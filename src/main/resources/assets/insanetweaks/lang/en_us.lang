@@ -1,0 +1,18 @@
+item.cost_core.name=Cost Core
+item.potency_core.name=Potency Core
+item.speedcast_core.name=Speedcast Core
+item.golden_book.name=Golden Book
+item.rupter_solied.name=Rupter (Solid)
+item.living_spellblade.name=§eLiving Spellblade
+item.sentient_spellblade.name=§eSentient Spellblade
+
+item.battle_mage_helmet.name=§eSentient Battlemage Helmet
+item.battle_mage_chestplate.name=§eSentient Battlemage Chestplate
+item.battle_mage_leggings.name=§eSentient Battlemage Leggings
+item.battle_mage_boots.name=§eSentient Battlemage Boots
+
+item.parasite_mage_helmet.name=§eLiving Mage Helmet
+item.parasite_mage_chestplate.name=§eLiving Mage Chestplate
+item.parasite_mage_leggings.name=§eLiving Mage Leggings
+item.parasite_mage_boots.name=§eLiving Mage Boots
+item.parasite_aegis.name=§eSentient Aegis

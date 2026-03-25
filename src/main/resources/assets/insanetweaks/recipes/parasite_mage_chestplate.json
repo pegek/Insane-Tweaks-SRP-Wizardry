@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " P ",
+    "FCF",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "item": "srpextra:sturdy_armor_plates"
+    },
+    "F": {
+      "item": "srpextra:flexible_cloth"
+    },
+    "C": {
+      "item": "srparasites:living_core"
+    },
+    "S": [
+      { "item": "ebwizardry:battlemage_chestplate", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_fire", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_ice", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_lightning", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_necromancy", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_earth", "data": 32767 },
+      { "item": "ebwizardry:battlemage_chestplate_sorcery", "data": 32767 }
+    ]
+  },
+  "result": {
+    "item": "insanetweaks:parasite_mage_chestplate",
+    "count": 1
+  }
+}

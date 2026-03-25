@@ -1,0 +1,794 @@
+Compiled from "ItemBattlemageShield.java"
+public class com.windanesz.ancientspellcraft.item.ItemBattlemageShield extends net.minecraft.item.Item implements electroblob.wizardry.item.ISpellCastingItem,electroblob.wizardry.item.IManaStoringItem,electroblob.wizardry.item.IWorkbenchItem,com.windanesz.ancientspellcraft.item.IItemWithSlots {
+  public com.windanesz.ancientspellcraft.item.ItemBattlemageShield();
+    Code:
+       0: aload_0
+       1: invokespecial #46                 // Method net/minecraft/item/Item."<init>":()V
+       4: aload_0
+       5: invokevirtual #50                 // Method func_77664_n:()Lnet/minecraft/item/Item;
+       8: pop
+       9: aload_0
+      10: iconst_1
+      11: putfield      #54                 // Field field_77777_bU:I
+      14: aload_0
+      15: getstatic     #60                 // Field com/windanesz/ancientspellcraft/registry/ASTabs.ANCIENTSPELLCRAFT_GEAR:Lnet/minecraft/creativetab/CreativeTabs;
+      18: invokevirtual #64                 // Method func_77637_a:(Lnet/minecraft/creativetab/CreativeTabs;)Lnet/minecraft/item/Item;
+      21: pop
+      22: aload_0
+      23: getstatic     #68                 // Field com/windanesz/ancientspellcraft/Settings.generalSettings:Lcom/windanesz/ancientspellcraft/Settings$GeneralSettings;
+      26: getfield      #71                 // Field com/windanesz/ancientspellcraft/Settings$GeneralSettings.runic_shield_durability:I
+      29: invokevirtual #75                 // Method func_77656_e:(I)Lnet/minecraft/item/Item;
+      32: pop
+      33: aload_0
+      34: new           #77                 // class net/minecraft/util/ResourceLocation
+      37: dup
+      38: ldc           #79                 // String blocking
+      40: invokespecial #82                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;)V
+      43: new           #15                 // class com/windanesz/ancientspellcraft/item/ItemBattlemageShield$1
+      46: dup
+      47: aload_0
+      48: invokespecial #85                 // Method com/windanesz/ancientspellcraft/item/ItemBattlemageShield$1."<init>":(Lcom/windanesz/ancientspellcraft/item/ItemBattlemageShield;)V
+      51: invokevirtual #89                 // Method func_185043_a:(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/item/IItemPropertyGetter;)V
+      54: getstatic     #95                 // Field net/minecraft/block/BlockDispenser.field_149943_a:Lnet/minecraft/util/registry/RegistryDefaulted;
+      57: aload_0
+      58: getstatic     #101                // Field net/minecraft/item/ItemArmor.field_96605_cw:Lnet/minecraft/dispenser/IBehaviorDispenseItem;
+      61: invokevirtual #107                // Method net/minecraft/util/registry/RegistryDefaulted.func_82595_a:(Ljava/lang/Object;Ljava/lang/Object;)V
+      64: aload_0
+      65: invokestatic  #113                // Method electroblob/wizardry/registry/WizardryRecipes.addToManaFlaskCharging:(Lnet/minecraft/item/Item;)V
+      68: return
+
+  public int getSpellSlotCount(net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean onApplyButtonPressed(net.minecraft.entity.player.EntityPlayer, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot[]);
+    Code:
+       0: iconst_0
+       1: istore        6
+       3: aload         4
+       5: invokevirtual #127                // Method net/minecraft/inventory/Slot.func_75216_d:()Z
+       8: ifeq          57
+      11: aload_2
+      12: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      15: invokevirtual #136                // Method net/minecraft/item/ItemStack.func_77946_l:()Lnet/minecraft/item/ItemStack;
+      18: astore        7
+      20: aload_2
+      21: aload_0
+      22: aload_1
+      23: aload_2
+      24: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      27: aload         4
+      29: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      32: invokevirtual #140                // Method applyUpgrade:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/ItemStack;
+      35: invokevirtual #144                // Method net/minecraft/inventory/Slot.func_75215_d:(Lnet/minecraft/item/ItemStack;)V
+      38: aload_2
+      39: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      42: aload         7
+      44: invokestatic  #148                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+      47: ifne          54
+      50: iconst_1
+      51: goto          55
+      54: iconst_0
+      55: istore        6
+      57: aload_3
+      58: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      61: getstatic     #151                // Field net/minecraft/item/ItemStack.field_190927_a:Lnet/minecraft/item/ItemStack;
+      64: if_acmpeq     180
+      67: aload_0
+      68: aload_2
+      69: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      72: invokevirtual #155                // Method isManaFull:(Lnet/minecraft/item/ItemStack;)Z
+      75: ifne          180
+      78: aload_0
+      79: aload_2
+      80: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      83: invokevirtual #158                // Method getManaCapacity:(Lnet/minecraft/item/ItemStack;)I
+      86: aload_0
+      87: aload_2
+      88: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+      91: invokevirtual #161                // Method getMana:(Lnet/minecraft/item/ItemStack;)I
+      94: isub
+      95: istore        7
+      97: aload_3
+      98: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     101: invokevirtual #165                // Method net/minecraft/item/ItemStack.func_190916_E:()I
+     104: bipush        100
+     106: imul
+     107: iload         7
+     109: if_icmpge     145
+     112: aload_0
+     113: aload_2
+     114: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     117: aload_3
+     118: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     121: invokevirtual #165                // Method net/minecraft/item/ItemStack.func_190916_E:()I
+     124: bipush        100
+     126: imul
+     127: invokevirtual #169                // Method rechargeMana:(Lnet/minecraft/item/ItemStack;I)V
+     130: aload_3
+     131: aload_3
+     132: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     135: invokevirtual #165                // Method net/minecraft/item/ItemStack.func_190916_E:()I
+     138: invokevirtual #173                // Method net/minecraft/inventory/Slot.func_75209_a:(I)Lnet/minecraft/item/ItemStack;
+     141: pop
+     142: goto          177
+     145: aload_0
+     146: aload_2
+     147: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     150: aload_0
+     151: aload_2
+     152: invokevirtual #131                // Method net/minecraft/inventory/Slot.func_75211_c:()Lnet/minecraft/item/ItemStack;
+     155: invokevirtual #158                // Method getManaCapacity:(Lnet/minecraft/item/ItemStack;)I
+     158: invokevirtual #176                // Method setMana:(Lnet/minecraft/item/ItemStack;I)V
+     161: aload_3
+     162: iload         7
+     164: i2d
+     165: ldc2_w        #177                // double 100.0d
+     168: ddiv
+     169: invokestatic  #184                // Method java/lang/Math.ceil:(D)D
+     172: d2i
+     173: invokevirtual #173                // Method net/minecraft/inventory/Slot.func_75209_a:(I)Lnet/minecraft/item/ItemStack;
+     176: pop
+     177: iconst_1
+     178: istore        6
+     180: iload         6
+     182: ireturn
+
+  public int getMaxDamage(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #199                // Method net/minecraft/item/Item.getMaxDamage:(Lnet/minecraft/item/ItemStack;)I
+       5: i2f
+       6: fconst_1
+       7: ldc           #200                // float 0.15f
+       9: aload_1
+      10: getstatic     #206                // Field electroblob/wizardry/registry/WizardryItems.storage_upgrade:Lnet/minecraft/item/Item;
+      13: invokestatic  #212                // Method electroblob/wizardry/util/WandHelper.getUpgradeLevel:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/Item;)I
+      16: i2f
+      17: fmul
+      18: fadd
+      19: fmul
+      20: ldc           #213                // float 0.5f
+      22: fadd
+      23: f2i
+      24: ireturn
+
+  public net.minecraft.item.ItemStack applyUpgrade(net.minecraft.entity.player.EntityPlayer, net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_3
+       1: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+       4: invokestatic  #221                // Method electroblob/wizardry/util/WandHelper.isWandUpgrade:(Lnet/minecraft/item/Item;)Z
+       7: ifeq          115
+      10: aload_3
+      11: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      14: astore        4
+      16: aload         4
+      18: getstatic     #206                // Field electroblob/wizardry/registry/WizardryItems.storage_upgrade:Lnet/minecraft/item/Item;
+      21: if_acmpeq     48
+      24: aload         4
+      26: getstatic     #224                // Field electroblob/wizardry/registry/WizardryItems.siphon_upgrade:Lnet/minecraft/item/Item;
+      29: if_acmpeq     48
+      32: aload         4
+      34: getstatic     #227                // Field electroblob/wizardry/registry/WizardryItems.condenser_upgrade:Lnet/minecraft/item/Item;
+      37: if_acmpeq     48
+      40: aload         4
+      42: getstatic     #232                // Field com/windanesz/ancientspellcraft/registry/ASItems.soulbound_upgrade:Lnet/minecraft/item/Item;
+      45: if_acmpne     115
+      48: bipush        9
+      50: istore        5
+      52: aload_2
+      53: invokestatic  #235                // Method electroblob/wizardry/util/WandHelper.getTotalUpgrades:(Lnet/minecraft/item/ItemStack;)I
+      56: iload         5
+      58: if_icmpge     115
+      61: aload_2
+      62: aload         4
+      64: invokestatic  #212                // Method electroblob/wizardry/util/WandHelper.getUpgradeLevel:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/Item;)I
+      67: iconst_3
+      68: if_icmpge     115
+      71: aload_0
+      72: aload_2
+      73: invokevirtual #161                // Method getMana:(Lnet/minecraft/item/ItemStack;)I
+      76: istore        6
+      78: aload_2
+      79: aload         4
+      81: invokestatic  #238                // Method electroblob/wizardry/util/WandHelper.applyUpgrade:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/Item;)V
+      84: aload         4
+      86: getstatic     #206                // Field electroblob/wizardry/registry/WizardryItems.storage_upgrade:Lnet/minecraft/item/Item;
+      89: if_acmpne     99
+      92: aload_0
+      93: aload_2
+      94: iload         6
+      96: invokevirtual #176                // Method setMana:(Lnet/minecraft/item/ItemStack;I)V
+      99: aload_3
+     100: iconst_1
+     101: invokevirtual #242                // Method net/minecraft/item/ItemStack.func_190918_g:(I)V
+     104: aload_1
+     105: ifnull        115
+     108: getstatic     #248                // Field electroblob/wizardry/registry/WizardryAdvancementTriggers.special_upgrade:Lelectroblob/wizardry/advancement/CustomAdvancementTrigger;
+     111: aload_1
+     112: invokevirtual #254                // Method electroblob/wizardry/advancement/CustomAdvancementTrigger.triggerFor:(Lnet/minecraft/entity/player/EntityPlayer;)V
+     115: aload_2
+     116: areturn
+
+  public boolean showTooltip(net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public int getMana(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #158                // Method getManaCapacity:(Lnet/minecraft/item/ItemStack;)I
+       5: aload_0
+       6: aload_1
+       7: invokevirtual #262                // Method getDamage:(Lnet/minecraft/item/ItemStack;)I
+      10: isub
+      11: ireturn
+
+  public void setDamage(net.minecraft.item.ItemStack, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: invokespecial #265                // Method net/minecraft/item/Item.setDamage:(Lnet/minecraft/item/ItemStack;I)V
+       6: return
+
+  public void setMana(net.minecraft.item.ItemStack, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_0
+       3: aload_1
+       4: invokevirtual #158                // Method getManaCapacity:(Lnet/minecraft/item/ItemStack;)I
+       7: iload_2
+       8: isub
+       9: invokespecial #265                // Method net/minecraft/item/Item.setDamage:(Lnet/minecraft/item/ItemStack;I)V
+      12: return
+
+  public int getManaCapacity(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #268                // Method getMaxDamage:(Lnet/minecraft/item/ItemStack;)I
+       5: ireturn
+
+  public void func_77624_a(net.minecraft.item.ItemStack, net.minecraft.world.World, java.util.List<java.lang.String>, net.minecraft.client.util.ITooltipFlag);
+    Code:
+       0: getstatic     #281                // Field electroblob/wizardry/Wizardry.proxy:Lelectroblob/wizardry/CommonProxy;
+       3: aload_3
+       4: new           #283                // class java/lang/StringBuilder
+       7: dup
+       8: invokespecial #284                // Method java/lang/StringBuilder."<init>":()V
+      11: ldc_w         #286                // String item.
+      14: invokevirtual #290                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      17: aload_0
+      18: invokevirtual #294                // Method getRegistryName:()Lnet/minecraft/util/ResourceLocation;
+      21: invokevirtual #297                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      24: ldc_w         #299                // String .desc
+      27: invokevirtual #290                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      30: invokevirtual #303                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      33: iconst_0
+      34: anewarray     #305                // class java/lang/Object
+      37: invokevirtual #311                // Method electroblob/wizardry/CommonProxy.addMultiLineDescription:(Ljava/util/List;Ljava/lang/String;[Ljava/lang/Object;)V
+      40: aload         4
+      42: invokeinterface #316,  1          // InterfaceMethod net/minecraft/client/util/ITooltipFlag.func_194127_a:()Z
+      47: ifeq          108
+      50: aload_3
+      51: new           #283                // class java/lang/StringBuilder
+      54: dup
+      55: invokespecial #284                // Method java/lang/StringBuilder."<init>":()V
+      58: ldc_w         #318                // String Åò9
+      61: invokevirtual #290                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      64: ldc_w         #320                // String item.ebwizardry:wand.mana
+      67: iconst_2
+      68: anewarray     #305                // class java/lang/Object
+      71: dup
+      72: iconst_0
+      73: aload_0
+      74: aload_1
+      75: invokevirtual #161                // Method getMana:(Lnet/minecraft/item/ItemStack;)I
+      78: invokestatic  #326                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      81: aastore
+      82: dup
+      83: iconst_1
+      84: aload_0
+      85: aload_1
+      86: invokevirtual #158                // Method getManaCapacity:(Lnet/minecraft/item/ItemStack;)I
+      89: invokestatic  #326                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      92: aastore
+      93: invokestatic  #332                // Method net/minecraft/client/resources/I18n.func_135052_a:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      96: invokevirtual #290                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      99: invokevirtual #303                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     102: invokeinterface #338,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     107: pop
+     108: return
+
+  public net.minecraft.item.EnumAction func_77661_b(net.minecraft.item.ItemStack);
+    Code:
+       0: getstatic     #353                // Field net/minecraft/item/EnumAction.BLOCK:Lnet/minecraft/item/EnumAction;
+       3: areturn
+
+  public int func_77626_a(net.minecraft.item.ItemStack);
+    Code:
+       0: sipush        20000
+       3: ireturn
+
+  public net.minecraft.util.ActionResult<net.minecraft.item.ItemStack> func_77659_a(net.minecraft.world.World, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand);
+    Code:
+       0: aload_2
+       1: aload_3
+       2: invokevirtual #363                // Method net/minecraft/entity/player/EntityPlayer.func_184586_b:(Lnet/minecraft/util/EnumHand;)Lnet/minecraft/item/ItemStack;
+       5: astore        4
+       7: aload_0
+       8: aload_2
+       9: invokevirtual #367                // Method isBattlemage:(Lnet/minecraft/entity/player/EntityPlayer;)Z
+      12: ifne          40
+      15: aload_2
+      16: ldc_w         #369                // String Only a battlemage can use this
+      19: iconst_0
+      20: iconst_0
+      21: anewarray     #305                // class java/lang/Object
+      24: invokestatic  #375                // Method com/windanesz/ancientspellcraft/util/ASUtils.sendMessage:(Lnet/minecraft/entity/Entity;Ljava/lang/String;Z[Ljava/lang/Object;)V
+      27: new           #377                // class net/minecraft/util/ActionResult
+      30: dup
+      31: getstatic     #383                // Field net/minecraft/util/EnumActionResult.FAIL:Lnet/minecraft/util/EnumActionResult;
+      34: aload         4
+      36: invokespecial #386                // Method net/minecraft/util/ActionResult."<init>":(Lnet/minecraft/util/EnumActionResult;Ljava/lang/Object;)V
+      39: areturn
+      40: aload_3
+      41: getstatic     #392                // Field net/minecraft/util/EnumHand.MAIN_HAND:Lnet/minecraft/util/EnumHand;
+      44: if_acmpne     80
+      47: aload_2
+      48: invokevirtual #395                // Method net/minecraft/entity/player/EntityPlayer.func_70093_af:()Z
+      51: ifeq          80
+      54: aload_2
+      55: getstatic     #401                // Field com/windanesz/ancientspellcraft/AncientSpellcraft.instance:Lcom/windanesz/ancientspellcraft/AncientSpellcraft;
+      58: getstatic     #406                // Field com/windanesz/ancientspellcraft/client/gui/GuiHandlerAS.BATTLEMAGE_SHIELD:I
+      61: aload_2
+      62: getfield      #409                // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      65: iconst_0
+      66: iconst_0
+      67: iconst_0
+      68: invokevirtual #413                // Method net/minecraft/entity/player/EntityPlayer.openGui:(Ljava/lang/Object;ILnet/minecraft/world/World;III)V
+      71: getstatic     #416                // Field net/minecraft/util/EnumActionResult.SUCCESS:Lnet/minecraft/util/EnumActionResult;
+      74: aload         4
+      76: invokestatic  #420                // Method net/minecraft/util/ActionResult.newResult:(Lnet/minecraft/util/EnumActionResult;Ljava/lang/Object;)Lnet/minecraft/util/ActionResult;
+      79: areturn
+      80: aload_0
+      81: aload         4
+      83: invokevirtual #423                // Method isManaEmpty:(Lnet/minecraft/item/ItemStack;)Z
+      86: ifeq          102
+      89: new           #377                // class net/minecraft/util/ActionResult
+      92: dup
+      93: getstatic     #383                // Field net/minecraft/util/EnumActionResult.FAIL:Lnet/minecraft/util/EnumActionResult;
+      96: aload         4
+      98: invokespecial #386                // Method net/minecraft/util/ActionResult."<init>":(Lnet/minecraft/util/EnumActionResult;Ljava/lang/Object;)V
+     101: areturn
+     102: aload_2
+     103: aload_3
+     104: invokevirtual #427                // Method net/minecraft/entity/player/EntityPlayer.func_184598_c:(Lnet/minecraft/util/EnumHand;)V
+     107: new           #377                // class net/minecraft/util/ActionResult
+     110: dup
+     111: getstatic     #416                // Field net/minecraft/util/EnumActionResult.SUCCESS:Lnet/minecraft/util/EnumActionResult;
+     114: aload         4
+     116: invokespecial #386                // Method net/minecraft/util/ActionResult."<init>":(Lnet/minecraft/util/EnumActionResult;Ljava/lang/Object;)V
+     119: areturn
+
+  public boolean canContinueUsing(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #432                // Method net/minecraft/item/ItemStack.func_185132_d:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+       5: ifeq          10
+       8: iconst_1
+       9: ireturn
+      10: aload_0
+      11: aload_1
+      12: aload_2
+      13: invokespecial #434                // Method net/minecraft/item/Item.canContinueUsing:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+      16: ireturn
+
+  public void onUsingTick(net.minecraft.item.ItemStack, net.minecraft.entity.EntityLivingBase, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: iload_3
+       4: invokespecial #440                // Method net/minecraft/item/Item.onUsingTick:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/EntityLivingBase;I)V
+       7: return
+
+  public boolean isBattlemage(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_1
+       1: aconst_null
+       2: getstatic     #447                // Field electroblob/wizardry/item/ItemWizardArmour$ArmourClass.BATTLEMAGE:Lelectroblob/wizardry/item/ItemWizardArmour$ArmourClass;
+       5: invokestatic  #453                // Method com/windanesz/ancientspellcraft/util/WizardArmourUtils.isWearingFullSet:(Lnet/minecraft/entity/EntityLivingBase;Lelectroblob/wizardry/constants/Element;Lelectroblob/wizardry/item/ItemWizardArmour$ArmourClass;)Z
+       8: ireturn
+
+  public java.lang.String func_77653_i(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #457                // Method net/minecraft/item/Item.func_77653_i:(Lnet/minecraft/item/ItemStack;)Ljava/lang/String;
+       5: areturn
+
+  public boolean shouldCauseReequipAnimation(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack, boolean);
+    Code:
+       0: aload_1
+       1: invokevirtual #462                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+       4: ifeq          14
+       7: aload_2
+       8: invokevirtual #462                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      11: ifne          31
+      14: aload_1
+      15: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      18: aload_2
+      19: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      22: if_acmpne     31
+      25: iload_3
+      26: ifne          31
+      29: iconst_0
+      30: ireturn
+      31: aload_0
+      32: aload_1
+      33: aload_2
+      34: iload_3
+      35: invokespecial #464                // Method net/minecraft/item/Item.shouldCauseReequipAnimation:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;Z)Z
+      38: ireturn
+
+  public boolean cast(net.minecraft.item.ItemStack, electroblob.wizardry.spell.Spell, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand, int, electroblob.wizardry.util.SpellModifiers);
+    Code:
+       0: aload_3
+       1: getfield      #409                // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       4: astore        7
+       6: aload         7
+       8: getfield      #472                // Field net/minecraft/world/World.field_72995_K:Z
+      11: ifeq          30
+      14: aload_2
+      15: getfield      #477                // Field electroblob/wizardry/spell/Spell.isContinuous:Z
+      18: ifne          30
+      21: aload_2
+      22: invokevirtual #480                // Method electroblob/wizardry/spell/Spell.requiresPacket:()Z
+      25: ifeq          30
+      28: iconst_0
+      29: ireturn
+      30: aload_2
+      31: aload         7
+      33: aload_3
+      34: aload         4
+      36: iload         5
+      38: aload         6
+      40: invokevirtual #483                // Method electroblob/wizardry/spell/Spell.cast:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/util/EnumHand;ILelectroblob/wizardry/util/SpellModifiers;)Z
+      43: ifeq          130
+      46: iload         5
+      48: ifne          72
+      51: getstatic     #489                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      54: new           #17                 // class electroblob/wizardry/event/SpellCastEvent$Post
+      57: dup
+      58: getstatic     #493                // Field electroblob/wizardry/event/SpellCastEvent$Source.OTHER:Lelectroblob/wizardry/event/SpellCastEvent$Source;
+      61: aload_2
+      62: aload_3
+      63: aload         6
+      65: invokespecial #496                // Method electroblob/wizardry/event/SpellCastEvent$Post."<init>":(Lelectroblob/wizardry/event/SpellCastEvent$Source;Lelectroblob/wizardry/spell/Spell;Lnet/minecraft/entity/EntityLivingBase;Lelectroblob/wizardry/util/SpellModifiers;)V
+      68: invokevirtual #502                // Method net/minecraftforge/fml/common/eventhandler/EventBus.post:(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z
+      71: pop
+      72: aload         7
+      74: getfield      #472                // Field net/minecraft/world/World.field_72995_K:Z
+      77: ifne          128
+      80: aload_2
+      81: getfield      #477                // Field electroblob/wizardry/spell/Spell.isContinuous:Z
+      84: ifne          128
+      87: aload_2
+      88: invokevirtual #480                // Method electroblob/wizardry/spell/Spell.requiresPacket:()Z
+      91: ifeq          128
+      94: new           #22                 // class electroblob/wizardry/packet/PacketCastSpell$Message
+      97: dup
+      98: aload_3
+      99: invokevirtual #505                // Method net/minecraft/entity/player/EntityPlayer.func_145782_y:()I
+     102: aload         4
+     104: aload_2
+     105: aload         6
+     107: invokespecial #508                // Method electroblob/wizardry/packet/PacketCastSpell$Message."<init>":(ILnet/minecraft/util/EnumHand;Lelectroblob/wizardry/spell/Spell;Lelectroblob/wizardry/util/SpellModifiers;)V
+     110: astore        8
+     112: getstatic     #514                // Field electroblob/wizardry/packet/WizardryPacketHandler.net:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+     115: aload         8
+     117: aload         7
+     119: getfield      #518                // Field net/minecraft/world/World.field_73011_w:Lnet/minecraft/world/WorldProvider;
+     122: invokevirtual #523                // Method net/minecraft/world/WorldProvider.getDimension:()I
+     125: invokevirtual #529                // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendToDimension:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;I)V
+     128: iconst_1
+     129: ireturn
+     130: iconst_0
+     131: ireturn
+
+  public electroblob.wizardry.spell.Spell getCurrentSpell(net.minecraft.item.ItemStack);
+    Code:
+       0: getstatic     #545                // Field electroblob/wizardry/registry/Spells.shield:Lelectroblob/wizardry/spell/Spell;
+       3: areturn
+
+  public boolean showSpellHUD(net.minecraft.entity.player.EntityPlayer, net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean canCast(net.minecraft.item.ItemStack, electroblob.wizardry.spell.Spell, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand, int, electroblob.wizardry.util.SpellModifiers);
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public com.google.common.collect.Multimap<java.lang.String, net.minecraft.entity.ai.attributes.AttributeModifier> func_111205_h(net.minecraft.inventory.EntityEquipmentSlot);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #553                // Method net/minecraft/item/Item.func_111205_h:(Lnet/minecraft/inventory/EntityEquipmentSlot;)Lcom/google/common/collect/Multimap;
+       5: astore_2
+       6: aload_1
+       7: getstatic     #559                // Field net/minecraft/inventory/EntityEquipmentSlot.OFFHAND:Lnet/minecraft/inventory/EntityEquipmentSlot;
+      10: if_acmpne     85
+      13: aload_2
+      14: getstatic     #565                // Field net/minecraft/entity/SharedMonsterAttributes.field_188791_g:Lnet/minecraft/entity/ai/attributes/IAttribute;
+      17: invokeinterface #570,  1          // InterfaceMethod net/minecraft/entity/ai/attributes/IAttribute.func_111108_a:()Ljava/lang/String;
+      22: new           #572                // class net/minecraft/entity/ai/attributes/AttributeModifier
+      25: dup
+      26: getstatic     #574                // Field SHIELD_ARMOR_BONUS:Ljava/util/UUID;
+      29: ldc_w         #576                // String Armor modifier
+      32: getstatic     #68                 // Field com/windanesz/ancientspellcraft/Settings.generalSettings:Lcom/windanesz/ancientspellcraft/Settings$GeneralSettings;
+      35: getfield      #580                // Field com/windanesz/ancientspellcraft/Settings$GeneralSettings.runic_shield_armor:F
+      38: f2d
+      39: iconst_0
+      40: invokespecial #583                // Method net/minecraft/entity/ai/attributes/AttributeModifier."<init>":(Ljava/util/UUID;Ljava/lang/String;DI)V
+      43: invokeinterface #589,  3          // InterfaceMethod com/google/common/collect/Multimap.put:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      48: pop
+      49: aload_2
+      50: getstatic     #592                // Field net/minecraft/entity/SharedMonsterAttributes.field_189429_h:Lnet/minecraft/entity/ai/attributes/IAttribute;
+      53: invokeinterface #570,  1          // InterfaceMethod net/minecraft/entity/ai/attributes/IAttribute.func_111108_a:()Ljava/lang/String;
+      58: new           #572                // class net/minecraft/entity/ai/attributes/AttributeModifier
+      61: dup
+      62: getstatic     #594                // Field SHIELD_TOUGHNESS_BONUS:Ljava/util/UUID;
+      65: ldc_w         #596                // String Armor toughness
+      68: getstatic     #68                 // Field com/windanesz/ancientspellcraft/Settings.generalSettings:Lcom/windanesz/ancientspellcraft/Settings$GeneralSettings;
+      71: getfield      #599                // Field com/windanesz/ancientspellcraft/Settings$GeneralSettings.runic_shield_armor_toughness:F
+      74: f2d
+      75: iconst_0
+      76: invokespecial #583                // Method net/minecraft/entity/ai/attributes/AttributeModifier."<init>":(Ljava/util/UUID;Ljava/lang/String;DI)V
+      79: invokeinterface #589,  3          // InterfaceMethod com/google/common/collect/Multimap.put:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      84: pop
+      85: aload_2
+      86: areturn
+
+  public void func_77663_a(net.minecraft.item.ItemStack, net.minecraft.world.World, net.minecraft.entity.Entity, int, boolean);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: iload         4
+       6: iload         5
+       8: invokespecial #607                // Method net/minecraft/item/Item.func_77663_a:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;IZ)V
+      11: aload_3
+      12: instanceof    #359                // class net/minecraft/entity/player/EntityPlayer
+      15: ifeq          227
+      18: aload_0
+      19: aload_3
+      20: checkcast     #359                // class net/minecraft/entity/player/EntityPlayer
+      23: invokevirtual #367                // Method isBattlemage:(Lnet/minecraft/entity/player/EntityPlayer;)Z
+      26: ifeq          227
+      29: aload_3
+      30: checkcast     #359                // class net/minecraft/entity/player/EntityPlayer
+      33: astore        6
+      35: aload         6
+      37: invokevirtual #610                // Method net/minecraft/entity/player/EntityPlayer.func_184592_cb:()Lnet/minecraft/item/ItemStack;
+      40: aload_1
+      41: invokestatic  #148                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+      44: ifne          48
+      47: return
+      48: aload_1
+      49: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      52: instanceof    #2                  // class com/windanesz/ancientspellcraft/item/ItemBattlemageShield
+      55: ifeq          145
+      58: aload_1
+      59: invokevirtual #613                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+      62: ifeq          145
+      65: aload_1
+      66: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      69: astore        7
+      71: aload         7
+      73: ldc_w         #619                // String Items
+      76: invokevirtual #625                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      79: ifeq          145
+      82: aload_1
+      83: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      86: ldc_w         #619                // String Items
+      89: bipush        10
+      91: invokevirtual #629                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      94: invokevirtual #634                // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      97: istore        8
+      99: iconst_0
+     100: istore        9
+     102: iload         9
+     104: iload         8
+     106: if_icmpge     145
+     109: aload_0
+     110: new           #133                // class net/minecraft/item/ItemStack
+     113: dup
+     114: aload_1
+     115: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+     118: ldc_w         #619                // String Items
+     121: bipush        10
+     123: invokevirtual #629                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+     126: iload         9
+     128: invokevirtual #638                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+     131: invokespecial #641                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/nbt/NBTTagCompound;)V
+     134: aload         6
+     136: invokevirtual #645                // Method tickArtefact:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/player/EntityPlayer;)V
+     139: iinc          9, 1
+     142: goto          102
+     145: aload_2
+     146: getfield      #472                // Field net/minecraft/world/World.field_72995_K:Z
+     149: ifne          185
+     152: aload_0
+     153: aload_1
+     154: invokevirtual #155                // Method isManaFull:(Lnet/minecraft/item/ItemStack;)Z
+     157: ifne          185
+     160: aload_2
+     161: invokevirtual #649                // Method net/minecraft/world/World.func_82737_E:()J
+     164: ldc2_w        #650                // long 50l
+     167: lrem
+     168: lconst_0
+     169: lcmp
+     170: ifne          185
+     173: aload_0
+     174: aload_1
+     175: aload_1
+     176: getstatic     #227                // Field electroblob/wizardry/registry/WizardryItems.condenser_upgrade:Lnet/minecraft/item/Item;
+     179: invokestatic  #212                // Method electroblob/wizardry/util/WandHelper.getUpgradeLevel:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/Item;)I
+     182: invokevirtual #169                // Method rechargeMana:(Lnet/minecraft/item/ItemStack;I)V
+     185: aload_2
+     186: getfield      #472                // Field net/minecraft/world/World.field_72995_K:Z
+     189: ifne          227
+     192: aload         6
+     194: invokevirtual #655                // Method net/minecraft/entity/player/EntityPlayer.func_184811_cZ:()Lnet/minecraft/util/CooldownTracker;
+     197: aload_1
+     198: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+     201: invokevirtual #660                // Method net/minecraft/util/CooldownTracker.func_185141_a:(Lnet/minecraft/item/Item;)Z
+     204: ifeq          227
+     207: aload         6
+     209: getstatic     #663                // Field com/windanesz/ancientspellcraft/registry/ASItems.charm_glyph_shield_disable:Lnet/minecraft/item/Item;
+     212: invokestatic  #669                // Method electroblob/wizardry/item/ItemArtefact.isArtefactActive:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/Item;)Z
+     215: ifeq          227
+     218: aload         6
+     220: invokevirtual #655                // Method net/minecraft/entity/player/EntityPlayer.func_184811_cZ:()Lnet/minecraft/util/CooldownTracker;
+     223: aload_0
+     224: invokevirtual #672                // Method net/minecraft/util/CooldownTracker.func_185142_b:(Lnet/minecraft/item/Item;)V
+     227: return
+
+  public static java.util.List<net.minecraft.item.ItemStack> getArtefacts(net.minecraft.item.ItemStack);
+    Code:
+       0: new           #684                // class java/util/ArrayList
+       3: dup
+       4: invokespecial #685                // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      12: instanceof    #2                  // class com/windanesz/ancientspellcraft/item/ItemBattlemageShield
+      15: ifeq          102
+      18: aload_0
+      19: invokevirtual #613                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+      22: ifeq          102
+      25: aload_0
+      26: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      29: astore_2
+      30: aload_2
+      31: ldc_w         #619                // String Items
+      34: invokevirtual #625                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      37: ifeq          102
+      40: aload_0
+      41: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      44: ldc_w         #619                // String Items
+      47: bipush        10
+      49: invokevirtual #629                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      52: invokevirtual #634                // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      55: istore_3
+      56: iconst_0
+      57: istore        4
+      59: iload         4
+      61: iload_3
+      62: if_icmpge     102
+      65: aload_1
+      66: new           #133                // class net/minecraft/item/ItemStack
+      69: dup
+      70: aload_0
+      71: invokevirtual #617                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      74: ldc_w         #619                // String Items
+      77: bipush        10
+      79: invokevirtual #629                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      82: iload         4
+      84: invokevirtual #638                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      87: invokespecial #641                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/nbt/NBTTagCompound;)V
+      90: invokeinterface #338,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      95: pop
+      96: iinc          4, 1
+      99: goto          59
+     102: aload_1
+     103: areturn
+
+  public void tickArtefact(net.minecraft.item.ItemStack, net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_1
+       1: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+       4: instanceof    #689                // class com/windanesz/ancientspellcraft/item/ITickableArtefact
+       7: ifeq          24
+      10: aload_1
+      11: invokevirtual #217                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      14: checkcast     #689                // class com/windanesz/ancientspellcraft/item/ITickableArtefact
+      17: aload_1
+      18: aload_2
+      19: invokeinterface #693,  3          // InterfaceMethod com/windanesz/ancientspellcraft/item/ITickableArtefact.onWornTick:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/EntityLivingBase;)V
+      24: return
+
+  public boolean func_77616_k(net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public int func_77619_b();
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean isBookEnchantable(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean func_82789_a(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean isShield(net.minecraft.item.ItemStack, net.minecraft.entity.EntityLivingBase);
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public int getSlotCount();
+    Code:
+       0: iconst_3
+       1: ireturn
+
+  public boolean hasGUI();
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public int getRowCount();
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public int getColumnCount();
+    Code:
+       0: iconst_3
+       1: ireturn
+
+  public boolean isItemValid(net.minecraft.item.Item);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  static {};
+    Code:
+       0: ldc_w         #711                // String 2b5b1f50-b6b5-473a-a402-e45a24d83c13
+       3: invokestatic  #717                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+       6: putstatic     #574                // Field SHIELD_ARMOR_BONUS:Ljava/util/UUID;
+       9: ldc_w         #719                // String 3c1acb30-dafb-4c27-a142-680f12ed9c36
+      12: invokestatic  #717                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+      15: putstatic     #721                // Field SHIELD_ARMOR_PERCENT_BONUS:Ljava/util/UUID;
+      18: ldc_w         #723                // String 84d9a7e1-5346-4073-98e9-0e04d6d28da5
+      21: invokestatic  #717                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+      24: putstatic     #594                // Field SHIELD_TOUGHNESS_BONUS:Ljava/util/UUID;
+      27: return
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "F F",
+    "BCB",
+    "BSB"
+  ],
+  "key": {
+    "F": {
+      "item": "srpextra:flexible_cloth"
+    },
+    "B": {
+      "item": "srpextra:tightening_buckle"
+    },
+    "C": {
+      "item": "srparasites:living_core"
+    },
+    "S": [
+      { "item": "ebwizardry:battlemage_leggings", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_fire", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_ice", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_lightning", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_necromancy", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_earth", "data": 32767 },
+      { "item": "ebwizardry:battlemage_leggings_sorcery", "data": 32767 }
+    ]
+  },
+  "result": {
+    "item": "insanetweaks:parasite_mage_leggings",
+    "count": 1
+  }
+}

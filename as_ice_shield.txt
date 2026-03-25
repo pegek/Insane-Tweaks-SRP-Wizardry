@@ -1,0 +1,24 @@
+Compiled from "ItemIceShield.java"
+public class com.windanesz.ancientspellcraft.item.ItemIceShield extends net.minecraft.item.Item implements electroblob.wizardry.item.IConjuredItem {
+  private net.minecraft.item.EnumRarity rarity;
+  public com.windanesz.ancientspellcraft.item.ItemIceShield();
+  public void func_77624_a(net.minecraft.item.ItemStack, net.minecraft.world.World, java.util.List<java.lang.String>, net.minecraft.client.util.ITooltipFlag);
+  public boolean canContinueUsing(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public net.minecraft.item.Item setRarity(net.minecraft.item.EnumRarity);
+  public net.minecraft.item.EnumRarity func_77613_e(net.minecraft.item.ItemStack);
+  public int getMaxDamage(net.minecraft.item.ItemStack);
+  public boolean shouldCauseReequipAnimation(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack, boolean);
+  public void func_77663_a(net.minecraft.item.ItemStack, net.minecraft.world.World, net.minecraft.entity.Entity, int, boolean);
+  public static void explodeShield(net.minecraft.world.World, net.minecraft.entity.EntityLivingBase, net.minecraft.item.ItemStack);
+  public net.minecraft.item.EnumAction func_77661_b(net.minecraft.item.ItemStack);
+  public int func_77626_a(net.minecraft.item.ItemStack);
+  public net.minecraft.util.ActionResult<net.minecraft.item.ItemStack> func_77659_a(net.minecraft.world.World, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand);
+  public boolean func_82789_a(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public boolean func_77636_d(net.minecraft.item.ItemStack);
+  public int func_77619_b();
+  public boolean func_77616_k(net.minecraft.item.ItemStack);
+  public boolean isBookEnchantable(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public boolean onDroppedByPlayer(net.minecraft.item.ItemStack, net.minecraft.entity.player.EntityPlayer);
+  public static void attackEvent(net.minecraftforge.event.entity.living.LivingAttackEvent);
+  public boolean isShield(net.minecraft.item.ItemStack, net.minecraft.entity.EntityLivingBase);
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LLL",
+    "LLL",
+    "LLL"
+  ],
+  "key": {
+    "L": {
+      "item": "srparasites:lurecomponent1"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:rupter_solied",
+    "count": 1
+  }
+}

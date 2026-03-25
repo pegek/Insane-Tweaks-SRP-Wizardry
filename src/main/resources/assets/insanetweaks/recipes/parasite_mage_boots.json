@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " F ",
+    "PCP",
+    " S "
+  ],
+  "key": {
+    "F": {
+      "item": "srpextra:flexible_cloth"
+    },
+    "P": {
+      "item": "srpextra:sturdy_armor_plates"
+    },
+    "C": {
+      "item": "srparasites:living_core"
+    },
+    "S": [
+      { "item": "ebwizardry:battlemage_boots", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_fire", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_ice", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_lightning", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_necromancy", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_earth", "data": 32767 },
+      { "item": "ebwizardry:battlemage_boots_sorcery", "data": 32767 }
+    ]
+  },
+  "result": {
+    "item": "insanetweaks:parasite_mage_boots",
+    "count": 1
+  }
+}

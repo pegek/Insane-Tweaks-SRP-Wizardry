@@ -1,0 +1,10 @@
+Compiled from "RenderAnimatedItem.java"
+public class com.windanesz.ancientspellcraft.client.renderer.entity.RenderAnimatedItem extends net.minecraft.client.renderer.entity.RenderBiped<com.windanesz.ancientspellcraft.entity.living.EntityAnimatedItem> {
+  static final net.minecraft.util.ResourceLocation TEXTURE;
+  public com.windanesz.ancientspellcraft.client.renderer.entity.RenderAnimatedItem(net.minecraft.client.renderer.entity.RenderManager);
+  protected net.minecraft.util.ResourceLocation getEntityTexture(com.windanesz.ancientspellcraft.entity.living.EntityAnimatedItem);
+  protected net.minecraft.util.ResourceLocation func_110775_a(net.minecraft.entity.EntityLiving);
+  protected boolean func_177070_b(net.minecraft.entity.EntityLivingBase);
+  protected net.minecraft.util.ResourceLocation func_110775_a(net.minecraft.entity.Entity);
+  static {};
+}

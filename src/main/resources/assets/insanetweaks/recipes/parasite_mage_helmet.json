@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " B ",
+    "PSP",
+    " L "
+  ],
+  "key": {
+    "B": {
+      "item": "srpextra:tightening_buckle"
+    },
+    "P": {
+      "item": "srpextra:sturdy_armor_plates"
+    },
+    "S": [
+      { "item": "ebwizardry:battlemage_helmet", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_fire", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_ice", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_lightning", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_necromancy", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_earth", "data": 32767 },
+      { "item": "ebwizardry:battlemage_helmet_sorcery", "data": 32767 }
+    ],
+    "L": {
+      "item": "srparasites:living_core"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:parasite_mage_helmet",
+    "count": 1
+  }
+}

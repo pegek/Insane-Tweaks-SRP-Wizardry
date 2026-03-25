@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SNS",
+    "RkR",
+    "WEW"
+  ],
+  "key": {
+    "S": {
+      "item": "defiledlands:book_wyrm_scale_golden"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    },
+    "R": {
+      "item": "insanetweaks:rupter_solied"
+    },
+    "k": {
+      "item": "minecraft:bookshelf"
+    },
+    "W": {
+      "item": "defiledlands:book_wyrm_scale"
+    },
+    "E": {
+      "item": "ancientspellcraft:empty_mystic_spell_book"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:golden_book",
+    "count": 4
+  }
+}

@@ -1,0 +1,44 @@
+Compiled from "ItemBattlemageShield.java"
+public class com.windanesz.ancientspellcraft.item.ItemBattlemageShield extends net.minecraft.item.Item implements electroblob.wizardry.item.ISpellCastingItem,electroblob.wizardry.item.IManaStoringItem,electroblob.wizardry.item.IWorkbenchItem,com.windanesz.ancientspellcraft.item.IItemWithSlots {
+  private static final java.util.UUID SHIELD_ARMOR_BONUS;
+  private static final java.util.UUID SHIELD_ARMOR_PERCENT_BONUS;
+  private static final java.util.UUID SHIELD_TOUGHNESS_BONUS;
+  public com.windanesz.ancientspellcraft.item.ItemBattlemageShield();
+  public int getSpellSlotCount(net.minecraft.item.ItemStack);
+  public boolean onApplyButtonPressed(net.minecraft.entity.player.EntityPlayer, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot, net.minecraft.inventory.Slot[]);
+  public int getMaxDamage(net.minecraft.item.ItemStack);
+  public net.minecraft.item.ItemStack applyUpgrade(net.minecraft.entity.player.EntityPlayer, net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public boolean showTooltip(net.minecraft.item.ItemStack);
+  public int getMana(net.minecraft.item.ItemStack);
+  public void setDamage(net.minecraft.item.ItemStack, int);
+  public void setMana(net.minecraft.item.ItemStack, int);
+  public int getManaCapacity(net.minecraft.item.ItemStack);
+  public void func_77624_a(net.minecraft.item.ItemStack, net.minecraft.world.World, java.util.List<java.lang.String>, net.minecraft.client.util.ITooltipFlag);
+  public net.minecraft.item.EnumAction func_77661_b(net.minecraft.item.ItemStack);
+  public int func_77626_a(net.minecraft.item.ItemStack);
+  public net.minecraft.util.ActionResult<net.minecraft.item.ItemStack> func_77659_a(net.minecraft.world.World, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand);
+  public boolean canContinueUsing(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public void onUsingTick(net.minecraft.item.ItemStack, net.minecraft.entity.EntityLivingBase, int);
+  public boolean isBattlemage(net.minecraft.entity.player.EntityPlayer);
+  public java.lang.String func_77653_i(net.minecraft.item.ItemStack);
+  public boolean shouldCauseReequipAnimation(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack, boolean);
+  public boolean cast(net.minecraft.item.ItemStack, electroblob.wizardry.spell.Spell, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand, int, electroblob.wizardry.util.SpellModifiers);
+  public electroblob.wizardry.spell.Spell getCurrentSpell(net.minecraft.item.ItemStack);
+  public boolean showSpellHUD(net.minecraft.entity.player.EntityPlayer, net.minecraft.item.ItemStack);
+  public boolean canCast(net.minecraft.item.ItemStack, electroblob.wizardry.spell.Spell, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand, int, electroblob.wizardry.util.SpellModifiers);
+  public com.google.common.collect.Multimap<java.lang.String, net.minecraft.entity.ai.attributes.AttributeModifier> func_111205_h(net.minecraft.inventory.EntityEquipmentSlot);
+  public void func_77663_a(net.minecraft.item.ItemStack, net.minecraft.world.World, net.minecraft.entity.Entity, int, boolean);
+  public static java.util.List<net.minecraft.item.ItemStack> getArtefacts(net.minecraft.item.ItemStack);
+  public void tickArtefact(net.minecraft.item.ItemStack, net.minecraft.entity.player.EntityPlayer);
+  public boolean func_77616_k(net.minecraft.item.ItemStack);
+  public int func_77619_b();
+  public boolean isBookEnchantable(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public boolean func_82789_a(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+  public boolean isShield(net.minecraft.item.ItemStack, net.minecraft.entity.EntityLivingBase);
+  public int getSlotCount();
+  public boolean hasGUI();
+  public int getRowCount();
+  public int getColumnCount();
+  public boolean isItemValid(net.minecraft.item.Item);
+  static {};
+}

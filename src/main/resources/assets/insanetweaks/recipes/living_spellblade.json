@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  N",
+    "VSF",
+    "HV "
+  ],
+  "key": {
+    "N": {
+      "item": "swparasites:living_nucleus"
+    },
+    "V": {
+      "item": "srparasites:vile_shell"
+    },
+    "S": {
+      "item": "ancientspellcraft:battlemage_sword_master"
+    },
+    "F": {
+      "item": "swparasites:infectious_long_blade_fragment"
+    },
+    "H": {
+      "item": "srparasites:hardened_bone_handle"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:living_spellblade",
+    "count": 1
+  }
+}
