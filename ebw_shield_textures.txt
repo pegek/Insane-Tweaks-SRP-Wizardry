@@ -1,4 +1,0 @@
-assets/ebwizardry/textures/entity/shield.png
-assets/ebwizardry/textures/items/amulet_auto_shield.png
-assets/ebwizardry/textures/spells/frost_shield.png
-assets/ebwizardry/textures/spells/shield.png

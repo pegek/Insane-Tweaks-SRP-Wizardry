@@ -1,9 +1,0 @@
-Compiled from "IItemWithSlots.java"
-public interface com.windanesz.ancientspellcraft.item.IItemWithSlots {
-  public abstract int getSlotCount();
-  public abstract boolean hasGUI();
-  public abstract int getRowCount();
-  public abstract int getColumnCount();
-  public boolean isItemValid(net.minecraft.item.Item);
-  public boolean isItemStackValid(net.minecraft.item.ItemStack);
-}
