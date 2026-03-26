@@ -33,22 +33,32 @@ public class ArmorTooltipHandler {
             if (item instanceof ParasiteWizardArmorItem) {
                 net.minecraft.nbt.NBTTagCompound nbt = stack.getTagCompound();
                 float blocked = (nbt != null) ? nbt.getFloat("ArmorDamageBlocked") : 0.0f;
-                int reduction = 1 + (int)(blocked / 100.0f); // Scales 1% to 11% at 1000 DMG
+                int reduction = 1 + (int)(blocked / 150.0f); // Scales 1% to 11% at 1500 DMG
 
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");
                 myLines.add(TextFormatting.BLUE + "  -" + reduction + "% Mana Cost");
                 myLines.add(TextFormatting.BLUE + "  -" + reduction + "% Cooldown");
                 myLines.add(TextFormatting.BLUE + "  -" + reduction + "% Charge-up");
 
-                myLines.add("\u00a75A living, breathing arcane carapace.");
+                myLines.add("");
+                myLines.add(TextFormatting.GRAY + "A living, breathing arcane carapace, infused with " + TextFormatting.DARK_GREEN + "Parasitic" + TextFormatting.GRAY + " biomass.");
+                myLines.add("");
                 myLines.add(
-                        "\u00a76Full set bonus: \u00a77Occasionally caps incoming damage. Dispels ailments on trigger.");
+                        "\u00a76Full set bonus: \u00a77At low HP (<25%), massive hits (10+) are reduced by 60% and ailments are dispelled.");
                 myLines.add(
                         "\u00a78Evolution Process: \u00a77Adapts when absorbing damage, granting stronger stats.");
 
                 if (blocked > 0.0f) {
-                    String blockedStr = String.format("%.1f", blocked);
-                    myLines.add(TextFormatting.GOLD + "Blocked: " + TextFormatting.YELLOW + blockedStr + " / 1000.0");
+                    if (blocked >= 10000.0f) {
+                        String guardian = TextFormatting.AQUA + "G " + TextFormatting.DARK_AQUA + "U " + 
+                                         TextFormatting.BLUE + "A " + TextFormatting.DARK_BLUE + "R " + 
+                                         TextFormatting.DARK_GREEN + "D " + TextFormatting.GREEN + "I " + 
+                                         TextFormatting.YELLOW + "A " + TextFormatting.GOLD + "N";
+                        tooltip.add(1, "\u00a79---> " + guardian);
+                    } else {
+                        String blockedStr = String.format("%.1f", blocked);
+                        tooltip.add(1, "\u00a79---> \u00a79Absorbed: \u00a7e" + blockedStr + " / 1500.0");
+                    }
                 }
             } else {
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");
@@ -56,9 +66,26 @@ public class ArmorTooltipHandler {
                 myLines.add(TextFormatting.BLUE + "  -10% Cooldown");
                 myLines.add(TextFormatting.BLUE + "  -10% Charge-up");
 
-                myLines.add("\u00a7eThe fully Evolved arcane carapace.");
-                myLines.add("\u00a76Passive: \u00a77Caps incoming max damage per hit. Dispels ailments on trigger.");
-                myLines.add("\u00a78Ethereal Shell: \u00a77Provides a flat -1.5% damage resistance from all sources.");
+                myLines.add("");
+                myLines.add(TextFormatting.GRAY + "The ulterior evolution of arcane carapace. It has achieved " + TextFormatting.AQUA + "Ethereal Stasis" + TextFormatting.GRAY + ".");
+                myLines.add("");
+                myLines.add("\u00a76Passive: \u00a77At low HP (<25%), massive hits (10+) are reduced by 60% and ailments are dispelled.");
+                myLines.add("\u00a78Ethereal Shell: \u00a77Provides a flat -1.0% damage resistance from all sources.");
+
+                net.minecraft.nbt.NBTTagCompound nbt = stack.getTagCompound();
+                if (nbt != null && nbt.hasKey("ArmorDamageBlocked")) {
+                    float absorbed = nbt.getFloat("ArmorDamageBlocked");
+                    if (absorbed >= 10000.0f) {
+                        String guardian = TextFormatting.AQUA + "G " + TextFormatting.DARK_AQUA + "U " + 
+                                         TextFormatting.BLUE + "A " + TextFormatting.DARK_BLUE + "R " + 
+                                         TextFormatting.DARK_GREEN + "D " + TextFormatting.GREEN + "I " + 
+                                         TextFormatting.YELLOW + "A " + TextFormatting.GOLD + "N";
+                        tooltip.add(1, "\u00a79---> " + guardian);
+                    } else {
+                        String absorbedStr = String.format("%.1f", absorbed);
+                        tooltip.add(1, "\u00a79---> \u00a79Absorbed: \u00a7e" + absorbedStr);
+                    }
+                }
             }
 
             tooltip.addAll(insertIdx, myLines);

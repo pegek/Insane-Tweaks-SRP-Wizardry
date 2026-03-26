@@ -150,7 +150,7 @@ public class SpellbladeHitHandler {
                 nbt.setInteger("SentientKills", kills);
 
                 // EVOLUTION TRIGGER: 1700 kills with the Living Spellblade -> evolve into Sentient
-                if (!player.world.isRemote && "insanetweaks:living_spellblade".equals(regName) && kills >= 1700) {
+                if (!player.world.isRemote && "insanetweaks:living_spellblade".equals(regName) && kills >= 1200) {
                     Item sentientSword = ForgeRegistries.ITEMS
                             .getValue(new ResourceLocation("insanetweaks", "sentient_spellblade"));
 

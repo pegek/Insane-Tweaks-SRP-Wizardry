@@ -201,7 +201,7 @@ public class SpellbladeTooltipHandler {
             }
         }
 
-        int bonusPercent = "insanetweaks:sentient_spellblade".equals(regName) ? 85 : Math.min(85, (kills / 100) * 5);
+        int bonusPercent = "insanetweaks:sentient_spellblade".equals(regName) ? 85 : Math.min(85, (kills * 85) / 1200);
 
         boolean hasSynergy = true;
         EntityPlayer player = Minecraft.getMinecraft().player;
@@ -219,7 +219,7 @@ public class SpellbladeTooltipHandler {
         }
 
         if (hasSynergy) {
-            myLines.add("\u00a76Sentient Synergy: \u00a76+" + bonusPercent + "% Potency");
+            myLines.add("\u00a76Sentient Synergy: \u00a7c+" + bonusPercent + "% Potency");
         }
 
         myLines.add(

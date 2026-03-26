@@ -19,25 +19,27 @@ public class AegisTooltipHandler {
     @SubscribeEvent
     public void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        if (stack.isEmpty()) return;
+        if (stack.isEmpty())
+            return;
         boolean isLiving = stack.getItem() == ModItems.LIVING_AEGIS;
         boolean isSentient = stack.getItem() == ModItems.SENTIENT_AEGIS;
-        if (!isLiving && !isSentient) return;
+        if (!isLiving && !isSentient)
+            return;
 
         List<String> tooltip = event.getToolTip();
 
         // 1. Remove garbage from default Ancient Spellcraft Battlemage Shield
         for (int i = tooltip.size() - 1; i >= 1; i--) {
             String line = tooltip.get(i).toLowerCase();
-            if (line.contains("battlemage") || 
-                line.contains("mana source") || 
-                line.contains("wand") ||
-                line.contains("spell") ||
-                line.contains("runeword") ||
-                line.contains("ancient spellcraft") ||
-                line.contains("item.insanetweaks") ||
-                line.contains("aegis.desc") ||
-                line.contains(".desc")) { 
+            if (line.contains("battlemage") ||
+                    line.contains("mana source") ||
+                    line.contains("wand") ||
+                    line.contains("spell") ||
+                    line.contains("runeword") ||
+                    line.contains("ancient spellcraft") ||
+                    line.contains("item.insanetweaks") ||
+                    line.contains("aegis.desc") ||
+                    line.contains(".desc")) {
                 tooltip.remove(i);
             }
         }
@@ -46,7 +48,7 @@ public class AegisTooltipHandler {
         int insertIdx = TooltipUtils.getInsertIdx(tooltip);
 
         List<String> myLines = new ArrayList<>();
-        
+
         // 3. Damage Blocked Counter
         if (stack.hasTagCompound()) {
             NBTTagCompound nbt = stack.getTagCompound();
@@ -54,42 +56,49 @@ public class AegisTooltipHandler {
                 float blocked = nbt.getFloat("AegisDamageBlocked");
                 if (blocked >= 10000.0f) {
                     // W A R D E N Easter Egg
-                    String warden = TextFormatting.DARK_BLUE + "W " + TextFormatting.DARK_AQUA + "A " + 
-                                   TextFormatting.BLUE + "R " + TextFormatting.AQUA + "D " + 
-                                   TextFormatting.WHITE + "E " + TextFormatting.DARK_AQUA + "N";
+                    String warden = TextFormatting.DARK_BLUE + "W " + TextFormatting.DARK_AQUA + "A " +
+                            TextFormatting.BLUE + "R " + TextFormatting.AQUA + "D " +
+                            TextFormatting.WHITE + "E " + TextFormatting.DARK_AQUA + "N";
                     tooltip.add(1, TextFormatting.BLUE + "---> " + warden);
                 } else {
-                    tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + String.format("%.1f", blocked) + " Blocked");
+                    tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + String.format("%.1f", blocked)
+                            + " / 1500.0 Blocked");
                 }
                 insertIdx++;
             }
         }
-        
+
         // 4. Descriptions
         myLines.add("");
         if (isSentient) {
-            myLines.add(TextFormatting.GRAY + "The ulterior evolution of Runic shield. It has gained a cursed " + TextFormatting.AQUA + "Will" + TextFormatting.GRAY + ".");
+            myLines.add(TextFormatting.GRAY + "The ulterior evolution of Runic shield. It has gained a hunger for "
+                    + TextFormatting.DARK_RED + "BLOOD" + TextFormatting.GRAY + ".");
         } else {
-            myLines.add(TextFormatting.GRAY + "A Runic shield infused with parasitic biomass. It feels " + TextFormatting.GREEN + "Hungry" + TextFormatting.GRAY + ".");
+            myLines.add(TextFormatting.GRAY + "A Runic shield infused with parasitic parts. It feels "
+                    + TextFormatting.DARK_RED + "Hungry" + TextFormatting.GRAY + ".");
         }
         myLines.add("");
-        
+
         myLines.add(TextFormatting.GOLD + "- Extinguishes you when on fire.");
         myLines.add(TextFormatting.GOLD + "- Cannot be disabled by weapons normally effective against shields.");
-        
+
         if (isSentient) {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
-            myLines.add(TextFormatting.GOLD + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN
+                    + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I"
+                    + TextFormatting.GOLD + " when blocking melee damage.");
+            myLines.add(TextFormatting.GOLD
+                    + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
         } else {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire and " + TextFormatting.DARK_PURPLE + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire and " + TextFormatting.DARK_PURPLE
+                    + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
         }
-        
+
         myLines.add(TextFormatting.RED + "- Enemy attacks from behind deal 50% more damage.");
-        
+
         myLines.add("");
-        myLines.add(TextFormatting.GOLD + "Sneak+Right click to place charms");
+        myLines.add(TextFormatting.DARK_GREEN + "Sneak+Right click to place charms");
         myLines.add(TextFormatting.DARK_GRAY + "inspired by Enigmatic legacy");
-        
+
         tooltip.addAll(insertIdx, myLines);
     }
 }

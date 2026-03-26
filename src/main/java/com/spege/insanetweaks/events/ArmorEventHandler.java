@@ -26,7 +26,7 @@ public class ArmorEventHandler {
     private static final String NBT_ADAPTATION = "ArmorDamageBlocked";
     private static final String TAG_COOLDOWN = "ArmorCapCooldown";
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.HIGH) // EventPriority.HIGHEST
     public void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -53,30 +53,36 @@ public class ArmorEventHandler {
         int totalPieces = livingCount + battleCount;
         float amount = event.getAmount();
 
-        // 1. 4-Piece Set Bonus: Damage Hardcap & Cure
+        // 1. 4-Piece Set Bonus: HP-based Damage Reduction & Cure
         if (totalPieces == 4) {
-            NBTTagCompound playerData = player.getEntityData();
-            long currentTime = player.world.getTotalWorldTime();
-            long lastProc = playerData.getLong(TAG_COOLDOWN);
+            float hpPercent = player.getHealth() / player.getMaxHealth();
 
-            if (amount > 6.0f && (currentTime - lastProc >= 40)) {
-                event.setAmount(6.0f);
-                amount = 6.0f; // Update local for subsequent reduction
-                playerData.setLong(TAG_COOLDOWN, currentTime);
+            if (hpPercent <= 0.25f) {
+                NBTTagCompound playerData = player.getEntityData();
+                long currentTime = player.world.getTotalWorldTime();
+                long lastProc = playerData.getLong(TAG_COOLDOWN);
 
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7c[DEBUG] Hardcap triggered! Overbearing force clipped to 6.0 DMG!"));
+                if (amount >= 10.0f && (currentTime - lastProc >= 80)) { // 400 ticks = 20s (Current: 80 = 4s for testing)
+                    event.setAmount(amount * 0.4f); // 60% reduction
+                    amount = event.getAmount(); 
+                    playerData.setLong(TAG_COOLDOWN, currentTime);
 
-                Potion curePotion = ForgeRegistries.POTIONS.getValue(new ResourceLocation("potioncore", "cure"));
-                if (curePotion != null) {
-                    player.addPotionEffect(new PotionEffect(curePotion, 40, 0, false, false));
-                    if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7a[DEBUG] 2s Cure applied! 2s Cooldown activated."));
+                    if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) 
+                        player.sendMessage(new TextComponentString("\u00a7c[DEBUG] Hardcap triggered! 60% reduction applied! 20s Cooldown."));
+
+                    Potion curePotion = ForgeRegistries.POTIONS.getValue(new ResourceLocation("potioncore", "cure"));
+                    if (curePotion != null) {
+                        player.addPotionEffect(new PotionEffect(curePotion, 40, 0, false, false));
+                        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) 
+                            player.sendMessage(new TextComponentString("\u00a7a[DEBUG] 2s Cure applied! (Test Cooldown: 4s)"));
+                    }
                 }
             }
         }
 
         // 2. Battlemage set reduction (1.5% per piece)
         if (battleCount > 0) {
-            float reduction = 1.0f - (0.015f * battleCount);
+            float reduction = 1.0f - (0.01f * battleCount);
             event.setAmount(event.getAmount() * reduction);
         }
 
@@ -91,9 +97,11 @@ public class ArmorEventHandler {
                     if (nbt == null) continue;
                     float blocked = nbt.getFloat(NBT_ADAPTATION);
 
+                    if (blocked >= 10000.0f) return;
+
                     blocked += damageTaken;
                     
-                    if (blocked >= 1000.0f) {
+                    if (blocked >= 1500.0f) {
                         evolveArmorPiece(player, i, piece);
                     } else {
                         nbt.setFloat(NBT_ADAPTATION, blocked);
@@ -132,7 +140,7 @@ public class ArmorEventHandler {
                     sound, SoundCategory.PLAYERS, 1.0f, 1.0f);
             }
             
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7b[DEBUG] Living Armor has absorbed 1000.0 DMG and transforms into BattleMage Armor!"));
+            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7b[DEBUG] Living Armor has absorbed 1500.0 DMG and transforms into BattleMage Armor!"));
         }
     }
 }

@@ -13,12 +13,18 @@ Insane Tweaks SRP&WIZ is an integration mod designed to unify magic and combat s
 
 ### Aegis Shield Progression
 A specialized shield based on Ancient Spellcraft's Runic Shield logic. It follows an evolutionary path:
-* **Living Aegis**: The craftable base tier (Armor +2.0, Durability 1750).
-* **Sentient Aegis**: The evolved form (Armor +3.0, Durability 2500).
-Evolution triggers after blocking **2000 damage**. Features a scaling retribution system (Fire, Immaleable, Corrosion) and synergistic Blazing Might mechanics.
+* **Living Aegis**: The craftable base tier (Armor +2.0).
+* **Sentient Aegis**: The evolved form (Armor +3.0, Indestructible).
+Evolution triggers after blocking **1500 damage**. Features a scaling retribution system and synergistic Blazing Might mechanics.
+
+### Sentient Armor System
+A specialized Battlemage set that improves with use:
+* **Living Mage Armor**: Base tier. Adapts as it absorbs damage (**1500 per piece** threshold).
+* **Sentient Mage Armor**: Evolved tier. Grants flat **-1.0% damage resistance** per piece.
+* **Hardcap Bonus (Full Set)**: When below **25% HP**, damage instances of **10+** are reduced by **60%**. (20s Cooldown, Dispels ailments).
 
 ### Spellblade Evolution
-Weapons that transform from **Living** to **Sentient** variant upon reaching **1700 decimated** enemies, gaining improved attributes and synergy.
+Weapons that transform from **Living** to **Sentient** variant upon reaching **1200 decimated** enemies, gaining improved attributes and synergy.
 
 ### Custom Cores (Anvil Upgrades)
 Anvil-applied modules (Speedcast, Cost, and Potency) providing persistent buffs to Wizardry stats on any armor piece (Max 2 upgrades per type).
