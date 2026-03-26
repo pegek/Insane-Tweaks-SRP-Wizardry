@@ -1,1 +1,22 @@
-ss
+# Credits and Attributions
+
+The Insane Tweaks SRPWIZ project wouldn't be possible without the foundational work, APIs, and inspiration from the following mods and their creators:
+
+## Core Frameworks and Integration
+- **Electroblob's Wizardry** by Electroblob: The central wizardry and mana mechanics.
+- **Ancient Spellcraft** by Windanesz: The Battlemage equipment base, Runic shields, and Arcane Workbench logic.
+- **Spartan Weaponry** by oblivioussp: The comprehensive weapon property and combat API.
+
+## Content and Inspiration
+- **Scape and Run: Parasites** by Dhanantry and the SRP Team: The parasitic evolution and world-building concepts.
+- **Scape and Spartan: Parasites** by Raptor and the SWParasites Team: Parasitic material integration.
+- **Enigmatic Legacy** by Aizistra and KELETU: Inspiration for Aegis shield mechanics and synergy systems.
+- **Bountiful Baubles** by CursedFlames: Inspiration for specific item mechanics.
+- **PotionCore** by Tmtravlr: The Cure and status cleansing mechanics.
+
+## Assets and Tools
+- **Electroblob's Wizardry Team**: Battlemage set texture bases.
+- **CleanroomMC & GroovyScript Teams**: Tools for performance optimization and initial prototyping.
+
+---
+Ported/Compiled by Isuth.

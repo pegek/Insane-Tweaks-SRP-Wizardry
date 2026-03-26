@@ -71,7 +71,7 @@ dependencies {
 jar {
     manifest {
         attributes([
-            "Specification-Title": "insanetweaks",
+            "Specification-Title": "insanetweaks SRP&Wizardry",
             "Specification-Vendor": "spege",
             "Specification-Version": "1.0.3", // We are version 1 of ourselves
             "Implementation-Title": project.name,
