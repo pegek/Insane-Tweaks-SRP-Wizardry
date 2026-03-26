@@ -1,28 +1,39 @@
 # eclipse
-bin
+bin/
 *.launch
-.settings
-.metadata
+.settings/
+.metadata/
 .classpath
 .project
 
 # idea
-out
+out/
 *.ipr
 *.iws
 *.iml
-.idea
+.idea/
 
 # gradle
-build
-.gradle
+build/
+.gradle/
 
 # other
-eclipse
-run
+eclipse/
+run/
+reobf/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
 
 # Files from Forge MDK
 forge*changelog.txt
 
+# Custom ignores
 groovy/
 notes/
+*.out
+*.tmp
