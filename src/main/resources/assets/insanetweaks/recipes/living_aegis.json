@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " N ",
+    "VSV",
+    "PCP"
+  ],
+  "key": {
+    "N": {
+      "item": "swparasites:living_nucleus"
+    },
+    "V": {
+      "item": "srparasites:vile_shell"
+    },
+    "S": {
+      "item": "ancientspellcraft:battlemage_shield"
+    },
+    "P": {
+      "item": "srpextra:sturdy_armor_plates"
+    },
+    "C": {
+      "item": "srpextra:flexible_cloth"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:living_aegis"
+  }
+}

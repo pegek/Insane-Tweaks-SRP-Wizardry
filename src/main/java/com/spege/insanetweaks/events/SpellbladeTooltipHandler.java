@@ -82,7 +82,13 @@ public class SpellbladeTooltipHandler {
             NBTTagCompound nbt = stack.getTagCompound();
             if (nbt != null && nbt.hasKey("SentientKills")) {
                 int kills = nbt.getInteger("SentientKills");
-                tooltip.add(1, "\u00a79---> \u00a79" + kills + " kills");
+                if (kills >= 5000) {
+                    // A N I H I L A T O R Easter Egg
+                    String anihilator = "\u00a74A \u00a7cN \u00a76I \u00a7eH \u00a72I \u00a73L \u00a71A \u00a79T \u00a75O \u00a7dR";
+                    tooltip.add(1, "\u00a79---> " + anihilator);
+                } else {
+                    tooltip.add(1, "\u00a79---> \u00a79" + kills + " decimated");
+                }
             }
         }
 

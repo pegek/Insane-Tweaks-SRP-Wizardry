@@ -4,7 +4,6 @@ import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
 import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
 
 import electroblob.wizardry.item.ItemWizardArmour;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -24,16 +23,14 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public class ArmorEventHandler {
 
-    private static final String NBT_ADAPTATION = "adaptation_points";
+    private static final String NBT_ADAPTATION = "ArmorDamageBlocked";
     private static final String TAG_COOLDOWN = "ArmorCapCooldown";
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
         if (player.world.isRemote) return;
-
-        float initialDamage = event.getAmount();
 
         int livingCount = 0;
         int battleCount = 0;
@@ -83,23 +80,23 @@ public class ArmorEventHandler {
             event.setAmount(event.getAmount() * reduction);
         }
 
-        // EVOLUTION TRIGGER (>4 DMG taken while wearing Parasite Armor)
-        if (livingCount > 0 && initialDamage > 4.0f && event.getSource().getTrueSource() instanceof EntityLivingBase) {
+        // ARMOR EVOLUTION (Now tracks total damage absorbed)
+        if (livingCount > 0) {
+            float damageTaken = event.getAmount();
             for (int i = 0; i < 4; i++) {
                 ItemStack piece = player.inventory.armorInventory.get(i);
                 if (!piece.isEmpty() && piece.getItem() instanceof ParasiteWizardArmorItem) {
                     if (!piece.hasTagCompound()) piece.setTagCompound(new NBTTagCompound());
                     NBTTagCompound nbt = piece.getTagCompound();
                     if (nbt == null) continue;
-                    int adapt = nbt.getInteger(NBT_ADAPTATION);
+                    float blocked = nbt.getFloat(NBT_ADAPTATION);
 
-                    adapt += 10;
-                    if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7e[DEBUG] Living Armor received 10 Evolution points! Current: " + adapt + "%"));
-
-                    if (adapt >= 100) {
+                    blocked += damageTaken;
+                    
+                    if (blocked >= 1000.0f) {
                         evolveArmorPiece(player, i, piece);
                     } else {
-                        nbt.setInteger(NBT_ADAPTATION, adapt);
+                        nbt.setFloat(NBT_ADAPTATION, blocked);
                     }
                 }
             }
@@ -135,7 +132,7 @@ public class ArmorEventHandler {
                     sound, SoundCategory.PLAYERS, 1.0f, 1.0f);
             }
             
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7b[DEBUG] Living Armor reaches 100% and transforms into BattleMage Armor!"));
+            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) player.sendMessage(new TextComponentString("\u00a7b[DEBUG] Living Armor has absorbed 1000.0 DMG and transforms into BattleMage Armor!"));
         }
     }
 }

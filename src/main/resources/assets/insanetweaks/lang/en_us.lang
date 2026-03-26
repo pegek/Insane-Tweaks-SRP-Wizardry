@@ -15,4 +15,5 @@ item.parasite_mage_helmet.name=§eLiving Mage Helmet
 item.parasite_mage_chestplate.name=§eLiving Mage Chestplate
 item.parasite_mage_leggings.name=§eLiving Mage Leggings
 item.parasite_mage_boots.name=§eLiving Mage Boots
-item.parasite_aegis.name=§eSentient Aegis
+item.living_aegis.name=§eLiving Aegis
+item.sentient_aegis.name=§eSentient Aegis

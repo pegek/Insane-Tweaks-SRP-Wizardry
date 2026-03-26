@@ -2,7 +2,7 @@
   "credit": "Made by WinDanesz, with Blockbench",
   "texture_size": [32, 32],
   "textures": {
-    "3": "insanetweaks:entity/shield/parasite_aegis"
+    "3": "insanetweaks:entity/shield/living_aegis"
   },
   "elements": [
     {
@@ -69,7 +69,7 @@
     }
   ],
   "overrides": [
-    {"predicate": {"blocking": 1}, "model": "insanetweaks:item/parasite_aegis_blocking"}
+    {"predicate": {"blocking": 1}, "model": "insanetweaks:item/living_aegis_blocking"}
   ],
   "display": {
     "thirdperson_righthand": {

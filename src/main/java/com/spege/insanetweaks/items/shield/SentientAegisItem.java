@@ -17,12 +17,12 @@ import keletu.enigmaticlegacy.entity.EntityItemIndestructible;
 
 import javax.annotation.Nonnull;
 
-public class ParasiteAegisItem extends ItemBattlemageShield {
-
-    public ParasiteAegisItem() {
+public class SentientAegisItem extends ItemBattlemageShield {
+    @SuppressWarnings("null")
+    public SentientAegisItem() {
         super();
-        this.setRegistryName("insanetweaks", "parasite_aegis");
-        this.setUnlocalizedName("parasite_aegis");
+        this.setRegistryName("insanetweaks", "sentient_aegis");
+        this.setUnlocalizedName("sentient_aegis");
         CreativeTabs tab = CreativeTabs.COMBAT;
         if (tab != null) this.setCreativeTab(tab);
         this.setMaxDamage(2500); // Base Mana capacity / Durability
@@ -72,15 +72,15 @@ public class ParasiteAegisItem extends ItemBattlemageShield {
             UUID uuidArmor = UUID.nameUUIDFromBytes(armorBytes);
             UUID uuidToughness = UUID.nameUUIDFromBytes(toughnessBytes);
              
-            if (uuidArmor != null) multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuidArmor, "Armor modifier", 2.0D, 0));
-            if (uuidToughness != null) multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuidToughness, "Armor toughness", 2.0D, 0));
+            if (uuidArmor != null) multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuidArmor, "Armor modifier", 3.0D, 0));
+            if (uuidToughness != null) multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuidToughness, "Armor toughness", 3.0D, 0));
         }
         return multimap;
     }
 
     @Override
     public int getItemEnchantability() {
-        return 22; // High enchantability (Gold tier)
+        return 14; // Standard tier enchantability (requested)
     }
     
     @Override

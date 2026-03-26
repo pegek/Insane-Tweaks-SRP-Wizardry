@@ -28,6 +28,7 @@ public class AegisEventHandler {
     private static final ResourceLocation CORROSION_LOC = new ResourceLocation("srparasites", "corrosion");
 
     @SubscribeEvent
+    @SuppressWarnings("null")
     public void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -39,7 +40,7 @@ public class AegisEventHandler {
         if (activeStack.isEmpty()) return;
 
         Item shieldItem = activeStack.getItem();
-        if (shieldItem == ModItems.PARASITE_AEGIS) {
+        if (shieldItem == ModItems.LIVING_AEGIS || shieldItem == ModItems.SENTIENT_AEGIS) {
             if (player.isHandActive() && shieldItem.isShield(activeStack, player)) {
                 
                 Vec3d damageVec = source.getDamageLocation();
@@ -75,20 +76,24 @@ public class AegisEventHandler {
                                     attacker.addPotionEffect(new PotionEffect(immaleable, 80, 0));
                                 }
 
-                                Potion corrosion = ForgeRegistries.POTIONS.getValue(CORROSIVE_LOC);
-                                if (corrosion == null) corrosion = ForgeRegistries.POTIONS.getValue(CORROSION_LOC);
-                                if (corrosion != null) {
-                                    attacker.addPotionEffect(new PotionEffect(corrosion, 80, 0));
+                                if (shieldItem == ModItems.SENTIENT_AEGIS) {
+                                    Potion corrosion = ForgeRegistries.POTIONS.getValue(CORROSIVE_LOC);
+                                    if (corrosion == null) corrosion = ForgeRegistries.POTIONS.getValue(CORROSION_LOC);
+                                    if (corrosion != null) {
+                                        attacker.addPotionEffect(new PotionEffect(corrosion, 80, 0));
+                                    }
                                 }
                             }
                         }
 
-                        // Apply Blazing Might
-                        Potion blazingMight = ForgeRegistries.POTIONS.getValue(BLAZING_MIGHT_LOC);
-                        if (blazingMight != null && !player.world.isRemote) {
-                            PotionEffect currentEffect = player.getActivePotionEffect(blazingMight);
-                            int amplifier = currentEffect != null ? Math.min(currentEffect.getAmplifier() + 1, 4) : 0;
-                            player.addPotionEffect(new PotionEffect(blazingMight, 300, amplifier, false, true));
+                        // Apply Blazing Might (Sentient Only)
+                        if (shieldItem == ModItems.SENTIENT_AEGIS) {
+                            Potion blazingMight = ForgeRegistries.POTIONS.getValue(BLAZING_MIGHT_LOC);
+                            if (blazingMight != null && !player.world.isRemote) {
+                                PotionEffect currentEffect = player.getActivePotionEffect(blazingMight);
+                                int amplifier = currentEffect != null ? Math.min(currentEffect.getAmplifier() + 1, 4) : 0;
+                                player.addPotionEffect(new PotionEffect(blazingMight, 300, amplifier, false, true));
+                            }
                         }
 
                         // Mana Drain
@@ -98,12 +103,43 @@ public class AegisEventHandler {
                             int newMana = Math.max(0, manaItem.getMana(activeStack) - manaDrain);
                             manaItem.setMana(activeStack, newMana);
                         }
+
+                        // Progress Tracking: Damage Blocked
+                        if (!player.world.isRemote) {
+                            if (!activeStack.hasTagCompound()) activeStack.setTagCompound(new NBTTagCompound());
+                            NBTTagCompound nbt = activeStack.getTagCompound();
+                            if (nbt != null) {
+                                float currentBlocked = nbt.getFloat("AegisDamageBlocked");
+                                if (currentBlocked < 10000.0f) {
+                                    float blocked = currentBlocked + event.getAmount();
+                                    nbt.setFloat("AegisDamageBlocked", Math.min(10000.0f, blocked));
+
+                                    // Evolution Trigger: 2000 Damage Blocked
+                                    if (shieldItem == ModItems.LIVING_AEGIS && blocked >= 2000.0f) {
+                                        ItemStack newShield = new ItemStack(ModItems.SENTIENT_AEGIS);
+                                        newShield.setTagCompound(nbt.copy());
+                                        player.setHeldItem(player.getActiveHand(), newShield);
+                                        
+                                        player.world.playSound(null, player.posX, player.posY, player.posZ, 
+                                            net.minecraft.init.SoundEvents.ENTITY_WITHER_SPAWN, 
+                                            net.minecraft.util.SoundCategory.PLAYERS, 1.0f, 1.0f);
+                                            
+                                        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+                                            player.sendMessage(new net.minecraft.util.text.TextComponentString(
+                                                "\u00a7c\u00a7l[!] \u00a7cYour shield pulses as it absorbs enough essence!\n" +
+                                                "It has evolved into the Sentient Aegis!"));
+                                        }
+                                    }
+                                }
+                            }
+                        }
                 }
             }
         }
     }
 
     @SubscribeEvent
+    @SuppressWarnings("null")
     public void onLivingUpdate(LivingUpdateEvent event) {
         EntityLivingBase entity = event.getEntityLiving();
 
@@ -113,14 +149,15 @@ public class AegisEventHandler {
             ItemStack main = player.getHeldItemMainhand();
             ItemStack off = player.getHeldItemOffhand();
 
-            boolean hasAegis = (main.getItem() == ModItems.PARASITE_AEGIS) || (off.getItem() == ModItems.PARASITE_AEGIS);
+            boolean hasAegis = (main.getItem() == ModItems.LIVING_AEGIS || main.getItem() == ModItems.SENTIENT_AEGIS) || 
+                             (off.getItem() == ModItems.LIVING_AEGIS || off.getItem() == ModItems.SENTIENT_AEGIS);
 
             if (hasAegis) {
                 // Anti-Axe Guard
-                Item aegis = ModItems.PARASITE_AEGIS;
-                if (aegis != null && player.getCooldownTracker().hasCooldown(aegis)) {
-                    player.getCooldownTracker().removeCooldown(aegis);
-                }
+                Item livingAegis = ModItems.LIVING_AEGIS;
+                Item sentientAegis = ModItems.SENTIENT_AEGIS;
+                if (player.getCooldownTracker().hasCooldown(livingAegis)) player.getCooldownTracker().removeCooldown(livingAegis);
+                if (player.getCooldownTracker().hasCooldown(sentientAegis)) player.getCooldownTracker().removeCooldown(sentientAegis);
 
                 // Extinguish feature (Every 1.5 seconds)
                 if (player.ticksExisted % 30 == 0 && player.isBurning()) {
@@ -156,6 +193,7 @@ public class AegisEventHandler {
     }
 
     @SubscribeEvent
+    @SuppressWarnings("null")
     public void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -164,7 +202,8 @@ public class AegisEventHandler {
         ItemStack main = player.getHeldItemMainhand();
         ItemStack off = player.getHeldItemOffhand();
 
-        boolean hasAegisEquipped = (main.getItem() == ModItems.PARASITE_AEGIS) || (off.getItem() == ModItems.PARASITE_AEGIS);
+        boolean hasAegisEquipped = (main.getItem() == ModItems.LIVING_AEGIS || main.getItem() == ModItems.SENTIENT_AEGIS) || 
+                                   (off.getItem() == ModItems.LIVING_AEGIS || off.getItem() == ModItems.SENTIENT_AEGIS);
 
         if (hasAegisEquipped) {
             // Remove blazing might upon any health loss
@@ -175,7 +214,8 @@ public class AegisEventHandler {
 
             // Backstab Verification
             ItemStack activeStack = player.getActiveItemStack();
-            boolean isAegisRaised = player.isHandActive() && !activeStack.isEmpty() && activeStack.getItem() == ModItems.PARASITE_AEGIS;
+            boolean isAegisRaised = player.isHandActive() && !activeStack.isEmpty() && 
+                                  (activeStack.getItem() == ModItems.LIVING_AEGIS || activeStack.getItem() == ModItems.SENTIENT_AEGIS);
 
             DamageSource source = event.getSource();
             Vec3d damageLoc = source.getDamageLocation();

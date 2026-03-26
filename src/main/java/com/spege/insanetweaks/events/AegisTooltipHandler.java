@@ -19,7 +19,10 @@ public class AegisTooltipHandler {
     @SubscribeEvent
     public void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        if (stack.isEmpty() || stack.getItem() != ModItems.PARASITE_AEGIS) return;
+        if (stack.isEmpty()) return;
+        boolean isLiving = stack.getItem() == ModItems.LIVING_AEGIS;
+        boolean isSentient = stack.getItem() == ModItems.SENTIENT_AEGIS;
+        if (!isLiving && !isSentient) return;
 
         List<String> tooltip = event.getToolTip();
 
@@ -32,6 +35,7 @@ public class AegisTooltipHandler {
                 line.contains("spell") ||
                 line.contains("runeword") ||
                 line.contains("ancient spellcraft") ||
+                line.contains("item.insanetweaks") ||
                 line.contains("aegis.desc") ||
                 line.contains(".desc")) { 
                 tooltip.remove(i);
@@ -43,25 +47,43 @@ public class AegisTooltipHandler {
 
         List<String> myLines = new ArrayList<>();
         
-        // 3. Kill Counter
+        // 3. Damage Blocked Counter
         if (stack.hasTagCompound()) {
             NBTTagCompound nbt = stack.getTagCompound();
-            if (nbt != null && nbt.hasKey("SentientKills")) {
-                int kills = nbt.getInteger("SentientKills");
-                tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + kills + " kills");
+            if (nbt != null && nbt.hasKey("AegisDamageBlocked")) {
+                float blocked = nbt.getFloat("AegisDamageBlocked");
+                if (blocked >= 10000.0f) {
+                    // W A R D E N Easter Egg
+                    String warden = TextFormatting.DARK_BLUE + "W " + TextFormatting.DARK_AQUA + "A " + 
+                                   TextFormatting.BLUE + "R " + TextFormatting.AQUA + "D " + 
+                                   TextFormatting.WHITE + "E " + TextFormatting.DARK_AQUA + "N";
+                    tooltip.add(1, TextFormatting.BLUE + "---> " + warden);
+                } else {
+                    tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + String.format("%.1f", blocked) + " Blocked");
+                }
                 insertIdx++;
             }
         }
         
         // 4. Descriptions
         myLines.add("");
-        myLines.add(TextFormatting.GRAY + "The ulterior evolution of Runic shield. It has gained a cursed " + TextFormatting.AQUA + "Will" + TextFormatting.GRAY + ".");
+        if (isSentient) {
+            myLines.add(TextFormatting.GRAY + "The ulterior evolution of Runic shield. It has gained a cursed " + TextFormatting.AQUA + "Will" + TextFormatting.GRAY + ".");
+        } else {
+            myLines.add(TextFormatting.GRAY + "A Runic shield infused with parasitic biomass. It feels " + TextFormatting.GREEN + "Hungry" + TextFormatting.GRAY + ".");
+        }
         myLines.add("");
         
         myLines.add(TextFormatting.GOLD + "- Extinguishes you when on fire.");
         myLines.add(TextFormatting.GOLD + "- Cannot be disabled by weapons normally effective against shields.");
-        myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
-        myLines.add(TextFormatting.GOLD + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
+        
+        if (isSentient) {
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
+            myLines.add(TextFormatting.GOLD + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
+        } else {
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire and " + TextFormatting.DARK_PURPLE + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
+        }
+        
         myLines.add(TextFormatting.RED + "- Enemy attacks from behind deal 50% more damage.");
         
         myLines.add("");

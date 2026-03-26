@@ -22,6 +22,7 @@ public class InsaneTweaksMod {
         
         if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CustomCoresEventHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
         
         if (com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge) {

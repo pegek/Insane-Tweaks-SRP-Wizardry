@@ -32,8 +32,8 @@ public class ArmorTooltipHandler {
 
             if (item instanceof ParasiteWizardArmorItem) {
                 net.minecraft.nbt.NBTTagCompound nbt = stack.getTagCompound();
-                int adapt = (nbt != null) ? nbt.getInteger("adaptation_points") : 0;
-                int reduction = 1 + (adapt / 10);
+                float blocked = (nbt != null) ? nbt.getFloat("ArmorDamageBlocked") : 0.0f;
+                int reduction = 1 + (int)(blocked / 100.0f); // Scales 1% to 11% at 1000 DMG
 
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");
                 myLines.add(TextFormatting.BLUE + "  -" + reduction + "% Mana Cost");
@@ -44,10 +44,11 @@ public class ArmorTooltipHandler {
                 myLines.add(
                         "\u00a76Full set bonus: \u00a77Occasionally caps incoming damage. Dispels ailments on trigger.");
                 myLines.add(
-                        "\u00a78Evolution Process: \u00a77Adapts when taking heavy damage (>4 DMG), granting stronger stats.");
+                        "\u00a78Evolution Process: \u00a77Adapts when absorbing damage, granting stronger stats.");
 
-                if (adapt > 0) {
-                    myLines.add("\u00a78Evolution Progress: \u00a7e" + adapt + "% / 100%");
+                if (blocked > 0.0f) {
+                    String blockedStr = String.format("%.1f", blocked);
+                    myLines.add(TextFormatting.GOLD + "Blocked: " + TextFormatting.YELLOW + blockedStr + " / 1000.0");
                 }
             } else {
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");

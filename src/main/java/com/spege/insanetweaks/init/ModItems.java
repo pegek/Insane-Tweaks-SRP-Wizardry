@@ -46,14 +46,15 @@ public class ModItems {
     public static final Item PARASITE_WIZARD_BOOTS = new com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.FEET);
 
-    public static final Item PARASITE_AEGIS = new com.spege.insanetweaks.items.shield.ParasiteAegisItem();
+    public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
+    public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         // Items gated by Golden Book module
         if (com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
-            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, PARASITE_AEGIS);
+            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS);
             event.getRegistry().registerAll(
                 BATTLEMAGE_HELMET, BATTLEMAGE_CHESTPLATE, BATTLEMAGE_LEGGINGS, BATTLEMAGE_BOOTS,
                 PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE, PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS
@@ -85,7 +86,8 @@ public class ModItems {
             registerModel(PARASITE_WIZARD_LEGGINGS);
             registerModel(PARASITE_WIZARD_BOOTS);
 
-            registerModel(PARASITE_AEGIS);
+            registerModel(LIVING_AEGIS);
+            registerModel(SENTIENT_AEGIS);
         }
 
         if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
