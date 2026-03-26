@@ -1,4 +1,5 @@
 # Insane Tweaks SRPWIZ: Evolution Bridge Module
+MOD IS IN VERY ALPHA STAGE, EXPECT BUGS AND UNBALANCED FEATURES IM ALSO UNEXPERIENCED SO EXPECT BAD CODING PRACTICES
 
 Minecraft: 1.12.2
 Forge: 14.23.5.2860+
@@ -13,7 +14,7 @@ Insane Tweaks SRP&WIZ is an integration mod designed to unify magic and combat s
 ### Sentient Spellblade
 The Spellblade system extends Ancient Spellcraft's Battlemage Sword logic to include support for Spartan Weaponry properties such as Viral, Bleeding, and Uncapped. These weapons follow an evolutionary path starting from a Living variant. Upon reaching a 1700-kill threshold, the weapon transforms into its Sentient form, gaining improved attributes.
 
-### Sentient Battlemage Armor
+### Sentient Battlemage Armor (I MOST LIKELY REWORK THIS MECHANIC)
 A protective set featuring Adaptation Logic. Wearing the full set hard-caps incoming damage instances to a maximum of 6.0 damage. Triggering this cap activates a Reactive Cleanse effect (using PotionCore's Cure mechanic) to dispel negative status ailments, followed by a brief internal cooldown. It also provides native mana efficiency and spell-scaling synergy.
 
 ### Parasite Aegis (Shield)
@@ -55,5 +56,6 @@ This project was made possible by the following creators and their respective AP
 * Tmtravlr: Status effect cleansing mechanics (PotionCore).
 * Wizardry And Fire Team: Battlemage equipment texture bases.
 * CleanroomMC / GroovyScript Teams: Prototyping and runtime tools.
+* Faithful Team: "Core" items textures were created using modified assets originally from the Faithful 32x Resource Pack. Distributed in accordance with their community license.
 
 *Created by Isuth.*

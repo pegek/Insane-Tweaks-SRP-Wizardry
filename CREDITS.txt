@@ -17,6 +17,6 @@ The Insane Tweaks SRPWIZ project wouldn't be possible without the foundational w
 ## Assets and Tools
 - **Electroblob's Wizardry Team**: Battlemage set texture bases.
 - **CleanroomMC & GroovyScript Teams**: Tools for performance optimization and initial prototyping.
-
+- **Faithful Team**: "Core" items textures were created using modified assets originally from the Faithful 32x Resource Pack. Distributed in accordance with their community license.
 ---
 Ported/Compiled by Isuth.
