@@ -63,11 +63,14 @@ public class AegisEventHandler {
                 if (!source.isUnblockable()) {
                     Entity trueSource = source.getTrueSource();
 
-                        // Retribution Logic
-                        if (trueSource instanceof EntityLivingBase && !source.isProjectile()) {
+                        // Retribution Logic: Ignite and debuff attacker
+                        if (trueSource instanceof EntityLivingBase) {
                             EntityLivingBase attacker = (EntityLivingBase) trueSource;
+                            boolean isProjectile = source.isProjectile();
+                            boolean isCloseMelee = !isProjectile && attacker.getDistance(player) <= 5.0D;
 
-                            if (attacker.getDistance(player) <= 5.0D) {
+                            // Projectiles trigger always, melee only if close
+                            if (isProjectile || isCloseMelee) {
                                 // Fast Fire NBT (80 ticks = 4 seconds)
                                 attacker.getEntityData().setInteger("AegisBurn", 80);
 

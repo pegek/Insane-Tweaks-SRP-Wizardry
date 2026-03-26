@@ -78,18 +78,16 @@ public class SpellbladeTooltipHandler {
             return;
 
         // 1. Insert kill count right below the item name (index 1)
-        if (stack.hasTagCompound()) {
-            NBTTagCompound nbt = stack.getTagCompound();
-            if (nbt != null && nbt.hasKey("SentientKills")) {
-                int kills = nbt.getInteger("SentientKills");
-                if (kills >= 5000) {
-                    // A N I H I L A T O R Easter Egg
-                    String anihilator = "\u00a74A \u00a7cN \u00a76I \u00a7eH \u00a72I \u00a73L \u00a71A \u00a79T \u00a75O \u00a7dR";
-                    tooltip.add(1, "\u00a79---> " + anihilator);
-                } else {
-                    tooltip.add(1, "\u00a79---> \u00a79" + kills + " decimated");
-                }
-            }
+        NBTTagCompound swordNbt = stack.getTagCompound();
+        int killsDisplay = (swordNbt != null) ? swordNbt.getInteger("SentientKills") : 0;
+
+        if (killsDisplay >= 5000) {
+            // A N I H I L A T O R Easter Egg
+            String anihilator = "\u00a74A \u00a7cN \u00a76I \u00a7eH \u00a72I \u00a73L \u00a71A \u00a79T \u00a75O \u00a7dR";
+            tooltip.add(1, "\u00a79---> " + anihilator);
+        } else {
+            String suffix = "insanetweaks:living_spellblade".equals(regName) ? " / 1200 decimated" : " decimated";
+            tooltip.add(1, "\u00a79---> \u00a79" + killsDisplay + suffix);
         }
 
         // 2. Aggressive junk removal from Battlemage (AncientSpellcraft) tooltip lines
@@ -122,12 +120,12 @@ public class SpellbladeTooltipHandler {
         if ("insanetweaks:sentient_spellblade".equals(regName)) {
             myLines.add("");
             myLines.add(
-                    "\u00a7fThe ulterior evolution of the spellblade, it has gained a twisted \u00a7bWisdom\u00a7f.");
+                    "\u00a7fThe ulterior evolution of the spellblade, it has gained a corrupted \u00a7bWisdom\u00a7f.");
             myLines.add("");
         } else if ("insanetweaks:living_spellblade".equals(regName)) {
             myLines.add("");
             myLines.add(
-                    "\u00a7fResults of various parasites body parts infused with magic, corrupted power shines inside.");
+                    "\u00a7fResults of various parasites body parts infused with magic, it seeks \u00a7bWisdom\u00a7f.");
             myLines.add("");
         }
 
@@ -223,7 +221,7 @@ public class SpellbladeTooltipHandler {
         }
 
         myLines.add(
-                "\u00a7c\u00a7oRequires offhand mana source | Unlock true potential with matching Sentient battlemage armor");
+                "\u00a7b\u00a7oRequires offhand mana source | Unlock true potential with matching Sentient battlemage armor");
 
         // 6. Inject all lines at the calculated position
         tooltip.addAll(insertIdx, myLines);

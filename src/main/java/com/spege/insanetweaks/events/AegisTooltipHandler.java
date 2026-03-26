@@ -50,22 +50,19 @@ public class AegisTooltipHandler {
         List<String> myLines = new ArrayList<>();
 
         // 3. Damage Blocked Counter
-        if (stack.hasTagCompound()) {
-            NBTTagCompound nbt = stack.getTagCompound();
-            if (nbt != null && nbt.hasKey("AegisDamageBlocked")) {
-                float blocked = nbt.getFloat("AegisDamageBlocked");
-                if (blocked >= 10000.0f) {
-                    // W A R D E N Easter Egg
-                    String warden = TextFormatting.DARK_BLUE + "W " + TextFormatting.DARK_AQUA + "A " +
-                            TextFormatting.BLUE + "R " + TextFormatting.AQUA + "D " +
-                            TextFormatting.WHITE + "E " + TextFormatting.DARK_AQUA + "N";
-                    tooltip.add(1, TextFormatting.BLUE + "---> " + warden);
-                } else {
-                    tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + String.format("%.1f", blocked)
-                            + " / 1500.0 Blocked");
-                }
-                insertIdx++;
-            }
+        NBTTagCompound nbt = stack.getTagCompound();
+        float blocked = (nbt != null) ? nbt.getFloat("AegisDamageBlocked") : 0.0f;
+
+        if (blocked >= 10000.0f) {
+            // W A R D E N Easter Egg
+            String warden = TextFormatting.DARK_BLUE + "W " + TextFormatting.DARK_AQUA + "A " +
+                    TextFormatting.BLUE + "R " + TextFormatting.AQUA + "D " +
+                    TextFormatting.WHITE + "E " + TextFormatting.DARK_AQUA + "N";
+            tooltip.add(1, TextFormatting.BLUE + "---> " + warden);
+        } else {
+            String blockedStr = String.format("%.1f", blocked);
+            String suffix = isSentient ? " Blocked" : " / 1500.0 Blocked";
+            tooltip.add(1, TextFormatting.BLUE + "---> " + TextFormatting.BLUE + blockedStr + suffix);
         }
 
         // 4. Descriptions
@@ -85,12 +82,12 @@ public class AegisTooltipHandler {
         if (isSentient) {
             myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN
                     + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I"
-                    + TextFormatting.GOLD + " when blocking melee damage.");
+                    + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
             myLines.add(TextFormatting.GOLD
                     + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
         } else {
             myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire and " + TextFormatting.DARK_PURPLE
-                    + "Immaleable I" + TextFormatting.GOLD + " when blocking melee damage.");
+                    + "Immaleable I" + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
         }
 
         myLines.add(TextFormatting.RED + "- Enemy attacks from behind deal 50% more damage.");

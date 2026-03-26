@@ -21,7 +21,7 @@ Evolution triggers after blocking **1500 damage**. Features a scaling retributio
 A specialized Battlemage set that improves with use:
 * **Living Mage Armor**: Base tier. Adapts as it absorbs damage (**1500 per piece** threshold).
 * **Sentient Mage Armor**: Evolved tier. Grants flat **-1.0% damage resistance** per piece.
-* **Hardcap Bonus (Full Set)**: When below **25% HP**, damage instances of **10+** are reduced by **60%**. (20s Cooldown, Dispels ailments).
+* **Hardcap Bonus (Full Set)**: When below **25% HP**, damage instances of **10+** (or lethal) are reduced by **90%** (capped at **2.0 DMG**). (20s Cooldown, Dispels ailments).
 
 ### Spellblade Evolution
 Weapons that transform from **Living** to **Sentient** variant upon reaching **1200 decimated** enemies, gaining improved attributes and synergy.

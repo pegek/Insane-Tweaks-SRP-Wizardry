@@ -26,7 +26,7 @@ public class ArmorEventHandler {
     private static final String NBT_ADAPTATION = "ArmorDamageBlocked";
     private static final String TAG_COOLDOWN = "ArmorCapCooldown";
 
-    @SubscribeEvent(priority = EventPriority.HIGH) // EventPriority.HIGHEST
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -53,28 +53,48 @@ public class ArmorEventHandler {
         int totalPieces = livingCount + battleCount;
         float amount = event.getAmount();
 
-        // 1. 4-Piece Set Bonus: HP-based Damage Reduction & Cure
+        // 1. 4-Piece Set Bonus: Survival Hardcap & Cure
         if (totalPieces == 4) {
             float hpPercent = player.getHealth() / player.getMaxHealth();
+            // EXPERIMENTAL: Enhanced survival logic (40% HP threshold + Lethal protection + Absorption support)
+            float totalEffectiveHP = player.getHealth() + player.getAbsorptionAmount();
+            boolean isLethal = amount >= totalEffectiveHP; 
+            boolean lowHPCondition = hpPercent <= 0.40f && amount >= 8.0f;
+            
+            boolean debugTrigger = isLethal || lowHPCondition;
 
-            if (hpPercent <= 0.25f) {
+            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+                String status = isLethal ? " \u00a7c[LETHAL]" : (lowHPCondition ? " \u00a76[LOW-HP]" : "");
+                player.sendMessage(new TextComponentString("\u00a78[DEBUG] HP: " + String.format("%.1f/%.1f", player.getHealth(), player.getMaxHealth()) + 
+                    " (" + (int)(hpPercent * 100) + "%) | DMG: " + amount + status));
+            }
+
+            if (debugTrigger) { // (isLethal || lowHPCondition)
                 NBTTagCompound playerData = player.getEntityData();
                 long currentTime = player.world.getTotalWorldTime();
                 long lastProc = playerData.getLong(TAG_COOLDOWN);
 
-                if (amount >= 10.0f && (currentTime - lastProc >= 80)) { // 400 ticks = 20s (Current: 80 = 4s for testing)
-                    event.setAmount(amount * 0.4f); // 60% reduction
-                    amount = event.getAmount(); 
+                if (currentTime - lastProc >= 80) { // 400 ticks = 20s (Current: 80 = 4s for testing)
+                    float reducedAmount = amount * 0.1f;
+                    if (reducedAmount > 2.0f) reducedAmount = 2.0f; // 2.0 DMG hard limit on trigger
+                    
+                    event.setAmount(reducedAmount);
+                    amount = reducedAmount; 
                     playerData.setLong(TAG_COOLDOWN, currentTime);
 
                     if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) 
-                        player.sendMessage(new TextComponentString("\u00a7c[DEBUG] Hardcap triggered! 60% reduction applied! 20s Cooldown."));
+                        player.sendMessage(new TextComponentString("\u00a7c[DEBUG] Hardcap triggered! Reduced and clipped to " + reducedAmount + " DMG!"));
+
+                    if (SoundEvents.ITEM_TOTEM_USE != null) {
+                        player.world.playSound(null, player.posX, player.posY, player.posZ, 
+                            SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                    }
 
                     Potion curePotion = ForgeRegistries.POTIONS.getValue(new ResourceLocation("potioncore", "cure"));
                     if (curePotion != null) {
                         player.addPotionEffect(new PotionEffect(curePotion, 40, 0, false, false));
                         if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) 
-                            player.sendMessage(new TextComponentString("\u00a7a[DEBUG] 2s Cure applied! (Test Cooldown: 4s)"));
+                            player.sendMessage(new TextComponentString("\u00a7a[DEBUG] 2s Cure applied! (Cooldown: 4s)"));
                     }
                 }
             }
@@ -86,22 +106,27 @@ public class ArmorEventHandler {
             event.setAmount(event.getAmount() * reduction);
         }
 
-        // ARMOR EVOLUTION (Now tracks total damage absorbed)
-        if (livingCount > 0) {
+        // 3. ARMOR DAMAGE TRACKING (Evolution for Living, Visual for Sentient)
+        if (totalPieces > 0) {
             float damageTaken = event.getAmount();
             for (int i = 0; i < 4; i++) {
                 ItemStack piece = player.inventory.armorInventory.get(i);
-                if (!piece.isEmpty() && piece.getItem() instanceof ParasiteWizardArmorItem) {
+                if (piece.isEmpty()) continue;
+
+                boolean isLiving = piece.getItem() instanceof ParasiteWizardArmorItem;
+                boolean isSentient = piece.getItem() instanceof BattleMageArmorItem;
+
+                if (isLiving || isSentient) {
                     if (!piece.hasTagCompound()) piece.setTagCompound(new NBTTagCompound());
                     NBTTagCompound nbt = piece.getTagCompound();
                     if (nbt == null) continue;
                     float blocked = nbt.getFloat(NBT_ADAPTATION);
 
-                    if (blocked >= 10000.0f) return;
+                    if (blocked >= 10000.0f) continue;
 
                     blocked += damageTaken;
-                    
-                    if (blocked >= 1500.0f) {
+
+                    if (isLiving && blocked >= 1500.0f) {
                         evolveArmorPiece(player, i, piece);
                     } else {
                         nbt.setFloat(NBT_ADAPTATION, blocked);
@@ -126,8 +151,6 @@ public class ArmorEventHandler {
                 NBTTagCompound tag = oldPiece.getTagCompound();
                 if (tag != null) {
                     newStack.setTagCompound(tag.copy());
-                    NBTTagCompound newTag = newStack.getTagCompound();
-                    if (newTag != null) newTag.removeTag(NBT_ADAPTATION);
                 }
             }
             newStack.setItemDamage(oldPiece.getItemDamage());
