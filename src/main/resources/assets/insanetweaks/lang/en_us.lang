@@ -17,3 +17,6 @@ item.parasite_mage_leggings.name=§eLiving Mage Leggings
 item.parasite_mage_boots.name=§eLiving Mage Boots
 item.living_aegis.name=§eLiving Aegis
 item.sentient_aegis.name=§eSentient Aegis
+
+# Potion effects
+potion.insanetweaks.cleanse=§eCleanse

@@ -35,7 +35,7 @@ import com.existingeevee.swparasites.init.ParasiteSWProperties;
 
 /**
  * Living Spellblade — the lower tier of the sentient sword pair.
- * Tracks kills via NBT "SentientKills" and evolves into the Sentient Spellblade at 1700 kills.
+ * Tracks kills via NBT "SentientKills" and evolves into the Sentient Spellblade at 1200 kills.
  * Tooltip is handled by SpellbladeTooltipHandler (client-side event) to avoid duplication.
  */
 public class LivingSpellblade extends BridgeSpellblade {

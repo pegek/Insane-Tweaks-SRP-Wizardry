@@ -13,7 +13,7 @@ import net.minecraft.world.World;
 import com.google.common.collect.Multimap;
 import com.windanesz.ancientspellcraft.item.ItemBattlemageShield;
 
-import keletu.enigmaticlegacy.entity.EntityItemIndestructible;
+import com.spege.insanetweaks.entities.EntityItemIndestructible;
 
 import javax.annotation.Nonnull;
 

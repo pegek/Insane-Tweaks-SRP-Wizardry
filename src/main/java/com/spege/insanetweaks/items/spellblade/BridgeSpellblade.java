@@ -194,8 +194,10 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
         if (bonusPercent > 0) {
             boolean hasSynergy = true;
             for (ItemStack piece : player.inventory.armorInventory) {
-                if (piece == null || piece.isEmpty() || 
-                   (!(piece.getItem() instanceof com.spege.insanetweaks.items.armor.BattleMageArmorItem) && 
+                // Note: armorInventory never contains null in 1.12.2 — empty slots are ItemStack.EMPTY.
+                // The 'piece == null' check was removed as dead code.
+                if (piece.isEmpty() ||
+                   (!(piece.getItem() instanceof com.spege.insanetweaks.items.armor.BattleMageArmorItem) &&
                     !(piece.getItem() instanceof com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem))) {
                     hasSynergy = false;
                     break;

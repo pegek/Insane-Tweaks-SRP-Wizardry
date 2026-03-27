@@ -22,7 +22,6 @@ import electroblob.wizardry.item.IManaStoringItem;
 
 public class AegisEventHandler {
 
-    private static final ResourceLocation BLAZING_MIGHT_LOC = new ResourceLocation("enigmaticlegacy", "blazing_might");
     private static final ResourceLocation IMMALEABLE_LOC = new ResourceLocation("srparasites", "immaleable");
     private static final ResourceLocation CORROSIVE_LOC = new ResourceLocation("srparasites", "corrosive");
     private static final ResourceLocation CORROSION_LOC = new ResourceLocation("srparasites", "corrosion");
@@ -89,15 +88,6 @@ public class AegisEventHandler {
                             }
                         }
 
-                        // Apply Blazing Might (Sentient Only)
-                        if (shieldItem == ModItems.SENTIENT_AEGIS) {
-                            Potion blazingMight = ForgeRegistries.POTIONS.getValue(BLAZING_MIGHT_LOC);
-                            if (blazingMight != null && !player.world.isRemote) {
-                                PotionEffect currentEffect = player.getActivePotionEffect(blazingMight);
-                                int amplifier = currentEffect != null ? Math.min(currentEffect.getAmplifier() + 1, 4) : 0;
-                                player.addPotionEffect(new PotionEffect(blazingMight, 300, amplifier, false, true));
-                            }
-                        }
 
                         // Mana Drain
                         if (shieldItem instanceof IManaStoringItem) {
@@ -209,11 +199,6 @@ public class AegisEventHandler {
                                    (off.getItem() == ModItems.LIVING_AEGIS || off.getItem() == ModItems.SENTIENT_AEGIS);
 
         if (hasAegisEquipped) {
-            // Remove blazing might upon any health loss
-            Potion blazingMight = ForgeRegistries.POTIONS.getValue(BLAZING_MIGHT_LOC);
-            if (blazingMight != null && player.isPotionActive(blazingMight)) {
-                player.removePotionEffect(blazingMight);
-            }
 
             // Backstab Verification
             ItemStack activeStack = player.getActiveItemStack();

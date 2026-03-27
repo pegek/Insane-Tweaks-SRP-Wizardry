@@ -80,13 +80,11 @@ public class AegisTooltipHandler {
         myLines.add(TextFormatting.GOLD + "- Cannot be disabled by weapons normally effective against shields.");
 
         if (isSentient) {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire, " + TextFormatting.DARK_GREEN
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + TextFormatting.DARK_RED + "MASSIVE " + TextFormatting.GOLD + "Fire, " + TextFormatting.DARK_GREEN
                     + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I"
                     + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
-            myLines.add(TextFormatting.GOLD
-                    + "- Successful blocks grant increasing Blazing Might effect, but any damage received takes it away.");
         } else {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with Fire and " + TextFormatting.DARK_PURPLE
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + TextFormatting.DARK_RED + "MASSIVE " + TextFormatting.GOLD + "Fire and " + TextFormatting.DARK_PURPLE
                     + "Immaleable I" + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
         }
 

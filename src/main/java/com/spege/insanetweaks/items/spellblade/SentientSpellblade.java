@@ -35,7 +35,7 @@ import com.existingeevee.swparasites.init.ParasiteSWProperties;
 
 /**
  * Sentient Spellblade — the evolved, higher-tier form of the Living Spellblade.
- * Reached via 1700 kills with the Living Spellblade; synergy potency bonus is capped at 85%.
+ * Reached via 1200 kills with the Living Spellblade; synergy potency bonus is capped at 85%.
  * Tooltip is handled by SpellbladeTooltipHandler (client-side event) to avoid duplication.
  */
 public class SentientSpellblade extends BridgeSpellblade {

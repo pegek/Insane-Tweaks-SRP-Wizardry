@@ -1,13 +1,10 @@
 package com.spege.insanetweaks.events;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
@@ -19,104 +16,34 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-
-import com.oblivioussp.spartanweaponry.api.IWeaponPropertyContainer;
-import com.oblivioussp.spartanweaponry.api.ToolMaterialEx;
-import com.oblivioussp.spartanweaponry.api.weaponproperty.IPropertyCallback;
-import com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponProperty;
-import com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponPropertyWithCallback;
 
 import com.spege.insanetweaks.config.ModConfig;
 
 public class SpellbladeHitHandler {
 
+    /**
+     * Items that participate in kill-tracking and evolution logic.
+     * Note: living_aegis is included here for future kill-tracking (commented out below).
+     * Weapon property dispatching is NOT handled here — it is done by BridgeSpellblade.hitEntity()
+     * which is the correct, single trigger point for per-hit callbacks.
+     */
     private static final Set<String> SENTIENT_ITEMS = new HashSet<>(Arrays.asList(
             "insanetweaks:sentient_spellblade",
             "insanetweaks:living_spellblade",
-            "insanetweaks:parasite_aegis"));
+            "insanetweaks:living_aegis")); // fixed: was parasite_aegis (non-existent registry name)
 
-    @SubscribeEvent
-    public void onLivingHurt(LivingHurtEvent event) {
-        if (!ModConfig.enableSrpEbWizardryBridge)
-            return;
-
-        Entity trueSource = event.getSource().getTrueSource();
-        if (!(trueSource instanceof EntityPlayer))
-            return;
-
-        EntityPlayer player = (EntityPlayer) trueSource;
-        ItemStack stack = player.getHeldItemMainhand();
-        if (stack.isEmpty())
-            return;
-
-        ResourceLocation regLoc = stack.getItem().getRegistryName();
-        if (regLoc == null)
-            return;
-
-        String regName = regLoc.toString();
-        if (!SENTIENT_ITEMS.contains(regName))
-            return;
-
-        Item item = stack.getItem();
-        EntityLivingBase target = event.getEntityLiving();
-
-        if (item instanceof IWeaponPropertyContainer<?>) {
-            IWeaponPropertyContainer<?> container = (IWeaponPropertyContainer<?>) item;
-            List<WeaponProperty> props = container.getAllWeaponProperties();
-
-            if (props != null) {
-                for (WeaponProperty prop : props) {
-                    if (prop instanceof WeaponPropertyWithCallback) {
-                        IPropertyCallback cb = ((WeaponPropertyWithCallback) prop).getCallback();
-                        if (cb != null) {
-                            try {
-                                cb.onHitEntity(container.getMaterialEx(), stack, target, player, (Entity) null);
-                            } catch (Throwable t) {
-                                if (ModConfig.displayDebugInfo) System.out.println("[SpellbladeHitHandler] ERROR applying property onHitEntity: "
-                                        + t.getMessage());
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            // Reflection fallback in case of classloader mismatch (instanceof returns false
-            // across loaders)
-            try {
-                Method getAllProps = item.getClass().getMethod("getAllWeaponProperties");
-                Method getMat = item.getClass().getMethod("getMaterialEx");
-                List<?> reflectProps = (List<?>) getAllProps.invoke(item);
-                Object mat = getMat.invoke(item);
-
-                if (reflectProps != null && mat != null) {
-                    for (Object prop : reflectProps) {
-                        try {
-                            if (prop == null)
-                                continue;
-                            Method getCb = prop.getClass().getMethod("getCallback");
-                            Object cb = getCb.invoke(prop);
-                            if (cb != null) {
-                                Method onHitEntity = cb.getClass().getMethod("onHitEntity",
-                                        ToolMaterialEx.class,
-                                        ItemStack.class,
-                                        EntityLivingBase.class,
-                                        EntityLivingBase.class,
-                                        Entity.class);
-                                onHitEntity.invoke(cb, mat, stack, target, player, (Entity) null);
-                            }
-                        } catch (Throwable t2) {
-                            // Silently ignore individual property errors
-                        }
-                    }
-                }
-            } catch (Throwable t) {
-                if (ModConfig.displayDebugInfo) System.out.println("[SpellbladeHitHandler] Reflection fallback failed: " + t.getMessage());
-            }
-        }
-    }
+    // onLivingHurt REMOVED — weapon property callbacks (Bleeding, Viral, Heavy, etc.) are already
+    // dispatched by BridgeSpellblade.hitEntity(), which Minecraft calls directly on every hit.
+    // Having a second dispatch in an event handler caused every WeaponPropertyWithCallback
+    // (e.g. BLEEDING_3, HEAVY_2, UNCAPPED) to fire TWICE per hit.
+    //
+    // REACH (WeaponProperties.REACH_1) was unaffected because its callback returns null —
+    // it works via attribute modifiers, not per-hit callbacks — which is why it appeared correct.
+    //
+    // The reflection fallback block is also removed as it was dead code: BridgeSpellblade
+    // implements IWeaponPropertyContainer directly, so instanceof always returns true.
 
     @SubscribeEvent
     @SuppressWarnings("null")
@@ -149,7 +76,7 @@ public class SpellbladeHitHandler {
                 int kills = nbt.getInteger("SentientKills") + 1;
                 nbt.setInteger("SentientKills", kills);
 
-                // EVOLUTION TRIGGER: 1700 kills with the Living Spellblade -> evolve into Sentient
+                // EVOLUTION TRIGGER: 1200 kills with the Living Spellblade -> evolve into Sentient
                 if (!player.world.isRemote && "insanetweaks:living_spellblade".equals(regName) && kills >= 1200) {
                     Item sentientSword = ForgeRegistries.ITEMS
                             .getValue(new ResourceLocation("insanetweaks", "sentient_spellblade"));
