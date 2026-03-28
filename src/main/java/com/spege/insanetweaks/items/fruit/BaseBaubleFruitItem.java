@@ -36,15 +36,14 @@ import java.util.List;
  * Base class for all Bauble Fruit items.
  *
  * A Bauble Fruit is a one-time consumable that permanently expands a specific
- * bauble slot when eaten. All bauble fruits share the same mechanics — subclasses
+ * bauble slot when eaten. All bauble fruits share the same mechanics  Esubclasses
  * only need to provide slot-specific parameters via the three abstract methods.
  *
  * Two runtime code paths:
  *   BaublesEX (v>1.5): real slot expansion via AttributeManager.applyAnonymousModifier.
  *   Legacy Baubles (v<=1.5): +1 generic.luck via vanilla Forge + BaubleFruitEventHandler.
  *
- * Subclasses must NOT override onFoodEaten/addInformation/createEntity —
- * all logic lives here. Only the three abstract methods need to be implemented.
+ * Subclasses must NOT override onFoodEaten/addInformation/createEntity  E * all logic lives here. Only the three abstract methods need to be implemented.
  */
 @SuppressWarnings("null")
 public abstract class BaseBaubleFruitItem extends ItemFood {
@@ -69,11 +68,11 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
         this.setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, registryName));
         this.setUnlocalizedName(registryName);
         this.setCreativeTab(CreativeTabs.FOOD);
-        this.setMaxStackSize(1); // One-time consumable — intentionally non-stackable
+        this.setMaxStackSize(1); // One-time consumable  Eintentionally non-stackable
     }
 
     // =========================================================================
-    // Abstract — subclasses provide slot-specific parameters
+    // Abstract  Esubclasses provide slot-specific parameters
     // =========================================================================
 
     /** The BaublesEX slot type this fruit expands (e.g. TypeData.Preset.RING). */
@@ -82,11 +81,11 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     /** Short description of the benefit, e.g. "+1 Ring slot". Used in tooltip. */
     protected abstract String getSlotDescription();
 
-    /** First tooltip line — thematic flavour text unique to each fruit. */
+    /** First tooltip line  Ethematic flavour text unique to each fruit. */
     protected abstract String getFlavorText();
 
     // =========================================================================
-    // Appearance — shared by all fruits
+    // Appearance  Eshared by all fruits
     // =========================================================================
 
     @Override
@@ -94,7 +93,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
         return EnumRarity.EPIC;
     }
 
-    /** Enchantment glint — signals special one-time consumable. */
+    /** Enchantment glint  Esignals special one-time consumable. */
     @Override
     public boolean hasEffect(@Nonnull ItemStack stack) {
         return true;
@@ -127,7 +126,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     }
 
     // =========================================================================
-    // Core Logic — called server-side after the eating animation completes
+    // Core Logic  Ecalled server-side after the eating animation completes
     // =========================================================================
 
     @Override
@@ -163,7 +162,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
             persistent.setBoolean(consumedTag, true);
             playerMP.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
 
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+            if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) {
                 playerMP.sendMessage(new TextComponentString(
                         "\u00a7d[DEBUG-BaubleFruit] " + getSlotDescription()
                         + " granted (BaublesEX). Modifier: " + (int)(current + 1)));
@@ -179,7 +178,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
             persistent.setBoolean(consumedTagLegacy, true);
             BaubleFruitEventHandler.grantLegacyBonus(playerMP, persistent);
 
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+            if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) {
                 playerMP.sendMessage(new TextComponentString(
                         "\u00a7d[DEBUG-BaubleFruit] Legacy bonus granted for "
                         + getSlotDescription() + " (Luck+1 applied)."));
@@ -192,7 +191,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     }
 
     // =========================================================================
-    // Indestructible dropped item — prevents the fruit being voided in lava
+    // Indestructible dropped item  Eprevents the fruit being voided in lava
     // =========================================================================
 
     @Override

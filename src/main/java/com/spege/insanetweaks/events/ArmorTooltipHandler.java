@@ -17,7 +17,7 @@ public class ArmorTooltipHandler {
 
     @SubscribeEvent
     public void onArmorTooltip(ItemTooltipEvent event) {
-        if (!ModConfig.enableSrpEbWizardryBridge)
+        if (!ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
         ItemStack stack = event.getItemStack();
@@ -71,9 +71,11 @@ public class ArmorTooltipHandler {
                 float absorbed = (nbt != null) ? nbt.getFloat("ArmorDamageBlocked") : 0.0f;
 
                 if (absorbed >= 10000.0f) {
-                    myLines.add("\u00a78Ethereal Shell (Awakened): \u00a77Provides a flat \u00a7a-1.5% \u00a77damage resistance from all sources.");
+                    myLines.add(
+                            "\u00a7dAwakened \u00a78Ethereal Shell: \u00a77Provides a flat \u00a7a-1.5% \u00a77damage resistance from all sources.");
                 } else {
-                    myLines.add("\u00a78Ethereal Shell: \u00a77Provides a flat -1.0% damage resistance from all sources.");
+                    myLines.add(
+                            "\u00a78Ethereal Shell: \u00a77Provides a flat -1.0% damage resistance from all sources.");
                 }
 
                 if (absorbed >= 10000.0f) {

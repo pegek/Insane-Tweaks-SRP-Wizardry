@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
@@ -13,6 +15,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.google.common.collect.Multimap;
 import javax.annotation.Nonnull;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -67,7 +71,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
         return this;
     }
 
-    /** Fluent helper — returns BridgeSpellblade for chaining during registration. */
+    /** Fluent helper  Ereturns BridgeSpellblade for chaining during registration. */
     public BridgeSpellblade addBridgeProperty(WeaponProperty prop) {
         addWeaponProperty(prop);
         return this;
@@ -116,9 +120,9 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
                 bridgeMaterial = new ToolMaterialEx(
                     bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, (float) getBaseAttackDamage(), -1, propArray
                 );
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] getMaterialEx built with " + propArray.length + " properties for " + bridgeModId + ":" + bridgeName);
+                if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] getMaterialEx built with " + propArray.length + " properties for " + bridgeModId + ":" + bridgeName);
             } catch (Throwable t) {
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] getMaterialEx with props failed (" + t.getMessage() + ") -- simple fallback");
+                if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] getMaterialEx with props failed (" + t.getMessage() + ") -- simple fallback");
                 bridgeMaterial = new ToolMaterialEx(
                     bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, (float) getBaseAttackDamage(), -1
                 );
@@ -204,7 +208,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
                     try {
                         cb.onHitEntity(mat, stack, target, attacker, (net.minecraft.entity.Entity) null);
                     } catch (Throwable t) {
-                        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] onHit callback error for " + prop + ": " + t.getMessage());
+                        if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] onHit callback error for " + prop + ": " + t.getMessage());
                     }
                 }
             }
@@ -238,7 +242,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
         if (bonusPercent > 0) {
             boolean hasSynergy = true;
             for (ItemStack piece : player.inventory.armorInventory) {
-                // Note: armorInventory never contains null in 1.12.2 — empty slots are ItemStack.EMPTY.
+                // Note: armorInventory never contains null in 1.12.2  Eempty slots are ItemStack.EMPTY.
                 // The 'piece == null' check was removed as dead code.
                 if (piece.isEmpty() ||
                    (!(piece.getItem() instanceof com.spege.insanetweaks.items.armor.BattleMageArmorItem) &&
@@ -277,17 +281,38 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
 
         // 1. Always register standard model (inventory icon)
         ModelLoader.setCustomModelResourceLocation(this, 0, new ModelResourceLocation(regName, "inventory"));
-        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] Registered standard model for: " + regName);
+        if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] Registered standard model for: " + regName);
 
         // 2. Register Spartan Weaponry model if path is provided
         if (swModelPath != null) {
             try {
                 String modId = regName.getResourceDomain();
                 ModelRenderRegistry.addItemToRegistry(this, new ResourceLocation(modId, swModelPath));
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] Registered Spartan model: " + modId + ":" + swModelPath);
+                if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] Registered Spartan model: " + modId + ":" + swModelPath);
             } catch (Throwable t) {
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) System.out.println("[BridgeSpellblade] Spartan ModelRenderRegistry skipped or failed: " + t.getMessage());
+                if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) System.out.println("[BridgeSpellblade] Spartan ModelRenderRegistry skipped or failed: " + t.getMessage());
             }
         }
+    }
+    @Override
+    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    @Nonnull
+    public Entity createEntity(@Nonnull World world, @Nonnull Entity location, @Nonnull ItemStack itemstack) {
+        EntityItemIndestructible entity = new EntityItemIndestructible(world, location.posX, location.posY, location.posZ, itemstack);
+        entity.motionX = location.motionX;
+        entity.motionY = location.motionY;
+        entity.motionZ = location.motionZ;
+        entity.setDefaultPickupDelay();
+        if (location instanceof EntityItem) {
+            String thrower = ((EntityItem) location).getThrower();
+            String owner = ((EntityItem) location).getOwner();
+            if (thrower != null) entity.setThrower(thrower);
+            if (owner != null) entity.setOwner(owner);
+        }
+        return entity;
     }
 }

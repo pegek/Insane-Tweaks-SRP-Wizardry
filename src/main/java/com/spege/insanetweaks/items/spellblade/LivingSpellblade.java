@@ -34,7 +34,7 @@ import com.oblivioussp.spartanweaponry.api.WeaponProperties;
 import com.existingeevee.swparasites.init.ParasiteSWProperties;
 
 /**
- * Living Spellblade — the lower tier of the sentient sword pair.
+ * Living Spellblade  Ethe lower tier of the sentient sword pair.
  * Tracks kills via NBT "SentientKills" and evolves into the Sentient Spellblade at 1200 kills.
  * Tooltip is handled by SpellbladeTooltipHandler (client-side event) to avoid duplication.
  */
@@ -166,7 +166,7 @@ public class LivingSpellblade extends BridgeSpellblade {
     }
 
     // ==========================================================
-    // COMBAT STATS — mana-conditional damage scaling
+    // COMBAT STATS  Emana-conditional damage scaling
     // ==========================================================
 
     @Override
@@ -180,7 +180,7 @@ public class LivingSpellblade extends BridgeSpellblade {
 
             if (!this._debugLogged) {
                 this._debugLogged = true;
-                if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+                if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) {
                     System.out.println("[LivingSpellblade DBG] super.getAttributeModifiers keys: " + multimap.keySet());
                     Collection<AttributeModifier> dmgEntries = multimap.get(damageName);
                     System.out.println("[LivingSpellblade DBG] ATTACK_DAMAGE entries: " + dmgEntries.size());
@@ -250,6 +250,6 @@ public class LivingSpellblade extends BridgeSpellblade {
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(@Nonnull ItemStack stack, @javax.annotation.Nullable World world, @Nonnull List<String> tooltip, @Nonnull net.minecraft.client.util.ITooltipFlag flag) {
-        // Intentionally empty — all custom tooltip lines are injected by SpellbladeTooltipHandler.
+        // Intentionally empty  Eall custom tooltip lines are injected by SpellbladeTooltipHandler.
     }
 }

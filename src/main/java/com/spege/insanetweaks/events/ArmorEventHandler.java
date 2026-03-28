@@ -48,7 +48,7 @@ public class ArmorEventHandler {
         if (player.world.isRemote)
             return;
 
-        if (!com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge)
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
         // Nomenclature: ParasiteWizardArmorItem = "Living Armor" (pre-evolution)
@@ -120,7 +120,7 @@ public class ArmorEventHandler {
     }
 
     // =========================================================================
-    // OLD HARDCAP (LivingDamageEvent HP-simulation) — ARCHIVED, DO NOT DELETE
+    // OLD HARDCAP (LivingDamageEvent HP-simulation)  EARCHIVED, DO NOT DELETE
     // Reason: Unreliable. HP math with absorption/potions had too many edge cases.
     // Replaced by onLivingDeath (Totem-style) below.
     // =========================================================================
@@ -129,7 +129,7 @@ public class ArmorEventHandler {
     // if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
     // EntityPlayer player = (EntityPlayer) event.getEntityLiving();
     // if (player.world.isRemote) return;
-    // if (!ModConfig.enableSrpEbWizardryBridge) return;
+    // if (!ModConfig.modules.enableSrpEbWizardryBridge) return;
     // int livingCount = 0; int battleCount = 0;
     // for (ItemStack piece : player.inventory.armorInventory) {
     // if (!piece.isEmpty()) {
@@ -160,9 +160,9 @@ public class ArmorEventHandler {
     // }
 
     // =========================================================================
-    // NEW HARDCAP — Totem of Undying style (LivingDeathEvent)
+    // NEW HARDCAP  ETotem of Undying style (LivingDeathEvent)
     // Mirrors EntityLivingBase.checkTotemDeathProtection() from vanilla source.
-    // Triggers ONLY when the player would actually die — no HP simulation needed.
+    // Triggers ONLY when the player would actually die  Eno HP simulation needed.
     // Cooldown is still tracked via NBT (TAG_COOLDOWN) the same way as before.
     // =========================================================================
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -179,7 +179,7 @@ public class ArmorEventHandler {
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
         if (player.world.isRemote)
             return;
-        if (!com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge)
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
         // Require: all 4 armor slots must be exclusively Living or Sentient pieces.
@@ -223,7 +223,7 @@ public class ArmorEventHandler {
         // Step 3: Apply Cleanse for 40 ticks (2s).
         // PotionCleanse.performEffect() fires every 10t and removes all non-beneficial
         // effects.
-        // Damage immunity is NOT provided by Cleanse — it is separate (TAG_IMMUNITY
+        // Damage immunity is NOT provided by Cleanse  Eit is separate (TAG_IMMUNITY
         // above).
         player.addPotionEffect(new PotionEffect(
                 com.spege.insanetweaks.init.ModPotions.CLEANSE, 40, 0, false, false));
@@ -235,13 +235,13 @@ public class ArmorEventHandler {
         player.world.playSound(null, player.posX, player.posY, player.posZ,
                 SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
-        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo)
+        if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo)
             player.sendMessage(new TextComponentString(
                     "\u00a7b[DEBUG-HARDCAP] Death cancelled! HP=3.0, Immunity(10t), Cleanse(40t) active."));
     }
 
     /**
-     * Damage immunity window — 10 ticks (0.5s) after hardcap triggers.
+     * Damage immunity window  E10 ticks (0.5s) after hardcap triggers.
      * Tracked via TAG_IMMUNITY NBT, INDEPENDENT of PotionCleanse duration.
      * Covers ALL DamageSource types (fire, fall, magic, void, etc.).
      */
@@ -251,7 +251,7 @@ public class ArmorEventHandler {
             return;
         if (event.getEntityLiving().world.isRemote)
             return;
-        if (!com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge)
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -267,7 +267,7 @@ public class ArmorEventHandler {
         if (currentTime - immunityStart < 10L) {
             event.setCanceled(true);
 
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo)
+            if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo)
                 player.sendMessage(new TextComponentString(
                         "\u00a78[DEBUG-IMMUNITY] Damage blocked! Immunity: "
                                 + (10L - (currentTime - immunityStart)) + "t remaining."));
@@ -315,7 +315,7 @@ public class ArmorEventHandler {
                         sound, SoundCategory.PLAYERS, 1.0f, 1.0f);
             }
 
-            if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo)
+            if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo)
                 player.sendMessage(new TextComponentString(
                         "\u00a7b[DEBUG] Living Armor absorbed 1500.0 DMG and transformed into Sentient Armor!"));
         }

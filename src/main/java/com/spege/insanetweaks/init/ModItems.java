@@ -61,7 +61,7 @@ public class ModItems {
     public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
     public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
 
-    // Bauble Fruits — all 6 slot types
+    // Bauble Fruits  Eall 6 slot types
     public static final Item BAUBLE_FRUIT_RING   = new RingFruitItem();
     public static final Item BAUBLE_FRUIT_AMULET = new AmuletFruitItem();
     public static final Item BAUBLE_FRUIT_BODY   = new BodyFruitItem();
@@ -72,7 +72,7 @@ public class ModItems {
     public static final Item BAUBLE_FRUIT_TOTEM  = new TotemFruitItem();
     public static final Item BAUBLE_FRUIT_TRINKET= new TrinketFruitItem();
 
-    /** All Bauble Fruit items — for convenient bulk registration / model registration. */
+    /** All Bauble Fruit items  Efor convenient bulk registration / model registration. */
     private static final Item[] ALL_BAUBLE_FRUITS = {
         BAUBLE_FRUIT_RING, BAUBLE_FRUIT_AMULET, BAUBLE_FRUIT_BODY,
         BAUBLE_FRUIT_HEAD, BAUBLE_FRUIT_CHARM,  BAUBLE_FRUIT_BELT,
@@ -82,7 +82,7 @@ public class ModItems {
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         // Items gated by Golden Book module
-        if (com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge) {
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
             event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS);
             event.getRegistry().registerAll(
@@ -91,14 +91,14 @@ public class ModItems {
             );
         }
 
-        // Cores — always gated by their own config
-        if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
+        // Cores  Ealways gated by their own config
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
             event.getRegistry().registerAll(COST_CORE, POTENCY_CORE, SPEEDCAST_CORE);
         }
 
-        // Bauble Fruits — any Baubles version triggers registration (BaublesEX or legacy).
+        // Bauble Fruits  Eany Baubles version triggers registration (BaublesEX or legacy).
         // The dual-path logic (BaublesEX vs luck fallback) is handled in BaseBaubleFruitItem.
-        if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits
                 && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
             event.getRegistry().registerAll(ALL_BAUBLE_FRUITS);
         }
@@ -106,7 +106,7 @@ public class ModItems {
 
     @SubscribeEvent
     public static void registerModels(net.minecraftforge.client.event.ModelRegistryEvent event) {
-        if (com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge) {
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             registerModel(GOLDEN_BOOK);
             registerModel(RUPTER_SOLIED);
             ((com.spege.insanetweaks.items.spellblade.BridgeSpellblade)LIVING_SPELLBLADE).registerModel();
@@ -127,19 +127,19 @@ public class ModItems {
             registerModel(SENTIENT_AEGIS);
         }
 
-        if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
             registerModel(COST_CORE);
             registerModel(POTENCY_CORE);
             registerModel(SPEEDCAST_CORE);
         }
 
-        if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits
                 && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
             for (Item fruit : ALL_BAUBLE_FRUITS) {
                 // Universal Texture System:
-                // Zamiast każdego owocu szukającego swojego osobnego pliku "bauble_fruit_ring.json" etc., 
+                // Zamiast każdego owocu szukajāEego swojego osobnego pliku "bauble_fruit_ring.json" etc., 
                 // przekierowujemy renderowanie ich grafiki do jednego pliku "bauble_fruit.json",
-                // oszczędzając czas na duplikowaniu JSONów dla nowo dodanych przedmiotów.
+                // oszczędzajāE czas na duplikowaniu JSONów dla nowo dodanych przedmiotów.
                 net.minecraftforge.client.model.ModelLoader.setCustomModelResourceLocation(
                     fruit, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("insanetweaks:bauble_fruit", "inventory")
                 );

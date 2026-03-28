@@ -94,6 +94,28 @@ public class BattleMageArmorItem extends ItemWizardArmour {
     }
 
     @Override
+    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    @Nonnull
+    public net.minecraft.entity.Entity createEntity(@Nonnull World world, @Nonnull net.minecraft.entity.Entity location, @Nonnull ItemStack itemstack) {
+        com.spege.insanetweaks.entities.EntityItemIndestructible entity = new com.spege.insanetweaks.entities.EntityItemIndestructible(world, location.posX, location.posY, location.posZ, itemstack);
+        entity.motionX = location.motionX;
+        entity.motionY = location.motionY;
+        entity.motionZ = location.motionZ;
+        entity.setDefaultPickupDelay();
+        if (location instanceof net.minecraft.entity.item.EntityItem) {
+            String thrower = ((net.minecraft.entity.item.EntityItem) location).getThrower();
+            String owner   = ((net.minecraft.entity.item.EntityItem) location).getOwner();
+            if (thrower != null) entity.setThrower(thrower);
+            if (owner   != null) entity.setOwner(owner);
+        }
+        return entity;
+    }
+
+    @Override
     @Nonnull
     public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
         return "insanetweaks:textures/models/armor/custom_battlemage.png";

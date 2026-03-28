@@ -29,17 +29,18 @@ public class InsaneTweaksJEIPlugin implements IModPlugin {
             Item spectralDust = ForgeRegistries.ITEMS.getValue(new ResourceLocation("ebwizardry", "spectral_dust"));
             if (spectralDust == null) return;
 
-            // Generate dust items (metadata corresponds to Element ordinal: 1=FIRE, 3=LIGHTNING, 5=EARTH, 6=SORCERY, 7=HEALING)
+            // Generate dust items (metadata corresponds to Element ordinal: 1=FIRE, 3=LIGHTNING, 4=NECROMANCY, 5=EARTH, 6=SORCERY, 7=HEALING)
             ItemStack sorceryDust = new ItemStack(spectralDust, 1, 6);
+            ItemStack necromancyDust = new ItemStack(spectralDust, 1, 4);
             ItemStack earthDust = new ItemStack(spectralDust, 1, 5);
             ItemStack healingDust = new ItemStack(spectralDust, 1, 7);
             ItemStack fireDust = new ItemStack(spectralDust, 1, 1);
             ItemStack lightningDust = new ItemStack(spectralDust, 1, 3);
 
-            // Potency Core Inputs (4x Sorcery)
+            // Potency Core Inputs (2x Sorcery, 2x Necromancy)
             List<List<ItemStack>> potencyDusts = Arrays.asList(
-                Collections.singletonList(sorceryDust), Collections.singletonList(sorceryDust),
-                Collections.singletonList(sorceryDust), Collections.singletonList(sorceryDust)
+                Collections.singletonList(sorceryDust), Collections.singletonList(necromancyDust),
+                Collections.singletonList(sorceryDust), Collections.singletonList(necromancyDust)
             );
 
             // Cost Core Inputs (2x Earth, 2x Healing)

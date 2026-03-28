@@ -1,12 +1,15 @@
 package com.spege.insanetweaks.items.shield;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.ItemStack;
-import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.item.ItemStack;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.world.World;
 import com.google.common.collect.Multimap;
 import com.windanesz.ancientspellcraft.item.ItemBattlemageShield;
+import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 
@@ -24,6 +27,28 @@ public class LivingAegisItem extends ItemBattlemageShield {
         CreativeTabs tab = CreativeTabs.COMBAT;
         if (tab != null) this.setCreativeTab(tab);
         this.setMaxDamage(1750); // Increased durability as requested
+    }
+
+    @Override
+    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    @Nonnull
+    public Entity createEntity(@Nonnull World world, @Nonnull Entity location, @Nonnull ItemStack itemstack) {
+        EntityItemIndestructible entity = new EntityItemIndestructible(world, location.posX, location.posY, location.posZ, itemstack);
+        entity.motionX = location.motionX;
+        entity.motionY = location.motionY;
+        entity.motionZ = location.motionZ;
+        entity.setDefaultPickupDelay();
+        if (location instanceof net.minecraft.entity.item.EntityItem) {
+            String thrower = ((net.minecraft.entity.item.EntityItem) location).getThrower();
+            String owner   = ((net.minecraft.entity.item.EntityItem) location).getOwner();
+            if (thrower != null) entity.setThrower(thrower);
+            if (owner   != null) entity.setOwner(owner);
+        }
+        return entity;
     }
 
     @Override

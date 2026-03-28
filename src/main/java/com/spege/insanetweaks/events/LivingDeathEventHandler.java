@@ -17,7 +17,7 @@ import java.util.List;
 public class LivingDeathEventHandler {
 
     private void debugMessage(EntityPlayer player, String message) {
-        if (!com.spege.insanetweaks.config.ModConfig.displayInfoOnDeath)
+        if (!com.spege.insanetweaks.config.ModConfig.client.displayInfoOnDeath)
             return;
 
         if (!player.world.isRemote) {
@@ -83,7 +83,7 @@ public class LivingDeathEventHandler {
     @SubscribeEvent(priority = EventPriority.HIGH)
     @SuppressWarnings("null")
     public void onLivingDeath(LivingDeathEvent event) {
-        if (!com.spege.insanetweaks.config.ModConfig.enableCurseOfPossessionPatch) return;
+        if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableCurseOfPossessionPatch) return;
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntity();

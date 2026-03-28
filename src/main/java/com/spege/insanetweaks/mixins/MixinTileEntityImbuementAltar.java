@@ -45,6 +45,7 @@ public class MixinTileEntityImbuementAltar {
             int fireCount = 0;
             int lightningCount = 0;
             int sorceryCount = 0;
+            int necromancyCount = 0;
 
             for (Element el : receptacleElements) {
                 if (el == Element.EARTH) earthCount++;
@@ -52,10 +53,11 @@ public class MixinTileEntityImbuementAltar {
                 else if (el == Element.FIRE) fireCount++;
                 else if (el == Element.LIGHTNING) lightningCount++;
                 else if (el == Element.SORCERY) sorceryCount++;
+                else if (el == Element.NECROMANCY) necromancyCount++;
             }
 
-            // 1. Potency Core (4x Sorcery)
-            if (sorceryCount == 4) {
+            // 1. Potency Core (2x Sorcery, 2x Necromancy)
+            if (sorceryCount == 2 && necromancyCount == 2) {
                 cir.setReturnValue(new ItemStack((net.minecraft.item.Item) ModItems.POTENCY_CORE, 1));
             } 
             // 2. Cost Core (2x Earth, 2x Healing)

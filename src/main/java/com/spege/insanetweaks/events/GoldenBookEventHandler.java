@@ -59,7 +59,7 @@ public class GoldenBookEventHandler {
             // Replace the slot with the converted book
             player.inventory.setInventorySlotContents(i, enchBook);
 
-            if (ModConfig.displayDebugInfo) {
+            if (ModConfig.client.displayDebugInfo) {
                 player.sendMessage(new TextComponentString(
                     "\u00a76Golden Book \u00a7flost all its power and transformed into an Enchanted Book!"
                 ));

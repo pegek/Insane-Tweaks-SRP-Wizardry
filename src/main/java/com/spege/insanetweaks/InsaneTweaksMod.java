@@ -17,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // For future reference: dependencies = "...;required-after:swparasites;required-after:potioncore;required-after:enigmaticlegacy"
-@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);required-after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;after:srpextra;after:baubles;after:potioncore")
+@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);required-after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;after:srpextra;after:baubles;after:potioncore;after:compatskills;after:reskillable")
 public class InsaneTweaksMod {
     public static final String MODID = "insanetweaks";
     public static final String NAME = "Insane Tweaks";
@@ -31,16 +31,19 @@ public class InsaneTweaksMod {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "indestructible_item"),
                 EntityItemIndestructible.class, "indestructible_item", 99, this, 64, 20, true);
 
-        if (com.spege.insanetweaks.config.ModConfig.enableCurseOfPossessionPatch) {
+        // Fire/lava immunity for all Living and Sentient item drops — registered unconditionally
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
+
+        if (com.spege.insanetweaks.config.ModConfig.tweaks.enableCurseOfPossessionPatch) {
             MinecraftForge.EVENT_BUS.register(new LivingDeathEventHandler());
         }
 
-        if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CustomCoresEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
 
-        if (com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge) {
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorEventHandler());
@@ -52,7 +55,7 @@ public class InsaneTweaksMod {
             }
         }
 
-        // GoldenBook is independent of the SRP/EBWizardry bridge — register unconditionally.
+        // GoldenBook is independent of the SRP/EBWizardry bridge  Eregister unconditionally.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GoldenBookEventHandler());
 
         if (!Loader.isModLoaded("srpextra")) {
@@ -73,8 +76,8 @@ public class InsaneTweaksMod {
             });
         }
 
-        // BaublesEX version check — log info about the operating mode
-        if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
+        // BaublesEX version check  Elog info about the operating mode
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits
                 && Loader.isModLoaded("baubles")) {
             // Register the legacy persistence handler unconditionally.
             // When BaublesEX is present it does nothing (no legacy bonus stored).
@@ -89,6 +92,11 @@ public class InsaneTweaksMod {
                         "Running in LEGACY MODE - Ring Fruits will grant +1 Luck instead of +1 Ring slot.",
                         installedVersion);
             }
+        }
+
+        if (Loader.isModLoaded("reskillable")) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.EventHandlerSkills());
+            LOGGER.info("[InsaneTweaks] Zarejestrowano eventy dla umiejętności Reskillable i CompatSkills.");
         }
     }
 

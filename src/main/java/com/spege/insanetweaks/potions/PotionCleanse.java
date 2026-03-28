@@ -17,12 +17,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
- * Cleanse — a duration-based protective effect applied by the Living/Sentient Armor Hardcap.
+ * Cleanse  Ea duration-based protective effect applied by the Living/Sentient Armor Hardcap.
  *
  * Applied by hardcap for 40 ticks (2 seconds).
  * Behavior:
  *   - Every 10 ticks (0.5s): removes ALL active potion effects registered as non-beneficial.
- *   - Has no fixed duration of its own — duration is set by the applier (hardcap = 40t).
+ *   - Has no fixed duration of its own  Eduration is set by the applier (hardcap = 40t).
  *
  * Note: Damage immunity is handled SEPARATELY by ArmorEventHandler.onLivingAttack
  * via a dedicated NBT immunity window (TAG_IMMUNITY, 10 ticks = 0.5s).
@@ -30,7 +30,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  *
  * Inspired by PotionCore's PotionCure (Tmtravlr):
  *   Original uses an external helper system (PotionCoreHelper.cureEntities).
- *   This implementation is self-contained — the logic lives in performEffect().
+ *   This implementation is self-contained  Ethe logic lives in performEffect().
  */
 public class PotionCleanse extends Potion {
 
@@ -60,8 +60,8 @@ public class PotionCleanse extends Potion {
 
     /**
      * On each trigger (every 10t):
-     *   Pass 1 — removes all effects where isBeneficial() == false.
-     *   Pass 2 — removes effects listed in ModConfig.cleanseAdditionalEffects.
+     *   Pass 1  Eremoves all effects where isBeneficial() == false.
+     *   Pass 2  Eremoves effects listed in ModConfig.tweaks.cleanseAdditionalEffects.
      *             Handles effects that bypass the isBeneficial() check (e.g. some mod effects
      *             are incorrectly registered as neutral/beneficial, like srparasites:no_vision).
      * Uses a copy in Pass 1 to avoid ConcurrentModificationException.
@@ -76,7 +76,7 @@ public class PotionCleanse extends Potion {
         }
 
         // Pass 2: config-driven additional removal
-        for (String effectId : ModConfig.cleanseAdditionalEffects) {
+        for (String effectId : ModConfig.tweaks.cleanseAdditionalEffects) {
             if (effectId == null || effectId.isEmpty()) continue;
             Potion extra = ForgeRegistries.POTIONS.getValue(new ResourceLocation(effectId));
             if (extra != null && entity.isPotionActive(extra)) {
@@ -104,17 +104,16 @@ public class PotionCleanse extends Potion {
      * Renders the Cleanse icon in the HUD (top-right effect list).
      *
      * The x,y coordinates point to the TOP-LEFT of the background frame (24x24 px).
-     * To center our 18x18 icon within that frame, we offset by +3 on both axes —
-     * matching the same +3,+3 offset that vanilla uses for all its potion icons.
+     * To center our 18x18 icon within that frame, we offset by +3 on both axes  E     * matching the same +3,+3 offset that vanilla uses for all its potion icons.
      *
-     * When ModConfig.hideCleanseHudEffect is true, this method returns immediately
+     * When ModConfig.client.hideCleanseHudEffect is true, this method returns immediately
      * without drawing anything (icon slot stays but is invisible).
      */
     @SideOnly(Side.CLIENT)
     @Override
     @SuppressWarnings("null") // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
     public void renderHUDEffect(int x, int y, @Nonnull PotionEffect effect, @Nonnull Minecraft mc, float alpha) {
-        if (ModConfig.hideCleanseHudEffect) return;
+        if (ModConfig.client.hideCleanseHudEffect) return;
         mc.getTextureManager().bindTexture(CLEANSE_TEXTURE);
         GlStateManager.color(1.0f, 1.0f, 1.0f, alpha);
         // +3 offset centers 18x18 icon inside the 24x24 background frame
@@ -130,7 +129,7 @@ public class PotionCleanse extends Potion {
     @Override
     @SuppressWarnings("null") // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
     public void renderInventoryEffect(int x, int y, @Nonnull PotionEffect effect, @Nonnull Minecraft mc) {
-        if (ModConfig.hideCleanseHudEffect) return;
+        if (ModConfig.client.hideCleanseHudEffect) return;
         mc.getTextureManager().bindTexture(CLEANSE_TEXTURE);
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
         drawFullTexture(x + 3, y + 3, 18, 18);
@@ -144,7 +143,7 @@ public class PotionCleanse extends Potion {
     @SideOnly(Side.CLIENT)
     @Override
     public boolean shouldRenderHUD(@Nonnull PotionEffect effect) {
-        return !ModConfig.hideCleanseHudEffect;
+        return !ModConfig.client.hideCleanseHudEffect;
     }
 
     /**
@@ -154,11 +153,11 @@ public class PotionCleanse extends Potion {
     @SideOnly(Side.CLIENT)
     @Override
     public boolean shouldRenderInvText(@Nonnull PotionEffect effect) {
-        return !ModConfig.hideCleanseHudEffect;
+        return !ModConfig.client.hideCleanseHudEffect;
     }
 
     /**
-     * Draws a textured quad at (x, y) using full UV coordinates (0.0 → 1.0).
+     * Draws a textured quad at (x, y) using full UV coordinates (0.0 ↁE1.0).
      * This correctly renders any standalone PNG regardless of its pixel dimensions,
      * unlike drawTexturedModalRect which only works with 256x256 sprite-sheets.
      */

@@ -31,10 +31,14 @@ public class EntityItemIndestructible extends EntityItem {
     @Override
     @SuppressWarnings("null")
     public boolean attackEntityFrom(@Nonnull DamageSource source, float amount) {
-        if (source == DamageSource.IN_FIRE || source == DamageSource.ON_FIRE || source == DamageSource.LAVA)
+        if (source == DamageSource.IN_FIRE ||
+            source == DamageSource.ON_FIRE ||
+            source == DamageSource.LAVA    ||
+            source == DamageSource.CACTUS  ||
+            source.isExplosion()) {
             return false;
-        else
-            return super.attackEntityFrom(source, amount);
+        }
+        return super.attackEntityFrom(source, amount);
     }
     
 }

@@ -32,7 +32,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Replaces the addInformation() approach to prevent double-rendering.
  *
  * Armor synergy checks for a full set of Living Armor (ParasiteWizardArmorItem)
- * or Sentient Armor (BattleMageArmorItem) — any mix of both counts.
+ * or Sentient Armor (BattleMageArmorItem)  Eany mix of both counts.
  */
 @SideOnly(Side.CLIENT)
 public class SpellbladeTooltipHandler {
@@ -43,7 +43,7 @@ public class SpellbladeTooltipHandler {
 
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
-        if (!ModConfig.enableSrpEbWizardryBridge)
+        if (!ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
         ItemStack stack = event.getItemStack();
@@ -61,7 +61,7 @@ public class SpellbladeTooltipHandler {
         Item item = stack.getItem();
         List<?> props = null;
 
-        // Retrieve weapon properties — try direct cast first, reflection fallback for
+        // Retrieve weapon properties  Etry direct cast first, reflection fallback for
         // classloader edge cases
         if (item instanceof IWeaponPropertyContainer<?>) {
             props = ((IWeaponPropertyContainer<?>) item).getAllWeaponProperties();
@@ -225,7 +225,7 @@ public class SpellbladeTooltipHandler {
         EntityPlayer player = event.getEntityPlayer();
         if (player != null) {
             for (ItemStack piece : player.inventory.armorInventory) {
-                // armorInventory never contains null in 1.12.2 — empty slots are ItemStack.EMPTY
+                // armorInventory never contains null in 1.12.2  Eempty slots are ItemStack.EMPTY
                 if (piece.isEmpty() ||
                         (!(piece.getItem() instanceof BattleMageArmorItem) &&
                                 !(piece.getItem() instanceof ParasiteWizardArmorItem))) {

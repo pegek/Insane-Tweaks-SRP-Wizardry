@@ -61,7 +61,7 @@ public class AegisEventHandler {
                         if (toDamage != null) {
                             toDamage = new Vec3d(toDamage.x, 0.0, toDamage.z);
                             if (toDamage.dotProduct(viewVec) < 0.0) {
-                                return; // Attack from behind — not blocked
+                                return; // Attack from behind  Enot blocked
                             }
                             // Attack is frontal and has a known position -> truly blocked
                             isDirectionallyBlocked = true;
@@ -141,7 +141,7 @@ public class AegisEventHandler {
                                             net.minecraft.init.SoundEvents.ENTITY_WITHER_SPAWN,
                                             net.minecraft.util.SoundCategory.PLAYERS, 1.0f, 1.0f);
 
-                                        if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
+                                        if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo) {
                                             player.sendMessage(new net.minecraft.util.text.TextComponentString(
                                                 "\u00a7c\u00a7l[!] \u00a7cYour shield pulses as it absorbs enough essence!\n" +
                                                 "It has evolved into the Sentient Aegis!"));
