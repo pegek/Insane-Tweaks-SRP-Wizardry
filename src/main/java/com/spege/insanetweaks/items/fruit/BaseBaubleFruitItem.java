@@ -108,7 +108,17 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
         tooltip.add("\u00a77It feels like it could expand your perception of space.");
         tooltip.add("");
         if (ModItems.isBaublesExPresent()) {
-            tooltip.add("\u00a7d\u00a7oPermanently grants \u00a7b" + getSlotDescription() + "\u00a7d\u00a7o.");
+            try {
+                if (getBaublesExType() == null) {
+                    tooltip.add("\u00a7cWARNING, such slot was not detected!");
+                    tooltip.add("\u00a7cYou can add this slot type in Baubles config!");
+                } else {
+                    tooltip.add("\u00a7d\u00a7oPermanently grants \u00a7b" + getSlotDescription() + "\u00a7d\u00a7o.");
+                }
+            } catch (Exception e) {
+                tooltip.add("\u00a7cWARNING, such slot was not detected!");
+                tooltip.add("\u00a7cYou can add this slot type in Baubles config!");
+            }
         } else {
             tooltip.add("\u00a7d\u00a7oPermanently grants \u00a7a+1 Luck\u00a7d\u00a7o "
                     + "\u00a78(Legacy Baubles mode)\u00a7d\u00a7o.");
@@ -137,6 +147,14 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
             if (persistent.getBoolean(consumedTag)) return; // Fruit wasted by design
 
             BaubleTypeEx slotType = getBaublesExType();
+            
+            // Safety guard: if the server config disabled this dynamic slot type (e.g., totem), 
+            // BaublesEX will return null. We must catch this to prevent a NullPointerException crash.
+            if (slotType == null) {
+                playerMP.sendMessage(new TextComponentString("\u00a7c[!] \u00a77The ancient fruit slips from your grasp... its corresponding slot is disabled in this world's physics."));
+                return;
+            }
+            
             AbstractAttributeMap map = playerMP.getAttributeMap();
             AdvancedInstance instance = AttributeManager.getInstance(map, slotType);
             double current = instance.getAnonymousModifier(0);

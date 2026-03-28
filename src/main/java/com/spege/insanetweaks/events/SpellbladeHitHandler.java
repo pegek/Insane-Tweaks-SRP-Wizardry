@@ -57,6 +57,9 @@ public class SpellbladeHitHandler {
 
         EntityPlayer player = (EntityPlayer) trueSource;
         
+        // Secure modifications from executing on the Client (prevents Desync / Ghost Data)
+        if (player.world.isRemote) return;
+        
         for (EnumHand hand : EnumHand.values()) {
             ItemStack stack = player.getHeldItem(hand);
             if (stack.isEmpty()) continue;
@@ -76,8 +79,8 @@ public class SpellbladeHitHandler {
                 int kills = nbt.getInteger("SentientKills") + 1;
                 nbt.setInteger("SentientKills", kills);
 
-                // EVOLUTION TRIGGER: 1200 kills with the Living Spellblade -> evolve into Sentient
-                if (!player.world.isRemote && "insanetweaks:living_spellblade".equals(regName) && kills >= 1200) {
+                // EVOLUTION TRIGGER: 900 kills with the Living Spellblade -> evolve into Sentient
+                if (!player.world.isRemote && "insanetweaks:living_spellblade".equals(regName) && kills >= 900) {
                     Item sentientSword = ForgeRegistries.ITEMS
                             .getValue(new ResourceLocation("insanetweaks", "sentient_spellblade"));
 

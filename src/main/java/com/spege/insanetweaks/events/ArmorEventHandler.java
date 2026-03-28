@@ -55,25 +55,32 @@ public class ArmorEventHandler {
         //               BattleMageArmorItem      = "Sentient Armor" (post-evolution)
         int livingArmorCount = 0;
         int sentientArmorCount = 0;
+        int awakenedSentientCount = 0;
 
         for (ItemStack piece : player.inventory.armorInventory) {
             if (!piece.isEmpty()) {
-                if (piece.getItem() instanceof ParasiteWizardArmorItem)
+                if (piece.getItem() instanceof ParasiteWizardArmorItem) {
                     livingArmorCount++;
-                else if (piece.getItem() instanceof BattleMageArmorItem)
+                } else if (piece.getItem() instanceof BattleMageArmorItem) {
                     sentientArmorCount++;
+                    NBTTagCompound tag = piece.getTagCompound();
+                    if (tag != null && tag.getFloat(NBT_ADAPTATION) >= 10000.0f) {
+                        awakenedSentientCount++;
+                    }
+                }
             }
         }
 
         int totalPieces = livingArmorCount + sentientArmorCount;
 
-        // 1. Sentient Armor set reduction (1% per piece) - Applied in Hurt phase (pre-armor).
+        // 1. Sentient Armor set reduction (1% per piece, 1.5% if awakened) - Applied in Hurt phase (pre-armor).
         // Note: capture rawDamage BEFORE this reduction so evolution tracking (below)
         // always measures the true incoming hit, not the already-discounted value.
         final float rawDamage = event.getAmount();
-        if (sentientArmorCount > 0) {
-            float reduction = 1.0f - (0.01f * sentientArmorCount);
-            event.setAmount(rawDamage * reduction);
+        float totalReductionPercent = (0.01f * sentientArmorCount) + (0.005f * awakenedSentientCount);
+        if (totalReductionPercent > 0) {
+            float multiplier = 1.0f - totalReductionPercent;
+            event.setAmount(rawDamage * multiplier);
         }
 
         // 2. ARMOR DAMAGE TRACKING (Evolution for Living, Visual for Sentient)
@@ -163,6 +170,12 @@ public class ArmorEventHandler {
     public void onLivingDeath(LivingDeathEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer))
             return;
+            
+        // 1. VOID TRAP FIX: Ignore absolutely lethal damage, such as `/kill` or falling into the Void.
+        // This prevents the armor from wasting its 90-second cooldown when death is inevitable anyway.
+        if (event.getSource().canHarmInCreative()) 
+            return;
+            
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
         if (player.world.isRemote)
             return;
@@ -258,6 +271,10 @@ public class ArmorEventHandler {
                 player.sendMessage(new TextComponentString(
                         "\u00a78[DEBUG-IMMUNITY] Damage blocked! Immunity: "
                                 + (10L - (currentTime - immunityStart)) + "t remaining."));
+        } else {
+            // NBT CLUTTER FIX: Expired tag cleanup.
+            // If more than 10 ticks have passed since the event, wipe the trigger parameter so the server doesn't check it relentlessly.
+            playerData.removeTag(TAG_IMMUNITY);
         }
     }
 

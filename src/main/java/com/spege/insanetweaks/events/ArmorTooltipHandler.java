@@ -67,10 +67,14 @@ public class ArmorTooltipHandler {
                         + TextFormatting.AQUA + "Ethereal Stasis" + TextFormatting.GRAY + ".");
                 myLines.add(
                         "\u00a76Full set bonus: \u00a77Once in a while, saves you from lethal damage and cleanse negative effects.");
-                myLines.add("\u00a78Ethereal Shell: \u00a77Provides a flat -1.0% damage resistance from all sources.");
-
                 net.minecraft.nbt.NBTTagCompound nbt = stack.getTagCompound();
                 float absorbed = (nbt != null) ? nbt.getFloat("ArmorDamageBlocked") : 0.0f;
+
+                if (absorbed >= 10000.0f) {
+                    myLines.add("\u00a78Ethereal Shell (Awakened): \u00a77Provides a flat \u00a7a-1.5% \u00a77damage resistance from all sources.");
+                } else {
+                    myLines.add("\u00a78Ethereal Shell: \u00a77Provides a flat -1.0% damage resistance from all sources.");
+                }
 
                 if (absorbed >= 10000.0f) {
                     String guardian = TextFormatting.AQUA + "G " + TextFormatting.DARK_AQUA + "U " +

@@ -140,7 +140,51 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
     @Nonnull
     @SuppressWarnings("null")
     public Multimap<String, net.minecraft.entity.ai.attributes.AttributeModifier> getAttributeModifiers(@Nonnull EntityEquipmentSlot slot, @Nonnull ItemStack stack) {
-        return super.getAttributeModifiers(slot, stack);
+        Multimap<String, net.minecraft.entity.ai.attributes.AttributeModifier> multimap = com.google.common.collect.HashMultimap.create();
+        multimap.putAll(super.getAttributeModifiers(slot, stack));
+        
+        if (slot == EntityEquipmentSlot.MAINHAND) {
+            // Replacing BattlemageSword's broken mechanics with the base speed of a Saber/Dagger (-1.5D).
+            // This enables the attack to charge instantly, allowing UNCAPPED spam-clicks to deal full damage as intended.
+            multimap.removeAll(net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED.getName());
+            multimap.put(
+                net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED.getName(), 
+                new net.minecraft.entity.ai.attributes.AttributeModifier(java.util.UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3"), "Weapon modifier", -1.5D, 0)
+            );
+            
+            // Magically Adapted - magic damage modifier for PotionCore
+            // Only activates if PotionCore is actually loaded, preventing NPEs on the AttributeMap
+            if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
+                ResourceLocation regLoc = this.getRegistryName();
+                if (regLoc != null) {
+                    String regName = regLoc.toString();
+                    double magicDmg = 0;
+                    
+                    if ("insanetweaks:sentient_spellblade".equals(regName)) {
+                        magicDmg = 0.10D; // 10% bonus for Sentient
+                    } else if ("insanetweaks:living_spellblade".equals(regName)) {
+                        int kills = 0;
+                        if (stack.hasTagCompound()) {
+                            NBTTagCompound nbt = stack.getTagCompound();
+                            if (nbt != null && nbt.hasKey("SentientKills")) {
+                                kills = nbt.getInteger("SentientKills");
+                            }
+                        }
+                        int magicBonus = Math.max(1, Math.min(10, (kills * 10) / 900));
+                        magicDmg = magicBonus / 100.0D;
+                    }
+                    
+                    if (magicDmg > 0) {
+                        multimap.put(
+                            "potioncore.magicDamage",
+                            new net.minecraft.entity.ai.attributes.AttributeModifier(java.util.UUID.fromString("6C2F3E8A-5182-421A-B01B-BCCE9786A000"), "Magically Adapted", magicDmg, 0)
+                        );
+                    }
+                }
+            }
+        }
+        
+        return multimap;
     }
 
     // ------------------------------------------------------------------
@@ -186,9 +230,9 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
         int bonusPercent;
         ResourceLocation regLoc = stack.getItem().getRegistryName();
         if (regLoc != null && "insanetweaks:sentient_spellblade".equals(regLoc.toString())) {
-            bonusPercent = 85;
+            bonusPercent = 70;
         } else {
-            bonusPercent = Math.min(85, (killCount / 100) * 5);
+            bonusPercent = Math.min(70, (killCount * 70) / 900);
         }
 
         if (bonusPercent > 0) {
@@ -205,6 +249,13 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword implements IW
             }
             if (hasSynergy) {
                 float multiplier = 1.0f + (bonusPercent / 100.0f);
+                
+                // Nerf runewords: reduce our custom synergy bonus by half specifically for Runewords
+                // This prevents game-breaking overlap with their innate 1.20x * 1.20x BATTLEMAGE class bonuses
+                if (spell.getRegistryName() != null && "ancientspellcraft".equals(spell.getRegistryName().getResourceDomain()) && spell.getRegistryName().getResourcePath().contains("runeword")) {
+                    multiplier = 1.0f + ((bonusPercent / 100.0f) * 0.5f);
+                }
+                
                 modifiers.set(SpellModifiers.POTENCY, multiplier, true);
             }
         }

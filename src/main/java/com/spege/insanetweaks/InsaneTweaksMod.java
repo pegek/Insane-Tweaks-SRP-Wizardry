@@ -17,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // For future reference: dependencies = "...;required-after:swparasites;required-after:potioncore;required-after:enigmaticlegacy"
-@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);required-after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;after:srpextra;after:baubles")
+@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);required-after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;after:srpextra;after:baubles;after:potioncore")
 public class InsaneTweaksMod {
     public static final String MODID = "insanetweaks";
     public static final String NAME = "Insane Tweaks";
@@ -47,6 +47,9 @@ public class InsaneTweaksMod {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisTooltipHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
+            }
         }
 
         // GoldenBook is independent of the SRP/EBWizardry bridge — register unconditionally.

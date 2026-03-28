@@ -31,6 +31,10 @@ public class AegisEventHandler {
     public void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        
+        // Protection safeguarding mana, potion effects and fire from executing on phantom entities in the client environment
+        if (player.world.isRemote) return;
+        
         DamageSource source = event.getSource();
 
         if (source.isDamageAbsolute() || source.canHarmInCreative()) return;
@@ -77,8 +81,21 @@ public class AegisEventHandler {
 
                             // Projectiles trigger always, melee only if close
                             if (isProjectile || isCloseMelee) {
-                                // Fast Fire NBT (80 ticks = 4 seconds)
-                                attacker.getEntityData().setInteger("AegisBurn", 80);
+                                boolean hasEasterEgg = false;
+                                if (activeStack.hasTagCompound()) {
+                                    NBTTagCompound tag = activeStack.getTagCompound();
+                                    if (tag != null && tag.getFloat("AegisDamageBlocked") >= 10000.0f) {
+                                        hasEasterEgg = true;
+                                    }
+                                }
+
+                                if (hasEasterEgg) {
+                                    // Massive Fire NBT (80 ticks = 4 seconds)
+                                    attacker.getEntityData().setInteger("AegisBurn", 80);
+                                } else {
+                                    // Normal Fire (4 seconds)
+                                    attacker.setFire(4);
+                                }
 
                                 Potion immaleable = ForgeRegistries.POTIONS.getValue(IMMALEABLE_LOC);
                                 if (immaleable != null) {
@@ -105,7 +122,7 @@ public class AegisEventHandler {
                         }
 
                         // Progress Tracking: only count truly blocked frontal positioned attacks
-                        if (!player.world.isRemote && isDirectionallyBlocked) {
+                        if (isDirectionallyBlocked) {
                             if (!activeStack.hasTagCompound()) activeStack.setTagCompound(new NBTTagCompound());
                             NBTTagCompound nbt = activeStack.getTagCompound();
                             if (nbt != null) {
@@ -187,6 +204,8 @@ public class AegisEventHandler {
                     if (!entity.isBurning()) {
                         entity.setFire(2);
                     }
+                } else {
+                    data.removeTag("AegisBurn");
                 }
             }
         }
@@ -222,9 +241,9 @@ public class AegisEventHandler {
                     if (toDamage != null) {
                         toDamage = new Vec3d(toDamage.x, 0.0, toDamage.z);
 
-                        // Hits from behind deal +50% DMG
+                        // Hits from behind deal +30% DMG
                         if (toDamage.dotProduct(viewVec) < 0.0) {
-                            event.setAmount(event.getAmount() * 1.5f);
+                            event.setAmount(event.getAmount() * 1.3f);
                         }
                     }
                 }

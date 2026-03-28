@@ -6,8 +6,11 @@ import com.spege.insanetweaks.items.fruit.AmuletFruitItem;
 import com.spege.insanetweaks.items.fruit.BeltFruitItem;
 import com.spege.insanetweaks.items.fruit.BodyFruitItem;
 import com.spege.insanetweaks.items.fruit.CharmFruitItem;
+import com.spege.insanetweaks.items.fruit.ElytraFruitItem;
 import com.spege.insanetweaks.items.fruit.HeadFruitItem;
 import com.spege.insanetweaks.items.fruit.RingFruitItem;
+import com.spege.insanetweaks.items.fruit.TotemFruitItem;
+import com.spege.insanetweaks.items.fruit.TrinketFruitItem;
 import com.spege.insanetweaks.items.spellblade.LivingSpellblade;
 import com.spege.insanetweaks.items.spellblade.SentientSpellblade;
 import net.minecraft.creativetab.CreativeTabs;
@@ -65,11 +68,15 @@ public class ModItems {
     public static final Item BAUBLE_FRUIT_HEAD   = new HeadFruitItem();
     public static final Item BAUBLE_FRUIT_CHARM  = new CharmFruitItem();
     public static final Item BAUBLE_FRUIT_BELT   = new BeltFruitItem();
+    public static final Item BAUBLE_FRUIT_ELYTRA = new ElytraFruitItem();
+    public static final Item BAUBLE_FRUIT_TOTEM  = new TotemFruitItem();
+    public static final Item BAUBLE_FRUIT_TRINKET= new TrinketFruitItem();
 
     /** All Bauble Fruit items — for convenient bulk registration / model registration. */
     private static final Item[] ALL_BAUBLE_FRUITS = {
         BAUBLE_FRUIT_RING, BAUBLE_FRUIT_AMULET, BAUBLE_FRUIT_BODY,
-        BAUBLE_FRUIT_HEAD, BAUBLE_FRUIT_CHARM,  BAUBLE_FRUIT_BELT
+        BAUBLE_FRUIT_HEAD, BAUBLE_FRUIT_CHARM,  BAUBLE_FRUIT_BELT,
+        BAUBLE_FRUIT_ELYTRA, BAUBLE_FRUIT_TOTEM, BAUBLE_FRUIT_TRINKET
     };
 
     @SubscribeEvent
@@ -129,7 +136,13 @@ public class ModItems {
         if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
                 && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
             for (Item fruit : ALL_BAUBLE_FRUITS) {
-                registerModel(fruit);
+                // Universal Texture System:
+                // Zamiast każdego owocu szukającego swojego osobnego pliku "bauble_fruit_ring.json" etc., 
+                // przekierowujemy renderowanie ich grafiki do jednego pliku "bauble_fruit.json",
+                // oszczędzając czas na duplikowaniu JSONów dla nowo dodanych przedmiotów.
+                net.minecraftforge.client.model.ModelLoader.setCustomModelResourceLocation(
+                    fruit, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("insanetweaks:bauble_fruit", "inventory")
+                );
             }
         }
     }

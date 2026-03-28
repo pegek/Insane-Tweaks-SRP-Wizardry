@@ -1,0 +1,6 @@
+﻿src/main/java/electroblob/wizardry/integration/jei/ArcaneWorkbenchRecipe.java
+src/main/java/electroblob/wizardry/integration/jei/ArcaneWorkbenchRecipeCategory.java
+src/main/java/electroblob/wizardry/integration/jei/ArcaneWorkbenchTransferHandler.java
+src/main/java/electroblob/wizardry/integration/jei/ImbuementAltarRecipe.java
+src/main/java/electroblob/wizardry/integration/jei/ImbuementAltarRecipeCategory.java
+src/main/java/electroblob/wizardry/integration/jei/WizardryJEIPlugin.java

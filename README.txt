@@ -139,20 +139,17 @@ All systems can be toggled via the mod config file (`insanetweaks.cfg`):
 
 ## Credits and Acknowledgements
 
-This project was made possible by the following creators:
+This project was made possible by the following creators and their respective APIs and frameworks:
 
-- **Electroblob** — Core magic framework and mana system (Electroblob's Wizardry).
-- **Windanesz** — Battlemage equipment base and Runic Shield systems (Ancient Spellcraft).
-- **oblivioussp** — Weapon properties and combat API (Spartan Weaponry).
-- **Dhanantry / The SRP Team** — Evolutionary concepts and world-building (Scape and Run: Parasites).
-- **Raptor / SWParasites Team** — Parasitic material attributes (Scape and Spartan: Parasites).
-- **Aizistra & KELETU** — Shield mechanics and Bauble Fruit item logic inspiration (Enigmatic Legacy).
-- **darktire** — BaublesEX API for Bauble Fruit slot expansion.
-- **CursedFlames** — Shield-related mechanic inspirations (Bountiful Baubles).
-- **Tmtravlr** — Status effect cleansing mechanics (PotionCore).
-- **Wizardry And Fire Team** — Battlemage equipment texture bases.
-- **CleanroomMC / GroovyScript Teams** — Prototyping environment and runtime scripting tools.
-- **Faithful Team** — "Core" item textures created using modified assets from the Faithful 32x
-  Resource Pack, distributed in accordance with their community license.
+Electroblob: Core magic framework and mana system, most textures are reeditet from. (Electroblob's Wizardry).
+Windanesz: Battlemage equipment base and Runic shield systems + texture reedited (Ancient Spellcraft).
+oblivioussp: Weapon properties and combat API (Spartan Weaponry).
+Dhanantry / The SRP Team: Evolutionary concepts and world-building (Scape and Run: Parasites).
+Raptor / SWParasites Team: Parasitic material attributes (Scape and Spartan: Parasites).
+Aizistra & KELETU:Inspiration for Shield mechanics and enchanting logic (Enigmatic Legacy).
+CursedFlames: Shield-related mechanic inspirations (Bountiful Baubles).
+Tmtravlr: Status effect cleansing mechanics (PotionCore).
+CleanroomMC / GroovyScript Teams: Prototyping and runtime tools.
+Faithful Team: "Core" items textures were created using modified assets originally from the Faithful 32x Resource Pack. Distributed in accordance with their community license.
 
 *Created by Isuth.*

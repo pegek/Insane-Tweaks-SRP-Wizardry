@@ -156,7 +156,7 @@ public class CustomCoresEventHandler {
             if (level > 0) {
                 int percent = (int) (level * POTENCY_PER_LEVEL * 100);
                 event.getToolTip().add(TextFormatting.RED + "Potency Upgrades: " + level + " / " + MAX_UPGRADES);
-                event.getToolTip().add(TextFormatting.GRAY + "  +" + percent + "% Spell Potency");
+                event.getToolTip().add(TextFormatting.GRAY + "  +" + percent + "% Spell Omnipotency");
             }
         }
 

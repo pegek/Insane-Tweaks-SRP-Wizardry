@@ -13,6 +13,20 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
+repositories {
+    maven { url = 'https://maven.cleanroommc.com' }
+    maven {
+        // JEI repository
+        name = "Progwml6 maven"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+    maven {
+        // fallback for JEI
+        name = "ModMaven"
+        url = "https://modmaven.dev"
+    }
+}
+
 version = '1.0.8'
 group = 'com.spege.insanetweaks' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'insanetweaks'
@@ -20,6 +34,7 @@ archivesBaseName = 'insanetweaks'
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.compilerArgs << "-proc:none"
 }
 
 
@@ -64,6 +79,9 @@ dependencies {
     
     // Use deobf to ensure jars from libs are correctly remapped/handled
     implementation fg.deobf(fileTree(dir: 'libs', include: '*.jar'))
+    
+    // Cleanroom MixinBooter (allows @Mixin annotations and injections in 1.12.2)
+    implementation 'zone.rong:mixinbooter:7.1'
 }
 
 
@@ -77,7 +95,8 @@ jar {
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"spege",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            "MixinConfigs": "mixins.insanetweaks.json"
         ])
     }
 }

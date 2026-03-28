@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
+
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -23,6 +23,9 @@ import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
 
 import com.spege.insanetweaks.config.ModConfig;
 
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
 /**
  * CLIENT-ONLY event handler that injects the full custom tooltip for both
  * Spellblades.
@@ -31,6 +34,7 @@ import com.spege.insanetweaks.config.ModConfig;
  * Armor synergy checks for a full set of Living Armor (ParasiteWizardArmorItem)
  * or Sentient Armor (BattleMageArmorItem) — any mix of both counts.
  */
+@SideOnly(Side.CLIENT)
 public class SpellbladeTooltipHandler {
 
     private static final java.util.Set<String> SW_BRIDGE_WEAPONS = new java.util.HashSet<>(java.util.Arrays.asList(
@@ -81,12 +85,12 @@ public class SpellbladeTooltipHandler {
         NBTTagCompound swordNbt = stack.getTagCompound();
         int killsDisplay = (swordNbt != null) ? swordNbt.getInteger("SentientKills") : 0;
 
-        if (killsDisplay >= 5000) {
+        if ("insanetweaks:sentient_spellblade".equals(regName) && killsDisplay >= 1800) {
             // A N I H I L A T O R Easter Egg
             String anihilator = "\u00a74A \u00a7cN \u00a76I \u00a7eH \u00a72I \u00a73L \u00a71A \u00a79T \u00a75O \u00a7dR";
             tooltip.add(1, "\u00a79---> " + anihilator);
         } else {
-            String suffix = "insanetweaks:living_spellblade".equals(regName) ? " / 1200 decimated" : " decimated";
+            String suffix = "insanetweaks:living_spellblade".equals(regName) ? " / 900 decimated" : " decimated";
             tooltip.add(1, "\u00a79---> \u00a79" + killsDisplay + suffix);
         }
 
@@ -186,6 +190,22 @@ public class SpellbladeTooltipHandler {
 
             myLines.add(color + "- " + name);
         }
+
+        // Easter Egg: Awakened Viral I
+        if ("insanetweaks:sentient_spellblade".equals(regName) && killsDisplay >= 1800) {
+            myLines.add("\u00a7a- Viral I \u00a7d(Awakened)");
+        }
+        
+        // Magical Adaptation (only visible if PotionCore is installed and providing bonuses)
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
+            if ("insanetweaks:sentient_spellblade".equals(regName)) {
+                myLines.add("\u00a7a- Magically Adapted \u00a79(+10% Magic Damage)");
+            } else if ("insanetweaks:living_spellblade".equals(regName)) {
+                int magicBonus = Math.max(1, Math.min(10, (killsDisplay * 10) / 900));
+                myLines.add("\u00a7a- Magically Adapted \u00a79(+" + magicBonus + "% Magic Damage)");
+            }
+        }
+
         myLines.add("\u00a78inspired by scape and spartan - parasites");
 
         // 5. Synergy line
@@ -199,10 +219,10 @@ public class SpellbladeTooltipHandler {
             }
         }
 
-        int bonusPercent = "insanetweaks:sentient_spellblade".equals(regName) ? 85 : Math.min(85, (kills * 85) / 1200);
+        int bonusPercent = "insanetweaks:sentient_spellblade".equals(regName) ? 70 : Math.min(70, (kills * 70) / 900);
 
         boolean hasSynergy = true;
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        EntityPlayer player = event.getEntityPlayer();
         if (player != null) {
             for (ItemStack piece : player.inventory.armorInventory) {
                 // armorInventory never contains null in 1.12.2 — empty slots are ItemStack.EMPTY
@@ -218,7 +238,7 @@ public class SpellbladeTooltipHandler {
         }
 
         if (hasSynergy) {
-            myLines.add("\u00a76Sentient Synergy: \u00a7c+" + bonusPercent + "% Potency");
+            myLines.add("\u00a76Sentient Synergy: \u00a7c+" + bonusPercent + "% Omnipotency");
         }
 
         myLines.add(
