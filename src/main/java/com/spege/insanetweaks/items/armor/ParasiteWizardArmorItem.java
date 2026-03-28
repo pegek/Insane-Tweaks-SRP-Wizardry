@@ -17,7 +17,6 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
@@ -74,18 +73,12 @@ public class ParasiteWizardArmorItem extends ItemWizardArmour {
     @Override
     @SuppressWarnings("null")
     public void applySpellModifiers(EntityLivingBase caster, Spell spell, SpellModifiers modifiers) {
+        // TODO: Future adaptive scaling — reduce cost/chargeup based on absorbed damage.
+        // The NBT tag 'adaptation_points' was planned for this, but is not currently written
+        // anywhere. Until the adaptation tracking system is implemented, apply a flat 0.01f
+        // reduction per piece (unchanged from the original Groovy implementation).
         float reduction = 0.01f;
-        if (caster instanceof EntityPlayer) {
-            ItemStack stack = ((EntityPlayer)caster).getItemStackFromSlot(this.armorType);
-            if (!stack.isEmpty() && stack.getItem() == this && stack.hasTagCompound()) {
-                NBTTagCompound nbt = stack.getTagCompound();
-                if (nbt != null) {
-                    int adapt = nbt.getInteger("adaptation_points");
-                    reduction += (adapt / 10) * 0.01f;
-                }
-            }
-        }
-        
+
         float multiplier = 1.0f - reduction;
         modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * multiplier), false);
         modifiers.set(SpellModifiers.CHARGEUP, (modifiers.get(SpellModifiers.CHARGEUP) * multiplier), false);

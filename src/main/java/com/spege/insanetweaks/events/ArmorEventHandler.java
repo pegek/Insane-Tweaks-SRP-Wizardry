@@ -36,10 +36,9 @@ public class ArmorEventHandler {
 
     /**
      * Hardcap cooldown in ticks.
-     * TEST VALUE: 100t = 5s.
-     * TARGET VALUE: 1200t = 60s (change before release).
+     * 1800t = 90 seconds.
      */
-    private static final long HARDCAP_COOLDOWN_TICKS = 100L;
+    private static final long HARDCAP_COOLDOWN_TICKS = 1800L;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onLivingHurt(LivingHurtEvent event) {
@@ -52,27 +51,28 @@ public class ArmorEventHandler {
         if (!com.spege.insanetweaks.config.ModConfig.enableSrpEbWizardryBridge)
             return;
 
-        int livingCount = 0;
-        int battleCount = 0;
+        // Nomenclature: ParasiteWizardArmorItem = "Living Armor" (pre-evolution)
+        //               BattleMageArmorItem      = "Sentient Armor" (post-evolution)
+        int livingArmorCount = 0;
+        int sentientArmorCount = 0;
 
         for (ItemStack piece : player.inventory.armorInventory) {
             if (!piece.isEmpty()) {
                 if (piece.getItem() instanceof ParasiteWizardArmorItem)
-                    livingCount++;
+                    livingArmorCount++;
                 else if (piece.getItem() instanceof BattleMageArmorItem)
-                    battleCount++;
+                    sentientArmorCount++;
             }
         }
 
-        int totalPieces = livingCount + battleCount;
+        int totalPieces = livingArmorCount + sentientArmorCount;
 
-        // 1. Battlemage set reduction (1% per piece) - Applied in Hurt phase
-        // (pre-armor)
+        // 1. Sentient Armor set reduction (1% per piece) - Applied in Hurt phase (pre-armor).
         // Note: capture rawDamage BEFORE this reduction so evolution tracking (below)
         // always measures the true incoming hit, not the already-discounted value.
         final float rawDamage = event.getAmount();
-        if (battleCount > 0) {
-            float reduction = 1.0f - (0.01f * battleCount);
+        if (sentientArmorCount > 0) {
+            float reduction = 1.0f - (0.01f * sentientArmorCount);
             event.setAmount(rawDamage * reduction);
         }
 
@@ -86,10 +86,10 @@ public class ArmorEventHandler {
                 if (piece.isEmpty())
                     continue;
 
-                boolean isLiving = piece.getItem() instanceof ParasiteWizardArmorItem;
-                boolean isSentient = piece.getItem() instanceof BattleMageArmorItem;
+                boolean isLivingArmor  = piece.getItem() instanceof ParasiteWizardArmorItem; // pre-evolution
+                boolean isSentientArmor = piece.getItem() instanceof BattleMageArmorItem;     // post-evolution
 
-                if (isLiving || isSentient) {
+                if (isLivingArmor || isSentientArmor) {
                     if (!piece.hasTagCompound())
                         piece.setTagCompound(new NBTTagCompound());
                     NBTTagCompound nbt = piece.getTagCompound();
@@ -102,7 +102,7 @@ public class ArmorEventHandler {
 
                     blocked += damageTaken;
 
-                    if (isLiving && blocked >= 1500.0f) {
+                    if (isLivingArmor && blocked >= 1500.0f) {
                         evolveArmorPiece(player, i, piece);
                     } else {
                         nbt.setFloat(NBT_ADAPTATION, blocked);
@@ -159,6 +159,7 @@ public class ArmorEventHandler {
     // Cooldown is still tracked via NBT (TAG_COOLDOWN) the same way as before.
     // =========================================================================
     @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SuppressWarnings("null") // ModPotions.CLEANSE and SoundEvents.* are guaranteed non-null at runtime
     public void onLivingDeath(LivingDeathEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer))
             return;
@@ -169,17 +170,20 @@ public class ArmorEventHandler {
             return;
 
         // Require: all 4 armor slots must be exclusively Living or Sentient pieces.
-        int livingCount = 0;
-        int battleCount = 0;
+        // Nomenclature: ParasiteWizardArmorItem = "Living Armor" (pre-evolution)
+        //               BattleMageArmorItem      = "Sentient Armor" (post-evolution)
+        // Hardcap requires all 4 slots to be Living OR Sentient armor (any mix).
+        int livingArmorCount = 0;
+        int sentientArmorCount = 0;
         for (ItemStack piece : player.inventory.armorInventory) {
             if (!piece.isEmpty()) {
                 if (piece.getItem() instanceof ParasiteWizardArmorItem)
-                    livingCount++;
+                    livingArmorCount++;
                 else if (piece.getItem() instanceof BattleMageArmorItem)
-                    battleCount++;
+                    sentientArmorCount++;
             }
         }
-        if (livingCount + battleCount != 4)
+        if (livingArmorCount + sentientArmorCount != 4)
             return;
 
         // Cooldown check (NBT on player entity data, same tag as before).
@@ -296,7 +300,7 @@ public class ArmorEventHandler {
 
             if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo)
                 player.sendMessage(new TextComponentString(
-                        "\u00a7b[DEBUG] Living Armor has absorbed 1500.0 DMG and transforms into BattleMage Armor!"));
+                        "\u00a7b[DEBUG] Living Armor absorbed 1500.0 DMG and transformed into Sentient Armor!"));
         }
     }
 }

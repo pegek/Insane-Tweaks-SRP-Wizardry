@@ -2,13 +2,22 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.items.GoldenBookItem;
+import com.spege.insanetweaks.items.fruit.AmuletFruitItem;
+import com.spege.insanetweaks.items.fruit.BeltFruitItem;
+import com.spege.insanetweaks.items.fruit.BodyFruitItem;
+import com.spege.insanetweaks.items.fruit.CharmFruitItem;
+import com.spege.insanetweaks.items.fruit.HeadFruitItem;
+import com.spege.insanetweaks.items.fruit.RingFruitItem;
 import com.spege.insanetweaks.items.spellblade.LivingSpellblade;
 import com.spege.insanetweaks.items.spellblade.SentientSpellblade;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
 
 @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
 @SuppressWarnings("null")
@@ -49,6 +58,20 @@ public class ModItems {
     public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
     public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
 
+    // Bauble Fruits — all 6 slot types
+    public static final Item BAUBLE_FRUIT_RING   = new RingFruitItem();
+    public static final Item BAUBLE_FRUIT_AMULET = new AmuletFruitItem();
+    public static final Item BAUBLE_FRUIT_BODY   = new BodyFruitItem();
+    public static final Item BAUBLE_FRUIT_HEAD   = new HeadFruitItem();
+    public static final Item BAUBLE_FRUIT_CHARM  = new CharmFruitItem();
+    public static final Item BAUBLE_FRUIT_BELT   = new BeltFruitItem();
+
+    /** All Bauble Fruit items — for convenient bulk registration / model registration. */
+    private static final Item[] ALL_BAUBLE_FRUITS = {
+        BAUBLE_FRUIT_RING, BAUBLE_FRUIT_AMULET, BAUBLE_FRUIT_BODY,
+        BAUBLE_FRUIT_HEAD, BAUBLE_FRUIT_CHARM,  BAUBLE_FRUIT_BELT
+    };
+
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         // Items gated by Golden Book module
@@ -64,6 +87,13 @@ public class ModItems {
         // Cores — always gated by their own config
         if (com.spege.insanetweaks.config.ModConfig.enableCustomCores) {
             event.getRegistry().registerAll(COST_CORE, POTENCY_CORE, SPEEDCAST_CORE);
+        }
+
+        // Bauble Fruits — any Baubles version triggers registration (BaublesEX or legacy).
+        // The dual-path logic (BaublesEX vs luck fallback) is handled in BaseBaubleFruitItem.
+        if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
+                && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
+            event.getRegistry().registerAll(ALL_BAUBLE_FRUITS);
         }
     }
 
@@ -95,6 +125,31 @@ public class ModItems {
             registerModel(POTENCY_CORE);
             registerModel(SPEEDCAST_CORE);
         }
+
+        if (com.spege.insanetweaks.config.ModConfig.enableBaubleFruits
+                && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
+            for (Item fruit : ALL_BAUBLE_FRUITS) {
+                registerModel(fruit);
+            }
+        }
+    }
+
+    /**
+     * Checks that the installed Baubles mod is actually BaublesEX (v2.0.0+).
+     * The original Azanor Baubles uses the same modid "baubles" with version 1.5.x.
+     * BaublesEX starts at 2.0.0 and provides the AttributeManager API required
+     * by Bauble Fruits. Without this check, the mod would crash at runtime when
+     * trying to call BaublesEX-specific classes.
+     *
+     * @return true if BaublesEX v2.0.0 or higher is loaded.
+     */
+    public static boolean isBaublesExPresent() {
+        if (!Loader.isModLoaded("baubles")) return false;
+        ModContainer baubles = Loader.instance().getIndexedModList().get("baubles");
+        if (baubles == null) return false;
+        DefaultArtifactVersion current = new DefaultArtifactVersion(baubles.getVersion());
+        DefaultArtifactVersion minRequired = new DefaultArtifactVersion("2.0.0");
+        return current.compareTo(minRequired) >= 0;
     }
 
     private static void registerModel(Item item) {

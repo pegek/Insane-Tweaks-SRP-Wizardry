@@ -24,13 +24,12 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
  * Java fallbacks are registered programmatically via
  * RegistryEvent.Register<IRecipe>.
  *
- * srpextra substitutions (temporary placeholders — replace with real fallback
- * items later):
- * srpextra:tightening_buckle → minecraft:dirt
- * srpextra:sturdy_armor_plates → minecraft:dirt
- * srpextra:flexible_cloth → minecraft:dirt
+ * srpextra substitutions (fallback items when srpextra is absent):
+ * srpextra:tightening_buckle    → srparasites:infectious_blade_fragment
+ * srpextra:sturdy_armor_plates  → srparasites:hive_scrap
+ * srpextra:flexible_cloth       → insanetweaks:rupter_solied
  *
- * Items covered (6):
+ * Items covered (5):
  * - living_aegis
  * - parasite_mage_helmet
  * - parasite_mage_chestplate
@@ -38,6 +37,7 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
  * - parasite_mage_boots
  */
 @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
+@SuppressWarnings("null") // safeItem() guarantees non-null via IllegalStateException; IDE cannot infer this
 public class ModRecipes {
 
     @SubscribeEvent
@@ -47,9 +47,10 @@ public class ModRecipes {
             return;
         }
 
-        // Shorthand for dirt (temporary placeholder for all srpextra items)
-        // Used instead of new ItemStack(Blocks.DIRT) to avoid @Nullable warning.
-        ItemStack dirt = new ItemStack(safeItem("minecraft", "dirt"));
+        // Fallback item mapping (srpextra substitutes)
+        ItemStack bladeFrag  = new ItemStack(safeItem("srparasites", "infectious_blade_fragment")); // tightening_buckle
+        ItemStack hiveScrap  = new ItemStack(safeItem("srparasites", "hive_scrap"));                // sturdy_armor_plates
+        ItemStack rupter     = new ItemStack(safeItem(InsaneTweaksMod.MODID, "rupter_solied"));      // flexible_cloth
 
         // =====================================================================
         // living_aegis (srpextra items: sturdy_armor_plates x2, flexible_cloth x1)
@@ -73,8 +74,8 @@ public class ModRecipes {
                         'N', new ItemStack(safeItem("swparasites", "living_nucleus")),
                         'V', new ItemStack(safeItem("srparasites", "vile_shell")),
                         'S', new ItemStack(safeItem("ancientspellcraft", "battlemage_shield")),
-                        'P', dirt,
-                        'C', dirt));
+                        'P', hiveScrap,   // srpextra:sturdy_armor_plates
+                        'C', rupter));    // srpextra:flexible_cloth
 
         // =====================================================================
         // parasite_mage_helmet (srpextra items: tightening_buckle x1,
@@ -108,8 +109,8 @@ public class ModRecipes {
                             " B ",
                             "PSP",
                             " L ",
-                            'B', dirt,
-                            'P', dirt,
+                            'B', bladeFrag, // srpextra:tightening_buckle
+                            'P', hiveScrap, // srpextra:sturdy_armor_plates
                             'S', new ItemStack(helmetItem, 1, 32767),
                             'L', new ItemStack(safeItem("srparasites", "living_core"))));
         }
@@ -143,8 +144,8 @@ public class ModRecipes {
                             " P ",
                             "FCF",
                             "PSP",
-                            'P', dirt,
-                            'F', dirt,
+                            'P', hiveScrap, // srpextra:sturdy_armor_plates
+                            'F', rupter,    // srpextra:flexible_cloth
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(chestItem, 1, 32767)));
         }
@@ -178,8 +179,8 @@ public class ModRecipes {
                             "F F",
                             "BCB",
                             "BSB",
-                            'F', dirt,
-                            'B', dirt,
+                            'F', rupter,    // srpextra:flexible_cloth
+                            'B', bladeFrag, // srpextra:tightening_buckle
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(legItem, 1, 32767)));
         }
@@ -213,8 +214,8 @@ public class ModRecipes {
                             " F ",
                             "PCP",
                             " S ",
-                            'F', dirt,
-                            'P', dirt,
+                            'F', rupter,    // srpextra:flexible_cloth
+                            'P', hiveScrap, // srpextra:sturdy_armor_plates
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(bootsItem, 1, 32767)));
         }

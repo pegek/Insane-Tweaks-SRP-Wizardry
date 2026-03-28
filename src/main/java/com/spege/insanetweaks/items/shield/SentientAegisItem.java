@@ -65,9 +65,9 @@ public class SentientAegisItem extends ItemBattlemageShield {
             multimap.removeAll(SharedMonsterAttributes.ARMOR.getName());
             multimap.removeAll(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName());
             
-            // Unique UUIDs for shielding
-            byte[] armorBytes = ("aegis_armor_" + equipmentSlot.name()).getBytes();
-            byte[] toughnessBytes = ("aegis_toughness_" + equipmentSlot.name()).getBytes();
+            // Unique UUIDs for shielding — prefix must be unique per item type
+            byte[] armorBytes = ("sentient_aegis_armor_" + equipmentSlot.name()).getBytes();
+            byte[] toughnessBytes = ("sentient_aegis_toughness_" + equipmentSlot.name()).getBytes();
             
             UUID uuidArmor = UUID.nameUUIDFromBytes(armorBytes);
             UUID uuidToughness = UUID.nameUUIDFromBytes(toughnessBytes);

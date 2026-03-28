@@ -18,5 +18,14 @@ item.parasite_mage_boots.name=§eLiving Mage Boots
 item.living_aegis.name=§eLiving Aegis
 item.sentient_aegis.name=§eSentient Aegis
 
+# Bauble Fruits
+item.bauble_fruit_ring.name=§dBauble Fruit - Ring
+item.bauble_fruit_amulet.name=§dBauble Fruit - Amulet
+item.bauble_fruit_body.name=§dBauble Fruit - Body
+item.bauble_fruit_head.name=§dBauble Fruit - Head
+item.bauble_fruit_charm.name=§dBauble Fruit - Charm
+item.bauble_fruit_belt.name=§dBauble Fruit - Belt
+
+
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse

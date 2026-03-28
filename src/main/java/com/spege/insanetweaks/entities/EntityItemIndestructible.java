@@ -5,6 +5,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+
 /**
  * Ported from Enigmatic Legacy (originally based on Thaumic Augmentation).
  * Makes the item indestructible when dropped by being immune to fire, lava, and explosions.
@@ -27,7 +29,8 @@ public class EntityItemIndestructible extends EntityItem {
     }
 
     @Override
-    public boolean attackEntityFrom(DamageSource source, float amount) {
+    @SuppressWarnings("null")
+    public boolean attackEntityFrom(@Nonnull DamageSource source, float amount) {
         if (source == DamageSource.IN_FIRE || source == DamageSource.ON_FIRE || source == DamageSource.LAVA)
             return false;
         else

@@ -44,6 +44,11 @@ public class AegisEventHandler {
                 
                 Vec3d damageVec = source.getDamageLocation();
 
+                // Track whether this attack was actually blockable from the front.
+                // Attacks with no position (magic, fire, environmental) are NOT counted
+                // as "damage blocked" since the shield cannot directionally intercept them.
+                boolean isDirectionallyBlocked = false;
+
                 if (damageVec != null) {
                     Vec3d viewVec = player.getLook(1.0f);
                     Vec3d posVec = player.getPositionVector();
@@ -52,8 +57,10 @@ public class AegisEventHandler {
                         if (toDamage != null) {
                             toDamage = new Vec3d(toDamage.x, 0.0, toDamage.z);
                             if (toDamage.dotProduct(viewVec) < 0.0) {
-                                return; // Not frontal
+                                return; // Attack from behind — not blocked
                             }
+                            // Attack is frontal and has a known position -> truly blocked
+                            isDirectionallyBlocked = true;
                         }
                     }
                 }
@@ -97,8 +104,8 @@ public class AegisEventHandler {
                             manaItem.setMana(activeStack, newMana);
                         }
 
-                        // Progress Tracking: Damage Blocked
-                        if (!player.world.isRemote) {
+                        // Progress Tracking: only count truly blocked frontal positioned attacks
+                        if (!player.world.isRemote && isDirectionallyBlocked) {
                             if (!activeStack.hasTagCompound()) activeStack.setTagCompound(new NBTTagCompound());
                             NBTTagCompound nbt = activeStack.getTagCompound();
                             if (nbt != null) {
@@ -107,16 +114,16 @@ public class AegisEventHandler {
                                     float blocked = currentBlocked + event.getAmount();
                                     nbt.setFloat("AegisDamageBlocked", Math.min(10000.0f, blocked));
 
-                                    // Evolution Trigger: 2000 Damage Blocked
-                                    if (shieldItem == ModItems.LIVING_AEGIS && blocked >= 2000.0f) {
+                                    // Evolution Trigger: 1500 Damage Blocked -> Living Aegis evolves into Sentient Aegis
+                                    if (shieldItem == ModItems.LIVING_AEGIS && blocked >= 1500.0f) {
                                         ItemStack newShield = new ItemStack(ModItems.SENTIENT_AEGIS);
                                         newShield.setTagCompound(nbt.copy());
                                         player.setHeldItem(player.getActiveHand(), newShield);
-                                        
-                                        player.world.playSound(null, player.posX, player.posY, player.posZ, 
-                                            net.minecraft.init.SoundEvents.ENTITY_WITHER_SPAWN, 
+
+                                        player.world.playSound(null, player.posX, player.posY, player.posZ,
+                                            net.minecraft.init.SoundEvents.ENTITY_WITHER_SPAWN,
                                             net.minecraft.util.SoundCategory.PLAYERS, 1.0f, 1.0f);
-                                            
+
                                         if (com.spege.insanetweaks.config.ModConfig.displayDebugInfo) {
                                             player.sendMessage(new net.minecraft.util.text.TextComponentString(
                                                 "\u00a7c\u00a7l[!] \u00a7cYour shield pulses as it absorbs enough essence!\n" +

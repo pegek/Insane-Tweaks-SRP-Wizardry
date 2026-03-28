@@ -103,11 +103,12 @@ public class SpellbladeHitHandler {
                 }
 
                 // TODO: FUTURE AEGIS EVOLUTION
-                // This is a placeholder for the Sentient Aegis evolution system.
-                // Currently, the killcount is purely cosmetic for the shield.
+                // Living Aegis (insanetweaks:living_aegis) -> Sentient Aegis (insanetweaks:sentient_aegis)
+                // Evolution handler lives in AegisEventHandler, NOT here.
+                // Kill-count tracking here is cosmetic only for now.
                 /*
-                if (!player.world.isRemote && "insanetweaks:parasite_aegis".equals(regName) && kills >= 2500) {
-                    // Logic for evolving the shield into a higher tier form goes here.
+                if (!player.world.isRemote && "insanetweaks:living_aegis".equals(regName) && kills >= 2500) {
+                    // Logic for evolving the shield into Sentient Aegis goes here.
                 }
                 */
             }

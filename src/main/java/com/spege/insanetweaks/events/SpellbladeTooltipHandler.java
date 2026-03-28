@@ -28,8 +28,8 @@ import com.spege.insanetweaks.config.ModConfig;
  * Spellblades.
  * Replaces the addInformation() approach to prevent double-rendering.
  *
- * Armor synergy checks for a full set of BattleMageArmorItem or
- * ParasiteWizardArmorItem.
+ * Armor synergy checks for a full set of Living Armor (ParasiteWizardArmorItem)
+ * or Sentient Armor (BattleMageArmorItem) — any mix of both counts.
  */
 public class SpellbladeTooltipHandler {
 
@@ -205,7 +205,8 @@ public class SpellbladeTooltipHandler {
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player != null) {
             for (ItemStack piece : player.inventory.armorInventory) {
-                if (piece == null || piece.isEmpty() ||
+                // armorInventory never contains null in 1.12.2 — empty slots are ItemStack.EMPTY
+                if (piece.isEmpty() ||
                         (!(piece.getItem() instanceof BattleMageArmorItem) &&
                                 !(piece.getItem() instanceof ParasiteWizardArmorItem))) {
                     hasSynergy = false;
