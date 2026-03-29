@@ -1,5 +1,6 @@
 package com.spege.insanetweaks.util;
 
+import net.minecraft.util.text.TextFormatting;
 import java.util.List;
 
 public class TooltipUtils {
@@ -10,15 +11,22 @@ public class TooltipUtils {
      */
     public static int getInsertIdx(List<String> tooltip) {
         int insertIdx = tooltip.size();
+        
         for (int i = tooltip.size() - 1; i >= 0; i--) {
-            String line = tooltip.get(i);
-            String lower = line.toLowerCase();
-            if (line.contains("NBT: ") || line.contains("insanetweaks:") || lower.contains("insane tweaks") || line.trim().isEmpty()) {
+            // Zdejmujemy niewidzialne kody kolorów (np. §9, §o), żeby bezpiecznie czytać tekst
+            String cleanLine = TextFormatting.getTextWithoutFormattingCodes(tooltip.get(i));
+            if (cleanLine == null) continue;
+            
+            String lower = cleanLine.toLowerCase();
+            
+            // Sprawdzamy czysty tekst
+            if (cleanLine.startsWith("NBT: ") || lower.contains("insanetweaks:") || lower.contains("insane tweaks") || cleanLine.trim().isEmpty()) {
                 insertIdx = i;
             } else {
                 break;
             }
         }
+        
         return insertIdx;
     }
 }

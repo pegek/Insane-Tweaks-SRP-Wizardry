@@ -6,51 +6,66 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Mod.EventBusSubscriber
 public class SkillsModule {
 
-    public static final List<Unlockable> TRAITS = new ArrayList<>();
+    /** All custom traits. Populated lazily. */
+    public static final java.util.List<Object> TRAITS = new java.util.ArrayList<>();
 
     // Keep "compatskills" domain for traits so we don't break existing player saves!
     public static final String DOMAIN = "compatskills";
 
-    // Attack Tree
-    public static final Unlockable FAST_LEARNER = new TraitFastLearner();
+    // Registration of traits is now handled inside the registerUnlockables event
+    // to avoid ClassNotFoundException when Reskillable is missing.
+    
+    private static void initTraits() {
+        if (!TRAITS.isEmpty()) return; // Already initialized
 
-    // Defense Tree
-    public static final Unlockable SPIDERS_GRACE = new TraitSpidersGrace();
-    public static final Unlockable IRON_STOMACH = new TraitIronStomach();
+        // Attack Tree
+        new TraitFastLearner();
 
-    // Gathering Tree
-    public static final Unlockable DOUBLE_LOOT = new TraitDoubleLoot();
-    public static final Unlockable ENCHANT_FISHING = new TraitEnchantFishing();
+        // Defense Tree
+        new TraitSpidersGrace();
+        new TraitIronStomach();
 
-    // Mining Tree
-    public static final Unlockable ASTRAL_PROSPECTOR = new TraitAstralProspector();
+        // Gathering Tree
+        new TraitDoubleLoot();
+        new TraitEnchantFishing();
 
-    // Building Tree
-    public static final Unlockable SUPREME_ENCHANTER = new TraitSupremeEnchanter();
+        // Mining Tree
+        new TraitAstralProspector();
 
-    // Agility Tree
-    public static final Unlockable MEDITATION = new TraitMeditation();
+        // Building Tree
+        new TraitSupremeEnchanter();
 
-    // Magic Tree
-    public static final Unlockable ARCANE_MASTERY = new TraitArcaneMastery();
-    public static final Unlockable SCHOOL_ALTERATION = new TraitSchoolAlteration();
-    public static final Unlockable SCHOOL_CONJURATION = new TraitSchoolConjuration();
-    public static final Unlockable SCHOOL_DESTRUCTION = new TraitSchoolDestruction();
-    public static final Unlockable POWER_CREEP = new TraitPowerCreep();
+        // Agility Tree
+        new TraitMeditation();
 
-    @SubscribeEvent
-    public static void registerUnlockables(RegistryEvent.Register<Unlockable> event) {
-        // Register all traits mapped from our List
-        for (Unlockable trait : TRAITS) {
-            event.getRegistry().register(trait);
+        // Magic Tree
+        new TraitArcaneMastery();
+        new TraitSchoolAlteration();
+        new TraitSchoolConjuration();
+        new TraitSchoolDestruction();
+        new TraitArchmage();
+    }
+
+    @Mod.EventBusSubscriber(modid = com.spege.insanetweaks.InsaneTweaksMod.MODID)
+    public static class RegistryHandler {
+        @SubscribeEvent
+        public static void registerUnlockables(RegistryEvent.Register<Unlockable> event) {
+            if (net.minecraftforge.fml.common.Loader.isModLoaded("reskillable") 
+                    && com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule) {
+                
+                initTraits(); // Populate the list
+                
+                for (Object trait : TRAITS) {
+                    if (trait instanceof Unlockable) {
+                        event.getRegistry().register((Unlockable) trait);
+                    }
+                }
+                
+                System.out.println("[Insane Tweaks] Registered " + TRAITS.size() + " custom Reskillable traits.");
+            }
         }
-        System.out.println("[Insane Tweaks] Registered " + TRAITS.size() + " custom Reskillable traits.");
     }
 
 }

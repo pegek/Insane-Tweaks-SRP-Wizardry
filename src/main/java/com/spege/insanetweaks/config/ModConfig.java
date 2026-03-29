@@ -10,19 +10,19 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Config(modid = InsaneTweaksMod.MODID, name = "insanetweaks", category = "")
 public class ModConfig {
 
-    @Config.Name("1. Modules & Integrations")
+    @Config.Name("[ 1 ] MODULES & INTEGRATIONS")
     @Config.Comment("Toggle main systems and cross-mod integrations.")
     public static final Modules modules = new Modules();
 
-    @Config.Name("2. Tweaks & Fixes")
+    @Config.Name("[ 2 ] TWEAKS & FIXES")
     @Config.Comment("Configure specific bugfixes and mechanic alterations.")
     public static final Tweaks tweaks = new Tweaks();
 
-    @Config.Name("3. Skill Traits")
+    @Config.Name("[ 3 ] SKILL TRAITS")
     @Config.Comment("Configure SP costs, parent trees, and requirements for custom traits.")
     public static final Traits traits = new Traits();
 
-    @Config.Name("4. Client & Debug")
+    @Config.Name("[ 4 ] CLIENT & DEBUG")
     @Config.Comment("Visual toggles and debugging tools.")
     public static final Client client = new Client();
 
@@ -35,7 +35,7 @@ public class ModConfig {
         @Config.RequiresMcRestart
         public boolean enableSrpEbWizardryBridge = true;
 
-        @Config.Comment("Enables the Skills Event Handlers port for CompatSkills/Reskillable Traits.")
+        @Config.Comment("Enables the Skills Event Handlers port for CompatSkills/Reskillable Traits. Requires Reskillable Fork and Compat Skills Fork to function. IF YOU HAVE CUSTOM MADE RESKILLABLE CONFIG IT IT RECOMENNDED TO DO BACKUP, i'm doing automatic backup tho")
         @Config.Name("Enable Skills Module")
         @Config.RequiresMcRestart
         public boolean enableSkillsModule = true;
@@ -48,7 +48,7 @@ public class ModConfig {
         @Config.Comment({
                 "Enables the Bauble Fruit system. Bauble Fruits are one-time consumable items that permanently",
                 "grant the player an additional bauble slot when eaten.",
-                "Requires BaublesEX (v2.0.0+) to function. Does nothing if only the original Baubles (v1.5.x) is installed."})
+                "Requires BaublesEX (v2.0.0+) to function. Does nothing if only the original Baubles (v1.5.x) is installed." })
         @Config.Name("Enable Bauble Fruits")
         @Config.RequiresMcRestart
         public boolean enableBaubleFruits = true;
@@ -75,43 +75,46 @@ public class ModConfig {
     // ========================================================================
     public static class Traits {
         @Config.Name("Fast Learner")
-        public TraitConfig fastLearner = new TraitConfig(2, "attack", new String[]{"reskillable:attack|5"});
+        public TraitConfig fastLearner = new TraitConfig(8, "attack", new String[] { "reskillable:attack|10" });
 
         @Config.Name("Spider's Grace")
-        public TraitConfig poisonImmunity = new TraitConfig(3, "defense", new String[]{"reskillable:defense|50"});
+        public TraitConfig spidersGrace = new TraitConfig(12, "defense", new String[] { "reskillable:defense|50" });
 
         @Config.Name("Iron Stomach")
-        public TraitConfig ironStomach = new TraitConfig(2, "defense", new String[]{"reskillable:defense|20"});
+        public TraitConfig ironStomach = new TraitConfig(6, "defense", new String[] { "reskillable:defense|15" });
 
         @Config.Name("Double Loot")
-        public TraitConfig doubleLoot = new TraitConfig(1, "gathering", new String[]{"reskillable:gathering|5"});
+        public TraitConfig doubleLoot = new TraitConfig(6, "gathering", new String[] { "reskillable:gathering|10" });
 
         @Config.Name("Enchant Fishing")
-        public TraitConfig enchantFishing = new TraitConfig(6, "gathering", new String[]{"reskillable:gathering|25"});
+        public TraitConfig enchantFishing = new TraitConfig(12, "gathering",
+                new String[] { "reskillable:gathering|45" });
 
         @Config.Name("Astral Prospector")
-        public TraitConfig astralProspector = new TraitConfig(2, "mining", new String[]{"reskillable:mining|32"});
+        public TraitConfig astralProspector = new TraitConfig(15, "mining", new String[] { "reskillable:mining|45" });
 
         @Config.Name("Supreme Enchanter")
-        public TraitConfig supremeEnchanter = new TraitConfig(5, "building", new String[]{"reskillable:building|30"});
+        public TraitConfig supremeEnchanter = new TraitConfig(15, "building",
+                new String[] { "reskillable:building|45" });
 
         @Config.Name("Meditation")
-        public TraitConfig meditation = new TraitConfig(2, "agility", new String[]{"reskillable:agility|10", "reskillable:magic|10"});
+        public TraitConfig meditation = new TraitConfig(8, "agility",
+                new String[] { "reskillable:agility|25", "reskillable:magic|15" });
 
         @Config.Name("Arcane Mastery")
-        public TraitConfig arcaneMastery = new TraitConfig(3, "magic", new String[]{"reskillable:magic|32"});
+        public TraitConfig arcaneMastery = new TraitConfig(4, "magic", new String[] { "reskillable:magic|20" });
 
         @Config.Name("School of Alteration")
-        public TraitConfig schoolOfAlteration = new TraitConfig(5, "magic", new String[]{"reskillable:magic|44"});
+        public TraitConfig schoolOfAlteration = new TraitConfig(6, "magic", new String[] { "reskillable:magic|30" });
 
         @Config.Name("School of Conjuration")
-        public TraitConfig schoolOfConjuration = new TraitConfig(5, "magic", new String[]{"reskillable:magic|16"});
+        public TraitConfig schoolOfConjuration = new TraitConfig(6, "magic", new String[] { "reskillable:magic|30" });
 
         @Config.Name("School of Destruction")
-        public TraitConfig schoolOfDestruction = new TraitConfig(4, "magic", new String[]{"reskillable:magic|16"});
+        public TraitConfig schoolOfDestruction = new TraitConfig(6, "magic", new String[] { "reskillable:magic|30" });
 
-        @Config.Name("Power Creep (Archmage)")
-        public TraitConfig powerCreep = new TraitConfig(3, "magic", new String[]{"reskillable:magic|50"});
+        @Config.Name("Archmage")
+        public TraitConfig archmage = new TraitConfig(10, "magic", new String[] { "reskillable:magic|50" });
     }
 
     // ========================================================================

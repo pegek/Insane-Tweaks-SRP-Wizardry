@@ -34,31 +34,31 @@ potion.insanetweaks.cleanse=§eCleanse
 
 # CompatSkills / Reskillable Custom Traits
 # Format: reskillable.unlock.<modid>.<traitid> (name), reskillable.unlock.<modid>.<traitid>.desc (desc)
-reskillable.unlock.compatskills.fast_learner=Fast Learner
-reskillable.unlock.compatskills.fast_learner.desc=Mobs drop 15% more experience
-reskillable.unlock.compatskills.poison_immunity=Spider's Grace
-reskillable.unlock.compatskills.poison_immunity.desc=Grants complete immunity to cobwebs
-reskillable.unlock.compatskills.iron_stomach=Iron Stomach
-reskillable.unlock.compatskills.iron_stomach.desc=Eating food instantly heals a small amount of health
-reskillable.unlock.compatskills.double_loot=Double Loot
-reskillable.unlock.compatskills.double_loot.desc=6% chance to catch double loot while fishing
-reskillable.unlock.compatskills.enchant_fishing=Enchant Fishing
-reskillable.unlock.compatskills.enchant_fishing.desc=4% chance to catch a rare enchanted book while fishing
-reskillable.unlock.compatskills.astral_prospector=Astral Prospector
-reskillable.unlock.compatskills.astral_prospector.desc=25% chance to duplicate drops when mining ores
-reskillable.unlock.compatskills.supreme_enchanter=Supreme Enchanter
-reskillable.unlock.compatskills.supreme_enchanter.desc=Grants +10 enchanting power at the enchanting table
-reskillable.unlock.compatskills.meditation=Meditation
-reskillable.unlock.compatskills.meditation.desc=Recharges mana of worn wizard armour while standing still
-reskillable.unlock.compatskills.arcane_mastery=Arcane Mastery
+reskillable.unlock.compatskills.fast_learner=§aFast Learner
+reskillable.unlock.compatskills.fast_learner.desc=Mobs drop 15%% more experience
+reskillable.unlock.compatskills.spiders_grace=§fSpider's Grace
+reskillable.unlock.compatskills.spiders_grace.desc=Move (almost) freely through cobwebs
+reskillable.unlock.compatskills.iron_stomach=§6Iron Stomach
+reskillable.unlock.compatskills.iron_stomach.desc=Decrease food consuming time by 15%% and gain bonus saturation.
+reskillable.unlock.compatskills.double_loot=§eDouble Hooks
+reskillable.unlock.compatskills.double_loot.desc=6%% chance to catch double loot while fishing
+reskillable.unlock.compatskills.enchant_fishing=§bEnchant Fishing
+reskillable.unlock.compatskills.enchant_fishing.desc=0.5%% chance to catch a treasure, advanced or §cSUPREME§r enchanted book while fishing(SME mod only)
+reskillable.unlock.compatskills.astral_prospector=§dAstral Prospector
+reskillable.unlock.compatskills.astral_prospector.desc=10%% chance to duplicate drops when mining ores
+reskillable.unlock.compatskills.supreme_enchanter=§dSupreme Enchanter
+reskillable.unlock.compatskills.supreme_enchanter.desc=Grants +5 enchanting power at the enchanting table, also increase item enchantability by 10
+reskillable.unlock.compatskills.meditation=§aMeditation
+reskillable.unlock.compatskills.meditation.desc=Recharges mana of worn wizard armour and offhand gear while standing still
+reskillable.unlock.compatskills.arcane_mastery=§bArcane Mastery
 reskillable.unlock.compatskills.arcane_mastery.desc=Grants constant Mana Regeneration
-reskillable.unlock.compatskills.school_of_alteration=School of Alteration
-reskillable.unlock.compatskills.school_of_alteration.desc=Buff and alteration spells receive +20% duration
-reskillable.unlock.compatskills.school_of_conjuration=School of Conjuration
-reskillable.unlock.compatskills.school_of_conjuration.desc=Summoning and minion spells receive +25% duration
-reskillable.unlock.compatskills.school_of_destruction=School of Destruction
-reskillable.unlock.compatskills.school_of_destruction.desc=Attack and projectile spells receive +15% potency
-reskillable.unlock.compatskills.power_creep=Archmage
-reskillable.unlock.compatskills.power_creep.desc=All spells receive +15% potency
+reskillable.unlock.compatskills.school_of_alteration=§eSchool of Alteration
+reskillable.unlock.compatskills.school_of_alteration.desc=Buff and alteration spells receive +20%% duration
+reskillable.unlock.compatskills.school_of_conjuration=§dSchool of Conjuration
+reskillable.unlock.compatskills.school_of_conjuration.desc=Summoning and minion spells receive +25%% duration
+reskillable.unlock.compatskills.school_of_destruction=§cSchool of Destruction
+reskillable.unlock.compatskills.school_of_destruction.desc=Attack and projectile spells receive +15%% potency
+reskillable.unlock.compatskills.archmage=§bArchmage
+reskillable.unlock.compatskills.archmage.desc=Gain general damage boost to magic.
 
 

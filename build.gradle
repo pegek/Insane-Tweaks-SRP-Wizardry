@@ -27,7 +27,7 @@ repositories {
     }
 }
 
-version = '1.0.9'
+version = '1.0.10'
 group = 'com.spege.insanetweaks' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'insanetweaks'
 
@@ -91,7 +91,7 @@ jar {
         attributes([
             "Specification-Title": "insanetweaks SRP&Wizardry",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.0.9", // We are version 1 of ourselves
+            "Specification-Version": "1.0.10", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"spege",
