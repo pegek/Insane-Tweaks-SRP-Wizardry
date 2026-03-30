@@ -7,9 +7,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-
-import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
@@ -18,7 +15,6 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.world.BlockEvent.HarvestDropsEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import electroblob.wizardry.event.SpellCastEvent;
@@ -30,6 +26,22 @@ import java.util.List;
 import java.util.Arrays;
 
 public class EventHandlerSkills {
+
+    // Stałe pod optymalizację traitu Archmage (Testowe wartości)
+    private static final java.util.UUID ARCHMAGE_MODIFIER_UUID = java.util.UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0123456789ab");
+    // Obrażenia Magiczne: 0.10D = +10% (zmienione z domyślnego +5%)
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier ARCHMAGE_MODIFIER = new net.minecraft.entity.ai.attributes.AttributeModifier(ARCHMAGE_MODIFIER_UUID, "Archmage Magic Damage Bonus", 0.10D, 1).setSaved(false);
+
+    // Stałe pod traita Bob the Builder
+    private static final java.util.UUID BOB_MODIFIER_UUID = java.util.UUID.fromString("b2c3d4e5-f6a7-4b8c-9d0e-123456789abc");
+    // Zwiększenie zasięgu o 2 bloki (+2.0D)
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier BOB_MODIFIER = new net.minecraft.entity.ai.attributes.AttributeModifier(BOB_MODIFIER_UUID, "Bob the Builder Reach", 2.0D, 0).setSaved(false);
+
+    // Stałe pod traita Angry Farmer
+    private static final java.util.UUID ANGRY_FARMER_DMG_UUID = java.util.UUID.fromString("c3d4e5f6-a7b8-4c9d-0e1f-23456789abcd");
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_DMG = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_DMG_UUID, "Angry Farmer Damage", 5.0D, 0).setSaved(false);
+    private static final java.util.UUID ANGRY_FARMER_SPEED_UUID = java.util.UUID.fromString("d4e5f6a7-b8c9-4d0e-1f2a-3456789abcde");
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_SPEED = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_SPEED_UUID, "Angry Farmer Attack Speed", 0.1D, 2).setSaved(false);
 
     // Removed memory-leaking static maps. Data is stored directly on player NBT
     // securely.
@@ -249,35 +261,85 @@ public class EventHandlerSkills {
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
 
         if (!player.world.isRemote) {
-            // ARCANE MASTERY
-            if (player.ticksExisted % 20 == 0) {
-                if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:arcane_mastery")) {
-                    if (Loader.isModLoaded("ancientspellcraft")) {
-                        Potion manaRegen = ForgeRegistries.POTIONS
-                                .getValue(new ResourceLocation("ancientspellcraft", "mana_regeneration"));
-                        if (manaRegen != null) {
-                            player.addPotionEffect(new PotionEffect(manaRegen, 300, 0, false, false));
+            // ARCANE MASTERY - przeniesiono do onSpellCastPre
+
+            // BOB THE BUILDER - +2 Block Reach Distance
+            if (player.ticksExisted % 5 == 0) {
+                net.minecraft.entity.ai.attributes.IAttributeInstance reachAttr = player.getEntityAttribute(EntityPlayer.REACH_DISTANCE);
+                if (reachAttr != null) {
+                    boolean hasBob = TraitBase.hasTrait(player, "reskillable:building", "compatskills:bob_the_builder");
+                    boolean holdingBlock = false;
+                    
+                    if (hasBob) {
+                        ItemStack mainhand = player.getHeldItemMainhand();
+                        if (!mainhand.isEmpty() && mainhand.getItem() instanceof net.minecraft.item.ItemBlock) {
+                            holdingBlock = true;
                         }
+                    }
+                    
+                    boolean hasModifier = reachAttr.hasModifier(BOB_MODIFIER);
+                    
+                    if (holdingBlock && !hasModifier) {
+                        reachAttr.applyModifier(BOB_MODIFIER);
+                    } else if (!holdingBlock && hasModifier) {
+                        reachAttr.removeModifier(BOB_MODIFIER);
                     }
                 }
             }
 
-            // ARCHMAGE - PotionCore magicDamage Attribute (+5%)
-            if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
-                net.minecraft.entity.ai.attributes.IAttributeInstance magicDamageAttr = player.getAttributeMap().getAttributeInstanceByName("potioncore.magicDamage");
-                if (magicDamageAttr != null) {
-                    // Unikalne UUID dla tego konkretnego bonusu ze skilla
-                    java.util.UUID archmageModifierUUID = java.util.UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0123456789ab");
-                    // Operacja 1 oznacza dodanie procentowe (0.05D = +5%)
-                    net.minecraft.entity.ai.attributes.AttributeModifier archmageModifier = new net.minecraft.entity.ai.attributes.AttributeModifier(archmageModifierUUID, "Archmage Magic Damage Bonus", 0.05D, 1).setSaved(false);
+            // ANGRY FARMER - +5 Flat Dmg, +10% Attack Speed with farming tools
+            if (player.ticksExisted % 5 == 0) {
+                net.minecraft.entity.ai.attributes.IAttributeInstance dmgAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_DAMAGE);
+                net.minecraft.entity.ai.attributes.IAttributeInstance speedAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED);
+                
+                if (dmgAttr != null && speedAttr != null) {
+                    boolean hasFarmer = TraitBase.hasTrait(player, "reskillable:farming", "compatskills:angry_farmer");
+                    boolean holdingFarmTool = false;
                     
-                    boolean hasArchmage = TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage");
-                    boolean hasModifier = magicDamageAttr.hasModifier(archmageModifier);
+                    if (hasFarmer) {
+                        ItemStack mainhand = player.getHeldItemMainhand();
+                        if (!mainhand.isEmpty()) {
+                            net.minecraft.item.Item item = mainhand.getItem();
+                            if (item instanceof net.minecraft.item.ItemHoe || item instanceof net.minecraft.item.ItemShears) {
+                                holdingFarmTool = true;
+                            } else {
+                                ResourceLocation regName = item.getRegistryName();
+                                if (regName != null) {
+                                    String name = regName.getResourcePath().toLowerCase();
+                                    if (name.contains("hoe") || name.contains("shears") || name.contains("scythe")) {
+                                        holdingFarmTool = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     
-                    if (hasArchmage && !hasModifier) {
-                        magicDamageAttr.applyModifier(archmageModifier);
-                    } else if (!hasArchmage && hasModifier) {
-                        magicDamageAttr.removeModifier(archmageModifier);
+                    boolean hasDmgMod = dmgAttr.hasModifier(ANGRY_FARMER_DMG);
+                    boolean hasSpeedMod = speedAttr.hasModifier(ANGRY_FARMER_SPEED);
+                    
+                    if (holdingFarmTool) {
+                        if (!hasDmgMod) dmgAttr.applyModifier(ANGRY_FARMER_DMG);
+                        if (!hasSpeedMod) speedAttr.applyModifier(ANGRY_FARMER_SPEED);
+                    } else {
+                        if (hasDmgMod) dmgAttr.removeModifier(ANGRY_FARMER_DMG);
+                        if (hasSpeedMod) speedAttr.removeModifier(ANGRY_FARMER_SPEED);
+                    }
+                }
+            }
+
+            // ARCHMAGE - PotionCore magicDamage Attribute (Optymalizacja, Timer: 20t)
+            if (player.ticksExisted % 20 == 0) {
+                if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
+                    net.minecraft.entity.ai.attributes.IAttributeInstance magicDamageAttr = player.getAttributeMap().getAttributeInstanceByName("potioncore.magicDamage");
+                    if (magicDamageAttr != null) {
+                        boolean hasArchmage = TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage");
+                        boolean hasModifier = magicDamageAttr.hasModifier(ARCHMAGE_MODIFIER);
+                        
+                        if (hasArchmage && !hasModifier) {
+                            magicDamageAttr.applyModifier(ARCHMAGE_MODIFIER);
+                        } else if (!hasArchmage && hasModifier) {
+                            magicDamageAttr.removeModifier(ARCHMAGE_MODIFIER);
+                        }
                     }
                 }
             }
@@ -345,6 +407,23 @@ public class EventHandlerSkills {
 
     // EBWizardry Magic Traits
     @SubscribeEvent
+    public void onSpellCastPre(SpellCastEvent.Pre event) {
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
+            return;
+        if (!(event.getCaster() instanceof EntityPlayer))
+            return;
+        EntityPlayer player = (EntityPlayer) event.getCaster();
+        if (player.world.isRemote)
+            return;
+
+        // Arcane Mastery (10% Cost Reduction)
+        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:arcane_mastery")) {
+            float currentCost = event.getModifiers().get("cost");
+            event.getModifiers().set("cost", Math.max(0.05f, currentCost * 0.90f), false);
+        }
+    }
+
+    @SubscribeEvent
     public void onSpellCastPost(SpellCastEvent.Post event) {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
             return;
@@ -362,7 +441,7 @@ public class EventHandlerSkills {
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage")) {
             if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
                 event.getModifiers().set("potency",
-                        event.getModifiers().get("potency") * 1.10f, false);
+                        event.getModifiers().get("potency") * 1.05f, false);
             } else {
                 event.getModifiers().set("potency",
                         event.getModifiers().get("potency") * 1.15f, false);
@@ -376,7 +455,7 @@ public class EventHandlerSkills {
             if (type == electroblob.wizardry.constants.SpellType.BUFF
                     || type == electroblob.wizardry.constants.SpellType.ALTERATION) {
                 event.getModifiers().set("duration",
-                        event.getModifiers().get("duration") * 1.20f, false);
+                        event.getModifiers().get("duration") * 1.15f, false);
             }
         }
 
@@ -385,7 +464,7 @@ public class EventHandlerSkills {
             if (type == electroblob.wizardry.constants.SpellType.MINION
                     || type == electroblob.wizardry.constants.SpellType.CONSTRUCT) {
                 event.getModifiers().set("duration",
-                        event.getModifiers().get("duration") * 1.25f, false);
+                        event.getModifiers().get("duration") * 1.20f, false);
             }
         }
 
@@ -394,7 +473,7 @@ public class EventHandlerSkills {
             if (type == electroblob.wizardry.constants.SpellType.ATTACK
                     || type == electroblob.wizardry.constants.SpellType.PROJECTILE) {
                 event.getModifiers().set("potency",
-                        event.getModifiers().get("potency") * 1.15f, false);
+                        event.getModifiers().get("potency") * 1.10f, false);
             }
         }
     }

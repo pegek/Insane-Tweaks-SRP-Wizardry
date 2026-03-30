@@ -54,7 +54,7 @@ public class SentientSpellblade extends BridgeSpellblade {
             .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
             .addBridgeProperty(ParasiteSWProperties.BLEEDING_3)
             .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
-            .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
+            .addBridgeProperty(ParasiteSWProperties.HEAVY_1);
     }
 
     @Override

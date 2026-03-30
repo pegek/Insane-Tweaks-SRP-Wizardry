@@ -38,7 +38,7 @@ public class ModConfig {
         @Config.Comment("Enables the Skills Event Handlers port for CompatSkills/Reskillable Traits. Requires Reskillable Fork and Compat Skills Fork to function. IF YOU HAVE CUSTOM MADE RESKILLABLE CONFIG IT IT RECOMENNDED TO DO BACKUP, i'm doing automatic backup tho")
         @Config.Name("Enable Skills Module")
         @Config.RequiresMcRestart
-        public boolean enableSkillsModule = true;
+        public boolean enableSkillsModule = false;
 
         @Config.Comment("Registers Cost, Potency and Speedcast Core items for use with Electroblob's Wizardry armor upgrades. Disable if you don't use EBWizardry.")
         @Config.Name("Enable Custom Cores (EBWizardry)")
@@ -77,6 +77,9 @@ public class ModConfig {
         @Config.Name("Fast Learner")
         public TraitConfig fastLearner = new TraitConfig(8, "attack", new String[] { "reskillable:attack|10" });
 
+        @Config.Name("Assimilated Warfare")
+        public TraitConfig assimilatedWarfare = new TraitConfig(12, "attack", new String[] { "reskillable:attack|20" });
+
         @Config.Name("Spider's Grace")
         public TraitConfig spidersGrace = new TraitConfig(12, "defense", new String[] { "reskillable:defense|50" });
 
@@ -96,6 +99,15 @@ public class ModConfig {
         @Config.Name("Supreme Enchanter")
         public TraitConfig supremeEnchanter = new TraitConfig(15, "building",
                 new String[] { "reskillable:building|45" });
+
+        @Config.Name("Bob the Builder")
+        public TraitConfig bobTheBuilder = new TraitConfig(10, "building", new String[] { "reskillable:building|20" });
+
+        @Config.Name("Angry Farmer")
+        public TraitConfig angryFarmer = new TraitConfig(100, "farming", new String[] { "reskillable:farming|1" });
+
+        @Config.Name("Adapted Vegetation")
+        public TraitConfig adaptedVegetation = new TraitConfig(15, "farming", new String[] { "reskillable:farming|15" });
 
         @Config.Name("Meditation")
         public TraitConfig meditation = new TraitConfig(8, "agility",

@@ -15,8 +15,13 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import com.spege.insanetweaks.events.LivingDeathEventHandler;
 import com.spege.insanetweaks.commands.CommandBackupCursed;
+import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.fml.client.registry.IRenderFactory;
+import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
+import com.spege.insanetweaks.entities.EntityAssimilatedCowMinion;
 import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,6 +64,16 @@ public class InsaneTweaksMod {
     public void preInit(FMLPreInitializationEvent event) {
         // Print compatibility report to log and set version flags.
         logCompatibilityReport();
+
+        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            RenderingRegistry.registerEntityRenderingHandler(EntityAssimilatedCowMinion.class,
+                    new IRenderFactory<EntityAssimilatedCowMinion>() {
+                        @Override
+                        public Render<? super EntityAssimilatedCowMinion> createRenderFor(RenderManager manager) {
+                            return new RenderAssimilatedCowMinion(manager);
+                        }
+                    });
+        }
 
         // Auto-detect Baubles; disable Bauble Fruits only if totally missing.
         boolean hasBaubles = Loader.isModLoaded("baubles");
@@ -103,6 +118,8 @@ public class InsaneTweaksMod {
         // Register Internal Entities
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "indestructible_item"),
                 EntityItemIndestructible.class, "indestructible_item", 99, this, 64, 20, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "assimilated_cow_minion"),
+                EntityAssimilatedCowMinion.class, "assimilated_cow_minion", 100, this, 64, 3, true);
 
         // Fire/lava immunity for all Living and Sentient item drops — registered
         // unconditionally.
@@ -221,6 +238,8 @@ public class InsaneTweaksMod {
 
         if (hasReskillable && com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.EventHandlerSkills());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.AdaptedVegetationSkill());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
             LOGGER.info("[InsaneTweaks] Reskillable traits module enabled.");
         }
     }

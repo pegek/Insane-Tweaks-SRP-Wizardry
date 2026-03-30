@@ -40,5 +40,4 @@ public class EntityItemIndestructible extends EntityItem {
         }
         return super.attackEntityFrom(source, amount);
     }
-    
 }

@@ -15,6 +15,7 @@ apply plugin: 'maven-publish'
 
 repositories {
     maven { url = 'https://maven.cleanroommc.com' }
+    maven { url = 'https://www.cursemaven.com' }
     maven {
         // JEI repository
         name = "Progwml6 maven"
@@ -27,7 +28,7 @@ repositories {
     }
 }
 
-version = '1.0.10'
+version = '1.0.12'
 group = 'com.spege.insanetweaks' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'insanetweaks'
 
@@ -78,7 +79,8 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     
     // Use deobf to ensure jars from libs are correctly remapped/handled
-    implementation fg.deobf(fileTree(dir: 'libs', include: '*.jar'))
+    implementation fg.deobf(fileTree(dir: 'libs', include: '*.jar', exclude: ['ElectroblobsWizardry-4.3.15.jar']))
+    implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:5216846')
     
     // Cleanroom MixinBooter (allows @Mixin annotations and injections in 1.12.2)
     implementation 'zone.rong:mixinbooter:7.1'
@@ -91,7 +93,7 @@ jar {
         attributes([
             "Specification-Title": "insanetweaks SRP&Wizardry",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.0.10", // We are version 1 of ourselves
+            "Specification-Version": "1.0.12", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"spege",

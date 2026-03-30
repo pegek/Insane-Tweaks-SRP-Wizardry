@@ -34,9 +34,12 @@ import com.oblivioussp.spartanweaponry.api.WeaponProperties;
 import com.existingeevee.swparasites.init.ParasiteSWProperties;
 
 /**
- * Living Spellblade  Ethe lower tier of the sentient sword pair.
- * Tracks kills via NBT "SentientKills" and evolves into the Sentient Spellblade at 1200 kills.
- * Tooltip is handled by SpellbladeTooltipHandler (client-side event) to avoid duplication.
+ * Ts
+ * Living Spellblade Ethe lower tier of the sentient sword pair.
+ * Tracks kills via NBT "SentientKills" and evolves into the Sentient Spellblade
+ * at 1200 kills.
+ * Tooltip is handled by SpellbladeTooltipHandler (client-side event) to avoid
+ * duplication.
  */
 public class LivingSpellblade extends BridgeSpellblade {
 
@@ -51,10 +54,10 @@ public class LivingSpellblade extends BridgeSpellblade {
 
         // Spartan & Parasite Properties
         this.addBridgeProperty(WeaponProperties.REACH_1)
-            .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
-            .addBridgeProperty(ParasiteSWProperties.BLEEDING_3)
-            .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
-            .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
+                .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
+                .addBridgeProperty(ParasiteSWProperties.BLEEDING_3)
+                .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
+                .addBridgeProperty(ParasiteSWProperties.HEAVY_1);
     }
 
     @Override
@@ -81,12 +84,14 @@ public class LivingSpellblade extends BridgeSpellblade {
     @Override
     @Nonnull
     @SuppressWarnings("null")
-    public ItemStack applyUpgrade(net.minecraft.entity.player.EntityPlayer player, @Nonnull ItemStack wand, @Nonnull ItemStack upgrade) {
+    public ItemStack applyUpgrade(net.minecraft.entity.player.EntityPlayer player, @Nonnull ItemStack wand,
+            @Nonnull ItemStack upgrade) {
         if (WandHelper.isWandUpgrade(upgrade.getItem())) {
             Item specialUpgrade = upgrade.getItem();
             int maxUpgrades = this.tier.upgradeLimit - 2;
 
-            if (WandHelper.getTotalUpgrades(wand) < maxUpgrades && WandHelper.getUpgradeLevel(wand, specialUpgrade) < Constants.UPGRADE_STACK_LIMIT) {
+            if (WandHelper.getTotalUpgrades(wand) < maxUpgrades
+                    && WandHelper.getUpgradeLevel(wand, specialUpgrade) < Constants.UPGRADE_STACK_LIMIT) {
                 int prevMana = this.getMana(wand);
                 WandHelper.applyUpgrade(wand, specialUpgrade);
 
@@ -104,7 +109,8 @@ public class LivingSpellblade extends BridgeSpellblade {
                     int[] cooldowns = WandHelper.getCooldowns(wand);
                     int[] newCooldowns = new int[newSlotCount];
                     if (cooldowns.length > 0) {
-                        System.arraycopy(cooldowns, 0, newCooldowns, 0, Math.min(cooldowns.length, newCooldowns.length));
+                        System.arraycopy(cooldowns, 0, newCooldowns, 0,
+                                Math.min(cooldowns.length, newCooldowns.length));
                     }
                     WandHelper.setCooldowns(wand, newCooldowns);
                 }
@@ -123,7 +129,8 @@ public class LivingSpellblade extends BridgeSpellblade {
 
     @Override
     @SuppressWarnings("null")
-    public boolean onApplyButtonPressed(net.minecraft.entity.player.EntityPlayer player, @Nonnull Slot centre, @Nonnull Slot crystals, @Nonnull Slot upgrade, @Nonnull Slot[] spellBooks) {
+    public boolean onApplyButtonPressed(net.minecraft.entity.player.EntityPlayer player, @Nonnull Slot centre,
+            @Nonnull Slot crystals, @Nonnull Slot upgrade, @Nonnull Slot[] spellBooks) {
         boolean changed = false;
         if (upgrade.getHasStack()) {
             ItemStack original = centre.getStack().copy();
@@ -139,7 +146,8 @@ public class LivingSpellblade extends BridgeSpellblade {
         for (int i = 0; i < spells.length; i++) {
             if (!spellBooks[i].getStack().isEmpty()) {
                 Spell spell = Spell.byMetadata(spellBooks[i].getStack().getItemDamage());
-                if (spell.getTier().level <= this.tier.level && spells[i] != spell && spell.isEnabled() && !(spell instanceof RunesmithingSpellBase)) {
+                if (spell.getTier().level <= this.tier.level && spells[i] != spell && spell.isEnabled()
+                        && !(spell instanceof RunesmithingSpellBase)) {
                     spells[i] = spell;
                     changed = true;
                 }
@@ -147,11 +155,14 @@ public class LivingSpellblade extends BridgeSpellblade {
         }
         WandHelper.setSpells(centre.getStack(), spells);
 
-        if (ItemBattlemageSword.hasManaStorage(centre.getStack()) && !crystals.getStack().isEmpty() && !this.isManaFull(centre.getStack())) {
+        if (ItemBattlemageSword.hasManaStorage(centre.getStack()) && !crystals.getStack().isEmpty()
+                && !this.isManaFull(centre.getStack())) {
             int chargeDepleted = this.getManaCapacity(centre.getStack()) - this.getMana(centre.getStack());
             int manaPerItem = Constants.MANA_PER_CRYSTAL;
-            if (crystals.getStack().getItem() == WizardryItems.crystal_shard) manaPerItem = Constants.MANA_PER_SHARD;
-            if (crystals.getStack().getItem() == WizardryItems.grand_crystal) manaPerItem = Constants.GRAND_CRYSTAL_MANA;
+            if (crystals.getStack().getItem() == WizardryItems.crystal_shard)
+                manaPerItem = Constants.MANA_PER_SHARD;
+            if (crystals.getStack().getItem() == WizardryItems.grand_crystal)
+                manaPerItem = Constants.GRAND_CRYSTAL_MANA;
 
             if (crystals.getStack().getCount() * manaPerItem < chargeDepleted) {
                 this.rechargeMana(centre.getStack(), crystals.getStack().getCount() * manaPerItem);
@@ -166,7 +177,7 @@ public class LivingSpellblade extends BridgeSpellblade {
     }
 
     // ==========================================================
-    // COMBAT STATS  Emana-conditional damage scaling
+    // COMBAT STATS Emana-conditional damage scaling
     // ==========================================================
 
     @Override
@@ -208,8 +219,8 @@ public class LivingSpellblade extends BridgeSpellblade {
                     int level = WandHelper.getUpgradeLevel(stack, WizardryItems.melee_upgrade);
                     boolean innateManaAvailable = ItemBattlemageSword.hasManaStorage(stack) && !this.isManaEmpty(stack);
                     boolean anyManaAvailable = stack.hasTagCompound()
-                        && stack.getTagCompound().hasKey("mana_available")
-                        && stack.getTagCompound().getBoolean("mana_available");
+                            && stack.getTagCompound().hasKey("mana_available")
+                            && stack.getTagCompound().getBoolean("mana_available");
 
                     if (level > 0 && (innateManaAvailable || anyManaAvailable)) {
                         finalDamage = customAttackDamage + level;
@@ -221,12 +232,15 @@ public class LivingSpellblade extends BridgeSpellblade {
                         Spell[] spells = WandHelper.getSpells(stack);
                         for (Spell spell : spells) {
                             if (spell instanceof Runeword && ((Runeword) spell).isAffectingAttributes()) {
-                                java.util.Map<Runeword, NBTTagCompound> dataMap = ItemBattlemageSword.getTemporaryRunewordData(stack);
-                                if (spell == ASSpells.runeword_fury && dataMap != null && dataMap.containsKey(ASSpells.runeword_fury)) {
+                                java.util.Map<Runeword, NBTTagCompound> dataMap = ItemBattlemageSword
+                                        .getTemporaryRunewordData(stack);
+                                if (spell == ASSpells.runeword_fury && dataMap != null
+                                        && dataMap.containsKey(ASSpells.runeword_fury)) {
                                     NBTTagCompound runewordData = dataMap.get(ASSpells.runeword_fury);
                                     if (runewordData != null) {
                                         int charges = runewordData.getInteger("charges");
-                                        float modifier = 1.0f + ASSpells.runeword_fury.getProperty("dmg_percent_increase_per_hit").floatValue() * charges;
+                                        float modifier = 1.0f + ASSpells.runeword_fury
+                                                .getProperty("dmg_percent_increase_per_hit").floatValue() * charges;
                                         finalDamage = finalDamage * modifier;
                                     }
                                 }
@@ -234,7 +248,8 @@ public class LivingSpellblade extends BridgeSpellblade {
                         }
                     }
 
-                    multimap.put(damageName, new AttributeModifier(mainMod.getID(), mainMod.getName(), finalDamage, mainMod.getOperation()));
+                    multimap.put(damageName, new AttributeModifier(mainMod.getID(), mainMod.getName(), finalDamage,
+                            mainMod.getOperation()));
                     for (AttributeModifier mod : currentMods) {
                         if (!mod.getID().equals(mainMod.getID())) {
                             multimap.put(damageName, mod);
@@ -249,7 +264,9 @@ public class LivingSpellblade extends BridgeSpellblade {
     // Tooltip is handled entirely by SpellbladeTooltipHandler to avoid duplication.
     @Override
     @SideOnly(Side.CLIENT)
-    public void addInformation(@Nonnull ItemStack stack, @javax.annotation.Nullable World world, @Nonnull List<String> tooltip, @Nonnull net.minecraft.client.util.ITooltipFlag flag) {
-        // Intentionally empty  Eall custom tooltip lines are injected by SpellbladeTooltipHandler.
+    public void addInformation(@Nonnull ItemStack stack, @javax.annotation.Nullable World world,
+            @Nonnull List<String> tooltip, @Nonnull net.minecraft.client.util.ITooltipFlag flag) {
+        // Intentionally empty Eall custom tooltip lines are injected by
+        // SpellbladeTooltipHandler.
     }
 }

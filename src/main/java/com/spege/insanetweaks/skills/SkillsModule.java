@@ -22,6 +22,7 @@ public class SkillsModule {
 
         // Attack Tree
         new TraitFastLearner();
+        new TraitAssimilatedWarfare();
 
         // Defense Tree
         new TraitSpidersGrace();
@@ -34,8 +35,13 @@ public class SkillsModule {
         // Mining Tree
         new TraitAstralProspector();
 
+        // Farming Tree
+        new TraitAngryFarmer();
+        new TraitAdaptedVegetation();
+
         // Building Tree
         new TraitSupremeEnchanter();
+        new TraitBobTheBuilder();
 
         // Agility Tree
         new TraitMeditation();
