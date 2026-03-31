@@ -44,7 +44,7 @@ public class ParasiteXPFixHandler {
     /**
      * Pending deaths table.
      * Key   : entity ID
-     * Value : [World world, double posX, double posY, double posZ, int ticksLeft]
+     * Value : [World world, double posX, double posY, double posZ, int ticksLeft, int xpToGive]
      */
     private final Map<Integer, Object[]> pending = new HashMap<>();
 
@@ -61,6 +61,20 @@ public class ParasiteXPFixHandler {
         ResourceLocation id = EntityList.getKey(entity);
         if (id == null || !"srparasites".equals(id.getResourceDomain())) return;
 
+        // Wyjątki XP
+        int xpToGive = PARASITE_XP_GRANT;
+        String path = id.getResourcePath();
+
+        if ("buglin".equals(path)) {
+            xpToGive = 4;
+        }
+        // Jeśli przetestujesz i zechcesz zablokować jakiegoś mobka (0 xp):
+        // else if ("nazwa_moba".equals(path)) {
+        //     xpToGive = 0;
+        // }
+
+        if (xpToGive <= 0) return;
+
         // Filter: only player kills with the trait
         Entity trueSource = event.getSource().getTrueSource();
         if (!(trueSource instanceof EntityPlayer)) return;
@@ -72,7 +86,8 @@ public class ParasiteXPFixHandler {
             entity.posX,
             entity.posY,
             entity.posZ,
-            TICK_DELAY
+            TICK_DELAY,
+            xpToGive
         });
     }
 
@@ -113,7 +128,8 @@ public class ParasiteXPFixHandler {
                 double posX = (double) data[1];
                 double posY = (double) data[2];
                 double posZ = (double) data[3];
-                world.spawnEntity(new EntityXPOrb(world, posX, posY, posZ, PARASITE_XP_GRANT));
+                int xpToGive = (int) data[5];
+                world.spawnEntity(new EntityXPOrb(world, posX, posY, posZ, xpToGive));
                 it.remove();
             } else {
                 data[4] = ticksLeft;

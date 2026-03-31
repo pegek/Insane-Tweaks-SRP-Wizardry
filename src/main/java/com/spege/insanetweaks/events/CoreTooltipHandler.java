@@ -1,10 +1,10 @@
 package com.spege.insanetweaks.events;
 
 import java.util.List;
-import com.spege.insanetweaks.init.ModItems;
+
+import com.spege.insanetweaks.items.core.WizardryCoreItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -19,11 +19,9 @@ public class CoreTooltipHandler {
         if (stack.isEmpty()) return;
         
         Item item = stack.getItem();
-        if (item == ModItems.COST_CORE || item == ModItems.POTENCY_CORE || item == ModItems.SPEEDCAST_CORE) {
+        if (item instanceof WizardryCoreItem) {
             List<String> tooltip = event.getToolTip();
-            tooltip.add("");
-            tooltip.add(TextFormatting.GOLD + "Combine in anvil with any armor piece,");
-            tooltip.add(TextFormatting.GOLD + "maximum x2 times per core type!");
+            ((WizardryCoreItem) item).addCoreTooltip(tooltip);
         }
     }
 }

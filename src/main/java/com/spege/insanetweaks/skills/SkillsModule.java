@@ -52,6 +52,9 @@ public class SkillsModule {
         new TraitSchoolConjuration();
         new TraitSchoolDestruction();
         new TraitArchmage();
+
+        // Native Overwrites
+        // new TraitGoldenOsmosisBuffed();
     }
 
     @Mod.EventBusSubscriber(modid = com.spege.insanetweaks.InsaneTweaksMod.MODID)

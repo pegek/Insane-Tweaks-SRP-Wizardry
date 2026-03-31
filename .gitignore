@@ -39,3 +39,4 @@ notes/
 *.tmp
 libs/
 craftweaker/
+test*.*/

@@ -17,18 +17,26 @@ import com.spege.insanetweaks.events.LivingDeathEventHandler;
 import com.spege.insanetweaks.commands.CommandBackupCursed;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.entity.RenderSnowball;
+import net.minecraft.init.Items;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
-import com.spege.insanetweaks.entities.EntityAssimilatedCowMinion;
+import com.spege.insanetweaks.entities.EntityFerCowMinion;
 import com.spege.insanetweaks.entities.EntityItemIndestructible;
+import com.spege.insanetweaks.entities.EntityPrimitiveYelloweyeMinion;
+import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNade;
+import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNadeProjectile;
+import com.spege.insanetweaks.entities.projectile.EntityYelloweyeSpineball;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;required-after:srparasites;"
         +
@@ -66,11 +74,45 @@ public class InsaneTweaksMod {
         logCompatibilityReport();
 
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-            RenderingRegistry.registerEntityRenderingHandler(EntityAssimilatedCowMinion.class,
-                    new IRenderFactory<EntityAssimilatedCowMinion>() {
+            RenderingRegistry.registerEntityRenderingHandler(EntityFerCowMinion.class,
+                    new IRenderFactory<EntityFerCowMinion>() {
                         @Override
-                        public Render<? super EntityAssimilatedCowMinion> createRenderFor(RenderManager manager) {
-                            return new RenderAssimilatedCowMinion(manager);
+                        public Render<? super EntityFerCowMinion> createRenderFor(RenderManager manager) {
+                            return new RenderFerCowMinion(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityPrimitiveYelloweyeMinion.class,
+                    new IRenderFactory<EntityPrimitiveYelloweyeMinion>() {
+                        @Override
+                        public Render<? super EntityPrimitiveYelloweyeMinion> createRenderFor(RenderManager manager) {
+                            return new RenderPrimitiveYelloweyeMinion(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeSpineball.class,
+                    new IRenderFactory<EntityYelloweyeSpineball>() {
+                        @Override
+                        public Render<? super EntityYelloweyeSpineball> createRenderFor(RenderManager manager) {
+                            return new RenderSnowball<EntityYelloweyeSpineball>(manager,
+                                    Objects.requireNonNull(Items.SLIME_BALL),
+                                    Minecraft.getMinecraft().getRenderItem());
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNadeProjectile.class,
+                    new IRenderFactory<EntityYelloweyeNadeProjectile>() {
+                        @Override
+                        public Render<? super EntityYelloweyeNadeProjectile> createRenderFor(RenderManager manager) {
+                            return new RenderSnowball<EntityYelloweyeNadeProjectile>(manager,
+                                    Objects.requireNonNull(Items.SLIME_BALL),
+                                    Minecraft.getMinecraft().getRenderItem());
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNade.class,
+                    new IRenderFactory<EntityYelloweyeNade>() {
+                        @Override
+                        public Render<? super EntityYelloweyeNade> createRenderFor(RenderManager manager) {
+                            return new RenderSnowball<EntityYelloweyeNade>(manager,
+                                    Objects.requireNonNull(Items.SLIME_BALL),
+                                    Minecraft.getMinecraft().getRenderItem());
                         }
                     });
         }
@@ -118,8 +160,16 @@ public class InsaneTweaksMod {
         // Register Internal Entities
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "indestructible_item"),
                 EntityItemIndestructible.class, "indestructible_item", 99, this, 64, 20, true);
-        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "assimilated_cow_minion"),
-                EntityAssimilatedCowMinion.class, "assimilated_cow_minion", 100, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "fer_cow_minion"),
+                EntityFerCowMinion.class, "fer_cow_minion", 100, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_yelloweye_minion"),
+                EntityPrimitiveYelloweyeMinion.class, "primitive_yelloweye_minion", 101, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_spineball"),
+                EntityYelloweyeSpineball.class, "yelloweye_spineball", 102, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade_projectile"),
+                EntityYelloweyeNadeProjectile.class, "yelloweye_nade_projectile", 103, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade"),
+                EntityYelloweyeNade.class, "yelloweye_nade", 104, this, 64, 10, true);
 
         // Fire/lava immunity for all Living and Sentient item drops — registered
         // unconditionally.

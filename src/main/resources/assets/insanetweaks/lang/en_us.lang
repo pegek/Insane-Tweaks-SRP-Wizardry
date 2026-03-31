@@ -1,6 +1,10 @@
 item.cost_core.name=Cost Core
 item.potency_core.name=Potency Core
 item.speedcast_core.name=Speedcast Core
+item.minion_health_core.name=Minion Health Core
+item.minion_count_core.name=Minion Count Core
+item.summon_radius_core.name=Summon Radius Core
+item.summon_duration_core.name=Summon Duration Core
 item.golden_book.name=Golden Book
 item.rupter_solied.name=Rupter (Solid)
 item.living_spellblade.name=§eLiving Spellblade
@@ -65,14 +69,20 @@ reskillable.unlock.compatskills.school_of_conjuration.desc=Summoning and minion 
 reskillable.unlock.compatskills.school_of_destruction=§cSchool of Destruction
 reskillable.unlock.compatskills.school_of_destruction.desc=Attack and projectile spells receive +10%% potency
 reskillable.unlock.compatskills.archmage=§bArchmage
-reskillable.unlock.compatskills.archmage.desc=Gain general +10%% damage boost to magic and +5% potency boost to magic.
+reskillable.unlock.compatskills.archmage.desc=Gain general +10%% damage boost to magic and +5%% potency boost to magic
 reskillable.unlock.compatskills.adapted_vegetation=§aAdapted Vegetation
-reskillable.unlock.compatskills.adapted_vegetation.desc=Protects crops around the player from being stunted by parasites(§fTESTING§r).
+reskillable.unlock.compatskills.adapted_vegetation.desc=Protects crops around the player (8 blocks) while holding a Living/Sentient Scythe from being stunted by parasites.
+reskillable.unlock.compatskills.golden_osmosis=§eGolden Osmosis
+reskillable.unlock.compatskills.golden_osmosis.desc=Golden tools, while being held or worn, will extract XP from the user to repair themselves at a fast rate.\n\n§6Passive Buff:§r\nGain +1 Armor and +0.5 Armor Toughness for each piece of Golden armor worn.\nGolden tools/weapons grant +25% Attack Speed.
 
 # EBWizardry Spells
-spell.insanetweaks:summon_pig=Summon Assimilated Cow
-spell.insanetweaks:summon_pig.desc=Summons a temporary assimilated cow minion to fight for the caster.
+spell.insanetweaks:summon_fer_cow=Summon Feral Cow
+spell.insanetweaks:summon_fer_cow.desc=Your connection with nature allows you to spawn this cute little cow now.
+spell.insanetweaks:summon_primitive_yelloweye=Summon Primitive Yelloweye
+spell.insanetweaks:summon_primitive_yelloweye.desc=Summons a floating yelloweye minion that spits venom at your enemies.
 spell.insanetweaks:test_projectile=Test Fireball
 spell.insanetweaks:test_projectile.desc=Conjures a small blazing fireball that shoots where you look.
-entity.insanetweaks.assimilated_cow_minion.name=Assimilated Cow Minion
-entity.assimilated_cow_minion.name=Assimilated Cow Minion
+entity.insanetweaks.fer_cow_minion.name=Feral Cow Minion
+entity.fer_cow_minion.name=Feral Cow Minion
+entity.insanetweaks.primitive_yelloweye_minion.name=Primitive Yelloweye Minion
+entity.primitive_yelloweye_minion.name=Primitive Yelloweye Minion

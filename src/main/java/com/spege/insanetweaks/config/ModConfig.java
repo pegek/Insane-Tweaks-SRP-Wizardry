@@ -45,6 +45,11 @@ public class ModConfig {
         @Config.RequiresMcRestart
         public boolean enableCustomCores = true;
 
+        @Config.Comment("Registers all InsaneTweaks custom Electroblob's Wizardry spells. Disable this to remove every spell added by the mod from the spell registry.")
+        @Config.Name("Enable Spells")
+        @Config.RequiresMcRestart
+        public boolean enableSpells = true;
+
         @Config.Comment({
                 "Enables the Bauble Fruit system. Bauble Fruits are one-time consumable items that permanently",
                 "grant the player an additional bauble slot when eaten.",
@@ -61,6 +66,14 @@ public class ModConfig {
         @Config.Comment("Fixes the Curse of Possession exploit with Corail Tombstone. Cursed items will now properly vanish on death instead of hiding in your grave. Use /restorecursed to get them back")
         @Config.Name("Enable Curse of Possession Patch")
         public boolean enableCurseOfPossessionPatch = false;
+
+        @Config.Comment({
+                "Prevents the Enigmatic Legacy 'Cursed Ring' from forcing summoned creatures (e.g. Fer Cow Minion) to attack their own caster.",
+                "When enabled, all Electroblob's Wizardry summoned creatures correctly report as being 'on the same team' as their owner,",
+                "which makes the Cursed Ring's anger loop skip them entirely.",
+                "Safe to leave enabled even if Enigmatic Legacy is not installed — the fix costs nothing when the ring is absent." })
+        @Config.Name("Enable Cursed Ring Minion Fix")
+        public boolean enableCursedRingFix = true;
 
         @Config.Comment({
                 "Additional effects removed by the CLEANSE effect, on top of all effects where isBeneficial() == false.",

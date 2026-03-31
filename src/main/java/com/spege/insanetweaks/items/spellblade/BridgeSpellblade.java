@@ -312,6 +312,12 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
+    public boolean hasEffect(@Nonnull ItemStack stack) {
+        return false;
+    }
+
+    @Override
     public boolean hasCustomEntity(@Nonnull ItemStack stack) {
         return true;
     }

@@ -1,5 +1,6 @@
 package com.spege.insanetweaks.skills;
 
+import com.spege.insanetweaks.customwizardrystats.SummonDurationStat;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.item.EntityItem;
@@ -11,6 +12,9 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import codersafterdark.reskillable.api.event.UnlockUnlockableEvent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
@@ -25,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 
+@SuppressWarnings("null")
 public class EventHandlerSkills {
 
     // Stałe pod optymalizację traitu Archmage (Testowe wartości)
@@ -42,6 +47,12 @@ public class EventHandlerSkills {
     private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_DMG = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_DMG_UUID, "Angry Farmer Damage", 5.0D, 0).setSaved(false);
     private static final java.util.UUID ANGRY_FARMER_SPEED_UUID = java.util.UUID.fromString("d4e5f6a7-b8c9-4d0e-1f2a-3456789abcde");
     private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_SPEED = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_SPEED_UUID, "Angry Farmer Attack Speed", 0.1D, 2).setSaved(false);
+
+    // Stałe pod traita Golden Osmosis Buffed
+    private static final java.util.UUID GOLDEN_ARMOR_UUID = java.util.UUID.fromString("e5f6a7b8-c9d0-4e1f-2a34-56789abcdef0");
+    private static final java.util.UUID GOLDEN_TOUGHNESS_UUID = java.util.UUID.fromString("f6a7b8c9-d0e1-4f2a-3b45-6789abcdef01");
+    private static final java.util.UUID GOLDEN_SPEED_UUID = java.util.UUID.fromString("0a1b2c3d-4e5f-6a7b-8c9d-e0123456789a");
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier GOLDEN_SPEED_MOD = new net.minecraft.entity.ai.attributes.AttributeModifier(GOLDEN_SPEED_UUID, "Golden Osmosis Speed", 0.25D, 2).setSaved(false);
 
     // Removed memory-leaking static maps. Data is stored directly on player NBT
     // securely.
@@ -327,6 +338,71 @@ public class EventHandlerSkills {
                 }
             }
 
+            // GOLDEN OSMOSIS - Passive Buffs for Gold Equipment
+            if (player.ticksExisted % 5 == 0) {
+                boolean hasGoldenOsmosis = TraitBase.hasTrait(player, "reskillable:magic", "reskillable:golden_osmosis");
+
+                // 1. Attack Speed Buff for Golden Tools/Weapons (+25%)
+                net.minecraft.entity.ai.attributes.IAttributeInstance speedAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED);
+                if (speedAttr != null) {
+                    boolean holdingGoldenTool = false;
+                    if (hasGoldenOsmosis) {
+                        if (isGoldenWeaponOrTool(player.getHeldItemMainhand())) {
+                            holdingGoldenTool = true;
+                        }
+                    }
+                    
+                    boolean hasSpeedMod = speedAttr.hasModifier(GOLDEN_SPEED_MOD);
+                    if (holdingGoldenTool && !hasSpeedMod) {
+                        speedAttr.applyModifier(GOLDEN_SPEED_MOD);
+                    } else if (!holdingGoldenTool && hasSpeedMod) {
+                        speedAttr.removeModifier(GOLDEN_SPEED_MOD);
+                    }
+                }
+
+                // 2. Armor and Toughness Buffs (+1 Armor, +0.5 Toughness per golden armor piece)
+                net.minecraft.entity.ai.attributes.IAttributeInstance armorAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ARMOR);
+                net.minecraft.entity.ai.attributes.IAttributeInstance toughnessAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ARMOR_TOUGHNESS);
+                
+                if (armorAttr != null && toughnessAttr != null) {
+                    int goldenArmorPieces = 0;
+                    if (hasGoldenOsmosis) {
+                        for (ItemStack armorStack : player.getArmorInventoryList()) {
+                            if (isGoldenArmor(armorStack)) {
+                                goldenArmorPieces++;
+                            }
+                        }
+                    }
+
+                    net.minecraft.entity.ai.attributes.AttributeModifier existingArmorMod = armorAttr.getModifier(GOLDEN_ARMOR_UUID);
+                    net.minecraft.entity.ai.attributes.AttributeModifier existingToughnessMod = toughnessAttr.getModifier(GOLDEN_TOUGHNESS_UUID);
+                    
+                    double expectedArmorBonus = goldenArmorPieces * 1.0D;
+                    double expectedToughnessBonus = goldenArmorPieces * 0.5D;
+
+                    if (existingArmorMod != null && existingArmorMod.getAmount() != expectedArmorBonus) {
+                        armorAttr.removeModifier(existingArmorMod);
+                        existingArmorMod = null;
+                    }
+                    if (existingToughnessMod != null && existingToughnessMod.getAmount() != expectedToughnessBonus) {
+                        toughnessAttr.removeModifier(existingToughnessMod);
+                        existingToughnessMod = null;
+                    }
+
+                    if (goldenArmorPieces > 0) {
+                        if (existingArmorMod == null) {
+                            armorAttr.applyModifier(new net.minecraft.entity.ai.attributes.AttributeModifier(GOLDEN_ARMOR_UUID, "Golden Osmosis Armor", expectedArmorBonus, 0).setSaved(false));
+                        }
+                        if (existingToughnessMod == null) {
+                            toughnessAttr.applyModifier(new net.minecraft.entity.ai.attributes.AttributeModifier(GOLDEN_TOUGHNESS_UUID, "Golden Osmosis Toughness", expectedToughnessBonus, 0).setSaved(false));
+                        }
+                    } else {
+                        if (existingArmorMod != null) armorAttr.removeModifier(existingArmorMod);
+                        if (existingToughnessMod != null) toughnessAttr.removeModifier(existingToughnessMod);
+                    }
+                }
+            }
+
             // ARCHMAGE - PotionCore magicDamage Attribute (Optymalizacja, Timer: 20t)
             if (player.ticksExisted % 20 == 0) {
                 if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
@@ -421,6 +497,22 @@ public class EventHandlerSkills {
             float currentCost = event.getModifiers().get("cost");
             event.getModifiers().set("cost", Math.max(0.05f, currentCost * 0.90f), false);
         }
+
+        Spell spell = event.getSpell();
+        if (spell == null)
+            return;
+
+        electroblob.wizardry.constants.SpellType type = spell.getType();
+
+        // School of Conjuration - TESTING
+        // Moved from Post to Pre so summon-related modifiers are applied before
+        // SpellMinion reads them during minion creation.
+        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_conjuration")) {
+            if (type == electroblob.wizardry.constants.SpellType.MINION
+                    || type == electroblob.wizardry.constants.SpellType.CONSTRUCT) {
+                SummonDurationStat.applyTestModifier(event);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -459,14 +551,23 @@ public class EventHandlerSkills {
             }
         }
 
-        // School of Conjuration
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_conjuration")) {
-            if (type == electroblob.wizardry.constants.SpellType.MINION
-                    || type == electroblob.wizardry.constants.SpellType.CONSTRUCT) {
-                event.getModifiers().set("duration",
-                        event.getModifiers().get("duration") * 1.20f, false);
-            }
-        }
+        /*
+         * TESTING NOTE:
+         * Old School of Conjuration implementation was executed in Post.
+         * We are keeping this block commented for reference while testing the new
+         * Pre-based implementation, because summon modifiers need to be applied
+         * before SpellMinion consumes them during minion creation.
+         *
+         * // School of Conjuration
+         * if (TraitBase.hasTrait(player, "reskillable:magic",
+         * "compatskills:school_of_conjuration")) {
+         *     if (type == electroblob.wizardry.constants.SpellType.MINION
+         *             || type == electroblob.wizardry.constants.SpellType.CONSTRUCT) {
+         *         event.getModifiers().set("duration",
+         *                 event.getModifiers().get("duration") * 1.20f, false);
+         *     }
+         * }
+         */
 
         // School of Destruction
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_destruction")) {
@@ -474,6 +575,84 @@ public class EventHandlerSkills {
                     || type == electroblob.wizardry.constants.SpellType.PROJECTILE) {
                 event.getModifiers().set("potency",
                         event.getModifiers().get("potency") * 1.10f, false);
+            }
+        }
+    }
+
+    private static boolean isGoldenArmor(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        net.minecraft.item.Item item = stack.getItem();
+        if (item instanceof net.minecraft.item.ItemArmor) {
+            if (((net.minecraft.item.ItemArmor) item).getArmorMaterial() == net.minecraft.item.ItemArmor.ArmorMaterial.GOLD) return true;
+        }
+        net.minecraft.util.ResourceLocation reg = item.getRegistryName();
+        if (reg != null && reg.getResourcePath().toLowerCase().contains("gold") && item instanceof net.minecraft.item.ItemArmor) return true;
+        return false;
+    }
+
+    private static boolean isGoldenWeaponOrTool(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        net.minecraft.item.Item item = stack.getItem();
+        
+        boolean isGold = false;
+        if (item instanceof net.minecraft.item.ItemTool && "GOLD".equals(((net.minecraft.item.ItemTool) item).getToolMaterialName())) isGold = true;
+        if (item instanceof net.minecraft.item.ItemSword && "GOLD".equals(((net.minecraft.item.ItemSword) item).getToolMaterialName())) isGold = true;
+        if (item instanceof net.minecraft.item.ItemHoe && "GOLD".equals(((net.minecraft.item.ItemHoe) item).getMaterialName())) isGold = true;
+        
+        net.minecraft.util.ResourceLocation reg = item.getRegistryName();
+        if (reg != null && reg.getResourcePath().toLowerCase().contains("gold")) {
+            if (!(item instanceof net.minecraft.item.ItemArmor)) isGold = true;
+        }
+        
+        if (!isGold && item.isRepairable()) {
+            try {
+                if (item.getIsRepairable(stack, new ItemStack(net.minecraft.init.Items.GOLD_INGOT)) && !(item instanceof net.minecraft.item.ItemArmor)) {
+                    isGold = true;
+                }
+            } catch (Exception e) {}
+        }
+        
+        return isGold;
+    }
+
+    @SubscribeEvent
+    public void onEnderPearlJoinWorld(net.minecraftforge.event.entity.EntityJoinWorldEvent event) {
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
+            return;
+
+        // Jeśli wchodzącym na serwer bytem jest Ender Perła
+        if (event.getEntity() instanceof net.minecraft.entity.item.EntityEnderPearl) {
+            net.minecraft.entity.item.EntityEnderPearl pearl = (net.minecraft.entity.item.EntityEnderPearl) event.getEntity();
+            net.minecraft.entity.EntityLivingBase thrower = pearl.getThrower();
+            
+            // Jeśli wyrzucił ją gracz posiadający Safe Port
+            if (thrower instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) thrower;
+                if (TraitBase.hasTrait(player, "reskillable:magic", "reskillable:safe_port")) {
+                    // Zwiększamy szybkość wyrzutu o 30%
+                    pearl.motionX *= 1.3D;
+                    pearl.motionY *= 1.3D;
+                    pearl.motionZ *= 1.3D;
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onSkillUnlocked(UnlockUnlockableEvent.Post event) {
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
+            return;
+
+        if (event.getUnlockable() != null) {
+            net.minecraft.util.ResourceLocation regName = event.getUnlockable().getRegistryName();
+            if (regName != null && regName.toString().equals("reskillable:golden_osmosis")) {
+                event.getEntityPlayer().sendMessage(new TextComponentString(
+                    TextFormatting.GOLD + "[InsaneTweaks]: " + TextFormatting.RESET + "You're so awesome your golden osmosis needs a buff! Golden Armor receives +1 Armor, +0.5 Toughness per piece, and golden tools/weapons receive +25% Attack Speed."
+                ));
+            } else if (regName != null && regName.toString().equals("reskillable:safe_port")) {
+                event.getEntityPlayer().sendMessage(new TextComponentString(
+                    TextFormatting.GOLD + "[InsaneTweaks]: " + TextFormatting.RESET + "You're so awesome your safe port needs a buff! Ender Pearl throw velocity and range are increased by 30%!"
+                ));
             }
         }
     }

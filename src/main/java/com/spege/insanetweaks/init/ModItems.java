@@ -2,6 +2,8 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.items.GoldenBookItem;
+import com.spege.insanetweaks.items.core.WizardryCoreItem;
+import com.spege.insanetweaks.items.core.WizardryCoreItems;
 import com.spege.insanetweaks.items.fruit.AmuletFruitItem;
 import com.spege.insanetweaks.items.fruit.BeltFruitItem;
 import com.spege.insanetweaks.items.fruit.BodyFruitItem;
@@ -26,12 +28,13 @@ import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
 @SuppressWarnings("null")
 public class ModItems {
 
-    public static final Item COST_CORE = new Item().setRegistryName("insanetweaks", "cost_core")
-            .setUnlocalizedName("cost_core").setCreativeTab(CreativeTabs.MISC).setMaxStackSize(16);
-    public static final Item POTENCY_CORE = new Item().setRegistryName("insanetweaks", "potency_core")
-            .setUnlocalizedName("potency_core").setCreativeTab(CreativeTabs.MISC).setMaxStackSize(16);
-    public static final Item SPEEDCAST_CORE = new Item().setRegistryName("insanetweaks", "speedcast_core")
-            .setUnlocalizedName("speedcast_core").setCreativeTab(CreativeTabs.MISC).setMaxStackSize(16);
+    public static final WizardryCoreItem COST_CORE = WizardryCoreItems.COST_CORE;
+    public static final WizardryCoreItem POTENCY_CORE = WizardryCoreItems.POTENCY_CORE;
+    public static final WizardryCoreItem SPEEDCAST_CORE = WizardryCoreItems.SPEEDCAST_CORE;
+    public static final WizardryCoreItem MINION_HEALTH_CORE = WizardryCoreItems.MINION_HEALTH_CORE;
+    public static final WizardryCoreItem MINION_COUNT_CORE = WizardryCoreItems.MINION_COUNT_CORE;
+    public static final WizardryCoreItem SUMMON_RADIUS_CORE = WizardryCoreItems.SUMMON_RADIUS_CORE;
+    public static final WizardryCoreItem SUMMON_DURATION_CORE = WizardryCoreItems.SUMMON_DURATION_CORE;
     public static final Item GOLDEN_BOOK = new GoldenBookItem().setRegistryName("insanetweaks", "golden_book");
     public static final Item RUPTER_SOLIED = new Item().setRegistryName("insanetweaks", "rupter_solied")
             .setUnlocalizedName("rupter_solied").setCreativeTab(CreativeTabs.MISC);
@@ -79,6 +82,8 @@ public class ModItems {
         BAUBLE_FRUIT_ELYTRA, BAUBLE_FRUIT_TOTEM, BAUBLE_FRUIT_TRINKET
     };
 
+    private static final Item[] ALL_WIZARDRY_CORES = WizardryCoreItems.ALL_CORES;
+
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         // Items gated by Golden Book module
@@ -93,7 +98,7 @@ public class ModItems {
 
         // Cores  Ealways gated by their own config
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
-            event.getRegistry().registerAll(COST_CORE, POTENCY_CORE, SPEEDCAST_CORE);
+            event.getRegistry().registerAll(ALL_WIZARDRY_CORES);
         }
 
         // Bauble Fruits  Eany Baubles version triggers registration (BaublesEX or legacy).
@@ -128,9 +133,9 @@ public class ModItems {
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
-            registerModel(COST_CORE);
-            registerModel(POTENCY_CORE);
-            registerModel(SPEEDCAST_CORE);
+            for (Item core : ALL_WIZARDRY_CORES) {
+                registerModel(core);
+            }
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits

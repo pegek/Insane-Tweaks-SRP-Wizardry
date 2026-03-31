@@ -4,9 +4,7 @@
   "package": "com.spege.insanetweaks.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "MixinTileEntityImbuementAltar"
-  ],
+  "mixins": [],
   "client": [],
   "server": [],
   "injectors": {
