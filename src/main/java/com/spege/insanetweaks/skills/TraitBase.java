@@ -18,6 +18,7 @@ import net.minecraft.util.ResourceLocation;
  * ModConfig.traits.<field> (TraitConfig) at construction time.
  * Falls back to hardcoded defaults if the config field is null or malformed.
  */
+@SuppressWarnings("null")
 public abstract class TraitBase extends Trait {
 
     public TraitBase(String name, int x, int y, ModConfig.TraitConfig cfg, String defaultSkillName, int defaultCost, String... defaultRequirements) {

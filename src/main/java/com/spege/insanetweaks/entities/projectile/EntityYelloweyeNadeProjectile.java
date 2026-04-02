@@ -13,13 +13,13 @@ public class EntityYelloweyeNadeProjectile extends EntityYelloweyeProjectileBase
 
     public EntityYelloweyeNadeProjectile(World worldIn) {
         super(worldIn);
-        this.setSize(0.5F, 0.5F);
+        this.setSize(0.3F, 0.3F);
     }
 
     public EntityYelloweyeNadeProjectile(World worldIn, EntityLivingBase shooter, double accelX, double accelY,
             double accelZ, int fuseTicks, int lingerTicks, float burstDamage) {
         super(worldIn, shooter, accelX, accelY, accelZ);
-        this.setSize(0.5F, 0.5F);
+        this.setSize(0.3F, 0.3F);
         this.fuseTicks = fuseTicks;
         this.lingerTicks = lingerTicks;
         this.burstDamage = burstDamage;
@@ -34,7 +34,25 @@ public class EntityYelloweyeNadeProjectile extends EntityYelloweyeProjectileBase
         EntityYelloweyeNade nade = new EntityYelloweyeNade(this.world, this.fuseTicks, this.lingerTicks,
                 this.burstDamage);
         nade.setOwner(this.shootingEntity);
-        nade.copyLocationAndAnglesFrom(this);
+
+        double spawnX = this.posX;
+        double spawnY = this.posY;
+        double spawnZ = this.posZ;
+
+        if (result != null) {
+            if (result.entityHit instanceof EntityLivingBase) {
+                EntityLivingBase target = (EntityLivingBase) result.entityHit;
+                spawnX = target.posX;
+                spawnY = target.getEntityBoundingBox().minY + 0.02D;
+                spawnZ = target.posZ;
+            } else if (result.hitVec != null) {
+                spawnX = result.hitVec.x;
+                spawnY = result.hitVec.y + 0.02D;
+                spawnZ = result.hitVec.z;
+            }
+        }
+
+        nade.setLocationAndAngles(spawnX, spawnY, spawnZ, this.rotationYaw, this.rotationPitch);
         this.world.spawnEntity(nade);
         this.setDead();
     }

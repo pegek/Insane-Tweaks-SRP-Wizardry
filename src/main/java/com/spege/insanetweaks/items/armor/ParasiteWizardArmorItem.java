@@ -17,10 +17,16 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
 public class ParasiteWizardArmorItem extends ItemWizardArmour {
+
+    public static final String NBT_ADAPTATION = "ArmorDamageBlocked";
+    public static final float SECOND_MILESTONE = 500.0f;
+    public static final float THIRD_MILESTONE = 1000.0f;
+    public static final float EVOLUTION_THRESHOLD = 1500.0f;
 
     private static final UUID HEAD_UUID = UUID.fromString("1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D");
     private static final UUID CHEST_UUID = UUID.fromString("2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7E");
@@ -77,7 +83,8 @@ public class ParasiteWizardArmorItem extends ItemWizardArmour {
         // The NBT tag 'adaptation_points' was planned for this, but is not currently written
         // anywhere. Until the adaptation tracking system is implemented, apply a flat 0.01f
         // reduction per piece (unchanged from the original Groovy implementation).
-        float reduction = 0.01f;
+        ItemStack equippedPiece = caster.getItemStackFromSlot(this.armorType);
+        float reduction = getSpellReductionPercent(equippedPiece) / 100.0f;
 
         float multiplier = 1.0f - reduction;
         modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * multiplier), false);
@@ -96,30 +103,32 @@ public class ParasiteWizardArmorItem extends ItemWizardArmour {
     }
 
     @Override
-    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
-        return true;
-    }
-
-    @Override
-    @Nonnull
-    public net.minecraft.entity.Entity createEntity(@Nonnull World world, @Nonnull net.minecraft.entity.Entity location, @Nonnull ItemStack itemstack) {
-        com.spege.insanetweaks.entities.EntityItemIndestructible entity = new com.spege.insanetweaks.entities.EntityItemIndestructible(world, location.posX, location.posY, location.posZ, itemstack);
-        entity.motionX = location.motionX;
-        entity.motionY = location.motionY;
-        entity.motionZ = location.motionZ;
-        entity.setDefaultPickupDelay();
-        if (location instanceof net.minecraft.entity.item.EntityItem) {
-            String thrower = ((net.minecraft.entity.item.EntityItem) location).getThrower();
-            String owner   = ((net.minecraft.entity.item.EntityItem) location).getOwner();
-            if (thrower != null) entity.setThrower(thrower);
-            if (owner   != null) entity.setOwner(owner);
-        }
-        return entity;
-    }
-
-    @Override
     @Nonnull
     public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
         return "insanetweaks:textures/models/armor/parasite_mage.png";
+    }
+
+    public static int getSpellReductionPercent(ItemStack stack) {
+        float blocked = getBlockedDamage(stack);
+        int reduction = 1;
+
+        if (blocked >= SECOND_MILESTONE) {
+            reduction++;
+        }
+
+        if (blocked >= THIRD_MILESTONE) {
+            reduction++;
+        }
+
+        return reduction;
+    }
+
+    public static float getBlockedDamage(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0.0f;
+        }
+
+        NBTTagCompound nbt = stack.getTagCompound();
+        return nbt != null ? nbt.getFloat(NBT_ADAPTATION) : 0.0f;
     }
 }

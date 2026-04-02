@@ -7,6 +7,7 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.TextFormatting;
 
+@SuppressWarnings("null")
 public class WizardryCoreItem extends Item {
 
     private final String upgradeNbtKey;
@@ -46,8 +47,8 @@ public class WizardryCoreItem extends Item {
 
     public void addCoreTooltip(List<String> tooltip) {
         tooltip.add("");
-        tooltip.add(TextFormatting.GOLD + "Combine in anvil with any armor piece,");
-        tooltip.add(TextFormatting.GOLD + "maximum x2 times per core type!");
+        tooltip.add(TextFormatting.RED + "Direct armor infusion is disabled.");
+        tooltip.add(TextFormatting.DARK_GRAY + "Reserved for future InsaneTweaks gear systems.");
 
         if (experimentalNote != null && !experimentalNote.isEmpty()) {
             tooltip.add(TextFormatting.DARK_GRAY + experimentalNote);

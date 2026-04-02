@@ -9,7 +9,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -30,53 +29,7 @@ public class CustomCoresEventHandler {
     };
 
     @SubscribeEvent
-    public void onAnvilUpdate(AnvilUpdateEvent event) {
-        ItemStack left = event.getLeft();
-        ItemStack right = event.getRight();
-
-        if (left.isEmpty() || right.isEmpty() || !(left.getItem() instanceof ItemArmor)) {
-            return;
-        }
-
-        if (!(right.getItem() instanceof WizardryCoreItem)) {
-            return;
-        }
-
-        applyCoreUpgrade(event, left, (WizardryCoreItem) right.getItem());
-    }
-
     @SuppressWarnings("null")
-    private void applyCoreUpgrade(AnvilUpdateEvent event, ItemStack left, WizardryCoreItem core) {
-        float currentBonus = 0.0f;
-
-        if (left.hasTagCompound()) {
-            NBTTagCompound leftNbt = left.getTagCompound();
-            if (leftNbt != null && leftNbt.hasKey(core.getUpgradeNbtKey())) {
-                currentBonus = leftNbt.getFloat(core.getUpgradeNbtKey());
-            }
-        }
-
-        float maxBonus = core.getIncrement() * MAX_UPGRADES;
-        if (currentBonus >= maxBonus - 0.001f) {
-            return;
-        }
-
-        ItemStack output = left.copy();
-        if (!output.hasTagCompound()) {
-            output.setTagCompound(new NBTTagCompound());
-        }
-
-        NBTTagCompound outputNbt = output.getTagCompound();
-        if (outputNbt != null) {
-            outputNbt.setFloat(core.getUpgradeNbtKey(), currentBonus + core.getIncrement());
-        }
-
-        event.setOutput(output);
-        event.setCost(3);
-        event.setMaterialCost(1);
-    }
-
-    @SubscribeEvent
     public void onSpellCast(SpellCastEvent.Pre event) {
         if (event.getCaster() == null) {
             return;
@@ -157,9 +110,8 @@ public class CustomCoresEventHandler {
         }
 
         if (totalMinionCountBonus > 0.0f) {
-            // Experimental: base SpellMinion does not read minion_count from
-            // SpellModifiers, but summon_fer_cow has a local override that consumes
-            // this value as flat extra summon count.
+            // Consumed globally by our SpellMinion compat mixin as flat extra summon
+            // count for Wizardry minion spells.
             float current = modifiers.get("minion_count");
             modifiers.set("minion_count", current + totalMinionCountBonus, false);
         }

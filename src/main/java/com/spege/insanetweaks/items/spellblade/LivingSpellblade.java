@@ -57,7 +57,7 @@ public class LivingSpellblade extends BridgeSpellblade {
                 .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
                 .addBridgeProperty(ParasiteSWProperties.BLEEDING_3)
                 .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
-                .addBridgeProperty(ParasiteSWProperties.HEAVY_1);
+                .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class LivingSpellblade extends BridgeSpellblade {
 
     @Override
     public float getBaseAttackDamage() {
-        return 20.0f;
+        return 21.0f;
     }
 
     // ==========================================================
@@ -213,7 +213,7 @@ public class LivingSpellblade extends BridgeSpellblade {
                 }
 
                 if (mainMod != null) {
-                    double customAttackDamage = 20.0d;
+                    double customAttackDamage = 21.0d;
                     double finalDamage = customAttackDamage;
 
                     int level = WandHelper.getUpgradeLevel(stack, WizardryItems.melee_upgrade);

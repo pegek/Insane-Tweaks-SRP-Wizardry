@@ -14,21 +14,28 @@ import java.util.Map;
 @Mixin(Locale.class)
 public class MixinLocale {
 
-    @Shadow
+    @Shadow(aliases = "field_135032_a", remap = false)
     Map<String, String> properties;
 
-    @Inject(method = "loadLocaleDataFiles", at = @At("RETURN"))
+    @Inject(method = { "loadLocaleDataFiles", "func_135022_a" }, at = @At("RETURN"), remap = false)
     private void insanetweaks_overwriteGoldenOsmosis(IResourceManager resourceManager, List<String> languageList, CallbackInfo ci) {
         if (this.properties != null) {
-            String newName = this.properties.get("reskillable.unlock.compatskills.golden_osmosis");
-            String newDesc = this.properties.get("reskillable.unlock.compatskills.golden_osmosis.desc");
+            String[] nativeSkillsToOverwrite = new String[] {
+                "golden_osmosis",
+                "safe_port"
+            };
 
-            // Hard overwrite natywnych wpisów Reskillable w słowniku gry
-            if (newName != null) {
-                this.properties.put("reskillable.unlock.reskillable.golden_osmosis", newName);
-            }
-            if (newDesc != null) {
-                this.properties.put("reskillable.unlock.reskillable.golden_osmosis.desc", newDesc);
+            for (String skill : nativeSkillsToOverwrite) {
+                String newName = this.properties.get("reskillable.unlock.compatskills." + skill);
+                String newDesc = this.properties.get("reskillable.unlock.compatskills." + skill + ".desc");
+
+                // Hard overwrite natywnych wpisów Reskillable w słowniku gry
+                if (newName != null) {
+                    this.properties.put("reskillable.unlock.reskillable." + skill, newName);
+                }
+                if (newDesc != null) {
+                    this.properties.put("reskillable.unlock.reskillable." + skill + ".desc", newDesc);
+                }
             }
         }
     }

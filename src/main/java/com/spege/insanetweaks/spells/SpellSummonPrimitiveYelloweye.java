@@ -14,6 +14,7 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+@SuppressWarnings("null")
 public class SpellSummonPrimitiveYelloweye extends SpellMinion<EntityPrimitiveYelloweyeMinion> {
 
     public SpellSummonPrimitiveYelloweye() {

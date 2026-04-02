@@ -1,21 +1,20 @@
 {
   "enabled": {
-    "book": true,
-    "scroll": true,
-    "wands": true,
-    "npcs": true,
-    "dispensers": true,
-    "commands": true,
-    "treasure": true,
-    "trades": true,
-    "looting": true
+    "book": false,
+    "scroll": false,
+    "wands": false,
+    "npcs": false,
+    "dispensers": false,
+    "commands": false,
+    "treasure": false,
+    "trades": false,
+    "looting": false
   },
   "tier": "apprentice",
-  "element": "fire",
+  "element": "magic",
   "type": "attack",
   "cost": 15,
   "chargeup": 5,
   "cooldown": 20,
-  "base_properties": {
-  }
+  "base_properties": {}
 }

@@ -11,13 +11,13 @@
     "looting": true
   },
   "tier": "master",
-  "element": "necromancy",
+  "element": "magic",
   "type": "minion",
-  "cost": 200,
-  "chargeup": 40,
-  "cooldown": 2400,
+  "cost": 350,
+  "chargeup": 45,
+  "cooldown": 1800,
   "base_properties": {
-    "minion_lifetime": 1000,
+    "minion_lifetime": 1050,
     "minion_count": 1,
     "summon_radius": 2
   }

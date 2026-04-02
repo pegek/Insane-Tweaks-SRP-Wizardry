@@ -12,6 +12,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+@SuppressWarnings("null")
 public class SpellTestProjectile extends Spell {
 
     public SpellTestProjectile() {

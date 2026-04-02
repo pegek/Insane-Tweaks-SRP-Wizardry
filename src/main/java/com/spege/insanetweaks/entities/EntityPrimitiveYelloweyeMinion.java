@@ -19,12 +19,12 @@ import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAILookIdle;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityMoveHelper;
-import net.minecraft.entity.ai.EntityMoveHelper.Action;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -35,10 +35,13 @@ import net.minecraft.world.World;
 public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature implements IRangedAttackMob {
 
     private static final int BASE_ATTACK_COOLDOWN = 80;
+    private static final int BASE_ATTACK_INTERVAL = 20;
+    private static final int CHARGE_CUE_TICK = BASE_ATTACK_COOLDOWN - 10;
+    private static final double MAX_ATTACK_DISTANCE_SQ = 4225.0D;
     private static final double DESIRED_COMBAT_DISTANCE_SQ = 64.0D;
     private static final double MIN_COMBAT_DISTANCE_SQ = 16.0D;
 
-    private int rangedAttackCooldown = BASE_ATTACK_COOLDOWN;
+    private int attackTimer = 0;
     private int shotCounter = 0;
     private int idleMoveCooldown = 0;
     private float projectileDamageMultiplier = 1.0F;
@@ -103,22 +106,31 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
     }
 
     private void handleCombatAndFlight() {
-        if (this.rangedAttackCooldown > 0) {
-            this.rangedAttackCooldown--;
-        }
-
         EntityLivingBase target = this.getAttackTarget();
         if (target != null && target.isEntityAlive()) {
             this.handleTargetMovement(target);
             this.getLookHelper().setLookPositionWithEntity(target, 180.0F, 30.0F);
 
-            if (this.canEntityBeSeen(target) && this.rangedAttackCooldown <= 0) {
-                float distanceFactor = MathHelper.sqrt(this.getDistanceSq(target));
-                this.attackEntityWithRangedAttack(target, distanceFactor);
-                this.rangedAttackCooldown = BASE_ATTACK_COOLDOWN;
+            if (this.canEntityBeSeen(target) && this.getDistanceSq(target) < MAX_ATTACK_DISTANCE_SQ) {
+                this.attackTimer++;
+
+                if (this.attackTimer == CHARGE_CUE_TICK) {
+                    this.playYelloweyeChargeCue();
+                }
+
+                if (this.attackTimer > BASE_ATTACK_COOLDOWN && this.attackTimer % BASE_ATTACK_INTERVAL == 0) {
+                    this.attackTimer = 0;
+                    this.idleMoveCooldown = 0;
+                    float distanceFactor = MathHelper.sqrt(this.getDistanceSq(target));
+                    this.attackEntityWithRangedAttack(target, distanceFactor);
+                }
+            } else if (this.attackTimer > 0) {
+                this.attackTimer--;
             }
             return;
         }
+
+        this.attackTimer = 0;
 
         EntityLivingBase caster = this.getCaster();
         if (caster != null && this.getDistanceSq(caster) > 36.0D) {
@@ -168,7 +180,7 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
 
     @Override
     public void attackEntityWithRangedAttack(@Nonnull EntityLivingBase target, float distanceFactor) {
-        boolean explosiveShot = (++this.shotCounter % 4) == 0;
+        boolean explosiveShot = this.shotCounter >= 4;
         Vec3d look = this.getLook(1.0F);
         double accelX = target.posX - (this.posX + look.x);
         double accelY = target.getEntityBoundingBox().minY + (double) (target.height / 2.0F)
@@ -176,6 +188,7 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
         double accelZ = target.posZ - (this.posZ + look.z);
 
         if (explosiveShot) {
+            this.shotCounter = 0;
             EntityYelloweyeNadeProjectile projectile = new EntityYelloweyeNadeProjectile(this.world, this, accelX,
                     accelY, accelZ, 3, 60, this.getProjectileBaseDamage());
             this.spawnYelloweyeProjectile(projectile, look);
@@ -186,8 +199,22 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
         EntityYelloweyeSpineball projectile = new EntityYelloweyeSpineball(this.world, this, accelX, accelY, accelZ,
                 this.getProjectileBaseDamage());
         projectile.applyPrimitiveYelloweyeDefaults();
+        projectile.setPotencyMultiplier(this.projectileDamageMultiplier);
         this.spawnYelloweyeProjectile(projectile, look);
         this.playSound(SRPSounds.EMANA_SHOOTING, 2.0F, 1.0F);
+    }
+
+    private void playYelloweyeChargeCue() {
+        this.shotCounter++;
+
+        if (this.shotCounter >= 4) {
+            this.world.setEntityState(this, (byte) 100);
+            float pitch = (this.rand.nextFloat() - this.rand.nextFloat()) * 0.4F + 2.0F;
+            this.playSound(SRPSounds.EMANA_HURT, 4.0F, pitch);
+            return;
+        }
+
+        this.playSound(SRPSounds.EMANA_SHOOTINGPOST, 2.0F, 1.0F);
     }
 
     private float getProjectileBaseDamage() {
@@ -252,6 +279,22 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
                     .clr(0.2F, 0.35F, 0.0F)
                     .spawn(this.world);
         }
+    }
+
+    @Override
+    public void handleStatusUpdate(byte id) {
+        if (id == 100) {
+            for (int i = 0; i < 2; i++) {
+                this.world.spawnParticle(EnumParticleTypes.FLAME,
+                        this.posX + (this.rand.nextDouble() - 0.5D) * (double) this.width,
+                        this.posY + this.rand.nextDouble() * (double) this.height,
+                        this.posZ + (this.rand.nextDouble() - 0.5D) * (double) this.width,
+                        0.0D, 0.0D, 0.0D);
+            }
+            return;
+        }
+
+        super.handleStatusUpdate(id);
     }
 
     @Override

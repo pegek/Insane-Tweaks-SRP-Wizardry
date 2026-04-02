@@ -6,12 +6,14 @@ import java.util.List;
 
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigMobs;
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
+import com.spege.insanetweaks.entities.SummonInfectionSafetyHelper;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -21,8 +23,9 @@ import net.minecraft.world.World;
 public class EntityYelloweyeSpineball extends EntityYelloweyeProjectileBase {
 
     private float damage;
-    private int poisonDurationTicks;
-    private int poisonAmplifier;
+    private int witherDurationTicks;
+    private int witherAmplifier;
+    private float potencyMultiplier = 1.0F;
     private double gearDamage;
 
     public EntityYelloweyeSpineball(World worldIn) {
@@ -43,12 +46,16 @@ public class EntityYelloweyeSpineball extends EntityYelloweyeProjectileBase {
     }
 
     public void setDurationAmplifier(int durationSeconds, int amplifier) {
-        this.poisonDurationTicks = durationSeconds * 20;
-        this.poisonAmplifier = amplifier - 1;
+        this.witherDurationTicks = durationSeconds * 20;
+        this.witherAmplifier = amplifier - 1;
     }
 
     public void setGearDamage(double gearDamage) {
         this.gearDamage = gearDamage;
+    }
+
+    public void setPotencyMultiplier(float potencyMultiplier) {
+        this.potencyMultiplier = potencyMultiplier;
     }
 
     @Override
@@ -65,10 +72,13 @@ public class EntityYelloweyeSpineball extends EntityYelloweyeProjectileBase {
                     : DamageSource.causeFireballDamage(this, shooter);
 
             target.attackEntityFrom(damageSource, this.damage);
+            SummonInfectionSafetyHelper.clearCoth(target);
 
-            if (this.poisonDurationTicks > 0) {
-                target.addPotionEffect(new PotionEffect(MobEffects.POISON, this.poisonDurationTicks,
-                        Math.max(0, this.poisonAmplifier)));
+            if (this.witherDurationTicks > 0) {
+                int baseAmplifier = Math.max(0, this.witherAmplifier);
+                int potencyBonus = this.getPotencyWitherBonus();
+                target.addPotionEffect(new PotionEffect(MobEffects.WITHER, this.witherDurationTicks,
+                        baseAmplifier + potencyBonus));
             }
 
             this.damageArmor(target, this.gearDamage);
@@ -116,6 +126,12 @@ public class EntityYelloweyeSpineball extends EntityYelloweyeProjectileBase {
         }
 
         return true;
+    }
+
+    private int getPotencyWitherBonus() {
+        float extraPotency = Math.max(0.0F, this.potencyMultiplier - 1.0F);
+        int bonus = MathHelper.floor(extraPotency / 0.5F);
+        return Math.min(2, bonus);
     }
 
     private void damageArmor(EntityLivingBase target, double percentage) {

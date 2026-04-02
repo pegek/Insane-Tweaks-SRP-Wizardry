@@ -1,15 +1,15 @@
 [
 {
   "modid": "insanetweaks",
-  "name": "InsaneTweaks SRP&Wizardry ",
-  "description": "A few thing and tweaks but mainly adds the Parasite-infused BattleMage Armor and Spellblades. Experience battlemage gear evolution inspired by SRParasites",
-  "version": "1.0.13",
+  "name": "Insane Tweaks",
+  "description": "A modular 1.12.2 bridge mod focused on parasite-themed battlemage progression, evolving gear, custom Wizardry spells, and optional Reskillable integration.",
+  "version": "1.0.16",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "url": "https://www.curseforge.com/minecraft/mc-mods/srpwizardry-insanetweaks",
   "credits": ".",
   "logoFile": "logo.png",
-  "dependencies": ["ebwizardry", "spartanweaponry", "ancientspellcraft", "srparasites", "swparasites", "srpextra", "baubles"]
+  "dependencies": ["ebwizardry", "spartanweaponry", "ancientspellcraft", "srparasites", "swparasites"]
 
 }
 ]

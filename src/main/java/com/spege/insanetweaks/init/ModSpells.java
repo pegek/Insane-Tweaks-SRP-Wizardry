@@ -3,6 +3,8 @@ package com.spege.insanetweaks.init;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.spells.SpellSummonFerCow;
+import com.spege.insanetweaks.spells.SpellPurifyingPulse;
+import com.spege.insanetweaks.spells.SpellSummonPrimitiveSummoner;
 import com.spege.insanetweaks.spells.SpellSummonPrimitiveYelloweye;
 import com.spege.insanetweaks.spells.SpellTestProjectile;
 import electroblob.wizardry.spell.Spell;
@@ -15,7 +17,9 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class ModSpells {
 
     public static final Spell SUMMON_FER_COW = new SpellSummonFerCow();
+    public static final Spell SUMMON_PRIMITIVE_SUMMONER = new SpellSummonPrimitiveSummoner();
     public static final Spell SUMMON_PRIMITIVE_YELLOWEYE = new SpellSummonPrimitiveYelloweye();
+    public static final Spell PURIFYING_PULSE = new SpellPurifyingPulse();
     public static final Spell TEST_PROJECTILE = new SpellTestProjectile();
 
     @SubscribeEvent
@@ -26,7 +30,9 @@ public class ModSpells {
 
         IForgeRegistry<Spell> registry = event.getRegistry();
         registry.register(SUMMON_FER_COW);
+        registry.register(SUMMON_PRIMITIVE_SUMMONER);
         registry.register(SUMMON_PRIMITIVE_YELLOWEYE);
+        registry.register(PURIFYING_PULSE);
         registry.register(TEST_PROJECTILE);
     }
 }

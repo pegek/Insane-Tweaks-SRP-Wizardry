@@ -5,15 +5,12 @@ import baubles.api.attribute.AdvancedInstance;
 import baubles.api.attribute.AttributeManager;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
-import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import com.spege.insanetweaks.events.BaubleFruitEventHandler;
 import com.spege.insanetweaks.init.ModItems;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
@@ -194,28 +191,4 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     // Indestructible dropped item  Eprevents the fruit being voided in lava
     // =========================================================================
 
-    @Override
-    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
-        return true;
-    }
-
-    @Override
-    @Nullable
-    public Entity createEntity(@Nonnull World world, @Nonnull Entity location,
-            @Nonnull ItemStack itemstack) {
-        EntityItemIndestructible entity = new EntityItemIndestructible(
-                world, location.posX, location.posY, location.posZ, itemstack);
-        entity.motionX = location.motionX;
-        entity.motionY = location.motionY;
-        entity.motionZ = location.motionZ;
-        entity.setDefaultPickupDelay();
-
-        if (location instanceof EntityItem) {
-            String thrower = ((EntityItem) location).getThrower();
-            String owner   = ((EntityItem) location).getOwner();
-            if (thrower != null) entity.setThrower(thrower);
-            if (owner   != null) entity.setOwner(owner);
-        }
-        return entity;
-    }
 }

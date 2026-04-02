@@ -40,6 +40,8 @@ public class ModItems {
             .setUnlocalizedName("rupter_solied").setCreativeTab(CreativeTabs.MISC);
     public static final Item LIVING_SPELLBLADE = new LivingSpellblade();
     public static final Item SENTIENT_SPELLBLADE = new SentientSpellblade();
+    public static final Item LIVING_WAND = new com.spege.insanetweaks.items.wand.LivingWandItem();
+    public static final Item SENTIENT_WAND = new com.spege.insanetweaks.items.wand.SentientWandItem();
 
     // Battlemage Armor
     public static final Item BATTLEMAGE_HELMET = new com.spege.insanetweaks.items.armor.BattleMageArmorItem(
@@ -63,6 +65,7 @@ public class ModItems {
 
     public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
     public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
+    public static final Item INFERNAL_CROWN = new com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact();
 
     // Bauble Fruits  Eall 6 slot types
     public static final Item BAUBLE_FRUIT_RING   = new RingFruitItem();
@@ -89,7 +92,8 @@ public class ModItems {
         // Items gated by Golden Book module
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
-            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS);
+            event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
+            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN);
             event.getRegistry().registerAll(
                 BATTLEMAGE_HELMET, BATTLEMAGE_CHESTPLATE, BATTLEMAGE_LEGGINGS, BATTLEMAGE_BOOTS,
                 PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE, PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS
@@ -116,6 +120,9 @@ public class ModItems {
             registerModel(RUPTER_SOLIED);
             ((com.spege.insanetweaks.items.spellblade.BridgeSpellblade)LIVING_SPELLBLADE).registerModel();
             ((com.spege.insanetweaks.items.spellblade.BridgeSpellblade)SENTIENT_SPELLBLADE).registerModel();
+            
+            registerModel(LIVING_WAND);
+            registerModel(SENTIENT_WAND);
 
             // Armor Models
             registerModel(BATTLEMAGE_HELMET);
@@ -130,6 +137,7 @@ public class ModItems {
 
             registerModel(LIVING_AEGIS);
             registerModel(SENTIENT_AEGIS);
+            registerModel(INFERNAL_CROWN);
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {

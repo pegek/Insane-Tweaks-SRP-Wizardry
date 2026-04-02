@@ -1,6 +1,6 @@
 package com.spege.insanetweaks.mixins;
 
-import java.util.Collections;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import zone.rong.mixinbooter.ILateMixinLoader;
 
+@SuppressWarnings("deprecation")
 @zone.rong.mixinbooter.MixinLoader
 public class LateMixinBooter implements ILateMixinLoader {
 
@@ -15,7 +16,9 @@ public class LateMixinBooter implements ILateMixinLoader {
 
     @Override
     public List<String> getMixinConfigs() {
-        return Collections.singletonList("mixins.insanetweaks.late.json");
+        List<String> configs = new java.util.ArrayList<>();
+        configs.add("mixins.insanetweaks.late.json");
+        return configs;
     }
 
     @Override

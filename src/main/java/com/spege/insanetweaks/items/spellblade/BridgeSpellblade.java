@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.util.SoManyEnchantmentsCompat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
@@ -15,8 +15,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.google.common.collect.Multimap;
 import javax.annotation.Nonnull;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -51,6 +49,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     protected String bridgeName;
     protected String bridgeModId;
     protected ToolMaterialEx bridgeMaterial = null;
+    protected static final int ARCANE_ADAPTATION_LEVEL = 1;
 
     @SuppressWarnings("null")
     public BridgeSpellblade(String name, String modId, Tier tier, int maxUpgrades) {
@@ -155,6 +154,8 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
                 .create();
         multimap.putAll(super.getAttributeModifiers(slot, stack));
         if (slot == EntityEquipmentSlot.MAINHAND) {
+            SoManyEnchantmentsCompat.addAttackSpeedModifiers(stack, multimap);
+
             // Magically Adapted - magic damage modifier for PotionCore
             // Only activates if PotionCore is actually loaded, preventing NPEs on the
             // AttributeMap
@@ -274,7 +275,37 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
             }
         }
 
+        if (this.shouldApplyArcaneAdaptation(spell)) {
+            modifiers.set(SpellModifiers.COST, modifiers.get(SpellModifiers.COST) * this.getArcaneAdaptationManaMultiplier(),
+                    false);
+        }
+
         return modifiers;
+    }
+
+    protected int getArcaneAdaptationLevel() {
+        return ARCANE_ADAPTATION_LEVEL;
+    }
+
+    protected int getArcaneAdaptationManaMultiplier() {
+        switch (this.getArcaneAdaptationLevel()) {
+            case 1:
+                return 2;
+            case 2:
+                return 3;
+            case 3:
+                return 4;
+            default:
+                return 1;
+        }
+    }
+
+    protected boolean shouldApplyArcaneAdaptation(Spell spell) {
+        if (this.getArcaneAdaptationLevel() <= 0 || spell == null || spell.getRegistryName() == null) {
+            return false;
+        }
+
+        return !InsaneTweaksMod.MODID.equals(spell.getRegistryName().getResourceDomain());
     }
 
     // ------------------------------------------------------------------
@@ -317,28 +348,4 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         return false;
     }
 
-    @Override
-    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
-        return true;
-    }
-
-    @Override
-    @Nonnull
-    public Entity createEntity(@Nonnull World world, @Nonnull Entity location, @Nonnull ItemStack itemstack) {
-        EntityItemIndestructible entity = new EntityItemIndestructible(world, location.posX, location.posY,
-                location.posZ, itemstack);
-        entity.motionX = location.motionX;
-        entity.motionY = location.motionY;
-        entity.motionZ = location.motionZ;
-        entity.setDefaultPickupDelay();
-        if (location instanceof EntityItem) {
-            String thrower = ((EntityItem) location).getThrower();
-            String owner = ((EntityItem) location).getOwner();
-            if (thrower != null)
-                entity.setThrower(thrower);
-            if (owner != null)
-                entity.setOwner(owner);
-        }
-        return entity;
-    }
 }

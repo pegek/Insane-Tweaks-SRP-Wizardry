@@ -24,6 +24,7 @@ import com.spege.insanetweaks.init.ModItems;
 @Mixin(value = TileEntityImbuementAltar.class, remap = false)
 public class MixinTileEntityImbuementAltar {
 
+    @SuppressWarnings("null")
     @Inject(method = "getImbuementResult", at = @At("HEAD"), cancellable = true, remap = false)
     private static void insanetweaks$onGetImbuementResult(ItemStack input, Element[] receptacleElements,
             boolean fullLootGen, World world, EntityPlayer lastUser, CallbackInfoReturnable<ItemStack> cir) {

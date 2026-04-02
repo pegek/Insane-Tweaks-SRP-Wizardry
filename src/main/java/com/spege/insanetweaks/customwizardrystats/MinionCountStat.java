@@ -19,10 +19,8 @@ public final class MinionCountStat {
         }
 
         // TESTING NOTE:
-        // Base SpellMinion reads minion_count from spell properties, not from
-        // SpellModifiers. This stores an experimental value in the modifier bag, but
-        // it will not affect default SpellMinion behavior until a custom spell reads
-        // it explicitly.
+        // InsaneTweaks now patches SpellMinion via compat mixin, so this modifier is
+        // consumed globally as flat extra summon count by Wizardry minion spells.
         event.getModifiers().set("minion_count",
                 event.getModifiers().get("minion_count") * TEST_MULTIPLIER, false);
     }

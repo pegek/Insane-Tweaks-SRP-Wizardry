@@ -5,7 +5,11 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinEntitySummonedCreature"
+    "MixinEntitySummonedCreature",
+    "MixinGuiSpellDisplay",
+    "MixinSpell",
+    "MixinSpellMinion",
+    "MixinUnlockableReskillable"
   ],
   "client": [],
   "server": [],

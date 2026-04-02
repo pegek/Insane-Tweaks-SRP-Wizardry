@@ -98,7 +98,9 @@ public class EntityFerCowMinion extends EntitySummonedCreature {
 
         if (attacked && entityIn instanceof EntityLivingBase) {
             this.applyEnchantments(this, entityIn);
-            this.onSuccessfulAttack((EntityLivingBase) entityIn);
+            EntityLivingBase target = (EntityLivingBase) entityIn;
+            SummonInfectionSafetyHelper.clearCoth(target);
+            this.onSuccessfulAttack(target);
         }
 
         return attacked;

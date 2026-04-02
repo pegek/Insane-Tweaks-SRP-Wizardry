@@ -13,6 +13,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+@SuppressWarnings("null")
 public class SpellSummonFerCow extends SpellMinion<EntityFerCowMinion> {
 
     public SpellSummonFerCow() {

@@ -25,6 +25,7 @@ import java.util.Objects;
 public class InsaneTweaksJEIPlugin implements IModPlugin {
 
     @Override
+    @SuppressWarnings("null")
     public void register(@Nonnull IModRegistry registry) {
         try {
             // Retrieve Spectral Dust item reference safely.

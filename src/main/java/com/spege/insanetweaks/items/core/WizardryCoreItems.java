@@ -58,7 +58,7 @@ public final class WizardryCoreItems {
             "Minion Count",
             false,
             false,
-            "Experimental: base SpellMinion does not consume count from SpellModifiers.");
+            "Consumed globally through the InsaneTweaks Wizardry SpellMinion compat mixin.");
 
     public static final WizardryCoreItem SUMMON_RADIUS_CORE = new WizardryCoreItem(
             "summon_radius_core",

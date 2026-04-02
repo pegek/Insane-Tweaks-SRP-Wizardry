@@ -25,8 +25,11 @@ import net.minecraft.init.Items;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
 import com.spege.insanetweaks.entities.EntityFerCowMinion;
-import com.spege.insanetweaks.entities.EntityItemIndestructible;
+import com.spege.insanetweaks.entities.EntityRupterMinion;
+import com.spege.insanetweaks.entities.EntitySummonerVomitCloud;
+import com.spege.insanetweaks.entities.EntityPrimitiveSummonerMinion;
 import com.spege.insanetweaks.entities.EntityPrimitiveYelloweyeMinion;
+import com.spege.insanetweaks.entities.EntityPurifyingWave;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNade;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNadeProjectile;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeSpineball;
@@ -40,11 +43,11 @@ import java.util.Objects;
 
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;required-after:srparasites;"
         +
-        "after:srpextra;after:baubles;after:potioncore;before:compatskills;before:reskillable")
+        "after:srpextra;after:baubles;after:potioncore;before:reskillable")
 public class InsaneTweaksMod {
     public static final String MODID = "insanetweaks";
     public static final String NAME = "Insane Tweaks";
-    public static final String VERSION = "1.0.5";
+    public static final String VERSION = "1.0.15";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -52,7 +55,6 @@ public class InsaneTweaksMod {
     private static boolean warnSrparasitesOldVersion = false;
     private static boolean wantsBaubleFruitsWarning = false;
     private static boolean wantsSkillsModuleWarning = false;
-    private static boolean notifySkillsModuleOff = false;
 
     // -----------------------------------------------------------------------
     // CurseForge URLs — update if any link changes
@@ -60,7 +62,6 @@ public class InsaneTweaksMod {
     private static final String URL_BAUBLES_EX = "https://www.curseforge.com/minecraft/mc-mods/baublesex";
     private static final String URL_SRPEXTRA = "https://www.curseforge.com/minecraft/mc-mods/scape-and-run-parasites-extra";
     private static final String URL_RESKILLABLE = "https://www.curseforge.com/minecraft/mc-mods/reskillable-fork";
-    private static final String URL_COMPATSKILLS = "https://www.curseforge.com/minecraft/mc-mods/compatskills-fork";
     private static final String URL_SOME_ENCHANTMENTS = "https://www.curseforge.com/minecraft/mc-mods/so-many-enchantments";
     private static final String URL_POTIONCORE = "https://www.curseforge.com/minecraft/mc-mods/potion-core";
 
@@ -69,7 +70,9 @@ public class InsaneTweaksMod {
     // -------------------------------------------------------------------------
 
     @Mod.EventHandler
+    @SuppressWarnings("null")
     public void preInit(FMLPreInitializationEvent event) {
+        
         // Print compatibility report to log and set version flags.
         logCompatibilityReport();
 
@@ -88,6 +91,20 @@ public class InsaneTweaksMod {
                             return new RenderPrimitiveYelloweyeMinion(manager);
                         }
                     });
+            RenderingRegistry.registerEntityRenderingHandler(EntityPrimitiveSummonerMinion.class,
+                    new IRenderFactory<EntityPrimitiveSummonerMinion>() {
+                        @Override
+                        public Render<? super EntityPrimitiveSummonerMinion> createRenderFor(RenderManager manager) {
+                            return new RenderPrimitiveSummonerMinion(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityRupterMinion.class,
+                    new IRenderFactory<EntityRupterMinion>() {
+                        @Override
+                        public Render<? super EntityRupterMinion> createRenderFor(RenderManager manager) {
+                            return new RenderRupterMinion(manager);
+                        }
+                    });
             RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeSpineball.class,
                     new IRenderFactory<EntityYelloweyeSpineball>() {
                         @Override
@@ -101,18 +118,14 @@ public class InsaneTweaksMod {
                     new IRenderFactory<EntityYelloweyeNadeProjectile>() {
                         @Override
                         public Render<? super EntityYelloweyeNadeProjectile> createRenderFor(RenderManager manager) {
-                            return new RenderSnowball<EntityYelloweyeNadeProjectile>(manager,
-                                    Objects.requireNonNull(Items.SLIME_BALL),
-                                    Minecraft.getMinecraft().getRenderItem());
+                            return new RenderYelloweyeNadeProjectile(manager);
                         }
                     });
             RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNade.class,
                     new IRenderFactory<EntityYelloweyeNade>() {
                         @Override
                         public Render<? super EntityYelloweyeNade> createRenderFor(RenderManager manager) {
-                            return new RenderSnowball<EntityYelloweyeNade>(manager,
-                                    Objects.requireNonNull(Items.SLIME_BALL),
-                                    Minecraft.getMinecraft().getRenderItem());
+                            return new RenderYelloweyeNade(manager);
                         }
                     });
         }
@@ -131,15 +144,13 @@ public class InsaneTweaksMod {
         }
 
         boolean wantsSkillsModule = com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule;
-        if (!wantsSkillsModule) {
-            notifySkillsModuleOff = true;
-        }
 
-        // Auto-detect Reskillable & CompatSkills; disable Skills Module if either is absent.
-        if (!Loader.isModLoaded("reskillable") || !Loader.isModLoaded("compatskills")) {
+        // Auto-detect Reskillable. CompatSkills itself is optional here; we only keep
+        // its domain string for save/config compatibility.
+        if (!Loader.isModLoaded("reskillable")) {
             if (wantsSkillsModule) {
                 LOGGER.info(
-                        "[InsaneTweaks] Reskillable or CompatSkills missing. Automatically disabling Skills Module.");
+                        "[InsaneTweaks] Reskillable missing. Automatically disabling Skills Module.");
                 wantsSkillsModuleWarning = true;
                 com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule = false;
             }
@@ -158,12 +169,21 @@ public class InsaneTweaksMod {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         // Register Internal Entities
-        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "indestructible_item"),
-                EntityItemIndestructible.class, "indestructible_item", 99, this, 64, 20, true);
+        // Other entities if any...
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "fer_cow_minion"),
                 EntityFerCowMinion.class, "fer_cow_minion", 100, this, 64, 3, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_yelloweye_minion"),
                 EntityPrimitiveYelloweyeMinion.class, "primitive_yelloweye_minion", 101, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_summoner_minion"),
+                EntityPrimitiveSummonerMinion.class, "primitive_summoner_minion", 105, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "rupter_minion"),
+                EntityRupterMinion.class, "rupter_minion", 106, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "summoner_vomit_cloud"),
+                EntitySummonerVomitCloud.class, "summoner_vomit_cloud", 107, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "purifying_wave"),
+                EntityPurifyingWave.class, "purifying_wave", 108, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "legendary_item"),
+                com.spege.insanetweaks.entities.EntityItemIndestructible.class, "legendary_item", 109, this, 64, 20, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_spineball"),
                 EntityYelloweyeSpineball.class, "yelloweye_spineball", 102, this, 64, 10, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade_projectile"),
@@ -171,8 +191,9 @@ public class InsaneTweaksMod {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade"),
                 EntityYelloweyeNade.class, "yelloweye_nade", 104, this, 64, 10, true);
 
-        // Fire/lava immunity for all Living and Sentient item drops — registered
-        // unconditionally.
+
+        // Immediately grant fire/explosion immunity to all Living and Sentient item drops
+        // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
         if (com.spege.insanetweaks.config.ModConfig.tweaks.enableCurseOfPossessionPatch) {
@@ -186,11 +207,15 @@ public class InsaneTweaksMod {
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AttackSpeedDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact.class);
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
             }
@@ -199,6 +224,10 @@ public class InsaneTweaksMod {
         // GoldenBook is independent of the SRP/EBWizardry bridge — register
         // unconditionally.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GoldenBookEventHandler());
+        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
+        }
 
         // --- Build the list of recommended mods that are missing / need updating ---
         boolean hasBaubles = Loader.isModLoaded("baubles");
@@ -214,7 +243,6 @@ public class InsaneTweaksMod {
 
         boolean hasSomeEnch = Loader.isModLoaded("somanyenchantments");
         boolean hasReskillable = Loader.isModLoaded("reskillable");
-        boolean hasCompatSkills = Loader.isModLoaded("compatskills");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
 
         // Each entry: { display name, reason, url }
@@ -260,18 +288,12 @@ public class InsaneTweaksMod {
                         "Reskillable", "Required for the skill tree and trait system.", URL_RESKILLABLE
                 });
             }
-            if (!hasCompatSkills) {
-                recommendations.add(new String[] {
-                        "CompatSkills", "Required alongside Reskillable for custom traits.", URL_COMPATSKILLS
-                });
-            }
         }
 
         // Register login handler only if there is something to report.
-        if (!recommendations.isEmpty() || notifySkillsModuleOff) {
+        if (!recommendations.isEmpty()) {
             final List<String[]> finalRecs = recommendations;
-            boolean finalNotifySkills = notifySkillsModuleOff;
-            MinecraftForge.EVENT_BUS.register(new RecommendationsLoginHandler(finalRecs, finalNotifySkills));
+            MinecraftForge.EVENT_BUS.register(new RecommendationsLoginHandler(finalRecs));
         }
 
         // Baubles legacy persistence handler
@@ -291,6 +313,10 @@ public class InsaneTweaksMod {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.AdaptedVegetationSkill());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
             LOGGER.info("[InsaneTweaks] Reskillable traits module enabled.");
+        }
+
+        if (hasReskillable && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ReskillableGuiHandler());
         }
     }
 
@@ -314,24 +340,18 @@ public class InsaneTweaksMod {
      */
     private static class RecommendationsLoginHandler {
         private final List<String[]> recs;
-        private final boolean notifySkillsModuleOff;
         private boolean sent = false;
 
-        RecommendationsLoginHandler(List<String[]> recs, boolean notifySkillsModuleOff) {
+        RecommendationsLoginHandler(List<String[]> recs) {
             this.recs = recs;
-            this.notifySkillsModuleOff = notifySkillsModuleOff;
         }
 
         @SubscribeEvent
+        @SuppressWarnings("null")
         public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (sent)
                 return;
             sent = true;
-
-            if (notifySkillsModuleOff) {
-                event.player.sendMessage(new TextComponentString(
-                        TextFormatting.RED + "[InsaneTweaks] " + TextFormatting.YELLOW + "Custom Skills module is off! enable this via config"));
-            }
 
             if (!recs.isEmpty()) {
                 event.player.sendMessage(new TextComponentString(
@@ -415,8 +435,11 @@ public class InsaneTweaksMod {
             LOGGER.info("   -> If crashing: set 'Fix Saturation = false' in potioncore.cfg");
         LOGGER.info("  reskillable         ... {}", status(hasReskillable));
         LOGGER.info("  compatskills        ... {}", status(hasCompatSkills));
-        if (!hasReskillable || !hasCompatSkills)
-            LOGGER.info("   -> Skills Module disabled (requires reskillable + compatskills).");
+        if (!hasReskillable) {
+            LOGGER.info("   -> Skills Module disabled (requires reskillable).");
+        } else if (!hasCompatSkills) {
+            LOGGER.info("   -> CompatSkills not installed; custom traits still use its domain for save compatibility.");
+        }
         LOGGER.info("================================================");
     }
 

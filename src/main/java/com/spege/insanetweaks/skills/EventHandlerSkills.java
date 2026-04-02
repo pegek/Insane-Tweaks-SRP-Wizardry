@@ -12,9 +12,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import codersafterdark.reskillable.api.event.UnlockUnlockableEvent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
@@ -25,6 +22,7 @@ import electroblob.wizardry.event.SpellCastEvent;
 import electroblob.wizardry.item.IManaStoringItem;
 import electroblob.wizardry.item.ItemWizardArmour;
 import electroblob.wizardry.spell.Spell;
+import electroblob.wizardry.util.SpellModifiers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
@@ -34,8 +32,8 @@ public class EventHandlerSkills {
 
     // Stałe pod optymalizację traitu Archmage (Testowe wartości)
     private static final java.util.UUID ARCHMAGE_MODIFIER_UUID = java.util.UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0123456789ab");
-    // Obrażenia Magiczne: 0.10D = +10% (zmienione z domyślnego +5%)
-    private static final net.minecraft.entity.ai.attributes.AttributeModifier ARCHMAGE_MODIFIER = new net.minecraft.entity.ai.attributes.AttributeModifier(ARCHMAGE_MODIFIER_UUID, "Archmage Magic Damage Bonus", 0.10D, 1).setSaved(false);
+    // Obrażenia Magiczne: 0.07D = +7%
+    private static final net.minecraft.entity.ai.attributes.AttributeModifier ARCHMAGE_MODIFIER = new net.minecraft.entity.ai.attributes.AttributeModifier(ARCHMAGE_MODIFIER_UUID, "Archmage Magic Damage Bonus", 0.07D, 1).setSaved(false);
 
     // Stałe pod traita Bob the Builder
     private static final java.util.UUID BOB_MODIFIER_UUID = java.util.UUID.fromString("b2c3d4e5-f6a7-4b8c-9d0e-123456789abc");
@@ -45,9 +43,6 @@ public class EventHandlerSkills {
     // Stałe pod traita Angry Farmer
     private static final java.util.UUID ANGRY_FARMER_DMG_UUID = java.util.UUID.fromString("c3d4e5f6-a7b8-4c9d-0e1f-23456789abcd");
     private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_DMG = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_DMG_UUID, "Angry Farmer Damage", 5.0D, 0).setSaved(false);
-    private static final java.util.UUID ANGRY_FARMER_SPEED_UUID = java.util.UUID.fromString("d4e5f6a7-b8c9-4d0e-1f2a-3456789abcde");
-    private static final net.minecraft.entity.ai.attributes.AttributeModifier ANGRY_FARMER_SPEED = new net.minecraft.entity.ai.attributes.AttributeModifier(ANGRY_FARMER_SPEED_UUID, "Angry Farmer Attack Speed", 0.1D, 2).setSaved(false);
-
     // Stałe pod traita Golden Osmosis Buffed
     private static final java.util.UUID GOLDEN_ARMOR_UUID = java.util.UUID.fromString("e5f6a7b8-c9d0-4e1f-2a34-56789abcdef0");
     private static final java.util.UUID GOLDEN_TOUGHNESS_UUID = java.util.UUID.fromString("f6a7b8c9-d0e1-4f2a-3b45-6789abcdef01");
@@ -298,12 +293,11 @@ public class EventHandlerSkills {
                 }
             }
 
-            // ANGRY FARMER - +5 Flat Dmg, +10% Attack Speed with farming tools
+            // ANGRY FARMER - +5 flat damage with farming tools
             if (player.ticksExisted % 5 == 0) {
                 net.minecraft.entity.ai.attributes.IAttributeInstance dmgAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_DAMAGE);
-                net.minecraft.entity.ai.attributes.IAttributeInstance speedAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED);
                 
-                if (dmgAttr != null && speedAttr != null) {
+                if (dmgAttr != null) {
                     boolean hasFarmer = TraitBase.hasTrait(player, "reskillable:farming", "compatskills:angry_farmer");
                     boolean holdingFarmTool = false;
                     
@@ -326,14 +320,11 @@ public class EventHandlerSkills {
                     }
                     
                     boolean hasDmgMod = dmgAttr.hasModifier(ANGRY_FARMER_DMG);
-                    boolean hasSpeedMod = speedAttr.hasModifier(ANGRY_FARMER_SPEED);
                     
                     if (holdingFarmTool) {
                         if (!hasDmgMod) dmgAttr.applyModifier(ANGRY_FARMER_DMG);
-                        if (!hasSpeedMod) speedAttr.applyModifier(ANGRY_FARMER_SPEED);
                     } else {
                         if (hasDmgMod) dmgAttr.removeModifier(ANGRY_FARMER_DMG);
-                        if (hasSpeedMod) speedAttr.removeModifier(ANGRY_FARMER_SPEED);
                     }
                 }
             }
@@ -494,8 +485,10 @@ public class EventHandlerSkills {
 
         // Arcane Mastery (10% Cost Reduction)
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:arcane_mastery")) {
-            float currentCost = event.getModifiers().get("cost");
-            event.getModifiers().set("cost", Math.max(0.05f, currentCost * 0.90f), false);
+            // Legacy syntax used to be event.getModifiers().set("cost", ...).
+            // Keep the note here so future edits remember why we now use the native constant.
+            float currentCost = event.getModifiers().get(SpellModifiers.COST);
+            event.getModifiers().set(SpellModifiers.COST, Math.max(0.05f, currentCost * 0.90f), false);
         }
 
         Spell spell = event.getSpell();
@@ -513,34 +506,17 @@ public class EventHandlerSkills {
                 SummonDurationStat.applyTestModifier(event);
             }
         }
-    }
-
-    @SubscribeEvent
-    public void onSpellCastPost(SpellCastEvent.Post event) {
-        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
-            return;
-        if (!(event.getCaster() instanceof EntityPlayer))
-            return;
-        EntityPlayer player = (EntityPlayer) event.getCaster();
-        if (player.world.isRemote)
-            return;
-
-        Spell spell = event.getSpell();
-        if (spell == null)
-            return;
 
         // Archmage
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage")) {
             if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
-                event.getModifiers().set("potency",
-                        event.getModifiers().get("potency") * 1.05f, false);
+                event.getModifiers().set(SpellModifiers.POTENCY,
+                        event.getModifiers().get(SpellModifiers.POTENCY) * 1.05f, false);
             } else {
-                event.getModifiers().set("potency",
-                        event.getModifiers().get("potency") * 1.15f, false);
+                event.getModifiers().set(SpellModifiers.POTENCY,
+                        event.getModifiers().get(SpellModifiers.POTENCY) * 1.15f, false);
             }
         }
-
-        electroblob.wizardry.constants.SpellType type = spell.getType();
 
         // School of Alteration
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_alteration")) {
@@ -573,8 +549,8 @@ public class EventHandlerSkills {
         if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_destruction")) {
             if (type == electroblob.wizardry.constants.SpellType.ATTACK
                     || type == electroblob.wizardry.constants.SpellType.PROJECTILE) {
-                event.getModifiers().set("potency",
-                        event.getModifiers().get("potency") * 1.10f, false);
+                event.getModifiers().set(SpellModifiers.POTENCY,
+                        event.getModifiers().get(SpellModifiers.POTENCY) * 1.10f, false);
             }
         }
     }
@@ -638,22 +614,4 @@ public class EventHandlerSkills {
         }
     }
 
-    @SubscribeEvent
-    public void onSkillUnlocked(UnlockUnlockableEvent.Post event) {
-        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
-            return;
-
-        if (event.getUnlockable() != null) {
-            net.minecraft.util.ResourceLocation regName = event.getUnlockable().getRegistryName();
-            if (regName != null && regName.toString().equals("reskillable:golden_osmosis")) {
-                event.getEntityPlayer().sendMessage(new TextComponentString(
-                    TextFormatting.GOLD + "[InsaneTweaks]: " + TextFormatting.RESET + "You're so awesome your golden osmosis needs a buff! Golden Armor receives +1 Armor, +0.5 Toughness per piece, and golden tools/weapons receive +25% Attack Speed."
-                ));
-            } else if (regName != null && regName.toString().equals("reskillable:safe_port")) {
-                event.getEntityPlayer().sendMessage(new TextComponentString(
-                    TextFormatting.GOLD + "[InsaneTweaks]: " + TextFormatting.RESET + "You're so awesome your safe port needs a buff! Ender Pearl throw velocity and range are increased by 30%!"
-                ));
-            }
-        }
-    }
 }

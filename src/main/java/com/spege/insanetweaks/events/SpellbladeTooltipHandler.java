@@ -4,13 +4,14 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -84,6 +85,7 @@ public class SpellbladeTooltipHandler {
         // 1. Insert kill count right below the item name (index 1)
         NBTTagCompound swordNbt = stack.getTagCompound();
         int killsDisplay = (swordNbt != null) ? swordNbt.getInteger("SentientKills") : 0;
+        boolean isShiftPressed = GuiScreen.isShiftKeyDown();
 
         if ("insanetweaks:sentient_spellblade".equals(regName) && killsDisplay >= 1800) {
             // A N I H I L A T O R Easter Egg
@@ -115,8 +117,28 @@ public class SpellbladeTooltipHandler {
             }
         }
 
-        // 3. Find the best insertion index (before Forge/JEI info footers)
-        int insertIdx = com.spege.insanetweaks.util.TooltipUtils.getInsertIdx(tooltip);
+        // 3. Find the best insertion index (before QualityTools and Vanilla attributes)
+        int insertIdx = tooltip.size();
+        for (int i = 1; i < tooltip.size(); i++) {
+            String cleanLine = net.minecraft.util.text.TextFormatting.getTextWithoutFormattingCodes(tooltip.get(i));
+            if (cleanLine == null) continue;
+            String lower = cleanLine.toLowerCase();
+            
+            // Look for QualityTools or Vanilla modifiers (When in main hand, etc.)
+            if (lower.startsWith("quality:") || lower.startsWith("when in ") || lower.startsWith("when on ") || lower.startsWith("attribute modifiers")) {
+                insertIdx = i;
+                // Capture any empty line before the Quality text
+                if (i > 1 && tooltip.get(i - 1).trim().isEmpty()) {
+                    insertIdx = i - 1;
+                }
+                break;
+            }
+        }
+        
+        // Fallback to TooltipUtils if nothing was found
+        if (insertIdx == tooltip.size()) {
+            insertIdx = com.spege.insanetweaks.util.TooltipUtils.getInsertIdx(tooltip);
+        }
 
         // 4. Build the custom information block
         List<String> myLines = new ArrayList<>();
@@ -133,17 +155,40 @@ public class SpellbladeTooltipHandler {
             myLines.add("");
         }
 
-        myLines.add("\u00a76Properties:");
+        // Properties header — mirrors SpartanWeaponry's SHIFT toggle style exactly
+        String shiftHint = isShiftPressed
+                ? TextFormatting.DARK_GRAY + "[Showing details]"
+                : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT" + TextFormatting.DARK_GRAY + " to show details]";
+        myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
+        myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation I"
+                + TextFormatting.RED + " (x2 Mana Cost)");
+        if (isShiftPressed) {
+            String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("arcane_adaptation");
+            if (desc != null) {
+                myLines.add(TextFormatting.RED + "" + TextFormatting.ITALIC + "  " + desc);
+            }
+        }
+        myLines.add(TextFormatting.GOLD + "- Ashen Legacy");
+        if (isShiftPressed) {
+            String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("ashen_legacy");
+            if (desc != null) {
+                myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
+            }
+        }
 
         for (Object propObj : props) {
             String type = "";
+            int level = 0;
 
             if (propObj instanceof WeaponProperty) {
                 type = ((WeaponProperty) propObj).getType();
+                level = ((WeaponProperty) propObj).getLevel();
             } else {
                 try {
                     Method getType = propObj.getClass().getMethod("getType");
                     type = (String) getType.invoke(propObj);
+                    Method getLevel = propObj.getClass().getMethod("getLevel");
+                    level = ((Integer) getLevel.invoke(propObj)).intValue();
                 } catch (Exception e) {
                     continue;
                 }
@@ -170,43 +215,57 @@ public class SpellbladeTooltipHandler {
             }
 
             // Polished overrides for known Spartan / swparasites property names
-            if (type.contains("viral"))
-                name = "Viral I";
-            if (type.contains("sweep"))
-                name = "Sweep I";
-            if (type.contains("reach"))
-                name = "Reach";
-            if (type.contains("heavy"))
-                name = "Heavy";
-            if (type.contains("bleeding"))
-                name = "Bleeding III";
-            if (type.contains("uncapped"))
-                name = "Uncapped";
+            if (type.contains("virulent")) name = "Virulent I";
+            if (type.contains("sweep"))    name = "Sweep I";
+            if (type.contains("reach"))    name = "Reach";
+            if ("heavy".equals(type) && level == 1) name = "Heavy I";
+            if ("heavy".equals(type) && level == 2) name = "Heavy II";
+            if (type.contains("bleeding")) name = "Bleeding III";
+            if (type.contains("uncapped")) name = "Uncapped";
 
-            String color = "\u00a7a";
+            String color = TextFormatting.GREEN.toString();
             if (type.contains("heavy") || type.contains("two_handed")) {
-                color = "\u00a7c";
+                color = TextFormatting.RED.toString();
             }
 
             myLines.add(color + "- " + name);
+
+            // SHIFT: add indented description from our own registry
+            if (isShiftPressed) {
+                String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription(type);
+                if (desc != null) {
+                    myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
+                }
+            }
         }
 
-        // Easter Egg: Awakened Viral I
+        // Easter Egg: Awakened Virulent I
         if ("insanetweaks:sentient_spellblade".equals(regName) && killsDisplay >= 1800) {
-            myLines.add("\u00a7a- Viral I \u00a7d(Awakened)");
+            myLines.add(TextFormatting.GREEN + "- Virulent I " + TextFormatting.LIGHT_PURPLE + "(Awakened)");
+            if (isShiftPressed) {
+                myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  The infection has evolved beyond mortal limits.");
+            }
         }
         
         // Magical Adaptation (only visible if PotionCore is installed and providing bonuses)
         if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
             if ("insanetweaks:sentient_spellblade".equals(regName)) {
-                myLines.add("\u00a7a- Magically Adapted \u00a79(+10% Magic Damage)");
+                myLines.add(TextFormatting.GREEN + "- Magically Adapted " + TextFormatting.DARK_AQUA + "(+10% Magic Damage)");
+                if (isShiftPressed) {
+                    myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " +
+                            com.spege.insanetweaks.util.PropertyDescriptions.getDescription("magically_adapted"));
+                }
             } else if ("insanetweaks:living_spellblade".equals(regName)) {
                 int magicBonus = Math.max(1, Math.min(10, (killsDisplay * 10) / 900));
-                myLines.add("\u00a7a- Magically Adapted \u00a79(+" + magicBonus + "% Magic Damage)");
+                myLines.add(TextFormatting.GREEN + "- Magically Adapted " + TextFormatting.DARK_AQUA + "(+" + magicBonus + "% Magic Damage)");
+                if (isShiftPressed) {
+                    myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " +
+                            com.spege.insanetweaks.util.PropertyDescriptions.getDescription("magically_adapted"));
+                }
             }
         }
 
-        myLines.add("\u00a78inspired by scape and spartan - parasites");
+        myLines.add(TextFormatting.DARK_GRAY + "inspired by scape and spartan - parasites");
 
         // 5. Synergy line
         myLines.add("");

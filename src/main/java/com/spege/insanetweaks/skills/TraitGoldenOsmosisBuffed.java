@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 
+@SuppressWarnings("null")
 public class TraitGoldenOsmosisBuffed extends Trait {
 
     public TraitGoldenOsmosisBuffed() {

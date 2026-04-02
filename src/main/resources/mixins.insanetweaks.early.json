@@ -5,9 +5,7 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
-  "client": [
-    "MixinLocale"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   }

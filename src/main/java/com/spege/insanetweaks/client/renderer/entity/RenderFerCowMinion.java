@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import javax.annotation.Nonnull;
 
 @SideOnly(Side.CLIENT)
 public class RenderFerCowMinion extends RenderLiving<EntityFerCowMinion> {
@@ -20,7 +21,7 @@ public class RenderFerCowMinion extends RenderLiving<EntityFerCowMinion> {
     }
 
     @Override
-    protected ResourceLocation getEntityTexture(EntityFerCowMinion entity) {
+    protected ResourceLocation getEntityTexture(@Nonnull EntityFerCowMinion entity) {
         return TEXTURE;
     }
 }

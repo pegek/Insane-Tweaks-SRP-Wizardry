@@ -12,6 +12,7 @@ import java.util.List;
 public class AdaptedVegetationSkill {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SuppressWarnings("null")
     public void protectCrops(BlockEvent.CropGrowEvent.Pre event) {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
             return;

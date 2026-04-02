@@ -4,6 +4,7 @@ import zone.rong.mixinbooter.IEarlyMixinLoader;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 @zone.rong.mixinbooter.MixinLoader
 public class EarlyMixinBooter implements IEarlyMixinLoader {
     @Override

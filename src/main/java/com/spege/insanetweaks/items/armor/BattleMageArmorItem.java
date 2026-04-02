@@ -40,8 +40,8 @@ public class BattleMageArmorItem extends ItemWizardArmour {
         this.setCreativeTab(CreativeTabs.COMBAT);
 
         int customDurability = slot == EntityEquipmentSlot.HEAD ? 15000 :
-                              slot == EntityEquipmentSlot.CHEST ? 2200 :
-                              slot == EntityEquipmentSlot.LEGS ? 2050 : 1800;
+                              slot == EntityEquipmentSlot.CHEST ? 22000 :
+                              slot == EntityEquipmentSlot.LEGS ? 20500 : 18000;
         this.setMaxDamage(customDurability);
     }
 
@@ -72,14 +72,11 @@ public class BattleMageArmorItem extends ItemWizardArmour {
 
     @Override
     public void applySpellModifiers(EntityLivingBase caster, Spell spell, SpellModifiers modifiers) {
-        // Provide 10% cost reduction PER piece!
-        modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * 0.90f), false);
+        modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * 0.97f), false);
 
-        // Provide 10% charge-up reduction PER piece!
-        modifiers.set(SpellModifiers.CHARGEUP, (modifiers.get(SpellModifiers.CHARGEUP) * 0.90f), false);
+        modifiers.set(SpellModifiers.CHARGEUP, (modifiers.get(SpellModifiers.CHARGEUP) * 0.97f), false);
 
-        // Apply 10% cooldown reduction PER piece explicitly using the native String mapped key.
-        modifiers.set("cooldown", (modifiers.get("cooldown") * 0.90f), true);
+        modifiers.set("cooldown", (modifiers.get("cooldown") * 0.97f), true);
     }
 
     @Override
@@ -91,28 +88,6 @@ public class BattleMageArmorItem extends ItemWizardArmour {
     @Override
     public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
         // Intentionally empty per original Groovy implementation.
-    }
-
-    @Override
-    public boolean hasCustomEntity(@Nonnull ItemStack stack) {
-        return true;
-    }
-
-    @Override
-    @Nonnull
-    public net.minecraft.entity.Entity createEntity(@Nonnull World world, @Nonnull net.minecraft.entity.Entity location, @Nonnull ItemStack itemstack) {
-        com.spege.insanetweaks.entities.EntityItemIndestructible entity = new com.spege.insanetweaks.entities.EntityItemIndestructible(world, location.posX, location.posY, location.posZ, itemstack);
-        entity.motionX = location.motionX;
-        entity.motionY = location.motionY;
-        entity.motionZ = location.motionZ;
-        entity.setDefaultPickupDelay();
-        if (location instanceof net.minecraft.entity.item.EntityItem) {
-            String thrower = ((net.minecraft.entity.item.EntityItem) location).getThrower();
-            String owner   = ((net.minecraft.entity.item.EntityItem) location).getOwner();
-            if (thrower != null) entity.setThrower(thrower);
-            if (owner   != null) entity.setOwner(owner);
-        }
-        return entity;
     }
 
     @Override
