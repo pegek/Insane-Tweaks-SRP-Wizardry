@@ -5,8 +5,10 @@ import java.util.Collections;
 import java.util.List;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.util.PlayerManaCompat;
 import com.spege.insanetweaks.util.SoManyEnchantmentsCompat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -15,6 +17,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.google.common.collect.Multimap;
 import javax.annotation.Nonnull;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -220,6 +223,25 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         }
 
         return result;
+    }
+
+    @Override
+    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
+            boolean isSelected) {
+        super.onUpdate(stack, world, entity, itemSlot, isSelected);
+
+        if (world.isRemote || !(entity instanceof EntityPlayer) || !PlayerManaCompat.isAvailable()) {
+            return;
+        }
+
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        NBTTagCompound nbt = stack.getTagCompound();
+        if (nbt != null && PlayerManaCompat.hasUsableMana((EntityPlayer) entity)) {
+            nbt.setBoolean("mana_available", true);
+        }
     }
 
     @Override

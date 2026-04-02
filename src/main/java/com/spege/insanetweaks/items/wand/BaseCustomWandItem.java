@@ -131,15 +131,17 @@ public class BaseCustomWandItem extends ItemWand {
     }
 
     public int getMagicDamageBonusPercent(ItemStack stack) {
-        int points = 0;
-        if (stack.hasTagCompound()) {
-            net.minecraft.nbt.NBTTagCompound tag = stack.getTagCompound();
-            if (tag != null) {
-                points = tag.getInteger("WandEvolutionPoints");
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_wand".equals(reg.getResourcePath())) {
+                return 5;
+            }
+            if ("sentient_wand".equals(reg.getResourcePath())) {
+                return 10;
             }
         }
 
-        return Math.max(1, Math.min(10, (points * 10) / 5000));
+        return 0;
     }
 
     @Override

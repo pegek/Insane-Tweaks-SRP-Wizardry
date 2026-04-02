@@ -42,7 +42,23 @@ public class ModRecipes {
 
     @SubscribeEvent
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
-        // Guard: only register fallbacks if srpextra is absent
+        if (!Loader.isModLoaded("defiledlands")) {
+            registerFallback(event, "golden_book_fallback",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "golden_book_fallback"),
+                            new ItemStack(safeItem(InsaneTweaksMod.MODID, "golden_book"), 2),
+                            "GNG",
+                            "RkR",
+                            "TET",
+                            'G', new ItemStack(safeItem("minecraft", "gold_block")),
+                            'N', new ItemStack(safeItem("minecraft", "nether_star")),
+                            'R', new ItemStack(safeItem(InsaneTweaksMod.MODID, "rupter_solied")),
+                            'k', new ItemStack(safeItem("minecraft", "bookshelf")),
+                            'T', new ItemStack(safeItem("minecraft", "enchanting_table")),
+                            'E', new ItemStack(safeItem("ancientspellcraft", "empty_mystic_spell_book"))));
+        }
+
+        // Guard: only register srpextra fallbacks if srpextra is absent
         if (Loader.isModLoaded("srpextra")) {
             return;
         }

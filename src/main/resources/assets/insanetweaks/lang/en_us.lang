@@ -107,3 +107,6 @@ entity.insanetweaks.primitive_yelloweye_minion.name=Primitive Yelloweye Minion
 entity.primitive_yelloweye_minion.name=Primitive Yelloweye Minion
 insanetweaks.reskillable.lock_fallback=Refund trait: Ctrl + Click or Middle Click
 insanetweaks.element.abomination=Abomination
+item.arcane_adapted_fruit.name=Arcane Adapted Fruit
+advancement.insanetweaks:obtain_living_sentient_gear=Obtain Living/Sentient EBWizardry Gear
+advancement.insanetweaks:obtain_living_sentient_gear.desc=Claim one of the parasite-touched relics of warped wizardry.

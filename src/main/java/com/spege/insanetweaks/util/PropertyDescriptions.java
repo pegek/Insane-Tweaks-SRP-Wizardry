@@ -32,7 +32,7 @@ public class PropertyDescriptions {
 
         // --- Custom / InsaneTweaks properties ---
         DESCRIPTIONS.put("magically_adapted",
-                "As the catalyst evolves, its arcane tissues refine themselves, gradually amplifying magic damage output.");
+                "The catalyst is suffused with refined arcane tissue, amplifying magic damage output beyond that of ordinary foci.");
         DESCRIPTIONS.put("arcane_adaptation",
                 "We are forced to evolve and adapt, shedding our old ways to survive. Non-Abomination spells cost exponentially more.");
         DESCRIPTIONS.put("ashen_legacy",

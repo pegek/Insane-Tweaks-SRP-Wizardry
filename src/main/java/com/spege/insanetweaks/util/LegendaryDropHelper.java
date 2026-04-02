@@ -3,6 +3,7 @@ package com.spege.insanetweaks.util;
 import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
 import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
+import com.spege.insanetweaks.items.bridge.ArcaneAdaptedFruitItem;
 import com.spege.insanetweaks.items.fruit.BaseBaubleFruitItem;
 import com.spege.insanetweaks.items.shield.LivingAegisItem;
 import com.spege.insanetweaks.items.shield.SentientAegisItem;
@@ -34,6 +35,7 @@ public final class LegendaryDropHelper {
         return item instanceof LivingAegisItem
                 || item instanceof SentientAegisItem
                 || item instanceof BridgeSpellblade
+                || item instanceof ArcaneAdaptedFruitItem
                 || item instanceof BaseBaubleFruitItem
                 || item instanceof BattleMageArmorItem
                 || item instanceof ParasiteWizardArmorItem

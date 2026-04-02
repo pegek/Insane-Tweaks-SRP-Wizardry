@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " N ",
+    "VWV",
+    " R "
+  ],
+  "key": {
+    "N": {
+      "item": "swparasites:living_nucleus"
+    },
+    "V": {
+      "item": "srparasites:vile_shell"
+    },
+    "W": {
+      "item": "ebwizardry:master_wand"
+    },
+    "R": {
+      "item": "insanetweaks:rupter_solied"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:living_wand",
+    "count": 1
+  }
+}

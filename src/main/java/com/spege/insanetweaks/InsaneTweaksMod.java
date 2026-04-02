@@ -15,6 +15,7 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import com.spege.insanetweaks.events.LivingDeathEventHandler;
 import com.spege.insanetweaks.commands.CommandBackupCursed;
+import com.spege.insanetweaks.commands.CommandClaimArcaneFruit;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraft.client.Minecraft;
@@ -41,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;required-after:srparasites;"
+@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;required-after:srparasites;"
         +
         "after:srpextra;after:baubles;after:potioncore;before:reskillable")
 public class InsaneTweaksMod {
@@ -208,6 +209,7 @@ public class InsaneTweaksMod {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AttackSpeedDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorEventHandler());
@@ -327,6 +329,7 @@ public class InsaneTweaksMod {
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandBackupCursed());
+        event.registerServerCommand(new CommandClaimArcaneFruit());
     }
 
     // -------------------------------------------------------------------------
@@ -393,6 +396,7 @@ public class InsaneTweaksMod {
         boolean hasSrpExtra = Loader.isModLoaded("srpextra");
         boolean hasBaubles = Loader.isModLoaded("baubles");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
+        boolean hasPlayerMana = Loader.isModLoaded("player_mana");
         boolean hasReskillable = Loader.isModLoaded("reskillable");
         boolean hasCompatSkills = Loader.isModLoaded("compatskills");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
@@ -433,6 +437,9 @@ public class InsaneTweaksMod {
         LOGGER.info("  potioncore          ... {}", status(hasPotionCore));
         if (hasPotionCore)
             LOGGER.info("   -> If crashing: set 'Fix Saturation = false' in potioncore.cfg");
+        LOGGER.info("  player_mana         ... {}", status(hasPlayerMana));
+        if (hasPlayerMana)
+            LOGGER.info("   -> Wand evolution and spellblade mana checks use player_mana compat.");
         LOGGER.info("  reskillable         ... {}", status(hasReskillable));
         LOGGER.info("  compatskills        ... {}", status(hasCompatSkills));
         if (!hasReskillable) {

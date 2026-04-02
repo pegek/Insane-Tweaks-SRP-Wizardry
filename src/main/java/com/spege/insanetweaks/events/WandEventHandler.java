@@ -16,10 +16,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import electroblob.wizardry.event.SpellCastEvent;
-import electroblob.wizardry.util.SpellModifiers;
-
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
+import com.spege.insanetweaks.util.PlayerManaCompat;
 
 public class WandEventHandler {
 
@@ -61,6 +60,7 @@ public class WandEventHandler {
         if (!ModConfig.modules.enableSrpEbWizardryBridge) return;
 
         if (event.getCaster() == null) return;
+        if (event.isCanceled()) return;
         
         if (event.getCaster() instanceof EntityPlayer && !event.getCaster().world.isRemote) {
             // Instant spells only
@@ -75,6 +75,7 @@ public class WandEventHandler {
         if (!ModConfig.modules.enableSrpEbWizardryBridge) return;
 
         if (event.getCaster() == null) return;
+        if (event.isCanceled()) return;
 
         if (event.getCaster() instanceof EntityPlayer && !event.getCaster().world.isRemote) {
             // Continuous spells only
@@ -85,20 +86,8 @@ public class WandEventHandler {
     }
 
     private void handleManaConsumption(EntityPlayer player, SpellCastEvent event) {
-        int baseCost = (int) (event.getSpell().getCost() * event.getModifiers().get(SpellModifiers.COST) + 0.1f);
-        int consumed = 0;
-
-        if (event.getSpell().isContinuous) {
-            // event must be Finish
-            if (event instanceof SpellCastEvent.Finish) {
-                int activeTicks = ((SpellCastEvent.Finish) event).getCount();
-                consumed = (int) Math.ceil((double) (baseCost * activeTicks) / 20.0);
-            }
-        } else {
-            consumed = baseCost;
-        }
-
-        if (consumed <= 0) return;
+        double consumed = PlayerManaCompat.getConsumedMana(event);
+        if (consumed <= 0.0D) return;
 
         ItemStack wandStack = ItemStack.EMPTY;
         EnumHand wandHand = EnumHand.MAIN_HAND;
@@ -121,9 +110,10 @@ public class WandEventHandler {
 
             NBTTagCompound nbt = wandStack.getTagCompound();
             if (nbt != null) {
-                int partialMana = nbt.getInteger("WandPartialMana") + consumed;
-                int pointsEarned = partialMana / MANA_PER_POINT;
-                nbt.setInteger("WandPartialMana", partialMana % MANA_PER_POINT);
+                double partialMana = nbt.getDouble("WandPartialMana") + consumed;
+                int pointsEarned = (int) Math.floor(partialMana / MANA_PER_POINT);
+                double remainder = partialMana - (pointsEarned * (double) MANA_PER_POINT);
+                nbt.setDouble("WandPartialMana", remainder < 0.0001D ? 0.0D : remainder);
 
                 if (pointsEarned > 0) {
                     addEvolutionPoints(wandStack, player, wandHand, pointsEarned);

@@ -1,0 +1,68 @@
+{
+    "display": {
+        "icon": {
+            "item": "insanetweaks:sentient_wand"
+        },
+        "title": {
+            "translate": "advancement.insanetweaks:obtain_living_sentient_gear"
+        },
+        "description": {
+            "translate": "advancement.insanetweaks:obtain_living_sentient_gear.desc"
+        },
+        "background": "ancientspellcraft:textures/gui/advancement_background.png",
+        "frame": "challenge",
+        "show_toast": true,
+        "announce_to_chat": true,
+        "hidden": false
+    },
+    "criteria": {
+        "living_wand": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "item": "insanetweaks:living_wand"
+                    }
+                ]
+            }
+        },
+        "sentient_wand": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "item": "insanetweaks:sentient_wand"
+                    }
+                ]
+            }
+        },
+        "living_spellblade": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "item": "insanetweaks:living_spellblade"
+                    }
+                ]
+            }
+        },
+        "sentient_spellblade": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "item": "insanetweaks:sentient_spellblade"
+                    }
+                ]
+            }
+        }
+    },
+    "requirements": [
+        [
+            "living_wand",
+            "sentient_wand",
+            "living_spellblade",
+            "sentient_spellblade"
+        ]
+    ]
+}
