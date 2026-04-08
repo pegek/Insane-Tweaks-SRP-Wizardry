@@ -8,6 +8,7 @@ import com.spege.insanetweaks.util.PlayerManaCompat;
 
 import electroblob.wizardry.event.SpellCastEvent;
 import electroblob.wizardry.util.SpellModifiers;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
@@ -24,12 +25,13 @@ public class ArcaneBridgeEventHandler {
             return;
         }
 
-        if (!(event.getCaster() instanceof EntityPlayer) || event.getCaster().world.isRemote || event.getSpell() == null
+        EntityLivingBase caster = event.getCaster();
+        if (!(caster instanceof EntityPlayer) || caster.world.isRemote || event.getSpell() == null
                 || event.getSpell().getRegistryName() == null) {
             return;
         }
 
-        EntityPlayer player = (EntityPlayer) event.getCaster();
+        EntityPlayer player = (EntityPlayer) caster;
         ResourceLocation spellId = event.getSpell().getRegistryName();
         net.minecraft.item.ItemStack castingStack = AdaptationUpgradeHelper.findCastingItem(player, event.getSpell());
         int adaptationLevel = AdaptationUpgradeHelper.getEffectiveAdaptationLevel(castingStack);

@@ -20,6 +20,7 @@ import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.util.PlayerManaCompat;
 
+@SuppressWarnings("null")
 public class WandEventHandler {
 
     private static final int EVOLUTION_THRESHOLD = 5000;
@@ -62,10 +63,11 @@ public class WandEventHandler {
         if (event.getCaster() == null) return;
         if (event.isCanceled()) return;
         
-        if (event.getCaster() instanceof EntityPlayer && !event.getCaster().world.isRemote) {
+        EntityLivingBase caster = event.getCaster();
+        if (caster instanceof EntityPlayer && !caster.world.isRemote) {
             // Instant spells only
             if (!event.getSpell().isContinuous) {
-                handleManaConsumption((EntityPlayer) event.getCaster(), event);
+                handleManaConsumption((EntityPlayer) caster, event);
             }
         }
     }
@@ -77,10 +79,11 @@ public class WandEventHandler {
         if (event.getCaster() == null) return;
         if (event.isCanceled()) return;
 
-        if (event.getCaster() instanceof EntityPlayer && !event.getCaster().world.isRemote) {
+        EntityLivingBase caster = event.getCaster();
+        if (caster instanceof EntityPlayer && !caster.world.isRemote) {
             // Continuous spells only
             if (event.getSpell().isContinuous) {
-                handleManaConsumption((EntityPlayer) event.getCaster(), event);
+                handleManaConsumption((EntityPlayer) caster, event);
             }
         }
     }

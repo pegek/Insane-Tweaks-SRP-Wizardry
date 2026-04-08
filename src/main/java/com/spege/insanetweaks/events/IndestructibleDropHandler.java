@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * Applies the legendary-drop hardening rules to protected Living/Sentient gear
  * as soon as the vanilla EntityItem joins the world.
  */
+@SuppressWarnings("null")
 public class IndestructibleDropHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

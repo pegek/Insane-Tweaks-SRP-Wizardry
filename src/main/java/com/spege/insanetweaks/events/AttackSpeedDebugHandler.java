@@ -16,7 +16,6 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -24,6 +23,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * Lightweight runtime probe for comparing final attack speed behaviour between
  * InsaneTweaks spellblades and the native swparasites sentient saber.
  */
+@SuppressWarnings("null")
 public class AttackSpeedDebugHandler {
 
     private static final String LIVING_SPELLBLADE = "insanetweaks:living_spellblade";
@@ -71,10 +71,11 @@ public class AttackSpeedDebugHandler {
     }
 
     private String getRegistryName(ItemStack stack) {
-        if (stack.isEmpty() || stack.getItem().getRegistryName() == null) {
+        if (stack.isEmpty()) {
             return "";
         }
-        return stack.getItem().getRegistryName().toString();
+        net.minecraft.util.ResourceLocation regName = stack.getItem().getRegistryName();
+        return regName == null ? "" : regName.toString();
     }
 
     private String buildSignature(String regName, ItemStack held, IAttributeInstance attackSpeed) {

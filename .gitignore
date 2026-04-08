@@ -17,6 +17,10 @@ out/
 build/
 .gradle/
 
+#IDE
+.vscode/
+modDev.code-workspace
+
 # other
 eclipse/
 run/

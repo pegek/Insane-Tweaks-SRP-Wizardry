@@ -13,6 +13,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+@SuppressWarnings("null")
 public class SpellRestrictionEventHandler {
 
     private static final ResourceLocation CALL_OF_DEMISE_ID = new ResourceLocation(InsaneTweaksMod.MODID, "call_of_demise");
@@ -24,12 +25,16 @@ public class SpellRestrictionEventHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onSpellCastPre(SpellCastEvent.Pre event) {
-        if (event.getSpell() == null || event.getSpell().getRegistryName() == null || event.getCaster() == null) {
+        if (event.getSpell() == null) {
             return;
         }
 
         ResourceLocation spellId = event.getSpell().getRegistryName();
         EntityLivingBase caster = event.getCaster();
+
+        if (spellId == null || caster == null) {
+            return;
+        }
 
         if (InsaneTweaksMod.MODID.equals(spellId.getResourceDomain()) && isBlockedWizardCaster(caster)) {
             event.setCanceled(true);

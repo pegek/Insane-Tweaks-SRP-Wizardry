@@ -26,9 +26,9 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SuppressWarnings("null")
 public class ArcaneAdaptedFruitItem extends ItemFood {
 
-    @SuppressWarnings("null")
     public ArcaneAdaptedFruitItem() {
         super(4, 0.6f, false);
         this.setAlwaysEdible();

@@ -20,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
+@SuppressWarnings("null")
 public class EntityPurifyingWave extends EntityAreaEffectCloud {
 
     private static final int BASE_DURATION = 18;

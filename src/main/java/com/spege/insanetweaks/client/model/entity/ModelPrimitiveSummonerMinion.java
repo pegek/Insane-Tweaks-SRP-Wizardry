@@ -6,6 +6,7 @@ import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.MathHelper;
 
+@SuppressWarnings("null")
 public class ModelPrimitiveSummonerMinion extends ModelCanra {
 
     @Override

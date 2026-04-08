@@ -4,6 +4,7 @@ import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 
 import net.minecraft.entity.EntityLivingBase;
 
+@SuppressWarnings("null")
 public final class SummonInfectionSafetyHelper {
 
     private SummonInfectionSafetyHelper() {

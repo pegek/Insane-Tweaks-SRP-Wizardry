@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
  * GUI whenever the player is hovering an unlocked trait.
  */
 @SideOnly(Side.CLIENT)
+@SuppressWarnings("null")
 public class ReskillableGuiHandler {
 
     private static final int GUI_WIDTH = 176;

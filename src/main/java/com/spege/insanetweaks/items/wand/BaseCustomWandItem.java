@@ -20,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 
+@SuppressWarnings("null")
 public class BaseCustomWandItem extends ItemWand {
 
     @Nonnull

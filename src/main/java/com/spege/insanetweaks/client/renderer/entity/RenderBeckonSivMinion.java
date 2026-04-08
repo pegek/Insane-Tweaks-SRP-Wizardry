@@ -13,6 +13,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 
 @SideOnly(Side.CLIENT)
+@SuppressWarnings("null")
 public class RenderBeckonSivMinion extends RenderLiving<EntityBeckonSivMinion> {
 
     public static final ResourceLocation TEXTURE = new ResourceLocation("srparasites:textures/entity/monster/venkrolsiv.png");

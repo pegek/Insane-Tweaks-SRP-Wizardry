@@ -30,7 +30,6 @@ public class EntityYelloweyeNade extends Entity {
     private float burstDamage = 5.0F;
     private float burstRadius = 1.45F;
     private double anchorX;
-    private double anchorY;
     private double anchorZ;
 
     public EntityYelloweyeNade(World worldIn) {
@@ -64,7 +63,6 @@ public class EntityYelloweyeNade extends Entity {
 
         if (this.ticksExisted <= 3) {
             this.anchorX = this.posX;
-            this.anchorY = this.posY;
             this.anchorZ = this.posZ;
 
             if (this.ticksExisted == 2) {

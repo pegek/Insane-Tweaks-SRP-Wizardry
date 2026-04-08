@@ -14,6 +14,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+@SuppressWarnings("null")
 public class ParasiteShroudEventHandler {
 
     public static final String SHROUD_TICKS_KEY = "InsaneTweaksParasiteShroudTicks";

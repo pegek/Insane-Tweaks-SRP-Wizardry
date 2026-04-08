@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * fallback and also use raw LWJGL Ctrl state for the original gesture.
  */
 @Mixin(value = GuiSkillInfo.class, remap = false)
-@SuppressWarnings("deprecation")
+@SuppressWarnings("null")
 public abstract class MixinGuiSkillInfoReskillable extends GuiScreen {
 
     @Shadow
