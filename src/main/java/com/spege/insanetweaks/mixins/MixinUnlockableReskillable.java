@@ -2,21 +2,20 @@ package com.spege.insanetweaks.mixins;
 
 import codersafterdark.reskillable.api.unlockable.Unlockable;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.client.resources.I18n;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Unlockable.class, remap = false)
-@SuppressWarnings("deprecation")
 public abstract class MixinUnlockableReskillable {
 
     @Inject(method = "getName", at = @At("HEAD"), cancellable = true, remap = false)
     private void insanetweaks$overrideUnlockableName(CallbackInfoReturnable<String> cir) {
         String skill = insanetweaks$getPatchedNativeSkill();
         if (skill != null) {
-            cir.setReturnValue(I18n.translateToLocal("reskillable.unlock.compatskills." + skill));
+            cir.setReturnValue(I18n.format("reskillable.unlock.compatskills." + skill));
         }
     }
 
@@ -24,7 +23,7 @@ public abstract class MixinUnlockableReskillable {
     private void insanetweaks$overrideUnlockableDescription(CallbackInfoReturnable<String> cir) {
         String skill = insanetweaks$getPatchedNativeSkill();
         if (skill != null) {
-            cir.setReturnValue(insanetweaks$formatMultiline(I18n.translateToLocal("reskillable.unlock.compatskills." + skill + ".desc")));
+            cir.setReturnValue(insanetweaks$formatMultiline(I18n.format("reskillable.unlock.compatskills." + skill + ".desc")));
         }
     }
 

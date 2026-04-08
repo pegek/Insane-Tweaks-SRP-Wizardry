@@ -86,7 +86,7 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     // =========================================================================
 
     @Override
-    public EnumRarity getRarity(@Nonnull ItemStack stack) {
+    public net.minecraftforge.common.IRarity getForgeRarity(@Nonnull ItemStack stack) {
         return EnumRarity.EPIC;
     }
 

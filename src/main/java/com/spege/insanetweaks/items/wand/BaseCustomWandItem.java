@@ -5,7 +5,8 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Multimap;
-import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.init.ModItems;
+import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 
 import electroblob.wizardry.constants.Element;
 import electroblob.wizardry.constants.Tier;
@@ -21,14 +22,15 @@ import net.minecraftforge.fml.common.Loader;
 
 public class BaseCustomWandItem extends ItemWand {
 
+    @Nonnull
     private static final UUID MAGICAL_ADAPTED_UUID = UUID.fromString("6C2F3E8A-5182-421A-B01B-BCCE9786A100");
     private final float basePotencyBonus;
-    private final int arcaneAdaptationLevel;
+    private final int defaultAdaptationLevel;
 
-    public BaseCustomWandItem(Tier tier, Element element, float basePotencyBonus, int arcaneAdaptationLevel) {
+    public BaseCustomWandItem(Tier tier, Element element, float basePotencyBonus, int defaultAdaptationLevel) {
         super(tier, element);
         this.basePotencyBonus = basePotencyBonus;
-        this.arcaneAdaptationLevel = Math.max(0, Math.min(3, arcaneAdaptationLevel));
+        this.defaultAdaptationLevel = Math.max(0, Math.min(3, defaultAdaptationLevel));
     }
 
     @Override
@@ -84,24 +86,11 @@ public class BaseCustomWandItem extends ItemWand {
 
         float costMultiplier = Math.max(0.0f, 1.0f - costReduction);
 
-        if (this.shouldApplyArcaneAdaptation(spell)) {
-            costMultiplier *= this.getArcaneAdaptationManaMultiplier();
-        }
-
         modifiers.set(SpellModifiers.COST, modifiers.get(SpellModifiers.COST) * costMultiplier, false);
         modifiers.set(SpellModifiers.CHARGEUP, modifiers.get(SpellModifiers.CHARGEUP) * Math.max(0.0f, 1.0f - chargeupReduction), false);
         modifiers.set("cooldown", modifiers.get("cooldown") * Math.max(0.0f, 1.0f - cooldownReduction), false);
 
         return modifiers;
-    }
-
-    private boolean shouldApplyArcaneAdaptation(Spell spell) {
-        if (this.arcaneAdaptationLevel <= 0 || spell == null) {
-            return false;
-        }
-
-        ResourceLocation registryName = spell.getRegistryName();
-        return registryName == null || !InsaneTweaksMod.MODID.equals(registryName.getResourceDomain());
     }
 
     @Override
@@ -113,21 +102,12 @@ public class BaseCustomWandItem extends ItemWand {
         return this.basePotencyBonus;
     }
 
-    public int getArcaneAdaptationLevel() {
-        return this.arcaneAdaptationLevel;
+    public int getArcaneAdaptationLevel(ItemStack stack) {
+        return Math.min(3, this.defaultAdaptationLevel + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 
-    public int getArcaneAdaptationManaMultiplier() {
-        switch (this.arcaneAdaptationLevel) {
-            case 1:
-                return 2;
-            case 2:
-                return 3;
-            case 3:
-                return 4;
-            default:
-                return 1;
-        }
+    public int getArcaneAdaptationPenaltyPercent(ItemStack stack) {
+        return AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(this.getArcaneAdaptationLevel(stack));
     }
 
     public int getMagicDamageBonusPercent(ItemStack stack) {
@@ -168,6 +148,11 @@ public class BaseCustomWandItem extends ItemWand {
         int forcedLimit = 10;
 
         if (electroblob.wizardry.util.WandHelper.getTotalUpgrades(wand) >= forcedLimit) {
+            return wand;
+        }
+
+        if (upgrade.getItem() == ModItems.ADAPTATION_UPGRADE
+                && AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(wand) >= AdaptationUpgradeHelper.getMaxAppliedAdaptationUpgrades(wand)) {
             return wand;
         }
 

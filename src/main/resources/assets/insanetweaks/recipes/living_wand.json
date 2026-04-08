@@ -3,7 +3,7 @@
   "pattern": [
     " N ",
     "VWV",
-    " R "
+    "GR "
   ],
   "key": {
     "N": {
@@ -17,6 +17,9 @@
     },
     "R": {
       "item": "insanetweaks:rupter_solied"
+    },
+    "G": {
+      "item": "insanetweaks:golden_book"
     }
   },
   "result": {

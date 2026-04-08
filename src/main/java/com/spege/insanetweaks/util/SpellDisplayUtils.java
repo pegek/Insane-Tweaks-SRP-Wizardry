@@ -6,9 +6,8 @@ import electroblob.wizardry.constants.Element;
 import electroblob.wizardry.spell.Spell;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.client.resources.I18n;
 
-@SuppressWarnings("deprecation")
 public final class SpellDisplayUtils {
 
     private static final String ABOMINATION_KEY = "insanetweaks.element.abomination";
@@ -43,7 +42,7 @@ public final class SpellDisplayUtils {
             return spell != null ? spell.getElement().getDisplayName() : ABOMINATION_FALLBACK;
         }
 
-        String translated = I18n.translateToLocal(ABOMINATION_KEY);
+        String translated = I18n.format(ABOMINATION_KEY);
         return ABOMINATION_KEY.equals(translated) ? ABOMINATION_FALLBACK : translated;
     }
 

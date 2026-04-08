@@ -2,6 +2,7 @@ package com.spege.insanetweaks.events;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.spege.insanetweaks.util.ArcaneAdaptedFruitHelper;
 import com.spege.insanetweaks.util.PlayerManaCompat;
 
@@ -29,19 +30,37 @@ public class ArcaneBridgeEventHandler {
         }
 
         EntityPlayer player = (EntityPlayer) event.getCaster();
-        if (!ArcaneAdaptedFruitHelper.hasConsumedFruit(player)
-                || ArcaneAdaptedFruitHelper.isUsingBridgeArcaneGear(player)) {
-            return;
-        }
-
         ResourceLocation spellId = event.getSpell().getRegistryName();
-        if (spellId != null && InsaneTweaksMod.MODID.equals(spellId.getResourceDomain())) {
+        net.minecraft.item.ItemStack castingStack = AdaptationUpgradeHelper.findCastingItem(player, event.getSpell());
+        int adaptationLevel = AdaptationUpgradeHelper.getEffectiveAdaptationLevel(castingStack);
+        boolean isInsaneTweaksSpell = spellId != null && InsaneTweaksMod.MODID.equals(spellId.getResourceDomain());
+
+        if (isInsaneTweaksSpell) {
+            if (ArcaneAdaptedFruitHelper.hasConsumedFruit(player)) {
+                ArcaneAdaptedFruitHelper.activateFruitRegen(player, ArcaneAdaptedFruitHelper.FRUIT_REGEN_DURATION_TICKS);
+            }
+
+            if (event.getSource() == SpellCastEvent.Source.WAND && adaptationLevel <= 0) {
+                event.setCanceled(true);
+                player.sendMessage(new net.minecraft.util.text.TextComponentString(
+                        net.minecraft.util.text.TextFormatting.DARK_RED
+                                + "This focus has not adapted to Abomination magic."));
+            }
             return;
         }
 
-        float currentCost = event.getModifiers().get(SpellModifiers.COST);
-        event.getModifiers().set(SpellModifiers.COST,
-                currentCost * ArcaneAdaptedFruitHelper.FOREIGN_SPELL_COST_MULTIPLIER, false);
+        if (adaptationLevel > 0) {
+            float currentCost = event.getModifiers().get(SpellModifiers.COST);
+            event.getModifiers().set(SpellModifiers.COST,
+                    currentCost * AdaptationUpgradeHelper.getForeignSpellCostMultiplier(adaptationLevel), false);
+            return;
+        }
+
+        if (ArcaneAdaptedFruitHelper.hasConsumedFruit(player)) {
+            float currentCost = event.getModifiers().get(SpellModifiers.COST);
+            event.getModifiers().set(SpellModifiers.COST,
+                    currentCost * ArcaneAdaptedFruitHelper.FOREIGN_SPELL_COST_MULTIPLIER, false);
+        }
     }
 
     @SubscribeEvent
@@ -60,14 +79,37 @@ public class ArcaneBridgeEventHandler {
     }
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (!ModConfig.modules.enableSrpEbWizardryBridge || event.phase != TickEvent.Phase.END
-                || event.player.world.isRemote || !(event.player instanceof EntityPlayerMP)
-                || event.player.ticksExisted % 20 != 0) {
+    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!ModConfig.modules.enableSrpEbWizardryBridge || event.player.world.isRemote) {
             return;
         }
 
-        checkGearAchievement((EntityPlayerMP) event.player);
+        ArcaneAdaptedFruitHelper.clearFruitRegen(event.player);
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!ModConfig.modules.enableSrpEbWizardryBridge || event.player.world.isRemote) {
+            return;
+        }
+
+        ArcaneAdaptedFruitHelper.clearFruitRegen(event.player);
+    }
+
+    @SubscribeEvent
+    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (!ModConfig.modules.enableSrpEbWizardryBridge || event.phase != TickEvent.Phase.END
+                || event.player.world.isRemote || !(event.player instanceof EntityPlayerMP)) {
+            return;
+        }
+
+        EntityPlayerMP player = (EntityPlayerMP) event.player;
+
+        if (player.ticksExisted % 20 != 0) {
+            return;
+        }
+
+        checkGearAchievement(player);
     }
 
     private void checkGearAchievement(EntityPlayerMP player) {

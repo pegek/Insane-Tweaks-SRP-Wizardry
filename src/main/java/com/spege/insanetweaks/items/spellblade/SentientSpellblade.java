@@ -30,6 +30,7 @@ import electroblob.wizardry.registry.WizardryAdvancementTriggers;
 import electroblob.wizardry.registry.WizardryItems;
 import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.WandHelper;
+import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.oblivioussp.spartanweaponry.api.WeaponProperties;
 import com.existingeevee.swparasites.init.ParasiteSWProperties;
 
@@ -52,7 +53,7 @@ public class SentientSpellblade extends BridgeSpellblade {
         // Spartan & Parasite Properties
         this.addBridgeProperty(WeaponProperties.REACH_1)
             .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
-            .addBridgeProperty(ParasiteSWProperties.BLEEDING_3)
+            .addBridgeProperty(ParasiteSWProperties.BLEEDING_2)
             .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
             .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
     }
@@ -114,6 +115,10 @@ public class SentientSpellblade extends BridgeSpellblade {
     public ItemStack applyUpgrade(net.minecraft.entity.player.EntityPlayer player, @Nonnull ItemStack wand, @Nonnull ItemStack upgrade) {
         if (WandHelper.isWandUpgrade(upgrade.getItem())) {
             Item specialUpgrade = upgrade.getItem();
+            if (specialUpgrade == com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE
+                    && AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(wand) >= AdaptationUpgradeHelper.getMaxAppliedAdaptationUpgrades(wand)) {
+                return wand;
+            }
             int maxUpgrades = this.tier.upgradeLimit - 2;
 
             if (WandHelper.getTotalUpgrades(wand) < maxUpgrades && WandHelper.getUpgradeLevel(wand, specialUpgrade) < Constants.UPGRADE_STACK_LIMIT) {

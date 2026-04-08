@@ -40,6 +40,16 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
 @SuppressWarnings("null") // safeItem() guarantees non-null via IllegalStateException; IDE cannot infer this
 public class ModRecipes {
 
+    @SubscribeEvent(priority = net.minecraftforge.fml.common.eventhandler.EventPriority.LOWEST)
+    public static void removeRecipes(RegistryEvent.Register<IRecipe> event) {
+        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks && 
+            com.spege.insanetweaks.config.ModConfig.tombstone.disableEnchantKeyRecipe) {
+            net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe> modRegistry = 
+                (net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe>) event.getRegistry();
+            modRegistry.remove(new ResourceLocation("tombstone", "enchanted_grave_key"));
+        }
+    }
+
     @SubscribeEvent
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
         if (!Loader.isModLoaded("defiledlands")) {

@@ -34,7 +34,9 @@ public class PropertyDescriptions {
         DESCRIPTIONS.put("magically_adapted",
                 "The catalyst is suffused with refined arcane tissue, amplifying magic damage output beyond that of ordinary foci.");
         DESCRIPTIONS.put("arcane_adaptation",
-                "We are forced to evolve and adapt, shedding our old ways to survive. Non-Abomination spells cost exponentially more.");
+                "This focus has been adapted to channel Abomination magic. Higher levels reduce the mana penalty imposed on foreign spells.");
+        DESCRIPTIONS.put("adaptation_upgrade",
+                "Allows a focus to channel Abomination spells. Further adaptation softens, then removes, the mana backlash imposed on non-InsaneTweaks spells.");
         DESCRIPTIONS.put("ashen_legacy",
                 "This relic refuses to be claimed by simple ruin. Even when discarded, it endures flame, lava, cactus and violent blasts, lingering far longer than ordinary gear.");
         DESCRIPTIONS.put("living_armor_lore",

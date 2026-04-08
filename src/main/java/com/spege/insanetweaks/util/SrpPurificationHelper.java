@@ -59,7 +59,8 @@ public final class SrpPurificationHelper {
             return false;
         }
 
-        return path.contains("inf") || path.contains("infect") || path.contains("parasite");
+        return path.contains("inf") || path.contains("infect") || path.contains("parasite")
+                || path.startsWith("gore") || path.contains("remain");
     }
 
     public static boolean isBeckon(Entity entity) {
@@ -89,7 +90,7 @@ public final class SrpPurificationHelper {
         }
 
         String path = registryName.getResourcePath().toLowerCase(Locale.ROOT);
-        if ("infestremain".equals(path)) {
+        if ("infestremain".equals(path) || path.startsWith("gore") || path.contains("remain")) {
             return Blocks.AIR;
         }
         if (containsAny(path, "glass_pane")) {

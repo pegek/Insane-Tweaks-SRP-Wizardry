@@ -39,7 +39,7 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
     }
 
     @Override
-    public EnumRarity getRarity(@Nonnull ItemStack stack) {
+    public net.minecraftforge.common.IRarity getForgeRarity(@Nonnull ItemStack stack) {
         return EnumRarity.EPIC;
     }
 
@@ -72,6 +72,14 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
 
         double currentMaxMana = PlayerManaCompat.getMaxMana(player);
         double maxManaCap = PlayerManaCompat.getMaxManaCap();
+        if (maxManaCap <= 0.0D) {
+            if (!world.isRemote) {
+                player.sendMessage(new TextComponentString(
+                        TextFormatting.RED + "The fruit cannot read your Soul MP cap in this world."));
+            }
+            return new ActionResult<>(EnumActionResult.FAIL, stack);
+        }
+
         if (maxManaCap > 0.0D && currentMaxMana >= maxManaCap - 0.001D) {
             if (!world.isRemote) {
                 player.sendMessage(new TextComponentString(
@@ -93,7 +101,24 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
             return;
         }
 
-        boolean applied = PlayerManaCompat.addMaxMana(player, ArcaneAdaptedFruitHelper.MAX_MANA_BONUS);
+        double cap = PlayerManaCompat.getMaxManaCap();
+        if (cap <= 0.0D) {
+            player.sendMessage(new TextComponentString(
+                    TextFormatting.RED + "The fruit cannot attune to your Soul MP cap."));
+            return;
+        }
+        
+        // Oblicz brakującą ilość many do capa u tego gracza.
+        double currentMax = PlayerManaCompat.getMaxMana(player);
+        double diff = cap - currentMax;
+        
+        if (diff <= 0) {
+            player.sendMessage(new TextComponentString(
+                    TextFormatting.RED + "You already possess unimaginable mana power."));
+            return;
+        }
+
+        boolean applied = PlayerManaCompat.addMaxMana(player, diff);
         if (!applied) {
             player.sendMessage(new TextComponentString(
                     TextFormatting.RED + "The fruit rejects the ritual and fails to alter your mana pool."));
@@ -104,9 +129,7 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
         world.playSound(null, player.posX, player.posY, player.posZ,
                 net.minecraft.init.SoundEvents.ENTITY_ILLAGER_PREPARE_MIRROR, SoundCategory.PLAYERS, 1.0f, 0.75f);
         player.sendMessage(new TextComponentString(
-                TextFormatting.LIGHT_PURPLE + "Arcane Adaptation takes root: +" 
-                        + (int) ArcaneAdaptedFruitHelper.MAX_MANA_BONUS
-                        + " max Soul MP."));
+                TextFormatting.LIGHT_PURPLE + "Arcane Adaptation takes root: Your Soul MP has been maximized."));
     }
 
     @Override
@@ -115,14 +138,16 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
         tooltip.add(TextFormatting.GRAY + "A parasite-born fruit steeped in stolen wizardry.");
         tooltip.add("");
-        tooltip.add(TextFormatting.LIGHT_PURPLE + "Permanently grants +" 
-                + (int) ArcaneAdaptedFruitHelper.MAX_MANA_BONUS + " max Soul MP");
+        tooltip.add(TextFormatting.LIGHT_PURPLE + "Instantly maximizes your Soul MP to its absolute limits");
         tooltip.add(TextFormatting.DARK_GRAY + "for player_mana users.");
         tooltip.add("");
         tooltip.add(TextFormatting.AQUA + "Arcane Adapted");
-        tooltip.add(TextFormatting.GRAY + "Non-InsaneTweaks spells cost "
-                + (int) ArcaneAdaptedFruitHelper.FOREIGN_SPELL_COST_MULTIPLIER + "x mana");
-        tooltip.add(TextFormatting.GRAY + "unless cast through Living/Sentient wands or spellblades.");
+        tooltip.add(TextFormatting.GRAY + "Spells from outside Insane Tweaks cost "
+                + (int) ArcaneAdaptedFruitHelper.FOREIGN_SPELL_COST_MULTIPLIER + "x mana!");
+        tooltip.add(TextFormatting.GRAY + "Casting an InsaneTweaks spell grants "
+                + (int) ArcaneAdaptedFruitHelper.MANA_REGEN_FRUIT_TOTAL_MULTIPLIER
+                + "x total mana regeneration for 10 seconds.");
+        tooltip.add(TextFormatting.DARK_GRAY + "This surge is temporary, not permanent.");
         tooltip.add("");
         tooltip.add(TextFormatting.DARK_GRAY + "One use per player.");
     }

@@ -20,7 +20,7 @@ public class ItemInfernalCrownArtefact extends ItemArtefact {
 
     private static final String SUMMON_COUNT_TAG = "InsaneTweaksSummonCount";
     private static final String PROCESSED_SUMMON_TAG = "InsaneTweaksInfernalCrownProcessed";
-    private static final int INFERNAL_THRESHOLD = 5;
+    private static final int INFERNAL_THRESHOLD = 10;
 
     public ItemInfernalCrownArtefact() {
         super(EnumRarity.EPIC, Type.HEAD);
@@ -53,13 +53,10 @@ public class ItemInfernalCrownArtefact extends ItemArtefact {
 
         if (!ItemArtefact.isArtefactActive(player, ModItems.INFERNAL_CROWN)) return;
 
-        NBTTagCompound persisted = getOrCreatePersistedData(player);
-        boolean hasInfernalMobs = Loader.isModLoaded("infernalmobs");
+        // Guard: InfernalMobs must be loaded — without it we cannot do anything useful.
+        if (!Loader.isModLoaded("infernalmobs")) return;
 
-        if (!hasInfernalMobs) {
-            persisted.setInteger(SUMMON_COUNT_TAG, 0);
-            return;
-        }
+        NBTTagCompound persisted = getOrCreatePersistedData(player);
 
         if (InfernalMobsDirectAPI.isRare(minion)) {
             persisted.setInteger(SUMMON_COUNT_TAG, 0);

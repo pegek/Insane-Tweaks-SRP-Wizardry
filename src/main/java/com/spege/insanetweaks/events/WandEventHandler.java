@@ -146,7 +146,12 @@ public class WandEventHandler {
             ItemStack newStack = new ItemStack(sentientWand, 1);
             NBTTagCompound stackTag = stack.getTagCompound();
             if (stackTag != null) {
-                newStack.setTagCompound(stackTag.copy());
+                NBTTagCompound newTag = stackTag.copy();
+                // Reset evolution counter so the new Sentient Wand doesn't
+                // re-trigger evolveWand() on the very next kill/spell cast.
+                newTag.setInteger("WandEvolutionPoints", 0);
+                newTag.setDouble("WandPartialMana", 0.0D);
+                newStack.setTagCompound(newTag);
             }
 
             // Transfer stack correctly into the correct hand slot

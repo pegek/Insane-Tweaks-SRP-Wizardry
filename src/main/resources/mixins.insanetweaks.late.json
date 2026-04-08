@@ -6,14 +6,21 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinEntitySummonedCreature",
-    "MixinGuiSpellDisplay",
+    "MixinParasiteEventEntity",
     "MixinSpell",
     "MixinSpellMinion",
     "MixinUnlockableReskillable"
   ],
-  "client": [],
+  "client": [
+    "MixinGuiSpellDisplay",
+    "MixinGuiSpellInfo",
+    "MixinItemSpellBook",
+    "MixinItemScroll",
+    "MixinGuiSkillInfoReskillable"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1
   }
 }
+

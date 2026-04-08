@@ -18,7 +18,7 @@ import net.minecraft.world.World;
 @Mixin(value = ItemScroll.class, remap = false)
 public abstract class MixinItemScroll {
 
-    @Inject(method = "addInformation", at = @At("TAIL"))
+    @Inject(method = { "addInformation", "func_77624_a" }, at = @At("TAIL"))
     private void insanetweaks$replaceScrollElementLine(ItemStack stack, World world, List<String> tooltip,
             ITooltipFlag flag, CallbackInfo ci) {
 

@@ -42,3 +42,16 @@ craftweaker/
 test*.*/
 tmp_reskillable/
 tmp*.*/
+
+# Minecraft Runtime
+logs/
+crash-reports/
+saves/
+config/
+mods/
+options*.txt
+servers.dat
+usercache.json
+realms_persistence.json
+waila_options.txt
+local/

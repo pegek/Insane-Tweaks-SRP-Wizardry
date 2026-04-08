@@ -1,5 +1,9 @@
 package com.spege.insanetweaks.util;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.init.ModItems;
 
@@ -25,11 +29,13 @@ public final class ArcaneAdaptedFruitHelper {
     public static final String TAG_FRUIT_PENDING = "ArcaneAdaptedFruitPending";
     public static final String TAG_FRUIT_CONSUMED = "ArcaneAdaptedFruitConsumed";
 
-    public static final double MAX_MANA_BONUS = 2500.0D;
     public static final float FOREIGN_SPELL_COST_MULTIPLIER = 2.0F;
+    public static final double MANA_REGEN_FRUIT_TOTAL_MULTIPLIER = 5.0D;
+    public static final int FRUIT_REGEN_DURATION_TICKS = 200;
     public static final ResourceLocation ADVANCEMENT_ID = new ResourceLocation(InsaneTweaksMod.MODID,
             "obtain_living_sentient_gear");
     public static final String CLAIM_COMMAND = "/claimarcanefruit";
+    private static final Map<UUID, Long> ACTIVE_FRUIT_REGEN = new HashMap<>();
 
     private ArcaneAdaptedFruitHelper() {
     }
@@ -80,6 +86,38 @@ public final class ArcaneAdaptedFruitHelper {
         NBTTagCompound persistent = getPersistentData(player);
         persistent.setBoolean(TAG_FRUIT_PENDING, pending);
         player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
+    }
+
+    public static long getFruitRegenEndTime(EntityPlayer player) {
+        if (player == null) {
+            return 0L;
+        }
+
+        Long endTime = ACTIVE_FRUIT_REGEN.get(player.getUniqueID());
+        return endTime == null ? 0L : endTime.longValue();
+    }
+
+    public static void activateFruitRegen(EntityPlayer player, int durationTicks) {
+        if (player == null || player.world == null) {
+            return;
+        }
+
+        long endTime = player.world.getTotalWorldTime() + Math.max(0, durationTicks);
+        ACTIVE_FRUIT_REGEN.put(player.getUniqueID(), endTime);
+    }
+
+    public static boolean isFruitRegenActive(EntityPlayer player) {
+        if (player == null || player.world == null) {
+            return false;
+        }
+
+        return getFruitRegenEndTime(player) > player.world.getTotalWorldTime();
+    }
+
+    public static void clearFruitRegen(EntityPlayer player) {
+        if (player != null) {
+            ACTIVE_FRUIT_REGEN.remove(player.getUniqueID());
+        }
     }
 
     public static boolean playerHasQualifyingGear(EntityPlayer player) {

@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.insanetweaks.mixins.playermana",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinPlayerManaEventsHandler"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

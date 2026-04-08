@@ -28,7 +28,7 @@ repositories {
     }
 }
 
-version = '1.0.16'
+version = '1.0.18'
 group = 'com.spege.insanetweaks' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'insanetweaks'
 
@@ -36,6 +36,7 @@ sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = co
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
     options.compilerArgs << "-proc:none"
+    options.compilerArgs << "-Xlint:all"
 }
 
 
@@ -93,7 +94,7 @@ jar {
         attributes([
             "Specification-Title": "insanetweaks SRP&Wizardry",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.0.16", // We are version 1 of ourselves
+            "Specification-Version": "1.0.18", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"spege",

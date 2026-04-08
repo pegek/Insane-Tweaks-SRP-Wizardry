@@ -84,14 +84,17 @@ public class AegisTooltipHandler {
         myLines.add(TextFormatting.GOLD + "- Extinguishes you when on fire.");
         myLines.add(TextFormatting.GOLD + "- Cannot be disabled by weapons normally effective against shields.");
 
-        String fireDesc = (blocked >= 10000.0f) ? TextFormatting.DARK_RED + "Awakened " + TextFormatting.GOLD + "Fire" : "Fire";
+        String fireDesc = (blocked >= 10000.0f) ? TextFormatting.DARK_RED + "Awakened " + TextFormatting.GOLD + "Fire"
+                : "Fire";
 
         if (isSentient) {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + fireDesc + TextFormatting.GOLD + ", " + TextFormatting.DARK_GREEN
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + fireDesc + TextFormatting.GOLD + ", "
+                    + TextFormatting.DARK_GREEN
                     + "Corrosion I" + TextFormatting.GOLD + ", and " + TextFormatting.DARK_PURPLE + "Immaleable I"
                     + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
         } else {
-            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + fireDesc + TextFormatting.GOLD + " and " + TextFormatting.DARK_PURPLE
+            myLines.add(TextFormatting.GOLD + "- Punishes attackers with " + fireDesc + TextFormatting.GOLD + " and "
+                    + TextFormatting.DARK_PURPLE
                     + "Immaleable I" + TextFormatting.GOLD + " when blocking melee or ranged attacks.");
         }
 
@@ -99,7 +102,6 @@ public class AegisTooltipHandler {
 
         myLines.add("");
         myLines.add(TextFormatting.DARK_GREEN + "Sneak+Right click to place charms");
-        myLines.add(TextFormatting.DARK_GRAY + "inspired by Enigmatic legacy");
 
         tooltip.addAll(insertIdx, myLines);
     }

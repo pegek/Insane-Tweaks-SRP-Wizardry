@@ -1,7 +1,9 @@
 package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.baubles.ItemZhonyasHourglassArtefact;
 import com.spege.insanetweaks.items.GoldenBookItem;
+import com.spege.insanetweaks.items.bridge.AdaptationUpgradeItem;
 import com.spege.insanetweaks.items.bridge.ArcaneAdaptedFruitItem;
 import com.spege.insanetweaks.items.core.WizardryCoreItem;
 import com.spege.insanetweaks.items.core.WizardryCoreItems;
@@ -43,6 +45,7 @@ public class ModItems {
     public static final Item SENTIENT_SPELLBLADE = new SentientSpellblade();
     public static final Item LIVING_WAND = new com.spege.insanetweaks.items.wand.LivingWandItem();
     public static final Item SENTIENT_WAND = new com.spege.insanetweaks.items.wand.SentientWandItem();
+    public static final Item ADAPTATION_UPGRADE = new AdaptationUpgradeItem();
     public static final Item ARCANE_ADAPTED_FRUIT = new ArcaneAdaptedFruitItem();
 
     // Battlemage Armor
@@ -68,6 +71,7 @@ public class ModItems {
     public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
     public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
     public static final Item INFERNAL_CROWN = new com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact();
+    public static final Item ZHONYAS_HOURGLASS = new ItemZhonyasHourglassArtefact();
 
     // Bauble Fruits  Eall 6 slot types
     public static final Item BAUBLE_FRUIT_RING   = new RingFruitItem();
@@ -95,8 +99,8 @@ public class ModItems {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
             event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
-            event.getRegistry().registerAll(ARCANE_ADAPTED_FRUIT);
-            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN);
+            event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT);
+            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS);
             event.getRegistry().registerAll(
                 BATTLEMAGE_HELMET, BATTLEMAGE_CHESTPLATE, BATTLEMAGE_LEGGINGS, BATTLEMAGE_BOOTS,
                 PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE, PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS
@@ -126,6 +130,7 @@ public class ModItems {
             
             registerModel(LIVING_WAND);
             registerModel(SENTIENT_WAND);
+            registerModel(ADAPTATION_UPGRADE);
             registerModel(ARCANE_ADAPTED_FRUIT);
 
             // Armor Models
@@ -142,6 +147,7 @@ public class ModItems {
             registerModel(LIVING_AEGIS);
             registerModel(SENTIENT_AEGIS);
             registerModel(INFERNAL_CROWN);
+            registerModel(ZHONYAS_HOURGLASS);
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {

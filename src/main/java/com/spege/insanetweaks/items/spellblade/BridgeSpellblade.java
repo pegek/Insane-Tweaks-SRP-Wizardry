@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.spege.insanetweaks.util.PlayerManaCompat;
 import com.spege.insanetweaks.util.SoManyEnchantmentsCompat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -123,7 +123,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
             try {
                 WeaponProperty[] propArray = swProperties.toArray(new WeaponProperty[0]);
                 bridgeMaterial = new ToolMaterialEx(
-                        bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, (float) getBaseAttackDamage(), -1,
+                        bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, getBaseAttackDamage(), -1,
                         propArray);
                 if (com.spege.insanetweaks.config.ModConfig.client.displayDebugInfo)
                     System.out.println("[BridgeSpellblade] getMaterialEx built with " + propArray.length
@@ -133,7 +133,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
                     System.out.println("[BridgeSpellblade] getMaterialEx with props failed (" + t.getMessage()
                             + ") -- simple fallback");
                 bridgeMaterial = new ToolMaterialEx(
-                        bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, (float) getBaseAttackDamage(), -1);
+                        bridgeName, "$nothing", bridgeModId, -1, -1, 4000, 22, 1.0f, getBaseAttackDamage(), -1);
             }
         }
         return bridgeMaterial;
@@ -141,7 +141,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
 
     @Override
     public float getDirectAttackDamage() {
-        return (float) getBaseAttackDamage();
+        return getBaseAttackDamage();
     }
 
     public float getBaseAttackDamage() {
@@ -201,9 +201,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     // ------------------------------------------------------------------
 
     @Override
-    @SuppressWarnings("null")
-    public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull EntityLivingBase target,
-            @Nonnull EntityLivingBase attacker) {
+    public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull EntityLivingBase target, @Nonnull EntityLivingBase attacker) {
         boolean result = super.hitEntity(stack, target, attacker);
         ToolMaterialEx mat = getMaterialEx();
 
@@ -297,37 +295,20 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
             }
         }
 
-        if (this.shouldApplyArcaneAdaptation(spell)) {
-            modifiers.set(SpellModifiers.COST, modifiers.get(SpellModifiers.COST) * this.getArcaneAdaptationManaMultiplier(),
-                    false);
-        }
-
         return modifiers;
     }
 
-    protected int getArcaneAdaptationLevel() {
+    protected int getDefaultAdaptationLevel() {
         return ARCANE_ADAPTATION_LEVEL;
     }
 
-    protected int getArcaneAdaptationManaMultiplier() {
-        switch (this.getArcaneAdaptationLevel()) {
-            case 1:
-                return 2;
-            case 2:
-                return 3;
-            case 3:
-                return 4;
-            default:
-                return 1;
-        }
+    public int getArcaneAdaptationLevel(ItemStack stack) {
+        return Math.min(3, this.getDefaultAdaptationLevel()
+                + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 
-    protected boolean shouldApplyArcaneAdaptation(Spell spell) {
-        if (this.getArcaneAdaptationLevel() <= 0 || spell == null || spell.getRegistryName() == null) {
-            return false;
-        }
-
-        return !InsaneTweaksMod.MODID.equals(spell.getRegistryName().getResourceDomain());
+    public int getArcaneAdaptationPenaltyPercent(ItemStack stack) {
+        return AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(this.getArcaneAdaptationLevel(stack));
     }
 
     // ------------------------------------------------------------------

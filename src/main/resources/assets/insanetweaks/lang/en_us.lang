@@ -27,7 +27,11 @@ item.living_aegis.name=§eLiving Aegis
 item.sentient_aegis.name=§eSentient Aegis
 
 item.insanetweaks.infernal_crown.name=§cInfernal Crown
-item.insanetweaks:infernal_crown.desc=Every 5th summoned creature is permanently twisted into an Infernal entity.
+item.insanetweaks:infernal_crown.desc=Every 10th summoned creature is permanently twisted into an Infernal entity.
+
+
+item.insanetweaks.zhonyas_hourglass.name=§eZhonyas Hourglass
+item.insanetweaks:zhonyas_hourglass.desc=Restores SRP-infected entities to their original form when using Purifying Pulse spell. In Creative, right-click to directly restore targeted entity.
 
 # Bauble Fruits
 item.bauble_fruit_ring.name=§dBauble Fruit - Ring
@@ -48,7 +52,7 @@ potion.insanetweaks.cleanse=§eCleanse
 reskillable.unlock.compatskills.fast_learner=§aFast Learner
 reskillable.unlock.compatskills.fast_learner.desc=Mobs drop 15%% more experience.
 reskillable.unlock.compatskills.assimilated_warfare=§cAssimilated Warfare
-reskillable.unlock.compatskills.assimilated_warfare.desc=Parasites you kill always drop some XP, even when SRP evolution would normally suppress it.
+reskillable.unlock.compatskills.assimilated_warfare.desc=Parasites you kill drop fallback XP even when SRP evolution would suppress it. From SRP stage 5 onward, each parasite kill also removes 1 evolution point.
 reskillable.unlock.compatskills.spiders_grace=§fSpider's Grace
 reskillable.unlock.compatskills.spiders_grace.desc=Move almost freely through cobwebs.
 reskillable.unlock.compatskills.iron_stomach=§6Iron Stomach
@@ -97,16 +101,25 @@ spell.insanetweaks:purifying_pulse=Purifying Pulse
 spell.insanetweaks:purifying_pulse.desc=Projects a short cleansing wave at the target point, restoring nearby SRP infestation blocks to crude vanilla forms and punishing Beckons caught in the purge.
 spell.insanetweaks:test_projectile=Test Fireball
 spell.insanetweaks:test_projectile.desc=Conjures a small blazing fireball that shoots where you look.
+spell.insanetweaks:call_of_demise=Call of Demise
+spell.insanetweaks:call_of_demise.desc=Summons an assimilated Beckon to act as a formidable stationary defense tower. It constantly pulls nearby enemies towards itself while shrugging off most attacks.
+spell.insanetweaks:yelloweye_gland=Yelloweye Gland
+spell.insanetweaks:yelloweye_gland.desc=Launches the parasite-born spineball of a Primitive Yelloweye. Every fourth cast mutates into the native lingering nade shot.
+spell.insanetweaks:parasite_shroud=Parasite Shroud
+spell.insanetweaks:parasite_shroud.desc=Veils the caster in parasite-tainted arcana. Primitive and adapted parasites repeatedly lose aggro for a short time, while stronger strains react more slowly and unreliably.
 entity.insanetweaks.fer_cow_minion.name=Feral Cow Minion
 entity.fer_cow_minion.name=Feral Cow Minion
 entity.insanetweaks.primitive_summoner_minion.name=Primitive Summoner Minion
 entity.primitive_summoner_minion.name=Primitive Summoner Minion
 entity.insanetweaks.rupter_minion.name=Rupter Minion
 entity.rupter_minion.name=Rupter Minion
-entity.insanetweaks.primitive_yelloweye_minion.name=Primitive Yelloweye Minion
 entity.primitive_yelloweye_minion.name=Primitive Yelloweye Minion
+entity.insanetweaks.beckon_siv_minion.name=Demise Minion
+entity.beckon_siv_minion.name=Demise Minion
 insanetweaks.reskillable.lock_fallback=Refund trait: Ctrl + Click or Middle Click
 insanetweaks.element.abomination=Abomination
 item.arcane_adapted_fruit.name=Arcane Adapted Fruit
+item.adaptation_upgrade.name=Adaptation Upgrade
+item.insanetweaks:adaptation_upgrade.desc=Allows a wand to channel Abomination spells. Stacks up to III; higher levels reduce the mana penalty imposed on non-InsaneTweaks spells.
 advancement.insanetweaks:obtain_living_sentient_gear=Obtain Living/Sentient EBWizardry Gear
 advancement.insanetweaks:obtain_living_sentient_gear.desc=Claim one of the parasite-touched relics of warped wizardry.

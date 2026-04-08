@@ -3,13 +3,13 @@
   "modid": "insanetweaks",
   "name": "Insane Tweaks",
   "description": "A modular 1.12.2 bridge mod focused on parasite-themed battlemage progression, evolving gear, custom Wizardry spells, and optional Reskillable integration.",
-  "version": "1.0.16",
+  "version": "1.0.18",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "url": "https://www.curseforge.com/minecraft/mc-mods/srpwizardry-insanetweaks",
   "credits": ".",
   "logoFile": "logo.png",
-  "dependencies": ["ebwizardry", "spartanweaponry", "ancientspellcraft", "srparasites", "swparasites"]
+  "dependencies": ["ebwizardry", "spartanweaponry", "ancientspellcraft", "srparasites", "swparasites", "potioncore", "baublesEX"]
 
 }
 ]

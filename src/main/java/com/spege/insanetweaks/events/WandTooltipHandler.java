@@ -5,9 +5,11 @@ import java.util.List;
 
 import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.items.wand.BaseCustomWandItem;
+import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.spege.insanetweaks.util.PropertyDescriptions;
 import com.spege.insanetweaks.util.TooltipUtils;
 
+import electroblob.wizardry.item.ItemWand;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -29,10 +31,17 @@ public class WandTooltipHandler {
         Item item = stack.getItem();
         boolean isLiving = item == ModItems.LIVING_WAND;
         boolean isSentient = item == ModItems.SENTIENT_WAND;
-        if (!isLiving && !isSentient) return;
+        boolean isCustomWand = isLiving || isSentient;
+        boolean isWizardryWand = item instanceof ItemWand;
+        if (!isCustomWand && !isWizardryWand) return;
 
         List<String> tooltip = event.getToolTip();
         if (tooltip.isEmpty()) return;
+
+        if (!isCustomWand) {
+            addGenericAdaptationTooltip(stack, tooltip);
+            return;
+        }
 
         NBTTagCompound wandNbt = stack.getTagCompound();
         int evoPoints = (wandNbt != null) ? wandNbt.getInteger("WandEvolutionPoints") : 0;
@@ -100,13 +109,16 @@ public class WandTooltipHandler {
                         + TextFormatting.DARK_GRAY + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
 
-        int adaptationLevel = customWand.getArcaneAdaptationLevel();
+        int adaptationLevel = customWand.getArcaneAdaptationLevel(stack);
         if (adaptationLevel > 0) {
-            myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation " + toRoman(adaptationLevel)
-                    + TextFormatting.RED + " (x" + customWand.getArcaneAdaptationManaMultiplier()
-                    + " Mana Cost)");
+            int penaltyPercent = customWand.getArcaneAdaptationPenaltyPercent(stack);
+            String penaltyText = penaltyPercent > 0
+                    ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
+                    : "(No Foreign Mana Penalty)";
+            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel)
+                    + TextFormatting.RED + " " + penaltyText);
             if (isShiftPressed) {
-                String desc = PropertyDescriptions.getDescription("arcane_adaptation");
+                String desc = PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {
                     myLines.add(TextFormatting.RED + "" + TextFormatting.ITALIC + "  " + desc);
                 }
@@ -149,6 +161,63 @@ public class WandTooltipHandler {
         myLines.add(TextFormatting.DARK_GRAY + "-" + standardReduction + "% " + TextFormatting.DARK_PURPLE + "Cooldown");
 
         tooltip.addAll(insertIdx, myLines);
+    }
+
+    private static void addGenericAdaptationTooltip(ItemStack stack, List<String> tooltip) {
+        int adaptationLevel = AdaptationUpgradeHelper.getEffectiveAdaptationLevel(stack);
+        if (adaptationLevel <= 0) {
+            return;
+        }
+
+        boolean isShiftPressed = GuiScreen.isShiftKeyDown();
+        int penaltyPercent = AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(adaptationLevel);
+        String penaltyText = penaltyPercent > 0
+                ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
+                : "(No Foreign Mana Penalty)";
+
+        int insertIdx = findInsertIndex(tooltip);
+        List<String> myLines = new ArrayList<String>();
+        myLines.add("");
+
+        String shiftHint = isShiftPressed
+                ? TextFormatting.DARK_GRAY + "[Showing details]"
+                : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT"
+                        + TextFormatting.DARK_GRAY + " to show details]";
+        myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
+        myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation " + toRoman(adaptationLevel)
+                + TextFormatting.RED + " " + penaltyText);
+
+        if (isShiftPressed) {
+            String desc = PropertyDescriptions.getDescription("adaptation_upgrade");
+            if (desc != null) {
+                myLines.add(TextFormatting.RED + "" + TextFormatting.ITALIC + "  " + desc);
+            }
+        }
+
+        tooltip.addAll(insertIdx, myLines);
+    }
+
+    private static int findInsertIndex(List<String> tooltip) {
+        int insertIdx = tooltip.size();
+        for (int i = 1; i < tooltip.size(); i++) {
+            String cleanLine = TextFormatting.getTextWithoutFormattingCodes(tooltip.get(i));
+            if (cleanLine == null) continue;
+
+            String lower = cleanLine.toLowerCase();
+            if (lower.startsWith("quality:") || lower.startsWith("when in ") || lower.startsWith("attribute modifiers")) {
+                insertIdx = i;
+                if (i > 1 && tooltip.get(i - 1).trim().isEmpty()) {
+                    insertIdx = i - 1;
+                }
+                break;
+            }
+        }
+
+        if (insertIdx == tooltip.size()) {
+            insertIdx = TooltipUtils.getInsertIdx(tooltip);
+        }
+
+        return insertIdx;
     }
 
     private static String toRoman(int value) {

@@ -25,12 +25,15 @@ import net.minecraft.client.renderer.entity.RenderSnowball;
 import net.minecraft.init.Items;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
+import com.spege.insanetweaks.entities.EntityBeckonSivMinion;
+import com.spege.insanetweaks.client.renderer.entity.RenderBeckonSivMinion;
 import com.spege.insanetweaks.entities.EntityFerCowMinion;
 import com.spege.insanetweaks.entities.EntityRupterMinion;
 import com.spege.insanetweaks.entities.EntitySummonerVomitCloud;
 import com.spege.insanetweaks.entities.EntityPrimitiveSummonerMinion;
 import com.spege.insanetweaks.entities.EntityPrimitiveYelloweyeMinion;
 import com.spege.insanetweaks.entities.EntityPurifyingWave;
+import com.spege.insanetweaks.entities.projectile.EntityYelloweyeGlandProjectile;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNade;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeNadeProjectile;
 import com.spege.insanetweaks.entities.projectile.EntityYelloweyeSpineball;
@@ -115,6 +118,13 @@ public class InsaneTweaksMod {
                                     Minecraft.getMinecraft().getRenderItem());
                         }
                     });
+            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeGlandProjectile.class,
+                    new IRenderFactory<EntityYelloweyeGlandProjectile>() {
+                        @Override
+                        public Render<? super EntityYelloweyeGlandProjectile> createRenderFor(RenderManager manager) {
+                            return new RenderYelloweyeGlandProjectile(manager);
+                        }
+                    });
             RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNadeProjectile.class,
                     new IRenderFactory<EntityYelloweyeNadeProjectile>() {
                         @Override
@@ -127,6 +137,13 @@ public class InsaneTweaksMod {
                         @Override
                         public Render<? super EntityYelloweyeNade> createRenderFor(RenderManager manager) {
                             return new RenderYelloweyeNade(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityBeckonSivMinion.class,
+                    new IRenderFactory<EntityBeckonSivMinion>() {
+                        @Override
+                        public Render<? super EntityBeckonSivMinion> createRenderFor(RenderManager manager) {
+                            return new RenderBeckonSivMinion(manager);
                         }
                     });
         }
@@ -187,17 +204,21 @@ public class InsaneTweaksMod {
                 com.spege.insanetweaks.entities.EntityItemIndestructible.class, "legendary_item", 109, this, 64, 20, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_spineball"),
                 EntityYelloweyeSpineball.class, "yelloweye_spineball", 102, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_gland_projectile"),
+                EntityYelloweyeGlandProjectile.class, "yelloweye_gland_projectile", 111, this, 64, 10, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade_projectile"),
                 EntityYelloweyeNadeProjectile.class, "yelloweye_nade_projectile", 103, this, 64, 10, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "yelloweye_nade"),
                 EntityYelloweyeNade.class, "yelloweye_nade", 104, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "beckon_siv_minion"),
+                EntityBeckonSivMinion.class, "beckon_siv_minion", 110, this, 64, 3, true);
 
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
-        if (com.spege.insanetweaks.config.ModConfig.tweaks.enableCurseOfPossessionPatch) {
+        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks && com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) {
             MinecraftForge.EVENT_BUS.register(new LivingDeathEventHandler());
         }
 
@@ -207,6 +228,8 @@ public class InsaneTweaksMod {
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
+            electroblob.wizardry.util.WandHelper.registerSpecialUpgrade(
+                    com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE, "adaptation");
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
@@ -226,6 +249,10 @@ public class InsaneTweaksMod {
         // GoldenBook is independent of the SRP/EBWizardry bridge — register
         // unconditionally.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GoldenBookEventHandler());
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellRestrictionEventHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteShroudEventHandler());
+        }
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());

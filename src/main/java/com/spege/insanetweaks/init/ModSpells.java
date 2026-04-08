@@ -4,9 +4,12 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.spells.SpellSummonFerCow;
 import com.spege.insanetweaks.spells.SpellPurifyingPulse;
+import com.spege.insanetweaks.spells.SpellParasiteShroud;
 import com.spege.insanetweaks.spells.SpellSummonPrimitiveSummoner;
 import com.spege.insanetweaks.spells.SpellSummonPrimitiveYelloweye;
 import com.spege.insanetweaks.spells.SpellTestProjectile;
+import com.spege.insanetweaks.spells.SpellCallOfDemise;
+import com.spege.insanetweaks.spells.SpellYelloweyeGland;
 import electroblob.wizardry.spell.Spell;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,6 +24,9 @@ public class ModSpells {
     public static final Spell SUMMON_PRIMITIVE_YELLOWEYE = new SpellSummonPrimitiveYelloweye();
     public static final Spell PURIFYING_PULSE = new SpellPurifyingPulse();
     public static final Spell TEST_PROJECTILE = new SpellTestProjectile();
+    public static final Spell CALL_OF_DEMISE = new SpellCallOfDemise();
+    public static final Spell YELLOWEYE_GLAND = new SpellYelloweyeGland();
+    public static final Spell PARASITE_SHROUD = new SpellParasiteShroud();
 
     @SubscribeEvent
     public static void registerSpells(RegistryEvent.Register<Spell> event) {
@@ -34,5 +40,8 @@ public class ModSpells {
         registry.register(SUMMON_PRIMITIVE_YELLOWEYE);
         registry.register(PURIFYING_PULSE);
         registry.register(TEST_PROJECTILE);
+        registry.register(CALL_OF_DEMISE);
+        registry.register(YELLOWEYE_GLAND);
+        registry.register(PARASITE_SHROUD);
     }
 }

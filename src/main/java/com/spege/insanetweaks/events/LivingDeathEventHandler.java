@@ -83,7 +83,7 @@ public class LivingDeathEventHandler {
     @SubscribeEvent(priority = EventPriority.HIGH)
     @SuppressWarnings("null")
     public void onLivingDeath(LivingDeathEvent event) {
-        if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableCurseOfPossessionPatch) return;
+        if (!com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks || !com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) return;
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntity();

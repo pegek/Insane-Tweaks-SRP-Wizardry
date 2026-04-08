@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " V ",
+    "GAG",
+    " N "
+  ],
+  "key": {
+    "V": {
+      "item": "srparasites:vile_shell"
+    },
+    "G": {
+      "item": "insanetweaks:golden_book"
+    },
+    "A": {
+      "item": "ebwizardry:attunement_upgrade"
+    },
+    "N": {
+      "item": "swparasites:living_nucleus"
+    }
+  },
+  "result": {
+    "item": "insanetweaks:adaptation_upgrade",
+    "count": 1
+  }
+}

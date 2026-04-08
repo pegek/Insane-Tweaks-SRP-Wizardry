@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.spege.insanetweaks.baubles.ItemZhonyasHourglassArtefact;
 import com.spege.insanetweaks.util.SrpPurificationHelper;
 
 import net.minecraft.block.state.IBlockState;
@@ -71,6 +72,8 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
 
         this.purifyRing(this.processedRadius, currentRadius);
         this.affectBeckons(currentRadius);
+        ItemZhonyasHourglassArtefact.tryRestoreInRange(
+                this.world, this.posX, this.posY, this.posZ, currentRadius, this.getOwner());
         this.processedRadius = currentRadius;
     }
 

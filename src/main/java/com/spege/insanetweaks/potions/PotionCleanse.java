@@ -111,7 +111,7 @@ public class PotionCleanse extends Potion {
      */
     @SideOnly(Side.CLIENT)
     @Override
-    @SuppressWarnings("null") // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
+    @SuppressWarnings({"null", "deprecation"}) // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
     public void renderHUDEffect(int x, int y, @Nonnull PotionEffect effect, @Nonnull Minecraft mc, float alpha) {
         if (ModConfig.client.hideCleanseHudEffect) return;
         mc.getTextureManager().bindTexture(CLEANSE_TEXTURE);
@@ -127,7 +127,7 @@ public class PotionCleanse extends Potion {
      */
     @SideOnly(Side.CLIENT)
     @Override
-    @SuppressWarnings("null") // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
+    @SuppressWarnings({"null", "deprecation"}) // bindTexture param lacks @Nonnull annotation in Forge 1.12.2 API
     public void renderInventoryEffect(int x, int y, @Nonnull PotionEffect effect, @Nonnull Minecraft mc) {
         if (ModConfig.client.hideCleanseHudEffect) return;
         mc.getTextureManager().bindTexture(CLEANSE_TEXTURE);

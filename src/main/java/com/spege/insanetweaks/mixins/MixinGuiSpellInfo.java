@@ -17,12 +17,12 @@ public abstract class MixinGuiSpellInfo {
     @Shadow
     public abstract Spell getSpell();
 
-    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/spell/Spell;getDisplayName()Ljava/lang/String;"))
+    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/spell/Spell;getDisplayName()Ljava/lang/String;"), require = 0)
     private String insanetweaks$formatSpellTitleInGui(Spell spell) {
         return SpellDisplayUtils.getFormattedSpellDisplayName(spell);
     }
 
-    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/constants/Element;getFormattingCode()Ljava/lang/String;"))
+    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/constants/Element;getFormattingCode()Ljava/lang/String;"), require = 0)
     private String insanetweaks$replaceElementFormatting(Element element) {
         Spell spell = this.getSpell();
         return SpellDisplayUtils.usesAbominationStyling(spell)
@@ -30,7 +30,7 @@ public abstract class MixinGuiSpellInfo {
                 : element.getFormattingCode();
     }
 
-    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/constants/Element;getDisplayName()Ljava/lang/String;"))
+    @Redirect(method = "drawForegroundLayer", at = @At(value = "INVOKE", target = "Lelectroblob/wizardry/constants/Element;getDisplayName()Ljava/lang/String;"), require = 0)
     private String insanetweaks$replaceElementName(Element element) {
         Spell spell = this.getSpell();
         return SpellDisplayUtils.usesAbominationStyling(spell)

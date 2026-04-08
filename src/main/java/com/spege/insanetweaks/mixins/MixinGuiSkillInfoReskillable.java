@@ -35,7 +35,7 @@ public abstract class MixinGuiSkillInfoReskillable extends GuiScreen {
     @Shadow
     private boolean isUnlocked;
 
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = { "mouseClicked", "func_73864_a" }, at = @At("HEAD"), cancellable = true, remap = false)
     private void insanetweaks$handleFallbackLockClick(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
         if (hoveredUnlockable == null || !isUnlocked) {
             return;

@@ -27,8 +27,11 @@ public abstract class MixinGuiSpellDisplay {
         }
 
         boolean discovered = true;
-        if (!player.isCreative() && WizardData.get(player) != null) {
-            discovered = WizardData.get(player).hasSpellBeenDiscovered(spell);
+        if (!player.isCreative()) {
+            WizardData wizardData = WizardData.get(player);
+            if (wizardData != null) {
+                discovered = wizardData.hasSpellBeenDiscovered(spell);
+            }
         }
 
         String formatting = switchTime > 0
