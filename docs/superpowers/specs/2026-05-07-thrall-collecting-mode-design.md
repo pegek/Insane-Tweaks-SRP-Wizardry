@@ -76,7 +76,7 @@ After TP:
 3. Else enter `HARVESTING` with a queue of scan hits.
 
 **Per-block harvest:**
-1. TP adjacent to target block (offset by closest face, fallback: TP into the block's column at +1 Y).
+1. TP adjacent to target block (offset by closest non-solid face). Fallback if no adjacent face is empty: TP straight up the block's column to the first air slot above (so the thrall can break the block from above). Final fallback: skip the block and continue to next.
 2. Wait `MINING_TICKS = max(3, hardness * MINING_SPEED_MULTIPLIER)` ticks (same formula as `ThrallAIMineshaft`).
 3. Drop via `block.dropBlockAsItem(world, pos, state, 0)` → all drops are auto-picked by `passiveItemPickup` within the next 5 ticks.
 4. **Vein-BFS:** push 26 neighbors of the just-broken block onto the harvest queue if they match the same `(block, metadata)`. Limits: `VEIN_MAX_BLOCKS = 50` per visit, BFS frontier depth `30` blocks from the BFS root.
@@ -135,7 +135,7 @@ if (mode == COLLECTING && collectingState.phase == WAITING_FOR_ITEMS) {
 }
 ```
 
-Items NOT matching block-form and items beyond the 4-target cap fall through to `passiveItemPickup` normally (so the thrall doesn't refuse food etc.).
+Items NOT matching block-form (sword, food, etc.) and items beyond the 4-target cap are **ignored entirely** during `WAITING_FOR_ITEMS` — they remain on the ground. Normal `passiveItemPickup` resumes once we transition to `SEARCHING`. This avoids the player accidentally feeding non-target items into the thrall's inventory while trying to set up the target list.
 
 ## 12. Configs (`ModConfig.thrall`)
 
@@ -163,7 +163,7 @@ Items NOT matching block-form and items beyond the 4-target cap fall through to 
 | `entities/EntityThrallMinion.java` | wire AI task into `initEntityAI` (gated by config); add COLLECTING-WAITING branch in `passiveItemPickup`; persist resume fields |
 | `network/PacketThrallCommand.java` | `+ ACTION_COLLECTING` packet handler |
 | `config/ModConfig.java` | 13 new fields under `thrall.collecting*` |
-| `client/gui/...` (thrall command menu) | `+ "Collecting"` button (mirrors existing buttons; locate existing menu file during impl) |
+| `client/gui/GuiThrallControl.java` | `+ "Collecting"` button (mirrors existing `ACTION_FARMING` / `ACTION_PORTER` buttons) |
 | `resources/assets/insanetweaks/lang/en_us.lang` | `gui.insanetweaks.thrall.mode.collecting=...` plus status keys |
 | `resources/assets/insanetweaks/lang/pl_pl.lang` | matching Polish strings |
 
@@ -190,4 +190,4 @@ Items NOT matching block-form and items beyond the 4-target cap fall through to 
 - No tool requirement / pickaxe gating — drops are auto-yielded (matches Mineshaft).
 - No tunneling through stone to reach buried targets — TP-only access.
 - No chunk-loading of distant TPs — relies on engine-loaded chunks; if a TP target is in unloaded space, the safe-spot resolver fails and the cycle retries.
-- No persistence across server restart of the *paused* state — resume window only spans live gameplay (NBT is written, but the 5-min wall-clock window uses world tick time, so reload effectively counts as elapsed).
+- Resume window uses `world.getTotalWorldTime()` ticks, so it counts only ticks the world actually advanced. NBT *is* persisted across restart; the resume window survives a server restart cleanly because no ticks elapsed while the server was off.
