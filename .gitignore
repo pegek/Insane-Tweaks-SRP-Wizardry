@@ -21,6 +21,9 @@ build/
 .vscode/
 modDev.code-workspace
 
+# Claude Code (per-user harness settings, never committed)
+.claude/
+
 # other
 eclipse/
 run/
