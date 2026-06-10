@@ -1,0 +1,122 @@
+# Russian translation by MrKoteo
+item.cost_core.name=Ядро затрат
+item.potency_core.name=Ядро силы
+item.speedcast_core.name=Ядро скорости чар
+item.minion_health_core.name=Ядро здоровья миньонов
+item.minion_count_core.name=Ядро количества миньонов
+item.summon_radius_core.name=Ядро радиуса призыва
+item.summon_duration_core.name=Ядро длительности призыва
+item.golden_book.name=Золотая книга
+item.rupter_solied.name=Разрыватель (твёрдый)
+item.living_spellblade.name=§eЖивой заклинательный клинок
+item.sentient_spellblade.name=§eРазумный заклинательный клинок
+item.living_wand.name=§eЖивая палочка
+item.sentient_wand.name=§eРазумная палочка
+
+insanetweaks.wand.omnipotency=Всесилие
+
+item.battle_mage_helmet.name=§eРазумный шлем боевого мага
+item.battle_mage_chestplate.name=§eРазумный нагрудник боевого мага
+item.battle_mage_leggings.name=§eРазумные поножи боевого мага
+item.battle_mage_boots.name=§eРазумные ботинки боевого мага
+item.parasite_mage_helmet.name=§eЖивой шлем мага
+item.parasite_mage_chestplate.name=§eЖивой нагрудник мага
+item.parasite_mage_leggings.name=§eЖивые поножи мага
+item.parasite_mage_boots.name=§eЖивые ботинки мага
+item.living_aegis.name=§eЖивая эгида
+item.sentient_aegis.name=§eРазумная эгида
+
+item.insanetweaks.infernal_crown.name=§cАдская корона
+item.insanetweaks:infernal_crown.desc=Каждое 10-ое призванное существо навсегда превращается в адскую сущность.
+item.insanetweaks.zhonyas_hourglass.name=§eЧасы Жони
+item.insanetweaks:zhonyas_hourglass.desc=Восстанавливает исходную форму существ, заражённых SRP, при использовании заклинания «Очищающий импульс». В творческом режиме ПКМ по существу восстанавливает его напрямую.
+
+# Bauble Fruits
+item.bauble_fruit_ring.name=§dПлод-бабл — Кольцо
+item.bauble_fruit_amulet.name=§dПлод-бабл — Амулет
+item.bauble_fruit_body.name=§dПлод-бабл — Нагрудник
+item.bauble_fruit_head.name=§dПлод-бабл — Шлем
+item.bauble_fruit_charm.name=§dПлод-бабл — Оберег
+item.bauble_fruit_belt.name=§dПлод-бабл — Пояс
+item.bauble_fruit_elytra.name=§dПлод-бабл — Элитры
+item.bauble_fruit_totem.name=§dПлод-бабл — Тотемы
+item.bauble_fruit_trinket.name=§dПлод-бабл — Безделушка
+
+# Potion effects
+potion.insanetweaks.cleanse=§eОчищение
+
+# CompatSkills / Reskillable Custom Traits
+reskillable.unlock.compatskills.fast_learner=§aБыстрая обучаемость
+reskillable.unlock.compatskills.fast_learner.desc=Мобы дают на 15%% больше опыта.
+reskillable.unlock.compatskills.assimilated_warfare=§cАссимилированная война
+reskillable.unlock.compatskills.assimilated_warfare.desc=Убитые вами паразиты дают резервный опыт, даже если эволюция SRP подавляет его. С 5-й стадии SRP убийство каждого паразита также удаляет 1 очко эволюции.
+reskillable.unlock.compatskills.spiders_grace=§fПаучья грация
+reskillable.unlock.compatskills.spiders_grace.desc=Почти беспрепятственно перемещайтесь по паутине.
+reskillable.unlock.compatskills.iron_stomach=§6Железный желудок
+reskillable.unlock.compatskills.iron_stomach.desc=Еда съедается на 15%% быстрее и даёт дополнительное насыщение, зависящее от его значения.
+reskillable.unlock.compatskills.double_loot=§eДвойная добыча
+reskillable.unlock.compatskills.double_loot.desc=6%% шанс поймать двойную добычу во время рыбалки.
+reskillable.unlock.compatskills.enchant_fishing=§bЗачарованная рыбалка
+reskillable.unlock.compatskills.enchant_fishing.desc=0.5%% шанс поймать зачарованную книгу с сокровищами, включая расширенные (Advanced) или высшие (Supreme) варианты, если они поддерживаются.
+reskillable.unlock.compatskills.astral_prospector=§dАстральный разведчик
+reskillable.unlock.compatskills.astral_prospector.desc=10%% шанс удвоить выпадение руды.
+reskillable.unlock.compatskills.angry_farmer=§aЗлой фермер
+reskillable.unlock.compatskills.angry_farmer.desc=Получите +5 к урону в ближнем бою, используя любую косу, тяпку или ножницы.
+reskillable.unlock.compatskills.supreme_enchanter=§dВерховный заклинатель
+reskillable.unlock.compatskills.supreme_enchanter.desc=Даёт +5 силы зачарования за столом и +10 зачаровываемости предметов.
+reskillable.unlock.compatskills.bob_the_builder=§eБоб-строитель
+reskillable.unlock.compatskills.bob_the_builder.desc=Получите +2 радиуса доставания блоков, держа любой блок в основной руке.
+reskillable.unlock.compatskills.meditation=§aМедитация
+reskillable.unlock.compatskills.meditation.desc=Восстанавливает ману в носимой магической броне и инструментах для чар в неосновной руке, когда вы стоите неподвижно.
+reskillable.unlock.compatskills.arcane_mastery=§bМастерство тайной магии
+reskillable.unlock.compatskills.arcane_mastery.desc=Уменьшает стоимость маны всех заклинаний на 10%%.
+reskillable.unlock.compatskills.school_of_alteration=§eШкола изменения
+reskillable.unlock.compatskills.school_of_alteration.desc=Усиливающие и изменяющие заклинания получают +15%% длительности.
+reskillable.unlock.compatskills.school_of_conjuration=§dШкола призыва
+reskillable.unlock.compatskills.school_of_conjuration.desc=Заклинания призыва и миньонов получают +20%% длительности.
+reskillable.unlock.compatskills.school_of_destruction=§cШкола разрушения
+reskillable.unlock.compatskills.school_of_destruction.desc=Атакующие и снарядные заклинания получают +10%% силы.
+reskillable.unlock.compatskills.archmage=§bАрхимаг
+reskillable.unlock.compatskills.archmage.desc=Даёт +7%% магического урона и +5%% силы заклинаний. Без PotionCore заменяется на +15%% силы заклинаний.
+reskillable.unlock.compatskills.adapted_vegetation=§aАдаптированная растительность
+reskillable.unlock.compatskills.adapted_vegetation.desc=Защищает посевы в радиусе 8 блоков вокруг игрока, пока он держит Живую или Разумную косу.
+
+# Reskillable overridden skills mixins
+reskillable.unlock.compatskills.golden_osmosis=§eЗолотой осмос
+reskillable.unlock.compatskills.golden_osmosis.desc=Золотые инструменты, находясь в руке или броне, извлекают опыт из владельца, чтобы быстро восстанавливаться. §6Дополнительно:§r +1 брони и +0.5 стойкости к броне за каждый надетый золотой предмет брони. Золотые инструменты и оружие дают +25%% скорости атаки.
+reskillable.unlock.compatskills.safe_port=§aБезопасный порт
+reskillable.unlock.compatskills.safe_port.desc=§cЖемчуга Края больше не причиняют вам вреда и получают +30%% скорости и дальности полёта.
+
+# EBWizardry Spells
+spell.insanetweaks:summon_fer_cow=Призыв одичавшей коровы
+spell.insanetweaks:summon_fer_cow.desc=Лишённая кожи и искажённая паразитом, её челюсть раскрывается, обнажая хватательные щупальца. Ужасный, но эффективный мясной щит первой линии.
+spell.insanetweaks:summon_primitive_summoner=Призыв примитивного призывателя
+spell.insanetweaks:summon_primitive_summoner.desc=Гротескная масса плоти, служащая живым гнездом. Избегает прямого боя, предпочитая отступать и яростно извергать свирепых быстрых ужасов, чтобы подавить врага.
+spell.insanetweaks:summon_primitive_yelloweye=Призыв примитивного желтоглаза
+spell.insanetweaks:summon_primitive_yelloweye.desc=Я ненавижу эту паразитическую магию, но выживание требует её. Призывает испорченного желтоглаза, чтобы тот мучил врагов сверху.
+spell.insanetweaks:purifying_pulse=Очищающий импульс
+spell.insanetweaks:purifying_pulse.desc=Выпускает короткую очищающую волну в указанную точку, восстанавливая близлежащие блоки заражения SRP до простых ванильных форм и наказывая маяки (Beckons), попавшие под очистку.
+spell.insanetweaks:test_projectile=Тестовый огненный шар
+spell.insanetweaks:test_projectile.desc=Создаёт небольшой пылающий шар, летящий туда, куда вы смотрите.
+spell.insanetweaks:call_of_demise=Зов гибели
+spell.insanetweaks:call_of_demise.desc=Призывает ассимилированный маяк (Beckon), который служит грозной стационарной оборонительной башней. Он постоянно подтягивает ближайших врагов к себе, игнорируя большинство атак.
+spell.insanetweaks:yelloweye_gland=Железа желтоглаза
+spell.insanetweaks:yelloweye_gland.desc=Запускает шипованный шар, рождённый паразитом, как у примитивного желтоглаза. Каждый четвёртый выстрел мутирует в родной липкий гранатный выстрел.
+spell.insanetweaks:parasite_shroud=Паразитический саван
+spell.insanetweaks:parasite_shroud.desc=Окутывает заклинателя тайной магией, пропитанной паразитами. Примитивные и адаптированные паразиты ненадолго теряют цель, а более сильные штаммы реагируют медленнее и ненадёжнее.
+entity.insanetweaks.fer_cow_minion.name=Миньон одичавшей коровы
+entity.fer_cow_minion.name=Миньон одичавшей коровы
+entity.insanetweaks.primitive_summoner_minion.name=Миньон примитивного призывателя
+entity.primitive_summoner_minion.name=Миньон примитивного призывателя
+entity.insanetweaks.rupter_minion.name=Миньон разрывателя
+entity.rupter_minion.name=Миньон разрывателя
+entity.primitive_yelloweye_minion.name=Миньон примитивного желтоглаза
+entity.insanetweaks.beckon_siv_minion.name=Миньон гибели
+entity.beckon_siv_minion.name=Миньон гибели
+insanetweaks.reskillable.lock_fallback=Откатить умение: Ctrl + ПКМ или Средняя кнопка
+insanetweaks.element.abomination=Мерзость
+item.arcane_adapted_fruit.name=Тайно-адаптированный плод
+item.adaptation_upgrade.name=Улучшение адаптации
+item.insanetweaks:adaptation_upgrade.desc=Позволяет палочке использовать заклинания мерзости. Суммируется до III уровня; более высокие уровни снижают штраф к мане, налагаемый на не-InsaneTweaks заклинания.
+advancement.insanetweaks:obtain_living_sentient_gear=Получите живое/разумное магическое снаряжение
+advancement.insanetweaks:obtain_living_sentient_gear.desc=Завладейте одной из затронутых паразитами реликвий искажённой магии.
