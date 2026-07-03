@@ -124,13 +124,6 @@ public class WandTooltipHandler {
                 }
             }
         }
-        myLines.add(TextFormatting.GOLD + "- Ashen Legacy");
-        if (isShiftPressed) {
-            String desc = PropertyDescriptions.getDescription("ashen_legacy");
-            if (desc != null) {
-                myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
-            }
-        }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
             int magicDamageBonus = customWand.getMagicDamageBonusPercent(stack);
             myLines.add(TextFormatting.GREEN + "- Magically Adapted "

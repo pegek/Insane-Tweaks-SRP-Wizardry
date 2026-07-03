@@ -22,6 +22,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 
+@SuppressWarnings("null")
 public final class ArcaneAdaptedFruitHelper {
 
     public static final String TAG_GEAR_ACHIEVEMENT = "ArcaneBridgeAchievementUnlocked";

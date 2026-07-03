@@ -2,6 +2,7 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.spells.SpellSummonWizard;
 import com.spege.insanetweaks.spells.SpellSummonFerCow;
 import com.spege.insanetweaks.spells.SpellPurifyingPulse;
 import com.spege.insanetweaks.spells.SpellParasiteShroud;
@@ -9,6 +10,8 @@ import com.spege.insanetweaks.spells.SpellSummonPrimitiveSummoner;
 import com.spege.insanetweaks.spells.SpellSummonPrimitiveYelloweye;
 import com.spege.insanetweaks.spells.SpellTestProjectile;
 import com.spege.insanetweaks.spells.SpellCallOfDemise;
+import com.spege.insanetweaks.spells.SpellImmuneBond;
+import com.spege.insanetweaks.spells.SpellSummonThrall;
 import com.spege.insanetweaks.spells.SpellYelloweyeGland;
 import electroblob.wizardry.spell.Spell;
 import net.minecraftforge.event.RegistryEvent;
@@ -19,6 +22,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
 public class ModSpells {
 
+    public static final Spell SUMMON_WIZARD = new SpellSummonWizard();
     public static final Spell SUMMON_FER_COW = new SpellSummonFerCow();
     public static final Spell SUMMON_PRIMITIVE_SUMMONER = new SpellSummonPrimitiveSummoner();
     public static final Spell SUMMON_PRIMITIVE_YELLOWEYE = new SpellSummonPrimitiveYelloweye();
@@ -27,6 +31,8 @@ public class ModSpells {
     public static final Spell CALL_OF_DEMISE = new SpellCallOfDemise();
     public static final Spell YELLOWEYE_GLAND = new SpellYelloweyeGland();
     public static final Spell PARASITE_SHROUD = new SpellParasiteShroud();
+    public static final Spell IMMUNE_BOND = new SpellImmuneBond();
+    public static final Spell SUMMON_THRALL = new SpellSummonThrall();
 
     @SubscribeEvent
     public static void registerSpells(RegistryEvent.Register<Spell> event) {
@@ -35,6 +41,7 @@ public class ModSpells {
         }
 
         IForgeRegistry<Spell> registry = event.getRegistry();
+        registry.register(SUMMON_WIZARD);
         registry.register(SUMMON_FER_COW);
         registry.register(SUMMON_PRIMITIVE_SUMMONER);
         registry.register(SUMMON_PRIMITIVE_YELLOWEYE);
@@ -43,5 +50,7 @@ public class ModSpells {
         registry.register(CALL_OF_DEMISE);
         registry.register(YELLOWEYE_GLAND);
         registry.register(PARASITE_SHROUD);
+        registry.register(IMMUNE_BOND);
+        registry.register(SUMMON_THRALL);
     }
 }

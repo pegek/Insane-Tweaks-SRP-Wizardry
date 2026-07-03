@@ -7,7 +7,8 @@
   ],
   "key": {
     "N": {
-      "item": "swparasites:living_nucleus"
+      "type": "forge:ore_dict",
+      "ore": "itLivingNucleus"
     },
     "V": {
       "item": "srparasites:vile_shell"

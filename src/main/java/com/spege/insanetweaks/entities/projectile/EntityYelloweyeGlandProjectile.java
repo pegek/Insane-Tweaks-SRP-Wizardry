@@ -123,7 +123,7 @@ public class EntityYelloweyeGlandProjectile extends EntityMagicArrow {
             return;
         }
 
-        SummonInfectionSafetyHelper.clearCoth(target);
+        SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
 
         if (this.witherDurationTicks > 0) {
             int baseAmplifier = Math.max(0, this.witherAmplifier);

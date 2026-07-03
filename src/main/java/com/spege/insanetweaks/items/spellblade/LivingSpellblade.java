@@ -32,7 +32,7 @@ import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.WandHelper;
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.oblivioussp.spartanweaponry.api.WeaponProperties;
-import com.existingeevee.swparasites.init.ParasiteSWProperties;
+import com.spege.insanetweaks.init.ModWeaponProperties;
 
 /**
  * Ts
@@ -53,12 +53,12 @@ public class LivingSpellblade extends BridgeSpellblade {
         this.setMaxDamage(4000);
         this.swModelPath = "living_spellblade";
 
-        // Spartan & Parasite Properties
+        // Spartan base + local InsaneTweaks parasite properties (no swparasites dependency)
         this.addBridgeProperty(WeaponProperties.REACH_1)
                 .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
-                .addBridgeProperty(ParasiteSWProperties.BLEEDING_2)
-                .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
-                .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
+                .addBridgeProperty(ModWeaponProperties.BLEEDING_3)
+                .addBridgeProperty(ModWeaponProperties.UNCAPPED)
+                .addBridgeProperty(ModWeaponProperties.HEAVY_2);
     }
 
     @Override

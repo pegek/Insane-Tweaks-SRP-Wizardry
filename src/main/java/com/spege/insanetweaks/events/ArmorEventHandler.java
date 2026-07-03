@@ -1,7 +1,7 @@
 package com.spege.insanetweaks.events;
 
-import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
-import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
+import com.spege.insanetweaks.items.armor.SentientWarlockArmorItem;
+import com.spege.insanetweaks.items.armor.LivingWarlockArmorItem;
 
 import electroblob.wizardry.item.ItemWizardArmour;
 import net.minecraft.entity.player.EntityPlayer;
@@ -51,17 +51,17 @@ public class ArmorEventHandler {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge)
             return;
 
-        // Nomenclature: ParasiteWizardArmorItem = "Living Armor" (pre-evolution)
-        //               BattleMageArmorItem      = "Sentient Armor" (post-evolution)
+        // Nomenclature: LivingWarlockArmorItem = "Living Armor" (pre-evolution)
+        //               SentientWarlockArmorItem = "Sentient Armor" (post-evolution)
         int livingArmorCount = 0;
         int sentientArmorCount = 0;
         int awakenedSentientCount = 0;
 
         for (ItemStack piece : player.inventory.armorInventory) {
             if (!piece.isEmpty()) {
-                if (piece.getItem() instanceof ParasiteWizardArmorItem) {
+                if (piece.getItem() instanceof LivingWarlockArmorItem) {
                     livingArmorCount++;
-                } else if (piece.getItem() instanceof BattleMageArmorItem) {
+                } else if (piece.getItem() instanceof SentientWarlockArmorItem) {
                     sentientArmorCount++;
                     NBTTagCompound tag = piece.getTagCompound();
                     if (tag != null && tag.getFloat(NBT_ADAPTATION) >= 10000.0f) {
@@ -93,8 +93,8 @@ public class ArmorEventHandler {
                 if (piece.isEmpty())
                     continue;
 
-                boolean isLivingArmor  = piece.getItem() instanceof ParasiteWizardArmorItem; // pre-evolution
-                boolean isSentientArmor = piece.getItem() instanceof BattleMageArmorItem;     // post-evolution
+                boolean isLivingArmor  = piece.getItem() instanceof LivingWarlockArmorItem; // pre-evolution
+                boolean isSentientArmor = piece.getItem() instanceof SentientWarlockArmorItem;     // post-evolution
 
                 if (isLivingArmor || isSentientArmor) {
                     if (!piece.hasTagCompound())
@@ -183,16 +183,16 @@ public class ArmorEventHandler {
             return;
 
         // Require: all 4 armor slots must be exclusively Living or Sentient pieces.
-        // Nomenclature: ParasiteWizardArmorItem = "Living Armor" (pre-evolution)
-        //               BattleMageArmorItem      = "Sentient Armor" (post-evolution)
+        // Nomenclature: LivingWarlockArmorItem = "Living Armor" (pre-evolution)
+        //               SentientWarlockArmorItem = "Sentient Armor" (post-evolution)
         // Hardcap requires all 4 slots to be Living OR Sentient armor (any mix).
         int livingArmorCount = 0;
         int sentientArmorCount = 0;
         for (ItemStack piece : player.inventory.armorInventory) {
             if (!piece.isEmpty()) {
-                if (piece.getItem() instanceof ParasiteWizardArmorItem)
+                if (piece.getItem() instanceof LivingWarlockArmorItem)
                     livingArmorCount++;
-                else if (piece.getItem() instanceof BattleMageArmorItem)
+                else if (piece.getItem() instanceof SentientWarlockArmorItem)
                     sentientArmorCount++;
             }
         }

@@ -19,9 +19,14 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
+import java.util.Arrays;
+import java.util.List;
+
+import com.spege.insanetweaks.api.ITweaksPropertyHolder;
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
 
 @SuppressWarnings("null")
-public class BaseCustomWandItem extends ItemWand {
+public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolder {
 
     @Nonnull
     private static final UUID MAGICAL_ADAPTED_UUID = UUID.fromString("6C2F3E8A-5182-421A-B01B-BCCE9786A100");
@@ -158,5 +163,10 @@ public class BaseCustomWandItem extends ItemWand {
         }
 
         return super.applyUpgrade(player, wand, upgrade);
+    }
+
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
     }
 }

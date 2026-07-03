@@ -5,13 +5,9 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPInfected;
-import com.dhanantry.scapeandrunparasites.entity.monster.crude.EntityInhooM;
-import com.dhanantry.scapeandrunparasites.entity.monster.crude.EntityInhooS;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.util.SrpOriginSnapshotHelper;
-import com.spege.insanetweaks.util.SrpOriginSnapshotHelper.OriginalSnapshot;
 
 import electroblob.wizardry.item.ItemArtefact;
 import net.minecraft.client.util.ITooltipFlag;
@@ -21,7 +17,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -34,10 +29,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -61,19 +52,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  *    MixinParasiteEventEntity przechwytuje KAŻDE entity tuż przed
  *    usunięciem przez spawnInsider() i convertEntity(). Pełne NBT
  *    (imię, właściciel, oswojenie, atrybuty) jest zapisywane globalnie.
- *    EntityJoinWorldEvent stosuje snapshot do nowo spawnanego SRP entity,
+ *    ZhonyasEventHandler stosuje snapshot do nowo spawnanego SRP entity,
  *    skąd artefakt go odczytuje przy przywracaniu.
+ *
+ *    Incomplete Form (EntityInhooM/S): mobs bez odpowiednika w SRP — np. modded
+ *    entity jak ebwizardry:wizard — trafiają do InhooM lub InhooS.
+ *    Snapshot zachowuje pełne ID + NBT, umożliwiając perfekcyjne odtworzenie
+ *    dowolnego moda, jeśli snapshot jest dostępny.
+ *
+ * Efekt po przywróceniu:
+ *    performRestore() nakłada na przywrócone entity 30-sekundowy EPEL_E
+ *    (ochrona przed ponowną asymilacją/transformacją) + clearCoth.
  */
-@Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
 @SuppressWarnings("null")
 public class ItemZhonyasHourglassArtefact extends ItemArtefact {
 
-    /** Cooldown przywracania per entity (ticki) — anti-spam. */
-    private static final int    RESTORE_COOLDOWN = 20;
     /** Minimalny promień sprawdzania w zasięgu fali. */
-    private static final double RESTORE_RADIUS   = 12.0D;
+    private static final double RESTORE_RADIUS  = 12.0D;
     /** Zasięg ray-trace dla trybu Creative. */
-    private static final double CREATIVE_REACH   = 20.0D;
+    private static final double CREATIVE_REACH  = 20.0D;
 
     public ItemZhonyasHourglassArtefact() {
         // CHARM = slot "charm/totem" w EBWizardry (najbliższy do TOTEM).
@@ -85,52 +82,20 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // EventBus: Stosuj snapshot do KAŻDEGO nowo spawnanego SRP entity
-    // ─────────────────────────────────────────────────────────────────
-
-    /**
-     * Łapie nowo spawnowane SRP entity i aplikuje do jego entityData
-     * snapshot zapisany przez Mixin.
-     *
-     * Działa dla WSZYSTKICH zarażonych form:
-     * - EntityInhooM / EntityInhooS — muszą mieć snapshot (nie mają wbudowanego hosta)
-     * - EntityPInfected i podklasy — snapshot wzbogaca dane o pełne NBT (owner, taming itp.)
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getWorld().isRemote) return;
-        Entity entity = event.getEntity();
-
-        // Interesują nas tylko SRP zarażone entity
-        boolean isInhoo    = entity instanceof EntityInhooM || entity instanceof EntityInhooS;
-        boolean isInfected = entity instanceof EntityPInfected;
-        if (!isInhoo && !isInfected) return;
-
-        // Czyść stale snapshoty przy okazji
-        SrpOriginSnapshotHelper.cleanupStale();
-
-        // Pobierz najświeższy snapshot (ze zbioru oczekujących)
-        OriginalSnapshot snapshot = SrpOriginSnapshotHelper.popMostRecent();
-        if (snapshot == null) return;
-
-        // Zapisz do entityData nowego pasożyta
-        EntityLivingBase living = (EntityLivingBase) entity;
-        NBTTagCompound data = living.getEntityData();
-        data.setString(SrpOriginSnapshotHelper.KEY_ORIGINAL_ID, snapshot.resourceId);
-        data.setTag(SrpOriginSnapshotHelper.KEY_ORIGINAL_NBT, snapshot.fullNbt.copy());
-
-        InsaneTweaksMod.LOGGER.debug(
-            "[IT][Zhonyas] Snapshot '{}' → {} (id={})",
-            snapshot.resourceId, entity.getClass().getSimpleName(), entity.getEntityId());
-    }
-
-    // ─────────────────────────────────────────────────────────────────
     // Pasywny tryb: wywoływany przez EntityPurifyingWave
     // ─────────────────────────────────────────────────────────────────
 
     /**
      * Przywraca wszystkie zarażone SRP entity w zasięgu fali puryfikacji.
      * Wywoływany z EntityPurifyingWave.onUpdate() gdy gracz ma CHARM aktywny.
+     *
+     * Nie używa cooldownu per-entity — performRestore() wykonuje srpEntity.setDead(),
+     * więc entity natychmiast przestaje istnieć po przywróceniu i nie może ponownie
+     * trafić do pętli w tej samej fali.
+     *
+     * UWAGA: Gdy owner (rzucający) wyjdzie poza zasięg chunku lub rozłączy się
+     * podczas aktywnej fali, this.getOwner() zwróci null i przywrócenie zostanie
+     * pominięte. Jest to znane ograniczenie projektowe.
      */
     public static void tryRestoreInRange(World world, double ox, double oy, double oz,
             double radius, @Nullable EntityLivingBase owner) {
@@ -146,17 +111,12 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         for (EntityLivingBase entity : world.getEntitiesWithinAABB(EntityLivingBase.class, area)) {
             if (!entity.isEntityAlive()) continue;
             if (!SrpOriginSnapshotHelper.isSrpConvertedEntity(entity)) continue;
-
-            NBTTagCompound data = entity.getEntityData();
-            if (data.getInteger(SrpOriginSnapshotHelper.KEY_RESTORE_CD) > 0) continue;
-            data.setInteger(SrpOriginSnapshotHelper.KEY_RESTORE_CD, RESTORE_COOLDOWN);
-
             doRestore(entity, world, player);
         }
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Aktywny tryb: Creative Right-Click
+    // Aktywny tryb: Right-Click (Ray-trace)
     // ─────────────────────────────────────────────────────────────────
 
     @Override
@@ -165,9 +125,6 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
             @Nonnull EnumHand hand) {
         ItemStack stack = player.getHeldItem(hand);
 
-        if (!player.isCreative()) {
-            return new ActionResult<>(EnumActionResult.PASS, stack);
-        }
         if (world.isRemote) {
             return new ActionResult<>(EnumActionResult.SUCCESS, stack);
         }
@@ -210,6 +167,12 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         if (restored != null) {
             player.sendMessage(new TextComponentString(
                 TextFormatting.GREEN + "[Zhonyas] Restored: " + restored.getName()));
+            
+            // Nakładamy 6-godzinny cooldown (432 000 ticków) jeśli gracz nie jest na creative.
+            if (!player.isCreative()) {
+                player.getCooldownTracker().setCooldown(this, 432000);
+            }
+            
             return new ActionResult<>(EnumActionResult.SUCCESS, stack);
         }
 
@@ -228,7 +191,9 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         String vanillaId = SrpOriginSnapshotHelper.resolveVanillaId(srpEntity);
         if (vanillaId == null) {
             InsaneTweaksMod.LOGGER.debug(
-                "[IT][Zhonyas] Brak ID dla {}", srpEntity.getClass().getSimpleName());
+                "[IT][Zhonyas] Brak ID dla {} ({})",
+                srpEntity.getClass().getSimpleName(),
+                SrpOriginSnapshotHelper.isIncompleteForm(srpEntity) ? "IncompleteForm — brak snapshotu" : "brak mapowania");
             return null;
         }
 
@@ -283,9 +248,13 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         tooltip.add(TextFormatting.GRAY + "When using Purifying Pulse spell,");
         tooltip.add(TextFormatting.GRAY + "restores infected mobs to their original form,");
         tooltip.add(TextFormatting.GRAY + "preserving name, taming & owner data.");
+        tooltip.add(TextFormatting.GRAY + "Incomplete Forms (modded/unknown mobs)");
+        tooltip.add(TextFormatting.GRAY + "are fully restored if snapshot available.");
+        tooltip.add("");
+        tooltip.add(TextFormatting.YELLOW + "Restored entities gain §630s §7re-infection immunity.");
         tooltip.add("");
         tooltip.add(TextFormatting.GOLD + "" + TextFormatting.ITALIC
-            + "[Creative] Right-click: instant restore.");
+            + "Right-click: instant restore.[30 min cooldown] ");
     }
 
     @Override

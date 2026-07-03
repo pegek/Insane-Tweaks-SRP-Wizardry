@@ -2,11 +2,9 @@ package com.spege.insanetweaks.entities;
 
 import javax.annotation.Nonnull;
 
-import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.init.SRPSounds;
 import com.dhanantry.scapeandrunparasites.util.SRPAttributes;
 import com.spege.insanetweaks.entities.ai.SummonTargetingHelper;
-
 import electroblob.wizardry.entity.living.EntitySummonedCreature;
 import electroblob.wizardry.util.ParticleBuilder;
 import net.minecraft.entity.Entity;
@@ -79,25 +77,17 @@ public class EntityRupterMinion extends EntitySummonedCreature {
         super.onUpdate();
 
         if (!this.world.isRemote) {
-            this.refreshParasiteRepelProtection();
+            SummonInfectionSafetyHelper.onSummonServerTick(this);
             SummonTargetingHelper.syncCasterPriorityTarget(this);
         }
 
-        if (!this.world.isRemote && this.getAttackTarget() == null) {
+        if (this.getAttackTarget() == null) {
             EntityLivingBase anchor = this.summonerAnchor != null && this.summonerAnchor.isEntityAlive()
                     ? this.summonerAnchor
                     : this.getCaster();
             if (anchor != null && this.getDistanceSq(anchor) > 36.0D) {
                 this.getNavigator().tryMoveToEntityLiving(anchor, 1.35D);
             }
-        }
-    }
-
-    private void refreshParasiteRepelProtection() {
-        PotionEffect repel = this.getActivePotionEffect(SRPPotions.EPEL_E);
-
-        if (repel == null || repel.getDuration() <= 40) {
-            this.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 100, 0, false, false));
         }
     }
 
@@ -109,7 +99,7 @@ public class EntityRupterMinion extends EntitySummonedCreature {
         if (attacked && entityIn instanceof EntityLivingBase) {
             this.applyEnchantments(this, entityIn);
             EntityLivingBase target = (EntityLivingBase) entityIn;
-            SummonInfectionSafetyHelper.clearCoth(target);
+            SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
             target.addPotionEffect(new PotionEffect(MobEffects.POISON, 60, 0, false, true));
         }
 

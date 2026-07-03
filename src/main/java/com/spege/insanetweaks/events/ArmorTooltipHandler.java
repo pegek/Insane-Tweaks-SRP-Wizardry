@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
-import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
+import com.spege.insanetweaks.items.armor.SentientWarlockArmorItem;
+import com.spege.insanetweaks.items.armor.LivingWarlockArmorItem;
 import com.spege.insanetweaks.util.PropertyDescriptions;
-
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextFormatting;
@@ -30,9 +28,8 @@ public class ArmorTooltipHandler {
             return;
 
         Item item = stack.getItem();
-        if (item instanceof ParasiteWizardArmorItem || item instanceof BattleMageArmorItem) {
+        if (item instanceof LivingWarlockArmorItem || item instanceof SentientWarlockArmorItem) {
             List<String> tooltip = event.getToolTip();
-            boolean isShiftPressed = GuiScreen.isShiftKeyDown();
             
             // Find the best insertion index (before QualityTools and Vanilla attributes)
             int insertIdx = tooltip.size();
@@ -59,13 +56,11 @@ public class ArmorTooltipHandler {
             
             List<String> myLines = new ArrayList<>();
 
-            if (item instanceof ParasiteWizardArmorItem) {
-                float blocked = ParasiteWizardArmorItem.getBlockedDamage(stack);
-                int reduction = ParasiteWizardArmorItem.getSpellReductionPercent(stack);
+            if (item instanceof LivingWarlockArmorItem) {
+                float blocked = LivingWarlockArmorItem.getBlockedDamage(stack);
+                int reduction = LivingWarlockArmorItem.getSpellReductionPercent(stack);
 
                 addDescriptionLine(myLines, TextFormatting.GRAY, "living_armor_lore");
-                myLines.add("");
-                addArmorPropertyLines(myLines, isShiftPressed, false, false);
                 myLines.add("");
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");
                 myLines.add(TextFormatting.BLUE + "  -" + reduction + "% Mana Cost");
@@ -85,16 +80,13 @@ public class ArmorTooltipHandler {
                 } else {
                     String blockedStr = String.format("%.1f", blocked);
                     tooltip.add(1, "\u00a79---> \u00a79Absorbed: \u00a7e" + blockedStr + " / "
-                            + String.format("%.1f", ParasiteWizardArmorItem.EVOLUTION_THRESHOLD));
+                            + String.format("%.1f", LivingWarlockArmorItem.EVOLUTION_THRESHOLD));
                 }
             } else {
                 net.minecraft.nbt.NBTTagCompound nbt = stack.getTagCompound();
                 float absorbed = (nbt != null) ? nbt.getFloat("ArmorDamageBlocked") : 0.0f;
-                boolean awakenedShell = absorbed >= 10000.0f;
 
                 addDescriptionLine(myLines, TextFormatting.GRAY, "sentient_armor_lore");
-                myLines.add("");
-                addArmorPropertyLines(myLines, isShiftPressed, true, awakenedShell);
                 myLines.add("");
                 myLines.add(TextFormatting.GRAY + "Per piece bonus for all spells:");
                 myLines.add(TextFormatting.BLUE + "  -3% Mana Cost");
@@ -117,40 +109,10 @@ public class ArmorTooltipHandler {
         }
     }
 
-    private static void addArmorPropertyLines(List<String> tooltip, boolean isShiftPressed, boolean sentient,
-            boolean awakenedShell) {
-        String shiftHint = isShiftPressed
-                ? TextFormatting.DARK_GRAY + "[Showing details]"
-                : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT"
-                        + TextFormatting.DARK_GRAY + " to show details]";
-        tooltip.add(TextFormatting.GOLD + "Properties: " + shiftHint);
-        addPropertyLine(tooltip, TextFormatting.GOLD, "Ashen Legacy", "ashen_legacy", isShiftPressed);
-        addPropertyLine(tooltip, TextFormatting.GOLD, "Grave Defiance", "armor_last_stand", isShiftPressed);
-
-        if (sentient) {
-            String shellName = awakenedShell ? "Awakened Veil of Stasis" : "Veil of Stasis";
-            String shellKey = awakenedShell ? "ethereal_shell_awakened" : "ethereal_shell";
-            TextFormatting shellColor = awakenedShell ? TextFormatting.LIGHT_PURPLE : TextFormatting.DARK_GRAY;
-            addPropertyLine(tooltip, shellColor, shellName, shellKey, isShiftPressed);
-        }
-    }
-
     private static void addDescriptionLine(List<String> tooltip, TextFormatting color, String key) {
         String desc = PropertyDescriptions.getDescription(key);
         if (desc != null) {
             tooltip.add(color + desc);
-        }
-    }
-
-    private static void addPropertyLine(List<String> tooltip, TextFormatting color, String name, String key,
-            boolean isShiftPressed) {
-        tooltip.add(color + "- " + name);
-
-        if (isShiftPressed) {
-            String desc = PropertyDescriptions.getDescription(key);
-            if (desc != null) {
-                tooltip.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
-            }
         }
     }
 }

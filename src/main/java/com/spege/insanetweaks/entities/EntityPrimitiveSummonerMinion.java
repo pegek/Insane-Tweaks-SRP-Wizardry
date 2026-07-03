@@ -10,7 +10,6 @@ import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.init.SRPSounds;
 import com.dhanantry.scapeandrunparasites.util.SRPAttributes;
 import com.spege.insanetweaks.entities.ai.SummonTargetingHelper;
-
 import electroblob.wizardry.entity.living.EntitySummonedCreature;
 import electroblob.wizardry.util.ParticleBuilder;
 import net.minecraft.entity.Entity;
@@ -120,18 +119,10 @@ public class EntityPrimitiveSummonerMinion extends EntitySummonedCreature implem
         }
 
         if (!this.world.isRemote) {
-            this.refreshParasiteRepelProtection();
+            SummonInfectionSafetyHelper.onSummonServerTick(this);
             SummonTargetingHelper.syncCasterPriorityTarget(this);
             this.trySummonRupters();
             this.handleCombatSupport();
-        }
-    }
-
-    private void refreshParasiteRepelProtection() {
-        PotionEffect repel = this.getActivePotionEffect(SRPPotions.EPEL_E);
-
-        if (repel == null || repel.getDuration() <= 40) {
-            this.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 100, 0, false, false));
         }
     }
 
@@ -164,6 +155,7 @@ public class EntityPrimitiveSummonerMinion extends EntitySummonedCreature implem
             rupter.setCaster(this.getCaster());
             rupter.setSummonerAnchor(this);
             rupter.setLifetime(260);
+            SummonInfectionSafetyHelper.onSummonServerTick(rupter);
             this.world.spawnEntity(rupter);
             this.activeRupters.add(rupter);
         }
@@ -379,7 +371,7 @@ public class EntityPrimitiveSummonerMinion extends EntitySummonedCreature implem
         if (attacked && entityIn instanceof EntityLivingBase) {
             this.applyEnchantments(this, entityIn);
             EntityLivingBase target = (EntityLivingBase) entityIn;
-            SummonInfectionSafetyHelper.clearCoth(target);
+            SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
             target.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 60, 0, false, true));
         }
 

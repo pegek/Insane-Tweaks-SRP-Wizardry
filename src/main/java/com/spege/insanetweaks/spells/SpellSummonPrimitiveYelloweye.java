@@ -2,6 +2,7 @@ package com.spege.insanetweaks.spells;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.entities.EntityPrimitiveYelloweyeMinion;
+import com.spege.insanetweaks.entities.SummonInfectionSafetyHelper;
 
 import electroblob.wizardry.registry.WizardryItems;
 import electroblob.wizardry.spell.SpellMinion;
@@ -48,6 +49,7 @@ public class SpellSummonPrimitiveYelloweye extends SpellMinion<EntityPrimitiveYe
             EntityPrimitiveYelloweyeMinion minion = this.createMinion(world, caster, modifiers);
             minion.setPosition(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
             minion.setCaster(caster);
+            SummonInfectionSafetyHelper.onSummonServerTick(minion);
             minion.setLifetime((int) (this.getProperty(MINION_LIFETIME).floatValue()
                     * modifiers.get(WizardryItems.duration_upgrade)));
             minion.setProjectileDamageMultiplier(modifiers.get(POTENCY_ATTRIBUTE_MODIFIER));

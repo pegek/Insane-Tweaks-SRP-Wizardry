@@ -22,6 +22,10 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.Arrays;
+
+import com.spege.insanetweaks.api.ITweaksPropertyHolder;
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
 
 import com.windanesz.ancientspellcraft.item.ItemBattlemageSword;
 import electroblob.wizardry.constants.Tier;
@@ -41,11 +45,11 @@ import com.oblivioussp.spartanweaponry.init.ModelRenderRegistry;
  * IWeaponPropertyContainer (SpartanWeaponry). Handles weapon properties,
  * kill-based spell synergy and model registration.
  *
- * Armour synergy checks for a full set of BattleMageArmorItem or
- * ParasiteWizardArmorItem.
+ * Armour synergy checks for a full set of SentientWarlockArmorItem or
+ * LivingWarlockArmorItem.
  */
 public abstract class BridgeSpellblade extends ItemBattlemageSword
-        implements IWeaponPropertyContainer<net.minecraft.item.Item> {
+        implements IWeaponPropertyContainer<net.minecraft.item.Item>, ITweaksPropertyHolder {
 
     protected final List<WeaponProperty> swProperties = new ArrayList<>();
     protected String swModelPath = null;
@@ -53,6 +57,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     protected String bridgeModId;
     protected ToolMaterialEx bridgeMaterial = null;
     protected static final int ARCANE_ADAPTATION_LEVEL = 1;
+    private static final boolean HAS_POTIONCORE = net.minecraftforge.fml.common.Loader.isModLoaded("potioncore");
 
     @SuppressWarnings("null")
     public BridgeSpellblade(String name, String modId, Tier tier, int maxUpgrades) {
@@ -162,7 +167,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
             // Magically Adapted - magic damage modifier for PotionCore
             // Only activates if PotionCore is actually loaded, preventing NPEs on the
             // AttributeMap
-            if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
+            if (HAS_POTIONCORE) {
                 ResourceLocation regLoc = this.getRegistryName();
                 if (regLoc != null) {
                     String regName = regLoc.toString();
@@ -247,7 +252,51 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     @SuppressWarnings("null")
     public SpellModifiers calculateModifiers(@Nonnull ItemStack stack, @Nonnull EntityPlayer player,
             @Nonnull Spell spell) {
-        SpellModifiers modifiers = super.calculateModifiers(stack, player, spell);
+        
+        int warlockCount = 0;
+        int battlemageCount = 0;
+        for (int i = 0; i < 4; i++) {
+            ItemStack piece = player.inventory.armorInventory.get(i);
+            if (!piece.isEmpty()) {
+                if (piece.getItem() instanceof com.spege.insanetweaks.items.armor.SentientWarlockArmorItem ||
+                    piece.getItem() instanceof com.spege.insanetweaks.items.armor.LivingWarlockArmorItem) {
+                    warlockCount++;
+                } else if (piece.getItem() instanceof com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem ||
+                           piece.getItem() instanceof com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem) {
+                    battlemageCount++;
+                }
+            }
+        }
+        
+        boolean hasSynergy = (warlockCount == 4 || battlemageCount == 4);
+        ItemStack[] originalArmor = new ItemStack[4];
+        boolean tricked = false;
+        
+        // Artificial native synergy for Warlock armor
+        if (warlockCount == 4) {
+            tricked = true;
+            for (int i = 0; i < 4; i++) {
+                originalArmor[i] = player.inventory.armorInventory.get(i);
+                ItemStack dummy = null;
+                if (i == 0) dummy = new ItemStack(com.spege.insanetweaks.init.ModItems.LIVING_BATTLEMAGE_BOOTS);
+                else if (i == 1) dummy = new ItemStack(com.spege.insanetweaks.init.ModItems.LIVING_BATTLEMAGE_LEGGINGS);
+                else if (i == 2) dummy = new ItemStack(com.spege.insanetweaks.init.ModItems.LIVING_BATTLEMAGE_CHESTPLATE);
+                else if (i == 3) dummy = new ItemStack(com.spege.insanetweaks.init.ModItems.LIVING_BATTLEMAGE_HELMET);
+                
+                player.inventory.armorInventory.set(i, dummy);
+            }
+        }
+
+        SpellModifiers modifiers;
+        try {
+            modifiers = super.calculateModifiers(stack, player, spell);
+        } finally {
+            if (tricked) {
+                for (int i = 0; i < 4; i++) {
+                    player.inventory.armorInventory.set(i, originalArmor[i]);
+                }
+            }
+        }
 
         int killCount = 0;
         if (stack.hasTagCompound()) {
@@ -266,18 +315,6 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         }
 
         if (bonusPercent > 0) {
-            boolean hasSynergy = true;
-            for (ItemStack piece : player.inventory.armorInventory) {
-                // Note: armorInventory never contains null in 1.12.2 Eempty slots are
-                // ItemStack.EMPTY.
-                // The 'piece == null' check was removed as dead code.
-                if (piece.isEmpty() ||
-                        (!(piece.getItem() instanceof com.spege.insanetweaks.items.armor.BattleMageArmorItem) &&
-                                !(piece.getItem() instanceof com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem))) {
-                    hasSynergy = false;
-                    break;
-                }
-            }
             if (hasSynergy) {
                 float multiplier = 1.0f + (bonusPercent / 100.0f);
 
@@ -351,4 +388,8 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         return false;
     }
 
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
+    }
 }

@@ -80,13 +80,19 @@ public class LivingDeathEventHandler {
         return removed;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     @SuppressWarnings("null")
     public void onLivingDeath(LivingDeathEvent event) {
         if (!com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks || !com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) return;
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntity();
+
+        if (player.world.getGameRules().getBoolean("keepInventory")) {
+            debugMessage(player, "keepInventory is true. Skipping Curse of Possession check.");
+            return;
+        }
+
         debugMessage(player, "Player death detected! Scanning inventory...");
 
         List<ItemStack> removedItems = new ArrayList<>();

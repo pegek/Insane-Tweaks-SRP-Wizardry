@@ -16,6 +16,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextFormatting;
 
 @Mixin(value = GuiSpellDisplay.class, remap = false)
+@SuppressWarnings("null")
 public abstract class MixinGuiSpellDisplay {
 
     @Inject(method = "getFormattedSpellName", at = @At("HEAD"), cancellable = true)

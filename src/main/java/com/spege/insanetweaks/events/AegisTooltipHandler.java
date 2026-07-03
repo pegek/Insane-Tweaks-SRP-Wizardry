@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.spege.insanetweaks.init.ModItems;
-import com.spege.insanetweaks.util.PropertyDescriptions;
 import com.spege.insanetweaks.util.TooltipUtils;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.TextFormatting;
@@ -29,7 +27,6 @@ public class AegisTooltipHandler {
             return;
 
         List<String> tooltip = event.getToolTip();
-        boolean isShiftPressed = GuiScreen.isShiftKeyDown();
 
         // 1. Remove garbage from default Ancient Spellcraft Battlemage Shield
         for (int i = tooltip.size() - 1; i >= 1; i--) {
@@ -79,8 +76,6 @@ public class AegisTooltipHandler {
         }
         myLines.add("");
 
-        addLegendaryPropertyLines(myLines, isShiftPressed);
-        myLines.add("");
         myLines.add(TextFormatting.GOLD + "- Extinguishes you when on fire.");
         myLines.add(TextFormatting.GOLD + "- Cannot be disabled by weapons normally effective against shields.");
 
@@ -104,21 +99,5 @@ public class AegisTooltipHandler {
         myLines.add(TextFormatting.DARK_GREEN + "Sneak+Right click to place charms");
 
         tooltip.addAll(insertIdx, myLines);
-    }
-
-    private static void addLegendaryPropertyLines(List<String> tooltip, boolean isShiftPressed) {
-        String shiftHint = isShiftPressed
-                ? TextFormatting.DARK_GRAY + "[Showing details]"
-                : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT"
-                        + TextFormatting.DARK_GRAY + " to show details]";
-        tooltip.add(TextFormatting.GOLD + "Properties: " + shiftHint);
-        tooltip.add(TextFormatting.GOLD + "- Ashen Legacy");
-
-        if (isShiftPressed) {
-            String desc = PropertyDescriptions.getDescription("ashen_legacy");
-            if (desc != null) {
-                tooltip.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
-            }
-        }
     }
 }

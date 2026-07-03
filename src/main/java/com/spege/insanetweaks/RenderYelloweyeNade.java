@@ -12,6 +12,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
+@SuppressWarnings("null")
 public class RenderYelloweyeNade extends Render<EntityYelloweyeNade> {
 
     private static final ResourceLocation TEXTURE = new ResourceLocation("srparasites:textures/entity/monster/nade.png");

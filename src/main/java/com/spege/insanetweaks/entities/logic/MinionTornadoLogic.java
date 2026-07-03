@@ -7,8 +7,10 @@ import com.spege.insanetweaks.entities.EntityBeckonSivMinion;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 public final class MinionTornadoLogic {
 
@@ -21,6 +23,10 @@ public final class MinionTornadoLogic {
     private static final double FLING_TRIGGER_HEIGHT = 16.0D;
     private static final double FLING_TRIGGER_RADIUS = 10.0D;
     private static final double FORCE_SCALE = 0.58D;
+    private static final int PARTICLE_INTERVAL = 2;
+    private static final double PARTICLE_HEIGHT = 18.0D;
+    private static final int PARTICLE_LAYERS = 8;
+    private static final int PARTICLES_PER_LAYER = 6;
 
     private MinionTornadoLogic() {
     }
@@ -34,6 +40,8 @@ public final class MinionTornadoLogic {
         if (world == null || world.isRemote) {
             return;
         }
+
+        spawnTornadoParticles(minion);
 
         AxisAlignedBB box = new AxisAlignedBB(minion.posX - MAX_RADIUS, minion.posY + MIN_Y_OFFSET,
                 minion.posZ - MAX_RADIUS, minion.posX + MAX_RADIUS, minion.posY + MAX_HEIGHT,
@@ -67,6 +75,35 @@ public final class MinionTornadoLogic {
 
             applyTornadoForces(minion, target);
         }
+    }
+
+    private static void spawnTornadoParticles(EntityBeckonSivMinion minion) {
+        if (!(minion.world instanceof WorldServer) || minion.ticksExisted % PARTICLE_INTERVAL != 0) {
+            return;
+        }
+
+        WorldServer world = (WorldServer) minion.world;
+        double baseAngle = (minion.ticksExisted * 0.18D) % (Math.PI * 2.0D);
+
+        for (int layer = 0; layer < PARTICLE_LAYERS; layer++) {
+            double heightProgress = (double) layer / (double) (PARTICLE_LAYERS - 1);
+            double y = minion.posY + 0.4D + PARTICLE_HEIGHT * heightProgress;
+            double radius = 1.6D + 5.6D * heightProgress;
+
+            for (int step = 0; step < PARTICLES_PER_LAYER; step++) {
+                double angle = baseAngle + heightProgress * 1.7D + step * ((Math.PI * 2.0D) / PARTICLES_PER_LAYER);
+                double x = minion.posX + Math.cos(angle) * radius;
+                double z = minion.posZ + Math.sin(angle) * radius;
+
+                world.spawnParticle(EnumParticleTypes.CLOUD, x, y, z, 1, 0.03D, 0.02D, 0.03D, 0.0D);
+                if ((layer + step) % 2 == 0) {
+                    world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, x, y, z, 1, 0.02D, 0.03D, 0.02D, 0.0D);
+                }
+            }
+        }
+
+        world.spawnParticle(EnumParticleTypes.CLOUD, minion.posX, minion.posY + 1.0D, minion.posZ, 4,
+                0.35D, 0.15D, 0.35D, 0.01D);
     }
 
     private static void applyTornadoForces(EntityBeckonSivMinion minion, EntityLivingBase target) {

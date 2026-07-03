@@ -41,6 +41,14 @@ public class ModItems {
     public static final Item GOLDEN_BOOK = new GoldenBookItem().setRegistryName("insanetweaks", "golden_book");
     public static final Item RUPTER_SOLIED = new Item().setRegistryName("insanetweaks", "rupter_solied")
             .setUnlocalizedName("rupter_solied").setCreativeTab(CreativeTabs.MISC);
+    // Fallback clones of the swparasites crafting components. Registered ONLY when swparasites
+    // is absent (see registerItems), so they never duplicate the originals. The OreDictionary
+    // bridge (ModOreDict) routes recipes to whichever variant actually exists.
+    public static final Item LIVING_NUCLEUS = new Item().setRegistryName("insanetweaks", "living_nucleus")
+            .setUnlocalizedName("living_nucleus").setCreativeTab(CreativeTabs.MISC);
+    public static final Item INFECTIOUS_LONG_BLADE_FRAGMENT = new Item()
+            .setRegistryName("insanetweaks", "infectious_long_blade_fragment")
+            .setUnlocalizedName("infectious_long_blade_fragment").setCreativeTab(CreativeTabs.MISC);
     public static final Item LIVING_SPELLBLADE = new LivingSpellblade();
     public static final Item SENTIENT_SPELLBLADE = new SentientSpellblade();
     public static final Item LIVING_WAND = new com.spege.insanetweaks.items.wand.LivingWandItem();
@@ -48,24 +56,44 @@ public class ModItems {
     public static final Item ADAPTATION_UPGRADE = new AdaptationUpgradeItem();
     public static final Item ARCANE_ADAPTED_FRUIT = new ArcaneAdaptedFruitItem();
 
-    // Battlemage Armor
-    public static final Item BATTLEMAGE_HELMET = new com.spege.insanetweaks.items.armor.BattleMageArmorItem(
+    // Sentient Warlock Armor (originally Battlemage)
+    public static final Item SENTIENT_WARLOCK_HELMET = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.HEAD);
-    public static final Item BATTLEMAGE_CHESTPLATE = new com.spege.insanetweaks.items.armor.BattleMageArmorItem(
+    public static final Item SENTIENT_WARLOCK_CHESTPLATE = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.CHEST);
-    public static final Item BATTLEMAGE_LEGGINGS = new com.spege.insanetweaks.items.armor.BattleMageArmorItem(
+    public static final Item SENTIENT_WARLOCK_LEGGINGS = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.LEGS);
-    public static final Item BATTLEMAGE_BOOTS = new com.spege.insanetweaks.items.armor.BattleMageArmorItem(
+    public static final Item SENTIENT_WARLOCK_BOOTS = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.FEET);
 
-    // Parasite Wizard Armor
-    public static final Item PARASITE_WIZARD_HELMET = new com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem(
+    // Living Battlemage Armor
+    public static final Item LIVING_BATTLEMAGE_HELMET = new com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.HEAD);
-    public static final Item PARASITE_WIZARD_CHESTPLATE = new com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem(
+    public static final Item LIVING_BATTLEMAGE_CHESTPLATE = new com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.CHEST);
-    public static final Item PARASITE_WIZARD_LEGGINGS = new com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem(
+    public static final Item LIVING_BATTLEMAGE_LEGGINGS = new com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.LEGS);
-    public static final Item PARASITE_WIZARD_BOOTS = new com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem(
+    public static final Item LIVING_BATTLEMAGE_BOOTS = new com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.FEET);
+
+    // Sentient Battlemage Armor
+    public static final Item SENTIENT_BATTLEMAGE_HELMET = new com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.HEAD);
+    public static final Item SENTIENT_BATTLEMAGE_CHESTPLATE = new com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.CHEST);
+    public static final Item SENTIENT_BATTLEMAGE_LEGGINGS = new com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.LEGS);
+    public static final Item SENTIENT_BATTLEMAGE_BOOTS = new com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.FEET);
+
+    // Living Warlock Armor (originally Parasite Mage)
+    public static final Item PARASITE_WIZARD_HELMET = new com.spege.insanetweaks.items.armor.LivingWarlockArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.HEAD);
+    public static final Item PARASITE_WIZARD_CHESTPLATE = new com.spege.insanetweaks.items.armor.LivingWarlockArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.CHEST);
+    public static final Item PARASITE_WIZARD_LEGGINGS = new com.spege.insanetweaks.items.armor.LivingWarlockArmorItem(
+            net.minecraft.inventory.EntityEquipmentSlot.LEGS);
+    public static final Item PARASITE_WIZARD_BOOTS = new com.spege.insanetweaks.items.armor.LivingWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.FEET);
 
     public static final Item LIVING_AEGIS = new com.spege.insanetweaks.items.shield.LivingAegisItem();
@@ -101,9 +129,17 @@ public class ModItems {
             event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
             event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT);
             event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS);
+
+            // Crafting-component clones: only register when swparasites is NOT present, so the
+            // originals aren't duplicated. Recipes resolve via the OreDictionary bridge either way.
+            if (!Loader.isModLoaded("swparasites")) {
+                event.getRegistry().registerAll(LIVING_NUCLEUS, INFECTIOUS_LONG_BLADE_FRAGMENT);
+            }
             event.getRegistry().registerAll(
-                BATTLEMAGE_HELMET, BATTLEMAGE_CHESTPLATE, BATTLEMAGE_LEGGINGS, BATTLEMAGE_BOOTS,
-                PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE, PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS
+                SENTIENT_WARLOCK_HELMET, SENTIENT_WARLOCK_CHESTPLATE, SENTIENT_WARLOCK_LEGGINGS, SENTIENT_WARLOCK_BOOTS,
+                PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE, PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS,
+                LIVING_BATTLEMAGE_HELMET, LIVING_BATTLEMAGE_CHESTPLATE, LIVING_BATTLEMAGE_LEGGINGS, LIVING_BATTLEMAGE_BOOTS,
+                SENTIENT_BATTLEMAGE_HELMET, SENTIENT_BATTLEMAGE_CHESTPLATE, SENTIENT_BATTLEMAGE_LEGGINGS, SENTIENT_BATTLEMAGE_BOOTS
             );
         }
 
@@ -118,6 +154,12 @@ public class ModItems {
                 && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
             event.getRegistry().registerAll(ALL_BAUBLE_FRUITS);
         }
+
+        // NOTE: OreDictionary bridge registration is NOT done here. During the Item event the
+        // cross-mod handler order is not guaranteed, so a swparasites:* lookup can still return
+        // null (its Register<Item> may run after ours even with 'after:swparasites'). It is done
+        // in ModRecipes at Register<IRecipe> instead, which is guaranteed to run after every
+        // mod's Register<Item> completes. See ModRecipes.registerOreEntries.
     }
 
     @SubscribeEvent
@@ -125,6 +167,10 @@ public class ModItems {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             registerModel(GOLDEN_BOOK);
             registerModel(RUPTER_SOLIED);
+            if (!Loader.isModLoaded("swparasites")) {
+                registerModel(LIVING_NUCLEUS);
+                registerModel(INFECTIOUS_LONG_BLADE_FRAGMENT);
+            }
             ((com.spege.insanetweaks.items.spellblade.BridgeSpellblade)LIVING_SPELLBLADE).registerModel();
             ((com.spege.insanetweaks.items.spellblade.BridgeSpellblade)SENTIENT_SPELLBLADE).registerModel();
             
@@ -134,10 +180,20 @@ public class ModItems {
             registerModel(ARCANE_ADAPTED_FRUIT);
 
             // Armor Models
-            registerModel(BATTLEMAGE_HELMET);
-            registerModel(BATTLEMAGE_CHESTPLATE);
-            registerModel(BATTLEMAGE_LEGGINGS);
-            registerModel(BATTLEMAGE_BOOTS);
+            registerModel(SENTIENT_WARLOCK_HELMET);
+            registerModel(SENTIENT_WARLOCK_CHESTPLATE);
+            registerModel(SENTIENT_WARLOCK_LEGGINGS);
+            registerModel(SENTIENT_WARLOCK_BOOTS);
+
+            registerModel(LIVING_BATTLEMAGE_HELMET);
+            registerModel(LIVING_BATTLEMAGE_CHESTPLATE);
+            registerModel(LIVING_BATTLEMAGE_LEGGINGS);
+            registerModel(LIVING_BATTLEMAGE_BOOTS);
+
+            registerModel(SENTIENT_BATTLEMAGE_HELMET);
+            registerModel(SENTIENT_BATTLEMAGE_CHESTPLATE);
+            registerModel(SENTIENT_BATTLEMAGE_LEGGINGS);
+            registerModel(SENTIENT_BATTLEMAGE_BOOTS);
 
             registerModel(PARASITE_WIZARD_HELMET);
             registerModel(PARASITE_WIZARD_CHESTPLATE);

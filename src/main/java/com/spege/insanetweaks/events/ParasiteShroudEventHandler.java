@@ -2,9 +2,9 @@ package com.spege.insanetweaks.events;
 
 import java.util.List;
 
-import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPAdapted;
-import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPPrimitive;
+import com.dhanantry.scapeandrunparasites.entity.EntityParasiticScent;
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
+import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -19,12 +19,12 @@ public class ParasiteShroudEventHandler {
 
     public static final String SHROUD_TICKS_KEY = "InsaneTweaksParasiteShroudTicks";
 
-    private static final double SHROUD_HORIZONTAL_RADIUS = 18.0D;
-    private static final double SHROUD_VERTICAL_RADIUS = 8.0D;
-    private static final int PRIMITIVE_CLEAR_INTERVAL = 8;
-    private static final int OTHER_CLEAR_INTERVAL = 18;
-    private static final double PRIMITIVE_STICKY_RANGE_SQ = 9.0D;
-    private static final double OTHER_STICKY_RANGE_SQ = 36.0D;
+    private static final double SHROUD_HORIZONTAL_RADIUS = 34.0D;
+    private static final double SHROUD_VERTICAL_RADIUS = 11.0D;
+    private static final double SCENT_HORIZONTAL_RADIUS = 67.0D;
+    private static final double SCENT_VERTICAL_RADIUS = 17.0D;
+    private static final int DISRUPT_INTERVAL = 7;
+    private static final float DISRUPT_CHANCE = 0.7F;
 
     public static void applyShroud(EntityPlayer player, int durationTicks) {
         if (player == null || durationTicks <= 0) {
@@ -63,7 +63,39 @@ public class ParasiteShroudEventHandler {
         }
 
         data.setInteger(SHROUD_TICKS_KEY, ticksLeft - 1);
+
+        if (player.ticksExisted % DISRUPT_INTERVAL != 0) {
+            return;
+        }
+
+        this.disruptNearbyScents(player);
         this.disruptNearbyParasites(player);
+    }
+
+    private void disruptNearbyScents(EntityPlayer player) {
+        player.removePotionEffect(SRPPotions.PREY_E);
+        player.removePotionEffect(SRPPotions.SPOT_E);
+
+        AxisAlignedBB area = player.getEntityBoundingBox().grow(SCENT_HORIZONTAL_RADIUS, SCENT_VERTICAL_RADIUS,
+                SCENT_HORIZONTAL_RADIUS);
+        List<EntityParasiticScent> scents = player.world.getEntitiesWithinAABB(EntityParasiticScent.class, area);
+
+        for (EntityParasiticScent scent : scents) {
+            if (scent == null || !scent.isEntityAlive()) {
+                continue;
+            }
+
+            EntityLivingBase target = scent.getTargetToKill();
+            if (target != player) {
+                continue;
+            }
+
+            if (player.getRNG().nextFloat() > DISRUPT_CHANCE) {
+                continue;
+            }
+
+            scent.setDead();
+        }
     }
 
     private void disruptNearbyParasites(EntityPlayer player) {
@@ -82,18 +114,7 @@ public class ParasiteShroudEventHandler {
                 continue;
             }
 
-            boolean primitiveOrAdapted = parasite instanceof EntityPPrimitive || parasite instanceof EntityPAdapted;
-            int interval = primitiveOrAdapted ? PRIMITIVE_CLEAR_INTERVAL : OTHER_CLEAR_INTERVAL;
-            if ((player.ticksExisted + parasite.getEntityId()) % interval != 0) {
-                continue;
-            }
-
-            double distanceSq = parasite.getDistanceSq(player);
-            if (primitiveOrAdapted) {
-                if (distanceSq <= PRIMITIVE_STICKY_RANGE_SQ && parasite.getRNG().nextFloat() < 0.45F) {
-                    continue;
-                }
-            } else if (distanceSq <= OTHER_STICKY_RANGE_SQ && parasite.getRNG().nextFloat() < 0.7F) {
+            if (player.getRNG().nextFloat() > DISRUPT_CHANCE) {
                 continue;
             }
 

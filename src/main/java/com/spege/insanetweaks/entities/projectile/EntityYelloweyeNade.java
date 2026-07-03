@@ -108,7 +108,7 @@ public class EntityYelloweyeNade extends Entity {
             }
 
             target.attackEntityFrom(DamageSource.MAGIC, this.burstDamage);
-            SummonInfectionSafetyHelper.clearCoth(target);
+            SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
         }
     }
 

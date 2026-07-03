@@ -1,7 +1,6 @@
 package com.spege.insanetweaks.entities;
 
 import com.dhanantry.scapeandrunparasites.init.SRPSounds;
-import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.util.SRPAttributes;
 import com.spege.insanetweaks.entities.ai.SummonTargetingHelper;
 import electroblob.wizardry.entity.living.EntitySummonedCreature;
@@ -18,7 +17,6 @@ import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAIWanderAvoidWater;
 import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
@@ -71,23 +69,13 @@ public class EntityFerCowMinion extends EntitySummonedCreature {
         super.onUpdate();
 
         if (!this.world.isRemote) {
-            this.refreshParasiteRepelProtection();
+            SummonInfectionSafetyHelper.onSummonServerTick(this);
             SummonTargetingHelper.syncCasterPriorityTarget(this);
         }
 
         EntityLivingBase caster = this.getCaster();
-        if (!this.world.isRemote && caster != null && this.getAttackTarget() == null && this.getDistanceSq(caster) > 64.0D) {
+        if (caster != null && this.getAttackTarget() == null && this.getDistanceSq(caster) > 64.0D) {
             this.getNavigator().tryMoveToEntityLiving(caster, 1.62D);
-        }
-    }
-
-    private void refreshParasiteRepelProtection() {
-        PotionEffect repel = this.getActivePotionEffect(SRPPotions.EPEL_E);
-
-        if (repel == null || repel.getDuration() <= 40) {
-            // SRP checks EPEL_E directly in its infection and COTH spread logic, so a
-            // short hidden refresh is enough to keep the summon protected.
-            this.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 100, 0, false, false));
         }
     }
 
@@ -99,7 +87,7 @@ public class EntityFerCowMinion extends EntitySummonedCreature {
         if (attacked && entityIn instanceof EntityLivingBase) {
             this.applyEnchantments(this, entityIn);
             EntityLivingBase target = (EntityLivingBase) entityIn;
-            SummonInfectionSafetyHelper.clearCoth(target);
+            SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
             this.onSuccessfulAttack(target);
         }
 

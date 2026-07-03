@@ -15,14 +15,17 @@ public final class SummonTargetingHelper {
             return;
         }
 
+        EntityLivingBase currentTarget = summon.getAttackTarget();
         EntityLivingBase priorityTarget = getCasterAttackTarget(summon, caster);
         if (priorityTarget != null) {
-            summon.setAttackTarget(priorityTarget);
+            if (currentTarget != priorityTarget) {
+                summon.setAttackTarget(priorityTarget);
+            }
             return;
         }
 
         EntityLivingBase revengeTarget = getCasterRevengeTarget(summon, caster);
-        if (revengeTarget != null) {
+        if (revengeTarget != null && currentTarget != revengeTarget) {
             summon.setAttackTarget(revengeTarget);
         }
     }

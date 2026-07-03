@@ -31,7 +31,7 @@ public class IndestructibleDropHandler {
             return;
         }
 
-        if (LegendaryDropHelper.isLegendaryDropItem(entityItem.getItem().getItem())) {
+        if (LegendaryDropHelper.isLegendaryDropItem(entityItem.getItem())) {
             event.setCanceled(true);
             event.getWorld().spawnEntity(LegendaryDropHelper.createLegendaryDropEntity(entityItem));
         }

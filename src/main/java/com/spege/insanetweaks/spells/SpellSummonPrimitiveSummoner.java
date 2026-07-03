@@ -2,6 +2,7 @@ package com.spege.insanetweaks.spells;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.entities.EntityPrimitiveSummonerMinion;
+import com.spege.insanetweaks.entities.SummonInfectionSafetyHelper;
 
 import electroblob.wizardry.registry.WizardryItems;
 import electroblob.wizardry.spell.SpellMinion;
@@ -40,6 +41,7 @@ public class SpellSummonPrimitiveSummoner extends SpellMinion<EntityPrimitiveSum
             EntityPrimitiveSummonerMinion minion = this.createMinion(world, caster, modifiers);
             minion.setPosition(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
             minion.setCaster(caster);
+            SummonInfectionSafetyHelper.onSummonServerTick(minion);
             minion.setLifetime((int) (this.getProperty(MINION_LIFETIME).floatValue()
                     * modifiers.get(WizardryItems.duration_upgrade)));
             minion.setPotencyMultiplier(modifiers.get(POTENCY_ATTRIBUTE_MODIFIER));

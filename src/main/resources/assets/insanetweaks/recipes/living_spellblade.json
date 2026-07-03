@@ -7,7 +7,8 @@
   ],
   "key": {
     "N": {
-      "item": "swparasites:living_nucleus"
+      "type": "forge:ore_dict",
+      "ore": "itLivingNucleus"
     },
     "V": {
       "item": "srparasites:vile_shell"
@@ -16,7 +17,8 @@
       "item": "ancientspellcraft:battlemage_sword_master"
     },
     "F": {
-      "item": "swparasites:infectious_long_blade_fragment"
+      "type": "forge:ore_dict",
+      "ore": "itInfectiousLongBladeFragment"
     },
     "H": {
       "item": "srparasites:hardened_bone_handle"

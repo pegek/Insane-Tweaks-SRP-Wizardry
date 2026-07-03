@@ -25,9 +25,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.Arrays;
+
+import com.spege.insanetweaks.api.ITweaksPropertyHolder;
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
 
 @SuppressWarnings("null")
-public class ArcaneAdaptedFruitItem extends ItemFood {
+public class ArcaneAdaptedFruitItem extends ItemFood implements ITweaksPropertyHolder {
 
     public ArcaneAdaptedFruitItem() {
         super(4, 0.6f, false);
@@ -150,5 +154,10 @@ public class ArcaneAdaptedFruitItem extends ItemFood {
         tooltip.add(TextFormatting.DARK_GRAY + "This surge is temporary, not permanent.");
         tooltip.add("");
         tooltip.add(TextFormatting.DARK_GRAY + "One use per player.");
+    }
+
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
     }
 }

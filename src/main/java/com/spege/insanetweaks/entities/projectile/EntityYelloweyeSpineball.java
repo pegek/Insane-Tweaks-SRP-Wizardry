@@ -72,7 +72,7 @@ public class EntityYelloweyeSpineball extends EntityYelloweyeProjectileBase {
                     : DamageSource.causeFireballDamage(this, shooter);
 
             target.attackEntityFrom(damageSource, this.damage);
-            SummonInfectionSafetyHelper.clearCoth(target);
+            SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
 
             if (this.witherDurationTicks > 0) {
                 int baseAmplifier = Math.max(0, this.witherAmplifier);

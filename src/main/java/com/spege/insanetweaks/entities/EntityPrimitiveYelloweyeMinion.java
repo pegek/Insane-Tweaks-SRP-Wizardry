@@ -2,7 +2,6 @@ package com.spege.insanetweaks.entities;
 
 import javax.annotation.Nonnull;
 
-import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.init.SRPSounds;
 import com.dhanantry.scapeandrunparasites.util.SRPAttributes;
 import com.spege.insanetweaks.entities.ai.SummonTargetingHelper;
@@ -22,7 +21,6 @@ import net.minecraft.entity.ai.EntityMoveHelper;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundEvent;
@@ -91,17 +89,9 @@ public class EntityPrimitiveYelloweyeMinion extends EntitySummonedCreature imple
         this.setNoGravity(true);
 
         if (!this.world.isRemote) {
-            this.refreshParasiteRepelProtection();
+            SummonInfectionSafetyHelper.onSummonServerTick(this);
             SummonTargetingHelper.syncCasterPriorityTarget(this);
             this.handleCombatAndFlight();
-        }
-    }
-
-    private void refreshParasiteRepelProtection() {
-        PotionEffect repel = this.getActivePotionEffect(SRPPotions.EPEL_E);
-
-        if (repel == null || repel.getDuration() <= 40) {
-            this.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 100, 0, false, false));
         }
     }
 

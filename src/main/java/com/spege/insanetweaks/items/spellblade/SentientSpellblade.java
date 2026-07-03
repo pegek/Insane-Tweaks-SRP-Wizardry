@@ -32,7 +32,7 @@ import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.WandHelper;
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.oblivioussp.spartanweaponry.api.WeaponProperties;
-import com.existingeevee.swparasites.init.ParasiteSWProperties;
+import com.spege.insanetweaks.init.ModWeaponProperties;
 
 /**
  * Sentient Spellblade  Ethe evolved, higher-tier form of the Living Spellblade.
@@ -50,12 +50,12 @@ public class SentientSpellblade extends BridgeSpellblade {
         this.setMaxDamage(4000);
         this.swModelPath = "sentient_spellblade";
 
-        // Spartan & Parasite Properties
+        // Spartan base + local InsaneTweaks parasite properties (no swparasites dependency)
         this.addBridgeProperty(WeaponProperties.REACH_1)
             .addBridgeProperty(WeaponProperties.SWEEP_DAMAGE_NORMAL)
-            .addBridgeProperty(ParasiteSWProperties.BLEEDING_2)
-            .addBridgeProperty(ParasiteSWProperties.UNCAPPED)
-            .addBridgeProperty(ParasiteSWProperties.HEAVY_2);
+            .addBridgeProperty(ModWeaponProperties.BLEEDING_3)
+            .addBridgeProperty(ModWeaponProperties.UNCAPPED)
+            .addBridgeProperty(ModWeaponProperties.HEAVY_2);
     }
 
     @Override
@@ -67,36 +67,6 @@ public class SentientSpellblade extends BridgeSpellblade {
     @Override
     public float getBaseAttackDamage() {
         return 22.0f;
-    }
-
-    @Override
-    public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull net.minecraft.entity.EntityLivingBase target, @Nonnull net.minecraft.entity.EntityLivingBase attacker) {
-        boolean result = super.hitEntity(stack, target, attacker);
-
-        int kills = 0;
-        if (stack.hasTagCompound()) {
-            NBTTagCompound nbt = stack.getTagCompound();
-            if (nbt != null && nbt.hasKey("SentientKills")) {
-                kills = nbt.getInteger("SentientKills");
-            }
-        }
-
-        // Easter Egg: Awakened Viral I at 1800 kills
-        if (kills >= 1800) {
-            com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponProperty viral = ParasiteSWProperties.VIRAL_1;
-            if (viral instanceof com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponPropertyWithCallback) {
-                com.oblivioussp.spartanweaponry.api.weaponproperty.IPropertyCallback cb = ((com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponPropertyWithCallback) viral).getCallback();
-                if (cb != null) {
-                    try {
-                        cb.onHitEntity(this.getMaterialEx(), stack, target, attacker, null);
-                    } catch (Throwable t) {
-                        // ignore
-                    }
-                }
-            }
-        }
-
-        return result;
     }
 
     // ==========================================================

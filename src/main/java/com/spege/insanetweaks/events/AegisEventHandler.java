@@ -1,5 +1,9 @@
 package com.spege.insanetweaks.events;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import com.spege.insanetweaks.init.ModItems;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -13,6 +17,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -25,6 +30,31 @@ public class AegisEventHandler {
     private static final ResourceLocation IMMALEABLE_LOC = new ResourceLocation("srparasites", "immaleable");
     private static final ResourceLocation CORROSIVE_LOC = new ResourceLocation("srparasites", "corrosive");
     private static final ResourceLocation CORROSION_LOC = new ResourceLocation("srparasites", "corrosion");
+    private static final int AEGIS_BURN_DURATION_TICKS = 80;
+    private static final long AEGIS_BURN_CLEANUP_INTERVAL = 20L;
+
+    private final Map<Integer, Long> activeAegisBurns = new HashMap<>();
+    private long lastBurnCleanupTime = -AEGIS_BURN_CLEANUP_INTERVAL;
+
+    private void startAegisBurn(EntityLivingBase entity) {
+        activeAegisBurns.put(entity.getEntityId(), entity.world.getTotalWorldTime() + AEGIS_BURN_DURATION_TICKS);
+    }
+
+    private void cleanupExpiredAegisBurns(long worldTime) {
+        if (worldTime - lastBurnCleanupTime < AEGIS_BURN_CLEANUP_INTERVAL) {
+            return;
+        }
+
+        lastBurnCleanupTime = worldTime;
+
+        Iterator<Map.Entry<Integer, Long>> iterator = activeAegisBurns.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Long> entry = iterator.next();
+            if (entry.getValue() <= worldTime) {
+                iterator.remove();
+            }
+        }
+    }
 
     @SubscribeEvent
     @SuppressWarnings("null")
@@ -90,8 +120,8 @@ public class AegisEventHandler {
                                 }
 
                                 if (hasEasterEgg) {
-                                    // Massive Fire NBT (80 ticks = 4 seconds)
-                                    attacker.getEntityData().setInteger("AegisBurn", 80);
+                                    // Massive Fire Cache (80 ticks = 4 seconds)
+                                    startAegisBurn(attacker);
                                 } else {
                                     // Normal Fire (4 seconds)
                                     attacker.setFire(4);
@@ -185,14 +215,15 @@ public class AegisEventHandler {
 
         // --- Fast Fire System (For enemies hit by shield) ---
         if (!entity.world.isRemote) {
-            NBTTagCompound data = entity.getEntityData();
-            if (data.hasKey("AegisBurn")) {
-                int burnTicks = data.getInteger("AegisBurn");
+            long worldTime = entity.world.getTotalWorldTime();
+            cleanupExpiredAegisBurns(worldTime);
+
+            int entityId = entity.getEntityId();
+            Long burnExpiry = activeAegisBurns.get(entityId);
+            if (burnExpiry != null) {
+                int burnTicks = (int) (burnExpiry - worldTime);
 
                 if (burnTicks > 0) {
-                    burnTicks--;
-                    data.setInteger("AegisBurn", burnTicks);
-
                     // Damage every 10 ticks (0.5 seconds)
                     if (entity.ticksExisted % 10 == 0) {
                         entity.hurtResistantTime = 0; // Break i-frames
@@ -205,10 +236,17 @@ public class AegisEventHandler {
                         entity.setFire(2);
                     }
                 } else {
-                    data.removeTag("AegisBurn");
+                    activeAegisBurns.remove(entityId);
                 }
             }
         }
+    }
+
+    @SubscribeEvent
+    @SuppressWarnings("null")
+    public void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntityLiving().world.isRemote) return;
+        activeAegisBurns.remove(event.getEntityLiving().getEntityId());
     }
 
     @SubscribeEvent

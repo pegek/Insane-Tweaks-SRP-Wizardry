@@ -14,6 +14,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
+@SuppressWarnings("null")
 public class SpellParasiteShroud extends Spell {
 
     private static final int BASE_DURATION_TICKS = 160;

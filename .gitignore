@@ -37,6 +37,9 @@ Thumbs.db
 forge*changelog.txt
 
 # Custom ignores
+CLAUDE.md
+.claude/
+
 groovy/
 notes/
 *.out

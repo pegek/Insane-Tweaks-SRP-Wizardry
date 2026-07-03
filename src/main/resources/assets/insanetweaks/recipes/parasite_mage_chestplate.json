@@ -16,13 +16,14 @@
       "item": "srparasites:living_core"
     },
     "S": [
-      { "item": "ebwizardry:battlemage_chestplate", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_fire", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_ice", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_lightning", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_necromancy", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_earth", "data": 32767 },
-      { "item": "ebwizardry:battlemage_chestplate_sorcery", "data": 32767 }
+      { "item": "ebwizardry:warlock_chestplate", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_fire", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_ice", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_lightning", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_necromancy", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_earth", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_sorcery", "data": 32767 },
+      { "item": "ebwizardry:warlock_chestplate_healing", "data": 32767 }
     ]
   },
   "result": {

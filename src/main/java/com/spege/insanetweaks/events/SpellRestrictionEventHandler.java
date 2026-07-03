@@ -21,7 +21,6 @@ public class SpellRestrictionEventHandler {
     private static final ResourceLocation WIZARD_ID = new ResourceLocation("ebwizardry", "wizard");
     private static final ResourceLocation EVIL_WIZARD_ID = new ResourceLocation("ebwizardry", "evil_wizard");
     private static final int REQUIRED_CALL_OF_DEMISE_STAGE = 7;
-    private static final int REQUIRED_PARASITE_SHROUD_STAGE = 5;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onSpellCastPre(SpellCastEvent.Pre event) {
@@ -80,9 +79,6 @@ public class SpellRestrictionEventHandler {
     private int getRequiredStage(ResourceLocation spellId) {
         if (CALL_OF_DEMISE_ID.equals(spellId)) {
             return REQUIRED_CALL_OF_DEMISE_STAGE;
-        }
-        if (PARASITE_SHROUD_ID.equals(spellId)) {
-            return REQUIRED_PARASITE_SHROUD_STAGE;
         }
         return -1;
     }

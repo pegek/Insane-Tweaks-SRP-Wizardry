@@ -117,7 +117,8 @@ public class ParasiteXPFixHandler {
 
         // Mirror SRP's own parasite-death subtraction style: reduce the point pool
         // without forcibly dropping the current phase below its floor.
-        saveData.setTotalKills(dimension, -ASSIMILATED_WARFARE_EVOLUTION_DRAIN, true, world, false);
+        // srcID 9 = PENALTY_OR_LOSS in SRP 1.10.7's point-source debug log.
+        saveData.setTotalKills(dimension, -ASSIMILATED_WARFARE_EVOLUTION_DRAIN, true, world, false, 9);
     }
 
     @SubscribeEvent

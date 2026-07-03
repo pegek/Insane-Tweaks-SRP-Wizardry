@@ -1,0 +1,50 @@
+{
+  "thrall.spawn": {
+    "category": "neutral",
+    "sounds": ["insanetweaks:thrall/minionspawn"]
+  },
+  "thrall.squeak": {
+    "category": "neutral",
+    "sounds": ["insanetweaks:thrall/minionsqueak"]
+  },
+  "thrall.follow": {
+    "category": "neutral",
+    "sounds": ["insanetweaks:thrall/orderfollowplayer"]
+  },
+  "thrall.order": {
+    "category": "neutral",
+    "sounds": [
+      "insanetweaks:thrall/randomorder1",
+      "insanetweaks:thrall/randomorder2",
+      "insanetweaks:thrall/randomorder3",
+      "insanetweaks:thrall/randomorder4",
+      "insanetweaks:thrall/randomorder5"
+    ]
+  },
+  "thrall.foryou": {
+    "category": "neutral",
+    "sounds": [
+      "insanetweaks:thrall/foryou1",
+      "insanetweaks:thrall/foryou2",
+      "insanetweaks:thrall/foryou3",
+      "insanetweaks:thrall/foryou4"
+    ]
+  },
+  "thrall.mineshaft": {
+    "category": "neutral",
+    "sounds": [
+      "insanetweaks:thrall/ordermineshaft1",
+      "insanetweaks:thrall/ordermineshaft2",
+      "insanetweaks:thrall/ordermineshaft3"
+    ]
+  },
+  "thrall.woodcutting": {
+    "category": "neutral",
+    "sounds": [
+      "insanetweaks:thrall/ordertreecutting1",
+      "insanetweaks:thrall/ordertreecutting2",
+      "insanetweaks:thrall/ordertreecutting3",
+      "insanetweaks:thrall/ordertreecutting4"
+    ]
+  }
+}

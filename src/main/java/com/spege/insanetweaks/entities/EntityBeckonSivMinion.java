@@ -1,6 +1,5 @@
 package com.spege.insanetweaks.entities;
 
-import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.init.SRPSounds;
 import com.dhanantry.scapeandrunparasites.util.SRPAttributes;
 import com.spege.insanetweaks.entities.ai.SummonTargetingHelper;
@@ -15,7 +14,6 @@ import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.effect.EntityLightningBolt;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundEvent;
@@ -89,7 +87,7 @@ public class EntityBeckonSivMinion extends EntitySummonedCreature {
 
         if (!this.world.isRemote) {
             this.infestNearbyTerrainOnce();
-            this.refreshParasiteRepelProtection();
+            SummonInfectionSafetyHelper.onSummonServerTick(this);
             SummonTargetingHelper.syncCasterPriorityTarget(this);
             MinionTornadoLogic.tickTornadoEffects(this);
 
@@ -116,13 +114,6 @@ public class EntityBeckonSivMinion extends EntitySummonedCreature {
             WorldServer worldServer = (WorldServer) this.world;
             worldServer.spawnParticle(EnumParticleTypes.SPELL_MOB_AMBIENT, this.posX, this.posY + 0.8D, this.posZ,
                     18, 2.2D, 0.4D, 2.2D, 0.02D);
-        }
-    }
-
-    private void refreshParasiteRepelProtection() {
-        PotionEffect repel = this.getActivePotionEffect(SRPPotions.EPEL_E);
-        if (repel == null || repel.getDuration() <= 40) {
-            this.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 100, 0, false, false));
         }
     }
 
@@ -179,6 +170,7 @@ public class EntityBeckonSivMinion extends EntitySummonedCreature {
         minion.setPosition(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
         minion.setCaster(this.getCaster());
         minion.setLifetime(CHILD_MINION_LIFETIME);
+        SummonInfectionSafetyHelper.onSummonServerTick(minion);
 
         EntityLivingBase priorityTarget = this.getAttackTarget();
         if (priorityTarget != null && priorityTarget.isEntityAlive() && !minion.isOnSameTeam(priorityTarget)) {
@@ -226,7 +218,7 @@ public class EntityBeckonSivMinion extends EntitySummonedCreature {
             if (this.rand.nextFloat() < 0.3F && !struck) {
                 BlockPos pos = target.getPosition();
                 this.world.addWeatherEffect(new EntityLightningBolt(this.world, pos.getX(), pos.getY(), pos.getZ(), false));
-                SummonInfectionSafetyHelper.clearCoth(target);
+                SummonInfectionSafetyHelper.onSuccessfulSummonHit(target);
                 struck = true;
             }
         }

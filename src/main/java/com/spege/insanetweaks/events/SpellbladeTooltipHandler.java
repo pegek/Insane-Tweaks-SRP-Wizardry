@@ -19,8 +19,8 @@ import com.oblivioussp.spartanweaponry.api.IWeaponPropertyContainer;
 import com.oblivioussp.spartanweaponry.api.weaponproperty.WeaponProperty;
 
 // No imports needed for custom armor if using qualified names, or add them here:
-import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
-import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
+import com.spege.insanetweaks.items.armor.SentientWarlockArmorItem;
+import com.spege.insanetweaks.items.armor.LivingWarlockArmorItem;
 
 import com.spege.insanetweaks.config.ModConfig;
 
@@ -32,8 +32,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Spellblades.
  * Replaces the addInformation() approach to prevent double-rendering.
  *
- * Armor synergy checks for a full set of Living Armor (ParasiteWizardArmorItem)
- * or Sentient Armor (BattleMageArmorItem) Eany mix of both counts.
+ * Armour synergy checks for a full set of Living/Sentient Warlock Armor
+ * OR Living/Sentient Battlemage Armor. No mixing between Warlock and Battlemage.
  */
 @SideOnly(Side.CLIENT)
 public class SpellbladeTooltipHandler {
@@ -164,8 +164,7 @@ public class SpellbladeTooltipHandler {
                         + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
         if (item instanceof com.spege.insanetweaks.items.spellblade.BridgeSpellblade) {
-            com.spege.insanetweaks.items.spellblade.BridgeSpellblade spellblade =
-                    (com.spege.insanetweaks.items.spellblade.BridgeSpellblade) item;
+            com.spege.insanetweaks.items.spellblade.BridgeSpellblade spellblade = (com.spege.insanetweaks.items.spellblade.BridgeSpellblade) item;
             int adaptationLevel = spellblade.getArcaneAdaptationLevel(stack);
             int penaltyPercent = spellblade.getArcaneAdaptationPenaltyPercent(stack);
             String penaltyText = penaltyPercent > 0
@@ -179,13 +178,6 @@ public class SpellbladeTooltipHandler {
                 if (desc != null) {
                     myLines.add(TextFormatting.RED + "" + TextFormatting.ITALIC + "  " + desc);
                 }
-            }
-        }
-        myLines.add(TextFormatting.GOLD + "- Ashen Legacy");
-        if (isShiftPressed) {
-            String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("ashen_legacy");
-            if (desc != null) {
-                myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC + "  " + desc);
             }
         }
 
@@ -259,12 +251,27 @@ public class SpellbladeTooltipHandler {
             }
         }
 
-        // Easter Egg: Awakened Virulent I
-        if ("insanetweaks:sentient_spellblade".equals(regName) && killsDisplay >= 1800) {
-            myLines.add(TextFormatting.GREEN + "- Virulent I " + TextFormatting.LIGHT_PURPLE + "(Awakened)");
-            if (isShiftPressed) {
-                myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC
-                        + "  The infection has evolved beyond mortal limits.");
+        // Fleshbound property display
+        if ("insanetweaks:sentient_spellblade".equals(regName)) {
+            net.minecraft.world.World world = event.getEntityPlayer() != null ? event.getEntityPlayer().world : net.minecraft.client.Minecraft.getMinecraft().world;
+            if (world != null) {
+                if (com.spege.insanetweaks.events.FleshboundEventHandler.isFleshbound(stack, world)) {
+                    myLines.add(TextFormatting.DARK_RED + "- Fleshbound");
+                    if (isShiftPressed) {
+                        myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC
+                                + "  Grafted to the wielder's flesh. Prevents drops and disarm.");
+                    }
+                } else if (com.spege.insanetweaks.events.FleshboundEventHandler.isMechanicUnlocked(stack) && stack.hasTagCompound() && stack.getTagCompound().hasKey("FleshboundRegrowTime")) {
+                    NBTTagCompound tag = stack.getTagCompound();
+                    long remainingTicks = tag.getLong("FleshboundRegrowTime") - world.getTotalWorldTime();
+                    int remainingMinutes = Math.max(0, (int) Math.ceil((double) remainingTicks / 1200.0));
+                    
+                    int currentKills = tag.getInteger("SentientKills");
+                    int reqKills = tag.getInteger("FleshboundRegrowKills");
+                    int progress = Math.min(50, Math.max(0, 50 - (reqKills - currentKills)));
+                    
+                    myLines.add(TextFormatting.GRAY + "- Fleshbound Regrowth: [" + remainingMinutes + "m] / [" + progress + "/50]");
+                }
             }
         }
 
@@ -305,15 +312,20 @@ public class SpellbladeTooltipHandler {
         boolean hasSynergy = true;
         EntityPlayer player = event.getEntityPlayer();
         if (player != null) {
+            int warlockCount = 0;
+            int battlemageCount = 0;
             for (ItemStack piece : player.inventory.armorInventory) {
-                // armorInventory never contains null in 1.12.2 Eempty slots are ItemStack.EMPTY
-                if (piece.isEmpty() ||
-                        (!(piece.getItem() instanceof BattleMageArmorItem) &&
-                                !(piece.getItem() instanceof ParasiteWizardArmorItem))) {
-                    hasSynergy = false;
-                    break;
+                if (!piece.isEmpty()) {
+                    if (piece.getItem() instanceof SentientWarlockArmorItem ||
+                        piece.getItem() instanceof LivingWarlockArmorItem) {
+                        warlockCount++;
+                    } else if (piece.getItem() instanceof com.spege.insanetweaks.items.armor.SentientBattlemageArmorItem ||
+                               piece.getItem() instanceof com.spege.insanetweaks.items.armor.LivingBattlemageArmorItem) {
+                        battlemageCount++;
+                    }
                 }
             }
+            hasSynergy = (warlockCount == 4 || battlemageCount == 4);
         } else {
             hasSynergy = false;
         }
@@ -323,7 +335,7 @@ public class SpellbladeTooltipHandler {
         }
 
         myLines.add(
-                "\u00a7b\u00a7oRequires offhand mana source | Unlock true potential with matching Sentient battlemage armor");
+                "\u00a7b\u00a7oRequires offhand mana source | Unlock true potential with matching sentient/living armor");
 
         // 6. Inject all lines at the calculated position
         tooltip.addAll(insertIdx, myLines);

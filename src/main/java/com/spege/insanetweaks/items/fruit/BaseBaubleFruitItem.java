@@ -42,8 +42,13 @@ import java.util.List;
  *
  * Subclasses must NOT override onFoodEaten/addInformation/createEntity  E * all logic lives here. Only the three abstract methods need to be implemented.
  */
+import java.util.Arrays;
+
+import com.spege.insanetweaks.api.ITweaksPropertyHolder;
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
+
 @SuppressWarnings("null")
-public abstract class BaseBaubleFruitItem extends ItemFood {
+public abstract class BaseBaubleFruitItem extends ItemFood implements ITweaksPropertyHolder {
 
     /** NBT key for the BaublesEX consumption flag. Survives death (PERSISTED_NBT_TAG). */
     protected final String consumedTag;
@@ -191,4 +196,8 @@ public abstract class BaseBaubleFruitItem extends ItemFood {
     // Indestructible dropped item  Eprevents the fruit being voided in lava
     // =========================================================================
 
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
+    }
 }

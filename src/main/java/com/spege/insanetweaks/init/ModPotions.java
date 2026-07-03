@@ -2,6 +2,7 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.potions.PotionCleanse;
+import com.spege.insanetweaks.potions.PotionImmuneBond;
 
 import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
@@ -25,11 +26,16 @@ public class ModPotions {
      * 10 ticks of complete damage immunity + instant 2 HP heal at trigger.
      */
     public static PotionCleanse CLEANSE;
+    public static PotionImmuneBond IMMUNE_BOND;
 
     @SubscribeEvent
     public static void registerPotions(RegistryEvent.Register<Potion> event) {
         CLEANSE = (PotionCleanse) new PotionCleanse()
                 .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "cleanse"));
         event.getRegistry().register(CLEANSE);
+
+        IMMUNE_BOND = (PotionImmuneBond) new PotionImmuneBond()
+                .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "immune_bond"));
+        event.getRegistry().register(IMMUNE_BOND);
     }
 }

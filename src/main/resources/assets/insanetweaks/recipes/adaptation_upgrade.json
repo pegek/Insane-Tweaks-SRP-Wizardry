@@ -16,7 +16,8 @@
       "item": "ebwizardry:attunement_upgrade"
     },
     "N": {
-      "item": "swparasites:living_nucleus"
+      "type": "forge:ore_dict",
+      "ore": "itLivingNucleus"
     }
   },
   "result": {

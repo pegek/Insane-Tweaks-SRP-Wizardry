@@ -1,16 +1,10 @@
 package com.spege.insanetweaks.util;
 
 import com.spege.insanetweaks.entities.EntityItemIndestructible;
-import com.spege.insanetweaks.items.armor.BattleMageArmorItem;
-import com.spege.insanetweaks.items.armor.ParasiteWizardArmorItem;
-import com.spege.insanetweaks.items.bridge.ArcaneAdaptedFruitItem;
-import com.spege.insanetweaks.items.fruit.BaseBaubleFruitItem;
-import com.spege.insanetweaks.items.shield.LivingAegisItem;
-import com.spege.insanetweaks.items.shield.SentientAegisItem;
-import com.spege.insanetweaks.items.spellblade.BridgeSpellblade;
-import com.spege.insanetweaks.items.wand.BaseCustomWandItem;
-
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
+import com.spege.insanetweaks.api.ITweaksPropertyHolder;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -31,15 +25,11 @@ public final class LegendaryDropHelper {
     private LegendaryDropHelper() {
     }
 
-    public static boolean isLegendaryDropItem(Item item) {
-        return item instanceof LivingAegisItem
-                || item instanceof SentientAegisItem
-                || item instanceof BridgeSpellblade
-                || item instanceof ArcaneAdaptedFruitItem
-                || item instanceof BaseBaubleFruitItem
-                || item instanceof BattleMageArmorItem
-                || item instanceof ParasiteWizardArmorItem
-                || item instanceof BaseCustomWandItem;
+    public static boolean isLegendaryDropItem(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        Item item = stack.getItem();
+        return item instanceof ITweaksPropertyHolder 
+                && ((ITweaksPropertyHolder) item).hasAdvProperty(stack, AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
     public static void applyLegendaryDropRules(EntityItem entityItem) {

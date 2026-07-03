@@ -3,7 +3,6 @@ package com.spege.insanetweaks.mixins;
 import javax.annotation.Nullable;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -11,79 +10,62 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.spege.insanetweaks.config.ModConfig;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 
 /**
- * Mixin on Tombstone's base {@code ovh.corail.tombstone.api.capability.Perk} class.
- *
- * <p>Uses a string target instead of a direct class reference so this file compiles
- * even when tombstone is absent from the compile classpath. The mixin config
- * {@code mixins.insanetweaks.tombstone.json} is only loaded at runtime when
- * {@code Loader.isModLoaded("tombstone")} returns true (see {@link LateMixinBooter}).</p>
- *
- * <p>Intercepts two methods:</p>
- * <ul>
- *   <li>{@code isDisabled} — forces the perk to appear disabled when
- *       config flag {@code enabled=false} or {@code maxLevel==0}.</li>
- *   <li>{@code getLevelMax} — clamps the native max level down to the
- *       value configured in {@code maxLevel}. Never raises the native cap.</li>
- * </ul>
- *
- * <p>Both overrides are guarded by the master switch
- * {@code tombstone.enableTombstoneTweaks}.</p>
+ * Mixin on all 10 concrete Tombstone Perk subclasses.
  */
-@Mixin(targets = "ovh.corail.tombstone.api.capability.Perk", remap = false)
+@Mixin(targets = {
+    "ovh.corail.tombstone.perk.PerkAlchemist",
+    "ovh.corail.tombstone.perk.PerkConcentration",
+    "ovh.corail.tombstone.perk.PerkGladiator",
+    "ovh.corail.tombstone.perk.PerkJailer",
+    "ovh.corail.tombstone.perk.PerkMementoMori",
+    "ovh.corail.tombstone.perk.PerkRuneInscriber",
+    "ovh.corail.tombstone.perk.PerkScribe",
+    "ovh.corail.tombstone.perk.PerkShadowWalker",
+    "ovh.corail.tombstone.perk.PerkTreasureSeeker",
+    "ovh.corail.tombstone.perk.PerkWitchDoctor"
+}, remap = false)
 public abstract class MixinTombstonePerk {
 
-    /** Shadowed to read the internal perk name for config lookup. */
-    @Shadow
-    protected String name;
-
-    // ------------------------------------------------------------------
-    // isDisabled override
-    // ------------------------------------------------------------------
-
-    @Inject(method = "isDisabled", at = @At("HEAD"), cancellable = true)
-    private void insanetweaks$overrideIsDisabled(@Nullable EntityPlayer player,
-            CallbackInfoReturnable<Boolean> cir) {
-
-        ModConfig.PerkConfig cfg = insanetweaks$getPerkConfig();
-        if (cfg == null) return;
+    @Inject(method = "getLevelMax", at = @At("RETURN"), cancellable = true)
+    private void insanetweaks$clampLevelMax(CallbackInfoReturnable<Integer> cir) {
         if (!ModConfig.tombstone.enableTombstoneTweaks) return;
 
-        // Force disabled if the config says disabled OR if maxLevel == 0
+        ModConfig.PerkConfig cfg = insanetweaks$resolveConfig();
+        if (cfg == null) return;
+
+        int nativeMax = cir.getReturnValue();
+        int capped = Math.min(nativeMax, cfg.maxLevel);
+        if (capped != nativeMax) {
+            cir.setReturnValue(capped);
+        }
+    }
+
+    @Inject(method = "isDisabled", at = @At("HEAD"), cancellable = true, require = 0)
+    private void insanetweaks$overrideIsDisabled(@Nullable EntityPlayer player,
+            CallbackInfoReturnable<Boolean> cir) {
+        if (!ModConfig.tombstone.enableTombstoneTweaks) return;
+
+        ModConfig.PerkConfig cfg = insanetweaks$resolveConfig();
+        if (cfg == null) return;
+
         if (!cfg.enabled || cfg.maxLevel == 0) {
             cir.setReturnValue(true);
         }
     }
 
-    // ------------------------------------------------------------------
-    // getLevelMax override
-    // ------------------------------------------------------------------
-
-    @Inject(method = "getLevelMax", at = @At("RETURN"), cancellable = true)
-    private void insanetweaks$clampLevelMax(CallbackInfoReturnable<Integer> cir) {
-
-        ModConfig.PerkConfig cfg = insanetweaks$getPerkConfig();
-        if (cfg == null) return;
-        if (!ModConfig.tombstone.enableTombstoneTweaks) return;
-
-        // Clamp: never raise native max, only lower it
-        int nativeMax = cir.getReturnValue();
-        int clampedMax = Math.min(nativeMax, cfg.maxLevel);
-        if (clampedMax != nativeMax) {
-            cir.setReturnValue(clampedMax);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Helper — resolves the PerkConfig entry for this perk by name
-    // ------------------------------------------------------------------
-
     @Nullable
-    private ModConfig.PerkConfig insanetweaks$getPerkConfig() {
-        if (name == null) return null;
+    private ModConfig.PerkConfig insanetweaks$resolveConfig() {
+        // Safe runtime cast without needing Tombstone in compile classpath
+        IForgeRegistryEntry<?> registryEntry = (IForgeRegistryEntry<?>) (Object) this;
+        if (registryEntry.getRegistryName() == null) return null;
+        
+        String perkName = registryEntry.getRegistryName().getResourcePath();
+        
         ModConfig.TombstoneTweaks ts = ModConfig.tombstone;
-        switch (name) {
+        switch (perkName) {
             case "alchemist":       return ts.alchemist;
             case "concentration":   return ts.concentration;
             case "gladiator":       return ts.gladiator;
@@ -94,7 +76,7 @@ public abstract class MixinTombstonePerk {
             case "shadow_walker":   return ts.shadowWalker;
             case "treasure_seeker": return ts.treasureSeeker;
             case "witch_doctor":    return ts.witchDoctor;
-            default:                return null; // unknown/third-party perk — skip
+            default:                return null;
         }
     }
 }

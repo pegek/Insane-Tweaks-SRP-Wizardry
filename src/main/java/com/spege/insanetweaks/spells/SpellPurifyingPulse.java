@@ -13,6 +13,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
+@SuppressWarnings("null")
 public class SpellPurifyingPulse extends Spell {
 
     private static final int BASE_SIZE = 8;

@@ -8,14 +8,16 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import com.spege.insanetweaks.events.LivingDeathEventHandler;
-import com.spege.insanetweaks.commands.CommandBackupCursed;
-import com.spege.insanetweaks.commands.CommandClaimArcaneFruit;
+
+
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraft.client.Minecraft;
@@ -27,7 +29,13 @@ import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
 import com.spege.insanetweaks.entities.EntityBeckonSivMinion;
 import com.spege.insanetweaks.client.renderer.entity.RenderBeckonSivMinion;
+import com.spege.insanetweaks.client.renderer.entity.RenderSimWizard;
 import com.spege.insanetweaks.entities.EntityFerCowMinion;
+import com.spege.insanetweaks.entities.EntitySentinel;
+import com.spege.insanetweaks.entities.EntitySimWizard;
+import com.spege.insanetweaks.entities.EntityThrallMinion;
+import com.spege.insanetweaks.client.renderer.entity.RenderThrallMinion;
+import com.spege.insanetweaks.entities.EntityWizardMinion;
 import com.spege.insanetweaks.entities.EntityRupterMinion;
 import com.spege.insanetweaks.entities.EntitySummonerVomitCloud;
 import com.spege.insanetweaks.entities.EntityPrimitiveSummonerMinion;
@@ -45,13 +53,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;required-after:swparasites;required-after:srparasites;"
+@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
         "after:srpextra;after:baubles;after:potioncore;before:reskillable")
-public class InsaneTweaksMod {
+public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
-    public static final String NAME = "Insane Tweaks";
+    public static final String NAME  = "Insane Tweaks";
     public static final String VERSION = "1.0.15";
+
+    /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
+    public static final int GUI_ID_THRALL_INV = 1;
+
+    @Mod.Instance
+    public static InsaneTweaksMod INSTANCE;
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -79,8 +93,30 @@ public class InsaneTweaksMod {
         
         // Print compatibility report to log and set version flags.
         logCompatibilityReport();
+        com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            RenderingRegistry.registerEntityRenderingHandler(EntitySentinel.class,
+                    new IRenderFactory<EntitySentinel>() {
+                        @Override
+                        public Render<? super EntitySentinel> createRenderFor(RenderManager manager) {
+                            return new RenderSentinel(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityWizardMinion.class,
+                    new IRenderFactory<EntityWizardMinion>() {
+                        @Override
+                        public Render<? super EntityWizardMinion> createRenderFor(RenderManager manager) {
+                            return new RenderWizardMinion(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntitySimWizard.class,
+                    new IRenderFactory<EntitySimWizard>() {
+                        @Override
+                        public Render<? super EntitySimWizard> createRenderFor(RenderManager manager) {
+                            return new RenderSimWizard(manager);
+                        }
+                    });
             RenderingRegistry.registerEntityRenderingHandler(EntityFerCowMinion.class,
                     new IRenderFactory<EntityFerCowMinion>() {
                         @Override
@@ -146,6 +182,13 @@ public class InsaneTweaksMod {
                             return new RenderBeckonSivMinion(manager);
                         }
                     });
+            RenderingRegistry.registerEntityRenderingHandler(EntityThrallMinion.class,
+                    new IRenderFactory<EntityThrallMinion>() {
+                        @Override
+                        public Render<? super EntityThrallMinion> createRenderFor(RenderManager manager) {
+                            return new RenderThrallMinion(manager);
+                        }
+                    });
         }
 
         // Auto-detect Baubles; disable Bauble Fruits only if totally missing.
@@ -190,6 +233,12 @@ public class InsaneTweaksMod {
         // Other entities if any...
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "fer_cow_minion"),
                 EntityFerCowMinion.class, "fer_cow_minion", 100, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "wizard_minion"),
+                EntityWizardMinion.class, "wizard_minion", 112, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sentinel"),
+                EntitySentinel.class, "sentinel", 113, this, 64, 3, true, 0x8F0C12, 0x2D2D2D);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sim_wizard"),
+                EntitySimWizard.class, "sim_wizard", 115, this, 64, 3, true, 0x5A6C72, 0x20353E);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_yelloweye_minion"),
                 EntityPrimitiveYelloweyeMinion.class, "primitive_yelloweye_minion", 101, this, 64, 3, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_summoner_minion"),
@@ -212,14 +261,21 @@ public class InsaneTweaksMod {
                 EntityYelloweyeNade.class, "yelloweye_nade", 104, this, 64, 10, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "beckon_siv_minion"),
                 EntityBeckonSivMinion.class, "beckon_siv_minion", 110, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "thrall_minion"),
+                EntityThrallMinion.class, "thrall_minion", 114, this, 64, 3, true);
 
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
-        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks && com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) {
-            MinecraftForge.EVENT_BUS.register(new LivingDeathEventHandler());
+        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks) {
+            if (com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) {
+                MinecraftForge.EVENT_BUS.register(new LivingDeathEventHandler());
+            }
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneDropEventHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneBooksHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GraveDecayHandler());
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
@@ -231,19 +287,42 @@ public class InsaneTweaksMod {
             electroblob.wizardry.util.WandHelper.registerSpecialUpgrade(
                     com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE, "adaptation");
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.FleshboundEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AttackSpeedDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.BattlemageAdaptationHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.BattlemageTooltipHandler());
+            }
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandTooltipHandler());
             MinecraftForge.EVENT_BUS.register(com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact.class);
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GlobalPropertyTooltipHandler());
             }
+        }
+
+        // Sim_wizard SRP faction integration: cancels parasite<->sim_wizard friendly fire so
+        // AoE spells (spark_bomb chains, force_orb splash) never turn the SRP pack against the
+        // wizard. Gated by its own flag (the entity is spawnable via /summon regardless of the
+        // bridge conversion being enabled, so this must not hide behind enableSrpEbWizardryBridge).
+        if (com.spege.insanetweaks.config.ModConfig.simWizard.enabled) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SimWizardFactionHandler());
+        }
+
+        // Zhonyas Hourglass snapshot handler: applies NBT snapshots from MixinParasiteEventEntity
+        // to newly spawned SRP entities (EntityPInfected, EntityInhooM/S).
+        // Gated by SRP presence (required dependency, but kept explicit for clarity).
+        // Registered unconditionally of enableSrpEbWizardryBridge — the item can exist
+        // without the full bridge being enabled.
+        if (Loader.isModLoaded("scapeandrunparasites")) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyasEventHandler());
         }
 
         // GoldenBook is independent of the SRP/EBWizardry bridge — register
@@ -252,23 +331,20 @@ public class InsaneTweaksMod {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellRestrictionEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteShroudEventHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImmuneBondHandler());
         }
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
         }
 
         // --- Build the list of recommended mods that are missing / need updating ---
         boolean hasBaubles = Loader.isModLoaded("baubles");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
         boolean hasSrpExtra = Loader.isModLoaded("srpextra");
-        boolean isSrpExtraValid = true;
-        if (hasSrpExtra && warnSrparasitesOldVersion) {
-            ModContainer srpExtraMod = Loader.instance().getIndexedModList().get("srpextra");
-            if (srpExtraMod != null && !srpExtraMod.getVersion().contains("0.7.4")) {
-                isSrpExtraValid = false;
-            }
-        }
+        // srpextra version check retired -- see logCompatibilityReport() comment for rationale.
 
         boolean hasSomeEnch = Loader.isModLoaded("somanyenchantments");
         boolean hasReskillable = Loader.isModLoaded("reskillable");
@@ -284,18 +360,8 @@ public class InsaneTweaksMod {
         }
         
         if (!hasSrpExtra) {
-            if (warnSrparasitesOldVersion) {
-                recommendations.add(new String[] {
-                        "SRPextra v0.7.4", "Required for recipes. Since SRParasites < 1.10, you MUST use v0.7.4.", URL_SRPEXTRA
-                });
-            } else {
-                recommendations.add(new String[] {
-                        "SRPextra", "Required for full crafting recipes. Fallback recipes are now active.", URL_SRPEXTRA
-                });
-            }
-        } else if (!isSrpExtraValid) {
             recommendations.add(new String[] {
-                    "SRPextra v0.7.4", "Incompatible SRPextra detected! Since SRParasites < 1.10, downgrade to v0.7.4.", URL_SRPEXTRA
+                    "SRPextra", "Required for full crafting recipes. Fallback recipes are now active.", URL_SRPEXTRA
             });
         }
         if (wantsBaubleFruitsWarning) {
@@ -347,6 +413,9 @@ public class InsaneTweaksMod {
         if (hasReskillable && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ReskillableGuiHandler());
         }
+
+        // Register IGuiHandler for thrall inventory GUI (syncs slots server->client via Forge)
+        NetworkRegistry.INSTANCE.registerGuiHandler(this, this);
     }
 
     // -------------------------------------------------------------------------
@@ -355,8 +424,50 @@ public class InsaneTweaksMod {
 
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
-        event.registerServerCommand(new CommandBackupCursed());
-        event.registerServerCommand(new CommandClaimArcaneFruit());
+        event.registerServerCommand(new com.spege.insanetweaks.commands.CommandInsaneTweaks());
+        LOGGER.info("Insane Tweaks Server Commands registered.");
+    }
+
+    // -------------------------------------------------------------------------
+    // IGuiHandler — Thrall Inventory (GUI_ID_THRALL_INV = 1)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Server-side: creates the Container backed by the thrall entity's real inventory.
+     * {@code x} carries the entity ID encoded as the parameter.
+     */
+    @Override
+    @SuppressWarnings("null")
+    public Object getServerGuiElement(int id, net.minecraft.entity.player.EntityPlayer player,
+            net.minecraft.world.World world, int x, int y, int z) {
+        if (id == GUI_ID_THRALL_INV) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof com.spege.insanetweaks.entities.EntityThrallMinion) {
+                com.spege.insanetweaks.entities.EntityThrallMinion thrall =
+                        (com.spege.insanetweaks.entities.EntityThrallMinion) entity;
+                return new com.spege.insanetweaks.client.gui.ThrallContainer(
+                        player, thrall.getThrallInventory(), thrall.getEntityId());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Client-side: creates the GuiContainer that renders the thrall inventory.
+     */
+    @Override
+    @SuppressWarnings("null")
+    public Object getClientGuiElement(int id, net.minecraft.entity.player.EntityPlayer player,
+            net.minecraft.world.World world, int x, int y, int z) {
+        if (id == GUI_ID_THRALL_INV) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof com.spege.insanetweaks.entities.EntityThrallMinion) {
+                com.spege.insanetweaks.entities.EntityThrallMinion thrall =
+                        (com.spege.insanetweaks.entities.EntityThrallMinion) entity;
+                return new com.spege.insanetweaks.client.gui.GuiThrallInventory(player, thrall);
+            }
+        }
+        return null;
     }
 
     // -------------------------------------------------------------------------
@@ -382,6 +493,10 @@ public class InsaneTweaksMod {
             if (sent)
                 return;
             sent = true;
+
+            // Respect the player's preference to suppress chat noise on startup.
+            if (com.spege.insanetweaks.config.ModConfig.client.suppressStartupWarningsInChat)
+                return;
 
             if (!recs.isEmpty()) {
                 event.player.sendMessage(new TextComponentString(
@@ -428,14 +543,21 @@ public class InsaneTweaksMod {
         boolean hasCompatSkills = Loader.isModLoaded("compatskills");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
 
-        // Check srparasites version
+        // Check srparasites version.
+        // SRParasites split its versioning after 1.10: the "old" branch stayed at 1.0.x.x
+        // while the maintained branch moved to 1.9.x.x and later 1.10.x.x.
+        // A naive compareTo("1.10") incorrectly classifies 1.9.x.x as "old" because
+        // 1.9 < 1.10 numerically.  We also accept any version whose major.minor is
+        // at least 1.9 as the new scheme.
         boolean oldSrparasites = false;
         ModContainer srparasitesMod = Loader.instance().getIndexedModList().get("srparasites");
         if (srparasitesMod != null) {
             try {
                 DefaultArtifactVersion current = new DefaultArtifactVersion(srparasitesMod.getVersion());
-                DefaultArtifactVersion min = new DefaultArtifactVersion("1.10");
-                oldSrparasites = current.compareTo(min) < 0;
+                DefaultArtifactVersion minNew  = new DefaultArtifactVersion("1.9");  // new versioning scheme start
+                DefaultArtifactVersion minOld  = new DefaultArtifactVersion("1.10"); // old scheme "full" threshold
+                // Accept if >= 1.9 (new branch) OR >= 1.10 (old branch threshold).
+                oldSrparasites = current.compareTo(minNew) < 0 && current.compareTo(minOld) < 0;
             } catch (Exception e) {
                 LOGGER.warn("[InsaneTweaks] Could not parse srparasites version: {}", srparasitesMod.getVersion());
             }
@@ -449,12 +571,10 @@ public class InsaneTweaksMod {
         LOGGER.info("  srpextra            ... {}", status(hasSrpExtra));
         if (!hasSrpExtra)
             LOGGER.info("   -> Fallback recipes active.");
-            
+
         if (oldSrparasites && srparasitesMod != null) {
-            ModContainer srpEx = Loader.instance().getIndexedModList().get("srpextra");
-            if (srpEx == null || !srpEx.getVersion().contains("0.7.4")) {
-                LOGGER.warn("  [!] SRParasites v{} < 1.10! Recommended: SRPextra v0.7.4", srparasitesMod.getVersion());
-            }
+            LOGGER.warn("  [!] SRParasites v{} is below the supported range. Fallback recipe mode active.",
+                    srparasitesMod.getVersion());
         }
         
         LOGGER.info("  baubles             ... {} ({})",
