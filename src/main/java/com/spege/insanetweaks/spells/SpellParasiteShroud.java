@@ -2,6 +2,7 @@ package com.spege.insanetweaks.spells;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.events.ParasiteShroudEventHandler;
+import com.spege.insanetweaks.util.SpellCastFeedback;
 
 import electroblob.wizardry.item.SpellActions;
 import electroblob.wizardry.registry.WizardryItems;
@@ -10,9 +11,9 @@ import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 
 @SuppressWarnings("null")
 public class SpellParasiteShroud extends Spell {
@@ -30,14 +31,10 @@ public class SpellParasiteShroud extends Spell {
         if (!world.isRemote) {
             ParasiteShroudEventHandler.applyShroud(caster, duration);
 
-            if (world instanceof WorldServer) {
-                ((WorldServer) world).spawnParticle(net.minecraft.util.EnumParticleTypes.SPELL_MOB_AMBIENT,
-                        caster.posX, caster.posY + caster.height * 0.6D, caster.posZ,
-                        20, 0.45D, 0.7D, 0.45D, 0.02D);
-            }
-
-            world.playSound(null, caster.posX, caster.posY, caster.posZ, SoundEvents.ENTITY_ENDERMEN_AMBIENT,
-                    SoundCategory.PLAYERS, 0.8F, 0.7F + world.rand.nextFloat() * 0.1F);
+            SpellCastFeedback.impactAt(world, caster, 0.6D,
+                    EnumParticleTypes.SPELL_MOB_AMBIENT, 20, 0.45D, 0.7D, 0.45D, 0.02D,
+                    SoundEvents.ENTITY_ENDERMEN_AMBIENT, SoundCategory.PLAYERS,
+                    0.8F, 0.7F + world.rand.nextFloat() * 0.1F);
         }
 
         return true;
