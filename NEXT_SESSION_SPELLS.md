@@ -1,6 +1,20 @@
 # Next session: Spell architecture rework
 
-**Stan na 2026-07-03.** Spec zatwierdzony przez użytkownika, implementacja NIE rozpoczęta.
+**Stan na 2026-07-03 (po południu).** Implementacja W TOKU — wykonywana metodą subagent-driven wg planu `docs/superpowers/plans/2026-07-03-spell-architecture-rework.md`.
+
+## Postęp implementacji
+
+- ✅ Task 1: `AbstractSrpSummonSpell` utworzony, martwe placeholdery usunięte (commit 87ebcef) — spec+quality review OK
+- ✅ Task 2: FerCow (5d0b4a9) — spec+quality OK
+- ✅ Task 3: PrimitiveSummoner (5722170) — spec+quality OK
+- ✅ Task 4: PrimitiveYelloweye (cd75598) — spec+quality OK
+- ✅ Task 5: Wizard (4c29a21) — spec+quality OK
+- ✅ Task 6: CallOfDemise (2b7c5e9) — spec+quality OK
+- ✅ Task 7: SpellCastFeedback + ParasiteShroud (c5cc87c) — spec+quality OK
+- ⬜ Task 8: SpellImmuneBond → RayTracer + SpellCastFeedback (pełny kod docelowy w planie, Task 8)
+- ⬜ Task 9: manualna weryfikacja w runClient (checklista w planie) + finalny przegląd całości
+
+Wznowienie: kontynuować skill superpowers:subagent-driven-development od Taska 8 (SpellImmuneBond — pełny docelowy kod w planie; implementer → spec review → quality review), potem Task 9 (manualna weryfikacja runClient) i finalny przegląd całości. Build był zielony po każdym tasku.
 
 ## Gdzie jesteśmy
 
