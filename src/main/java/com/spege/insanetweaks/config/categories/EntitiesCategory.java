@@ -4,21 +4,27 @@ import net.minecraftforge.common.config.Config;
 
 public class EntitiesCategory {
 
-    @Config.Name("Assimilated Wizard")
-    @Config.Comment("The assimilated wizard parasite-mage (registry name sim_wizard): a full SRP parasite, aggressive vs non-parasites.")
+    // Sub-category @Config.Name values double as .cfg section keys (Forge lowercases them),
+    // so they stay snake_case; the pretty display names come from the LangKeys.
+    @Config.Name("assimilated_wizard")
+    @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard")
+    @Config.Comment("The Assimilated Wizard parasite-mage (registry name sim_wizard): a full SRP parasite, aggressive vs non-parasites.")
     public final AssimilatedWizard assimilatedWizard = new AssimilatedWizard();
 
     public static class AssimilatedWizard {
 
-        @Config.Name("Spawning & Stats")
+        @Config.Name("spawning")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.spawning")
         @Config.Comment("Master toggle, base attributes and SRP phase scaling. Attribute values apply to newly created entities only.")
         public final Spawning spawning = new Spawning();
 
-        @Config.Name("Combat")
+        @Config.Name("combat")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.combat")
         @Config.Comment("Cast AI tunables: ranges, cooldowns, self-heal, telegraph.")
         public final Combat combat = new Combat();
 
-        @Config.Name("Spells")
+        @Config.Name("spells")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.spells")
         @Config.Comment("Spell pool contents.")
         public final Spells spells = new Spells();
     }

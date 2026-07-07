@@ -317,7 +317,7 @@ public class EntityThrallMinion extends EntityCreature {
             }
 
             // Work timer — duration from config (0 = disabled).
-            // COLLECTING is included so thrallWorkDurationHours bounds the session-loop (C-3);
+            // COLLECTING is included so thrall.general.workDurationHours bounds the session-loop (C-3);
             // when it expires there, the collecting AI's own onWorkTimerExpired() routes to
             // WAITING_FOR_ITEMS rather than STAY, so the auto-return branch below is skipped for it.
             ThrallMode currentMode = getMode();
@@ -637,7 +637,7 @@ public class EntityThrallMinion extends EntityCreature {
         this.dataManager.set(MODE_ORDINAL, mode.ordinal());
         if (debugLogs()) LOG.info("[Thrall#{}] setMode {} -> {}", getEntityId(), prev, mode);
         // Start/reset work timer when entering a work mode (COLLECTING included so its
-        // session-loop is bounded by thrallWorkDurationHours — see onUpdate work-timer block).
+        // session-loop is bounded by thrall.general.workDurationHours — see onUpdate work-timer block).
         if (mode == ThrallMode.WOODCUTTING || mode == ThrallMode.MINESHAFT
                 || mode == ThrallMode.FARMING || mode == ThrallMode.PORTER
                 || mode == ThrallMode.COLLECTING) {

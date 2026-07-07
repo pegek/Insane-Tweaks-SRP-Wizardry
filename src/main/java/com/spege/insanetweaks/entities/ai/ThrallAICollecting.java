@@ -88,7 +88,7 @@ public class ThrallAICollecting extends EntityAIBase {
     private int targetCycleIndex;
     /** When > 0, the AI is resting at home between looped sessions; counts down each tick. */
     private int restTicksRemaining;
-    /** Set by EntityThrallMinion when thrallWorkDurationHours elapses — forces WAITING on next rest end. */
+    /** Set by EntityThrallMinion when thrall.general.workDurationHours elapses — forces WAITING on next rest end. */
     private boolean workTimerExpired;
 
     private final Deque<BlockPos> harvestQueue = new ArrayDeque<>();
@@ -626,7 +626,7 @@ public class ThrallAICollecting extends EntityAIBase {
         // Intrinsic loop terminator: capture the just-finished session's yield BEFORE the loop
         // branch resets it. A zero-yield session means the area is exhausted — idle in WAITING
         // instead of ring-teleporting forever. This must not rely on the work timer alone, because
-        // thrallWorkDurationHours = 0 disables the timer entirely (onUpdate gates on workHours > 0).
+        // thrall.general.workDurationHours = 0 disables the timer entirely (onUpdate gates on workHours > 0).
         int harvestedLastSession = totalItemsHarvestedThisSession;
 
         if (workTimerExpired || targets.isEmpty() || harvestedLastSession <= 0) {
@@ -673,7 +673,7 @@ public class ThrallAICollecting extends EntityAIBase {
         thrall.setStatusText("Waiting for items");
     }
 
-    /** Called by EntityThrallMinion when thrallWorkDurationHours elapses while in COLLECTING mode.
+    /** Called by EntityThrallMinion when thrall.general.workDurationHours elapses while in COLLECTING mode.
      *  Routes the AI home to deposit, then (via the RESTING branch) into WAITING_FOR_ITEMS — never STAY. */
     public void onWorkTimerExpired() {
         workTimerExpired = true;
