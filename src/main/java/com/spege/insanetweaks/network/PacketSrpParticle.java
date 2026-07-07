@@ -74,6 +74,9 @@ public class PacketSrpParticle implements IMessage {
         buf.writeFloat(this.speed);
     }
 
+    // This class must never be classloaded on a dedicated server: ParticleSpawner's
+    // static initializer touches Minecraft. registerMessage only stores the Class
+    // reference; the handler is instantiated when a CLIENT-bound packet arrives.
     @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<PacketSrpParticle, IMessage> {
 
