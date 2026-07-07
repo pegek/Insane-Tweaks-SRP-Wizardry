@@ -937,6 +937,9 @@ git commit -m "feat: SRP particles for bond aura and thrall spawn"
 | Shroud expiry | Letting it run out: grey smoke puff, no sound |
 | Yelloweye Gland | ~1.5 s charge (sound + HUD bar + yellow-green converging dots), every shot explodes, no 4-shot cycle |
 | Purifying Pulse | Regular parasites in the wave: brief golden flash, weakness/slowness; Beckons: unchanged harsh hit; infected cow/villager (COTH): white-gold sparkle + XP-orb sound, conversion never completes; re-infection possible later |
+| Pulse: player cure (deviation 1) | COTH-infected player (incl. the caster) in the wave gets cured too — confirm the feel is right |
+| Pulse: bonded mob | Immune Bond target (`srpcothimmunity` = 0) in the wave is NOT cleansed (no DOT/XP-orb) |
+| Pulse: uninfected passive mob | Plain cow in the wave gets no particle/sound (early-return path) |
 | Immune Bond aura | Bonded mob shows a violet dot pulse ~every 2 s (yellow redstone ring is gone) |
 | Thrall spawn | Casting Summon Thrall: dark-red flash + dark smoke at the thrall |
 | Dedicated-server sanity | `./gradlew runServer` boots without a client-classloading crash (PacketSrpParticle handler is client-only) |
@@ -944,6 +947,10 @@ git commit -m "feat: SRP particles for bond aura and thrall spawn"
 - [ ] **Step 3: Update `NEXT_SESSION_SPELLS.md`** — mark part 2 done (or record fixups), note any balance numbers changed during testing.
 
 ---
+
+## Accepted deviations
+
+1. **(Task 4) COTH cleanse reaches players.** The generalized `EntityLivingBase` query means a COTH-infected player (including the caster standing in their own wave) is cured by `cleanseCothInfection`. The spec wording says "non-parasite mobs", but curing players is a strict superset consistent with the "real cure" intent — accepted at quality review (2026-07-07); probe the feel in Task 6.
 
 ## Self-review results
 

@@ -1,37 +1,23 @@
-# Next session: Spell architecture rework
+# Next session: Spell rework — status
 
-**Stan na 2026-07-03 (po południu).** Implementacja W TOKU — wykonywana metodą subagent-driven wg planu `docs/superpowers/plans/2026-07-03-spell-architecture-rework.md`.
+**Stan na 2026-07-07 (wieczór).**
 
-## Postęp implementacji
+## Część 1 — architektura (plan `2026-07-03-spell-architecture-rework.md`)
 
-- ✅ Task 1: `AbstractSrpSummonSpell` utworzony, martwe placeholdery usunięte (commit 87ebcef) — spec+quality review OK
-- ✅ Task 2: FerCow (5d0b4a9) — spec+quality OK
-- ✅ Task 3: PrimitiveSummoner (5722170) — spec+quality OK
-- ✅ Task 4: PrimitiveYelloweye (cd75598) — spec+quality OK
-- ✅ Task 5: Wizard (4c29a21) — spec+quality OK
-- ✅ Task 6: CallOfDemise (2b7c5e9) — spec+quality OK
-- ✅ Task 7: SpellCastFeedback + ParasiteShroud (c5cc87c) — spec+quality OK
-- ✅ Task 8: SpellImmuneBond → RayTracer + SpellCastFeedback (commit 86d4a50) — spec+quality OK; quality review ujawnił 2 dodatkowe odchylenia zachowania (brak aim-assistu = ciaśniejsze celowanie; nieżywe encje mogą blokować promień) — zaakceptowane i dopisane do planu jako deviation 5
-- ⬜ Task 9: manualna weryfikacja w runClient (checklista w planie; dodatkowo sprawdzić odczucie celowania Immune Bond — deviation 5a) + finalny przegląd całości
+- ✅ Taski 1–8 zrobione i zacommitowane (szczegóły w planie).
+- ⏸ Task 9 (manualna weryfikacja w `runClient`) — **odroczony na życzenie użytkownika** (2026-07-07). Checklista w planie; dodatkowo sprawdzić odczucie celowania Immune Bond (deviation 5a).
 
-Wznowienie: został tylko Task 9 — manualna weryfikacja w `./gradlew runClient` (checklista w planie, Task 9) + finalny przegląd całości. Build był zielony po każdym tasku (1–8).
+## Część 2 — mechaniki i wizualia (plan `2026-07-07-spell-mechanics-visuals.md`)
 
-## Gdzie jesteśmy
+- ✅ Task 1: `PacketSrpParticle` (discriminator 4) + `SpellCastFeedback.srpBurst*` (42abc35)
+- ✅ Task 2: Parasite Shroud — tiery wg potency, synergia z wizard armour, break-on-attack (5dd538c)
+- ✅ Task 3: Yelloweye Gland — chargeup 30 tick., zawsze explosive, klienckie particle ładowania (d2d47de)
+- ✅ Task 4: Purifying Pulse — sear wszystkich pasożytów + COTH cleanse (58e4cda) — spec+quality OK; **accepted deviation 1:** cleanse obejmuje też graczy (w tym castera) — patrz plan
+- ✅ Task 5: Immune Bond fioletowy DOT co 40 tick. + burst przy spawnie thralla (df62723, 0b91b69) + **bonus:** ten sam burst na ścieżce recall thralla — luka planu wykryta w quality review (e0f2f16)
+- ⏸ Task 6 (manualna weryfikacja w `runClient` + `runServer` sanity) — **odroczony na życzenie użytkownika** (2026-07-07). Checklista w planie (rozszerzona o: cure gracza z COTH, bonded mob NIE czyszczony, brak feedbacku na niezainfekowanej krowie, burst przy recall thralla, aura bonda na małych/wysokich mobach).
 
-1. Brainstorming zakończony, projekt zatwierdzony: `docs/superpowers/specs/2026-07-03-spell-architecture-rework-design.md` — przeczytaj go w całości przed czymkolwiek innym.
-2. Etap 0 (aktualizacja zależności do SRP 1.10.7 + EBW 4.3.19) jest **zrobiony i zacommitowany**: podmienione jary w `libs/`, nowy koordynat CurseMaven w `build.gradle`, dwa fixy zgodności (`ParasiteXPFixHandler` — nowy parametr `srcID`; `SummonInfectionSafetyHelper` — odwrócona semantyka `srpcothimmunity`, szczegóły w specu). `./gradlew build` przechodzi.
-3. Zdekompilowane źródła referencyjne (poza gitem, per urządzenie!): `notes/decompiled_mods/ebwizardry_source/decompiled_src` (EBW 4.3.19) i `notes/decompiled_mods/srp_sourcecode_analis/decompiled_src` (SRP 1.10.7). Na nowym urządzeniu trzeba je odtworzyć: jary + CFR 0.152 + wzorzec `decompile.py` leżą w `notes/decompiled_mods/` (folder gitignored — skopiuj ręcznie albo zdekompiluj ponownie z jarów modów).
+Build zielony po każdym tasku. Wersja EBW 4.3.19 / SRP 1.10.7 bez zmian.
 
-## Następny krok
+## Następny wątek (rozpoczęty 2026-07-07)
 
-Użyć skilla **writing-plans** (superpowers) do rozpisania planu implementacji ze speca, potem implementacja:
-- `AbstractSrpSummonSpell<T>` w `spells/` + migracja 5 summonów,
-- wymiana ray-trace w `SpellImmuneBond` na `RayTracer` z EBW,
-- helper `util/SpellCastFeedback`,
-- usunięcie `InsaneTweaksSpellMinion.java`.
-
-Weryfikacja: build + manualny `runClient` (lista przypadków w specu).
-
-## Po tym etapie
-
-Osobny brainstorming/spec na część 2: rework mechanik i wizualiów zaklęć (nowe particle SRP 1.10.7: flash RGB, blood, dot; nowe gettery `ItemWizardArmour` w EBW 4.3.19).
+Rework **Summon Thrall** — AI/taski, naprawa wadliwych trybów Collecting / Farming / Porter, gwarancja nieśmiertelności i ignorowania thralla przez WSZYSTKIE moby. Analiza w toku.
