@@ -33,36 +33,40 @@
 - Explicit constraint: EBW chargeup is **fixed-time with auto-fire**; variable "hold longer = stronger" is NOT natively supported and is out of scope (would need a wand mixin).
 
 **Parasite Shroud — three combined mechanics:**
-1. **Tiers by potency:** tier 1 (base) hides from primitive parasites only; tier 2 (potency ≥ ~1.3) also from advanced ones. Parasite classification (primitive vs adapted/evolved) to be pinned down in the plan from decompiled SRP class hierarchy; fallback if no clean hierarchy exists: config-driven class list.
-2. **Wizard-armour synergy:** duration +~15% per worn wizard-armour piece matching the spell's element, via `ItemWizardArmour.getMatchingArmourCount(player, element)` (EBW 4.3.19).
+1. **Tiers by potency:** tier 1 (base) hides from primitive parasites only; tier 2 (potency ≥ ~1.3) also from advanced ones. Classification resolved during planning: primitive parasites share the base class `com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPPrimitive` — tier 1 filters with `instanceof EntityPPrimitive`; no config list needed. Scent disruption stays tier-independent.
+2. **Wizard-armour synergy:** duration +~15% per worn wizard-armour piece — any `ItemWizardArmour` counts (decided in planning: element-matched counting via `getMatchingArmourCount` would almost never trigger, since this spell's element is generic MAGIC and players wear elemental sets; a plain `instanceof ItemWizardArmour` count over armour slots serves the battlemage-synergy intent).
 3. **Break on attack:** the player attacking anything while shrouded removes the shroud early (handler on `AttackEntityEvent`/`LivingHurtEvent` checking `hasShroud`); base duration rises 160 → ~240 ticks in exchange (`BASE_DURATION_TICKS` constant in `SpellParasiteShroud.java`).
 
 **Purifying Pulse — extend the existing wave.**
 Block purification already exists (`EntityPurifyingWave.purifyRing` + `SrpPurificationHelper`); Beckons already get dmg 6 + glow + weakness/slowness. New:
 1. Generalize `affectBeckons` → `affectParasites`: **all** SRP parasites in the ring get a "searing" debuff (weakness + slowness + short magic DoT); Beckons keep their current harsher treatment.
-2. **COTH cleanse:** non-parasite mobs in range get their COTH infection removed — set `srpcothimmunity = 0` (SRP 1.10.7 semantics: tag value 0 = immune/cleared; see `SummonInfectionSafetyHelper`). The spell becomes a real cure for infected animals/villagers.
+2. **COTH cleanse:** non-parasite mobs in range get their COTH infection removed — strip the `COTH_E` potion effect and **remove** the `srpcothimmunity` tag (cured but re-infectable; deliberately NOT set to 0, which would grant permanent immunity and stack oddly with Immune Bond — bonded mobs hold the tag at 0 and are skipped by the `> 0` victim check). The spell becomes a real cure for infected animals/villagers.
 
-### 3. Visuals map (silent events only)
+### 3. Visuals map
 
-| Event (currently silent) | Effect | Path |
+**Planning-time reality check** (corrections to the brainstormed "silent events" list, found by reading the code):
+- Minion spawn/despawn is **not silent** — every minion's `onSpawn()`/`onDespawn()` already spawns 15× EBW `DARK_MAGIC` particles with a per-entity colour (e.g. FerCow dark green). Left unchanged (minimal principle).
+- Immune Bond active is **not silent** — `ImmuneBondHandler` already draws a yellow `REDSTONE` ring every 10 ticks. Replaced (not added) with the spec'd violet SRP DOT.
+- Thrall spawn *looks* covered (`world.spawnParticle(SMOKE_LARGE, …)` in `ThrallSlotManager`) but `World.spawnParticle` is a client-side no-op on the server, so it is effectively silent. Replaced with the packet burst.
+
+| Event | Effect | Path |
 |---|---|---|
-| Minion spawn (shared loop in `AbstractSrpSummonSpell`) | short FLASH in family colour (blood red for parasitic, violet for Wizard) + a few GCLOUD at ground level | `PacketSrpParticle` from the server loop |
-| Thrall spawn (`SpellSummonThrall`) | as above, darker red | same |
-| Minion despawn at end of lifetime | small DOT dissolve at the vanish point | packet (hook in minion base entity or handler) |
-| Shroud: natural expiry | fading grey GCLOUD around the player | packet from `ParasiteShroudEventHandler` |
-| Shroud: broken by attacking (new) | sharp red FLASH + "break" sound | same |
-| Yelloweye: charging | yellow-green DOT converging on the hand during chargeup | client-side in `cast()` / EBW idiom (cast-time only) |
-| Pulse: parasite debuffed (new) | small golden FLASH on the target | from `affectParasites` |
-| Pulse: COTH cleansed from a mob (new) | white-gold burst + cure sound | same |
-| Immune Bond: bond active | subtle violet DOT on the bonded mob every ~2 s | packet from `ImmuneBondHandler` tick |
+| Thrall spawn (`ThrallSlotManager.spawnThrall`) | dark-red FLASH + a few dark GCLOUD (replaces dead `SMOKE_LARGE` call) | `PacketSrpParticle` |
+| Shroud: natural expiry | fading grey GCLOUD around the player, no sound | packet from `ParasiteShroudEventHandler` |
+| Shroud: broken by attacking (new) | sharp red FLASH + glass-break sound | same |
+| Yelloweye: charging | yellow-green DOT converging on the hand during chargeup | client-only tick handler calling SRP `ParticleSpawner` directly (no packet) |
+| Pulse: parasite seared (new) | small golden FLASH on the target | from `affectParasites` |
+| Pulse: COTH cleansed from a mob (new) | white-gold DOT burst + XP-orb sound | same |
+| Immune Bond: bond active | subtle violet SRP DOT on the bonded mob every ~2 s (replaces yellow REDSTONE ring every 0.5 s) | packet from `ImmuneBondHandler` tick |
 
 Sounds: existing vanilla/`SRPSounds` only. No new textures — SRP particle sprites only.
 
 ## Files touched
 
-- **New:** `network/PacketSrpParticle.java` (+ registration in `InsaneTweaksNetwork.init()`).
-- **Extended:** `util/SpellCastFeedback`, `spells/AbstractSrpSummonSpell`, `events/ParasiteShroudEventHandler`, `events/ImmuneBondHandler`, `entities/EntityPurifyingWave`, `spells/SpellYelloweyeGland`, `spells/SpellParasiteShroud` (duration constant, armour synergy, tier from potency at cast time), `spells/SpellSummonThrall`.
-- **JSON:** `assets/insanetweaks/spells/yelloweye_gland.json` (chargeup/cost/cooldown).
+- **New:** `network/PacketSrpParticle.java` (+ registration in `InsaneTweaksNetwork.init()`, discriminator 4 — 0/1/3 are taken, 2 is historically skipped), `client/YelloweyeChargeHandler.java` (+ client-side registration in `InsaneTweaksMod.init`).
+- **Extended:** `util/SpellCastFeedback` (SRP overloads), `events/ParasiteShroudEventHandler` (tiers, break-on-attack, expiry/break particles), `spells/SpellParasiteShroud` (duration constant 240, armour synergy, tier from potency), `events/ImmuneBondHandler` (particle swap), `entities/EntityPurifyingWave` (`affectBeckons` → `affectParasites` + COTH cleanse), `spells/SpellYelloweyeGland` (cycle removal, always explosive), `entities/ThrallSlotManager` (spawn burst).
+- **JSON:** `assets/insanetweaks/spells/yelloweye_gland.json` (chargeup 12→30, cost 120→140, cooldown 70→100).
+- **Not touched after all:** `spells/AbstractSrpSummonSpell`, `spells/SpellSummonThrall` (spawn happens in `ThrallSlotManager`), minion entity classes.
 
 ## Constraints & conventions
 
@@ -72,8 +76,8 @@ Sounds: existing vanilla/`SRPSounds` only. No new textures — SRP particle spri
 
 ## Risks
 
-1. **Parasite tier classification** for Shroud tiers — verify in decompiled SRP 1.10.7 whether primitive/adapted/evolved is expressed as a class hierarchy; fallback: config list of class names.
-2. **Client-only `ParticleSpawner`** — packet handler must follow SRP's own sided pattern or servers crash.
+1. **Parasite tier classification** — RESOLVED in planning: `instanceof EntityPPrimitive` (all primitive-tier parasites share that base class).
+2. **Client-only `ParticleSpawner`** — packet handler must follow the sided pattern already used by `PacketOpenSentinelLoot` (`@SideOnly(Side.CLIENT)` static inner `Handler`); `SRPEnumParticle` itself is server-safe (imports only Guava/javax).
 3. **Yelloweye rebalance** changes game feel — judged in manual runClient; numbers (chargeup 30, cost, cooldown) are starting points, tunable in JSON.
 4. Shroud tier threshold (potency ≥ 1.3) is a starting point, tune during manual test.
 
