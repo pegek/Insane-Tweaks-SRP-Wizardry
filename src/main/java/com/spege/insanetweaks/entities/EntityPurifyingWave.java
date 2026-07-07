@@ -4,17 +4,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle;
+import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
+import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.spege.insanetweaks.baubles.ItemZhonyasHourglassArtefact;
+import com.spege.insanetweaks.util.SpellCastFeedback;
 import com.spege.insanetweaks.util.SrpPurificationHelper;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EntityAreaEffectCloud;
 import net.minecraft.init.MobEffects;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -27,11 +33,15 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
     private static final int BECKON_GLOW_DURATION = 120;
     private static final int BECKON_DEBUFF_DURATION = 100;
     private static final float BECKON_DAMAGE = 6.0F;
+    private static final int SEAR_DEBUFF_DURATION = 80;
+    private static final float SEAR_DAMAGE = 2.0F;
+    private static final int SEAR_RGB = 0xFFC83C;
+    private static final int CLEANSE_RGB = 0xFFF0BE;
 
     private double maxWaveRadius = 8.0D;
     private int verticalRange = 4;
     private double processedRadius = 0.0D;
-    private final Set<Integer> affectedBeckons = new HashSet<Integer>();
+    private final Set<Integer> affectedEntities = new HashSet<Integer>();
 
     public EntityPurifyingWave(World world) {
         super(world);
@@ -72,7 +82,7 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
         }
 
         this.purifyRing(this.processedRadius, currentRadius);
-        this.affectBeckons(currentRadius);
+        this.affectParasites(currentRadius);
         ItemZhonyasHourglassArtefact.tryRestoreInRange(
                 this.world, this.posX, this.posY, this.posZ, currentRadius, this.getOwner());
         this.processedRadius = currentRadius;
@@ -114,14 +124,14 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
         }
     }
 
-    private void affectBeckons(double currentRadius) {
+    private void affectParasites(double currentRadius) {
         AxisAlignedBB area = new AxisAlignedBB(this.posX, this.posY, this.posZ, this.posX + 1.0D, this.posY + 1.0D,
                 this.posZ + 1.0D).grow(currentRadius, this.verticalRange + 2, currentRadius);
         List<EntityLivingBase> entities = this.world.getEntitiesWithinAABB(EntityLivingBase.class, area);
 
         for (EntityLivingBase entity : entities) {
-            if (entity == null || !entity.isEntityAlive() || !SrpPurificationHelper.isBeckon(entity)
-                    || !this.affectedBeckons.add(Integer.valueOf(entity.getEntityId()))) {
+            if (entity == null || !entity.isEntityAlive()
+                    || !this.affectedEntities.add(Integer.valueOf(entity.getEntityId()))) {
                 continue;
             }
 
@@ -131,19 +141,63 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
                 continue;
             }
 
-            EntityLivingBase owner = this.getOwner();
-            entity.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, owner == null ? this : owner),
-                    BECKON_DAMAGE);
-            entity.addPotionEffect(new PotionEffect(MobEffects.GLOWING, BECKON_GLOW_DURATION, 0, false, true));
-            entity.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, BECKON_DEBUFF_DURATION, 1, false, true));
-            entity.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, BECKON_DEBUFF_DURATION, 1, false, true));
-
-            if (this.world instanceof WorldServer) {
-                ((WorldServer) this.world).spawnParticle(EnumParticleTypes.CRIT_MAGIC, entity.posX,
-                        entity.posY + entity.height * 0.5D, entity.posZ, 12, entity.width * 0.35D,
-                        entity.height * 0.25D, entity.width * 0.35D, 0.05D);
+            if (SrpPurificationHelper.isBeckon(entity)) {
+                this.searBeckon(entity);
+            } else if (entity instanceof EntityParasiteBase) {
+                this.searParasite(entity);
+            } else {
+                this.cleanseCothInfection(entity);
             }
         }
+    }
+
+    private void searBeckon(EntityLivingBase entity) {
+        EntityLivingBase owner = this.getOwner();
+        entity.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, owner == null ? this : owner),
+                BECKON_DAMAGE);
+        entity.addPotionEffect(new PotionEffect(MobEffects.GLOWING, BECKON_GLOW_DURATION, 0, false, true));
+        entity.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, BECKON_DEBUFF_DURATION, 1, false, true));
+        entity.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, BECKON_DEBUFF_DURATION, 1, false, true));
+
+        if (this.world instanceof WorldServer) {
+            ((WorldServer) this.world).spawnParticle(EnumParticleTypes.CRIT_MAGIC, entity.posX,
+                    entity.posY + entity.height * 0.5D, entity.posZ, 12, entity.width * 0.35D,
+                    entity.height * 0.25D, entity.width * 0.35D, 0.05D);
+        }
+    }
+
+    private void searParasite(EntityLivingBase parasite) {
+        EntityLivingBase owner = this.getOwner();
+        parasite.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, owner == null ? this : owner),
+                SEAR_DAMAGE);
+        parasite.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, SEAR_DEBUFF_DURATION, 0, false, true));
+        parasite.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, SEAR_DEBUFF_DURATION, 0, false, true));
+        SpellCastFeedback.srpBurstAt(this.world, parasite, 0.5D, SRPEnumParticle.FLASH, SEAR_RGB, 2, 0.3F, 0.3F,
+                0.01F);
+    }
+
+    private void cleanseCothInfection(EntityLivingBase entity) {
+        boolean hadPotion = entity.isPotionActive(SRPPotions.COTH_E);
+        NBTTagCompound tags = entity.getEntityData();
+        // srpcothimmunity > 0 = tracked COTH victim (SRP 1.10.7). Value 0 means
+        // immune (e.g. an Immune Bond target) — those are deliberately skipped.
+        boolean hadTag = tags.getInteger("srpcothimmunity") > 0;
+        if (!hadPotion && !hadTag) {
+            return;
+        }
+
+        if (hadPotion) {
+            entity.removePotionEffect(SRPPotions.COTH_E);
+        }
+        if (hadTag) {
+            // Remove rather than zero: cured, but re-infectable later.
+            tags.removeTag("srpcothimmunity");
+        }
+
+        SpellCastFeedback.srpBurstAt(this.world, entity, 0.5D, SRPEnumParticle.DOT, CLEANSE_RGB, 8, 0.4F, 0.5F,
+                0.02F);
+        this.world.playSound(null, entity.posX, entity.posY, entity.posZ,
+                SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.NEUTRAL, 0.6F, 0.8F);
     }
 
     private void spawnPurifyBurst(BlockPos pos) {
