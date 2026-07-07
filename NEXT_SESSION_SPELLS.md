@@ -20,6 +20,11 @@ Build zielony po każdym tasku. Wersja EBW 4.3.19 / SRP 1.10.7 bez zmian.
 
 ## Thrall fixes & mob-ignore (plan `2026-07-07-thrall-fixes.md`) — deferred manual checklist
 
+**Status: wszystkie taski 1–7 zrobione i zacommitowane (2026-07-07).** Finalny przegląd całości wykrył i naprawił
+(commit d7dc71b): mob-ignore był bramkowany `enableSpells` mimo bezwarunkowej rejestracji encji thralla (krytyczne);
+`.gitignore` `config/` połykał `src/**/config/` (zakotwiczone do `/config/`); status "Shift done" nadpisywał
+statusy Collecting (kosmetyczne).
+
 Build green after every task; in-game testing deferred by the user (2026-07-07). Verify in `runClient`
 (and one `runServer` boot for sanity):
 
@@ -36,3 +41,4 @@ Build green after every task; in-game testing deferred by the user (2026-07-07).
 - [ ] Porter FROM_HOME: set `porterDirection = FROM_HOME`; thrall tops up the owner's partial main-inventory stacks from home chests, never adding new types or touching hotbar/armour/offhand; leftovers returned to chests.
 - [ ] GUI: two columns (modes left, actions right); hovering each button shows a wrapped one-line tooltip.
 - [ ] `runServer` boots without a client-classloading crash (ThrallTargetProtectionHandler + SRPConfig append are server-safe).
+- [ ] Mob-ignore works with `Enable Spells = false` (protection is unconditional since d7dc71b — thrall spawned earlier must still be ignored).
