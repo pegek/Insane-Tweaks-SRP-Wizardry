@@ -1,7 +1,6 @@
 package com.spege.insanetweaks.config;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -22,6 +21,8 @@ import net.minecraftforge.fml.common.Loader;
 public final class OldConfigBackup {
 
     private static final Logger LOGGER = LogManager.getLogger(InsaneTweaksMod.MODID);
+    // WARNING: this literal must never appear in any @Config.Comment/@Config.Name string of the
+    // NEW schema, or every launch would re-detect the "old" format and re-reset the config.
     private static final String OLD_STRUCTURE_MARKER = "\"[ 1 ]";
     private static final String BACKUP_NAME = "insanetweaks.cfg.pre-rework";
 
@@ -52,12 +53,16 @@ public final class OldConfigBackup {
             }
 
             File backup = new File(configDir, BACKUP_NAME);
-            Files.copy(cfg.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            Files.delete(cfg.toPath());
+            if (backup.isFile()) {
+                LOGGER.warn("[InsaneTweaks] Existing backup {} will be overwritten.", BACKUP_NAME);
+            }
+            // Atomic same-volume rename: no partial-failure window where a copy succeeds but the
+            // delete fails and the game then loads a hybrid old+new config forever.
+            Files.move(cfg.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
             migrated = true;
             LOGGER.info("[InsaneTweaks] Config structure changed in {}; old settings were backed up to {} - re-apply any customizations.",
                     InsaneTweaksMod.VERSION, BACKUP_NAME);
-        } catch (IOException e) {
+        } catch (Exception e) {
             // Never fatal: worst case the old sections linger in the file as ignored junk.
             LOGGER.warn("[InsaneTweaks] Could not back up old-format config: {}", e.toString());
         }
