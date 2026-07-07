@@ -553,11 +553,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (sent)
                 return;
-            sent = true;
 
             // Respect the player's preference to suppress chat noise on startup.
+            // Checked BEFORE consuming the one-shot flag: a suppressing first joiner
+            // must not swallow the message for everyone else this session.
             if (com.spege.insanetweaks.config.ModConfig.client.suppressStartupWarningsInChat)
                 return;
+            sent = true;
 
             if (!recs.isEmpty()) {
                 event.player.sendMessage(new TextComponentString(
