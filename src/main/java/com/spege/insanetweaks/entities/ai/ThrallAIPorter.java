@@ -208,6 +208,8 @@ public class ThrallAIPorter extends EntityAIBase {
         ThrallInventory inv = thrall.getThrallInventory();
 
         // Clear anything we might still be carrying so the pulled items don't mix with stale loot.
+        // If a prior aborted top-up left stock matching a still-open need, this deposits it and the
+        // pull below re-draws it from the same chests — accepted redundancy (cheap, no teleport).
         if (inv.containsItems()) {
             ThrallChestHelper.smartDeposit(thrall, home, range, MANIFEST_VRANGE, false);
         }
@@ -416,7 +418,7 @@ public class ThrallAIPorter extends EntityAIBase {
     private int pullFromOwner(EntityPlayer owner, List<ItemStack> manifest, ChestBudgetPool pool) {
         ThrallInventory inv = thrall.getThrallInventory();
         int transfers = 0;
-        // Hotbar exclusion (spec 4.1): slots 0-8 are the hotbar, 36-40 armour, 40 offhand — none are
+        // Hotbar exclusion (spec 4.1): slots 0-8 are the hotbar, 36-39 armour, 40 offhand — none are
         // ever read. PLAYER_MAIN_INV_START is pinned to 9 so the porter only manages the main inventory.
         for (int i = PLAYER_MAIN_INV_START; i <= PLAYER_MAIN_INV_END && transfers < MAX_TRANSFERS_PER_CYCLE; i++) {
             ItemStack s = owner.inventory.mainInventory.get(i);
