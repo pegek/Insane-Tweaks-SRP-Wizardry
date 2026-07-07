@@ -76,7 +76,7 @@ public class ImmuneBondHandler {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
         if (player.world.isRemote) return;
-        // Run every 10 ticks for particles, every tick for COTH_E strip is too expensive.
+        // Particles pulse every 40 ticks (2 s); every tick for COTH_E strip is too expensive.
         // But we MUST strip COTH_E quickly — do it every 5 ticks for responsiveness.
         boolean particleTick  = player.ticksExisted % 40 == 0;
         boolean protectTick   = player.ticksExisted % 5  == 0;
@@ -115,7 +115,7 @@ public class ImmuneBondHandler {
             target.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 400, 0, false, false));
         }
 
-        // Spawn particle ring every 10 ticks
+        // Violet SRP DOT pulse every 40 ticks (2 s)
         if (particleTick) {
             spawnBondParticles(player.world, target);
         }
