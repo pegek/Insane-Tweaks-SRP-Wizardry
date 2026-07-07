@@ -37,13 +37,22 @@ import java.util.Set;
  * Lifecycle:
  *  1. WAITING_FOR_ITEMS — player tosses 1-N (default 4) block-items at the thrall.
  *     Lock-in trigger: max-targets reached OR pickup-window timeout since the FIRST accepted item.
- *  2. SEARCHING — every collectingTickInterval ticks: random teleport in a ring around home,
- *     adaptive Y per current target hint, sphere-scan for matches.
+ *     Lock-in also re-arms the thrall's work timer (see {@code rearmWorkTimer}).
+ *  2. SEARCHING — local scan around the current position first (C-2a, no teleport), then every
+ *     collectingTickInterval ticks: random teleport in a ring around home, adaptive Y per current
+ *     target hint, sphere-scan for matches.
  *  3. HARVESTING — drain a queue of scan hits; each block: TP adjacent, mine for hardness*MULT ticks,
  *     drop default loot, then vein-BFS into same-type neighbors.
- *  4. RETURNING — TP home, smartDeposit into nearby chests, switch to STAY.
+ *  4. RETURNING — TP home, smartDeposit into nearby chests, then rest.
+ *  5. RESTING — short pause at home. On rest end: loop back to SEARCHING with the SAME target list
+ *     (session loop, C-3), UNLESS the work timer expired, the target list is empty, or the
+ *     just-finished session harvested nothing (exhausted area) — those drop the AI back to
+ *     WAITING_FOR_ITEMS so the player can stage a fresh target set without leaving COLLECTING.
  *
- * Termination: 2h budget OR inventory full OR N consecutive empty scan cycles.
+ * Per-session triggers into RETURNING: session-minutes budget OR inventory full OR N consecutive
+ * empty scan cycles. DONE is a near-dead terminal: reached only when NO home is set (nowhere to
+ * deposit or loop), or via NBT load — where the readFromNBT guard immediately rewrites a
+ * COLLECTING+DONE restore to WAITING_FOR_ITEMS.
  *
  * Entire state persists in NBT under "ThrallCollecting" so a saved game restores cleanly.
  * Reading state with the player having interrupted the mode (FOLLOW/STAY) is supported via
@@ -273,6 +282,13 @@ public class ThrallAICollecting extends EntityAIBase {
         thrall.setStatusText("Searching...");
         if (debugLogs()) LOG.info("[Thrall#{}] Collecting: locked in {} targets, beginning search",
                 thrall.getEntityId(), targets.size());
+
+        // Re-arm the work timer for this new session. After a timer expiry the mode stays
+        // COLLECTING (setMode is never called on the WAITING re-entry path), so workStartTick
+        // would otherwise remain 0 and the newly staged session would run unbounded.
+        if (thrall.getMode() == ThrallMode.COLLECTING) {
+            thrall.rearmWorkTimer();
+        }
 
         // C-2a: sweep the thrall's CURRENT position first (no teleport), so targets right next to
         // where the player deployed it are collected before any ring-teleport search begins.
@@ -542,7 +558,6 @@ public class ThrallAICollecting extends EntityAIBase {
 
             // Vein-BFS: enqueue 26-neighbours of same sig within frontier radius and not yet visited.
             if (miningSig != null && veinRoot != null
-                    && totalItemsHarvestedThisSession % 1 == 0 /* always */
                     && harvestVisited.size() < ModConfig.thrall.collectingVeinMaxBlocks) {
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
@@ -597,9 +612,10 @@ public class ThrallAICollecting extends EntityAIBase {
     }
 
     /**
-     * Short pause at home between looped sessions. On completion: if the work-timer expired or the
-     * target list is empty, drop to WAITING_FOR_ITEMS ("Waiting for items"); otherwise start a fresh
-     * SEARCHING pass with the same target list (C-3).
+     * Short pause at home between looped sessions. On completion: if the work-timer expired, the
+     * target list is empty, or the just-finished session harvested NOTHING (exhausted area), drop to
+     * WAITING_FOR_ITEMS ("Waiting for items"); otherwise start a fresh SEARCHING pass with the same
+     * target list (C-3).
      */
     private void tickResting() {
         if (restTicksRemaining > 0) {
@@ -607,7 +623,13 @@ public class ThrallAICollecting extends EntityAIBase {
             return;
         }
 
-        if (workTimerExpired || targets.isEmpty()) {
+        // Intrinsic loop terminator: capture the just-finished session's yield BEFORE the loop
+        // branch resets it. A zero-yield session means the area is exhausted — idle in WAITING
+        // instead of ring-teleporting forever. This must not rely on the work timer alone, because
+        // thrallWorkDurationHours = 0 disables the timer entirely (onUpdate gates on workHours > 0).
+        int harvestedLastSession = totalItemsHarvestedThisSession;
+
+        if (workTimerExpired || targets.isEmpty() || harvestedLastSession <= 0) {
             workTimerExpired = false;
             enterWaitingForItems();
             return;

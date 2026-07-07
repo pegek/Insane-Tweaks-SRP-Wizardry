@@ -789,6 +789,19 @@ public class EntityThrallMinion extends EntityCreature {
         return collectingAI;
     }
 
+    /**
+     * Re-arms the work timer if it is not currently running ({@code workStartTick == 0}).
+     * Called by ThrallAICollecting when a new session locks in from WAITING_FOR_ITEMS: after a
+     * work-timer expiry the mode stays COLLECTING (setMode is never called on that path), so
+     * without this the re-staged session would run with no timer bound.
+     */
+    public void rearmWorkTimer() {
+        if (workStartTick == 0) {
+            workStartTick = world.getTotalWorldTime();
+            if (debugLogs()) LOG.info("[Thrall#{}] Work timer re-armed at tick {}", getEntityId(), workStartTick);
+        }
+    }
+
 
 
     // -------------------------------------------------------------------------
