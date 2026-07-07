@@ -36,6 +36,8 @@ public class ThrallTargetProtectionHandler {
 
         aggressor.setAttackTarget(null);
         aggressor.setRevengeTarget(null);
+        // Deliberate: stops pursuit of the thrall instantly. A mob with other prey re-plans
+        // its path next AI tick, so the worst case is a brief hitch, not lost targeting.
         aggressor.getNavigator().clearPath();
     }
 }
