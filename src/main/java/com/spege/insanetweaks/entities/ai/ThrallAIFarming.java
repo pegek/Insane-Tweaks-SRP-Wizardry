@@ -581,10 +581,11 @@ public class ThrallAIFarming extends EntityAIBase {
         // oscillating on the reach boundary never accumulated navTimer and never teleported in.
         navTimer++;
 
-        // Center-based distance, matching the WORKING drift check below. The old corner-based
-        // getDistanceSq(BlockPos) measured to the block's integer corner, letting a −X/−Z diagonal
-        // approach satisfy arrival while the center-based WORKING check failed the same tick —
-        // a permanent NAVIGATING↔WORKING freeze. Both checks now use the block center.
+        // Distance to the block's horizontal centre (X/Z +0.5; Y unadjusted), matching the WORKING
+        // drift check below. The old corner-based getDistanceSq(BlockPos) measured to the block's
+        // integer corner, letting a −X/−Z diagonal approach satisfy arrival while the centre-based
+        // WORKING check failed the same tick — a permanent NAVIGATING↔WORKING freeze. Both checks
+        // now use the block's horizontal centre.
         double distSq = thrall.getDistanceSq(
                 targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5);
         if (distSq <= CLOSE_ENOUGH_SQ) {
@@ -609,8 +610,9 @@ public class ThrallAIFarming extends EntityAIBase {
             teleportToTarget(targetPos);
             navTimer = 0;
             // Re-check distance; if we landed inside reach, transition to WORKING immediately.
-            // Center-based to match the arrival + drift checks (avoids re-triggering the freeze
-            // right after a teleport that lands on a diagonal).
+            // Measured to the block's horizontal centre (X/Z +0.5; Y unadjusted) to match the
+            // arrival + drift checks (avoids re-triggering the freeze right after a teleport
+            // that lands on a diagonal).
             if (thrall.getDistanceSq(
                     targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5) <= CLOSE_ENOUGH_SQ) {
                 startWorking();
