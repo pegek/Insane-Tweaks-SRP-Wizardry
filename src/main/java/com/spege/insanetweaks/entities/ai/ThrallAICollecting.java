@@ -61,10 +61,11 @@ public class ThrallAICollecting extends EntityAIBase {
     private static final int MAX_SCAN_HITS = 64;
     private static final int VEIN_BFS_FRONTIER_RADIUS = 30;
     private static final int SAFE_SPOT_VERTICAL_PROBE = 6;
+    private static final int REST_AT_HOME_TICKS = 100;
 
     private final EntityThrallMinion thrall;
 
-    public enum Phase { WAITING_FOR_ITEMS, SEARCHING, HARVESTING, RETURNING, DONE }
+    public enum Phase { WAITING_FOR_ITEMS, SEARCHING, HARVESTING, RETURNING, RESTING, DONE }
     private Phase phase = Phase.DONE;
 
     private final List<Sig> targets = new ArrayList<>();
@@ -76,6 +77,10 @@ public class ThrallAICollecting extends EntityAIBase {
     private int consecutiveEmptyCycles;
     private int totalItemsHarvestedThisSession;
     private int targetCycleIndex;
+    /** When > 0, the AI is resting at home between looped sessions; counts down each tick. */
+    private int restTicksRemaining;
+    /** Set by EntityThrallMinion when thrallWorkDurationHours elapses — forces WAITING on next rest end. */
+    private boolean workTimerExpired;
 
     private final Deque<BlockPos> harvestQueue = new ArrayDeque<>();
     private final Set<BlockPos> harvestVisited = new HashSet<>();
@@ -121,7 +126,8 @@ public class ThrallAICollecting extends EntityAIBase {
         long now = thrall.world.getTotalWorldTime();
 
         // Termination triggers (checked once per tick — cheap)
-        if (phase != Phase.RETURNING && phase != Phase.DONE && phase != Phase.WAITING_FOR_ITEMS) {
+        if (phase != Phase.RETURNING && phase != Phase.DONE && phase != Phase.WAITING_FOR_ITEMS
+                && phase != Phase.RESTING) {
             long durationTicks = (long) ModConfig.thrall.collectingDurationMinutes * 60L * 20L;
             if (now - sessionStartTick >= durationTicks) {
                 if (debugLogs()) LOG.info("[Thrall#{}] Collecting: session timeout", thrall.getEntityId());
@@ -152,6 +158,9 @@ public class ThrallAICollecting extends EntityAIBase {
                 break;
             case RETURNING:
                 tickReturning();
+                break;
+            case RESTING:
+                tickResting();
                 break;
             case DONE:
                 break;
@@ -264,6 +273,32 @@ public class ThrallAICollecting extends EntityAIBase {
         thrall.setStatusText("Searching...");
         if (debugLogs()) LOG.info("[Thrall#{}] Collecting: locked in {} targets, beginning search",
                 thrall.getEntityId(), targets.size());
+
+        // C-2a: sweep the thrall's CURRENT position first (no teleport), so targets right next to
+        // where the player deployed it are collected before any ring-teleport search begins.
+        tryLocalScan();
+    }
+
+    /**
+     * Scans around the thrall's current position (no teleport). If matches are found, loads the
+     * harvest queue and switches to HARVESTING immediately. No-op if nothing matches — the normal
+     * ring-teleport SEARCHING cycle then takes over.
+     */
+    private void tryLocalScan() {
+        BlockPos here = new BlockPos(thrall);
+        List<BlockPos> hits = scanForTargets(here);
+        if (hits.isEmpty()) return;
+
+        consecutiveEmptyCycles = 0;
+        harvestQueue.clear();
+        harvestVisited.clear();
+        for (BlockPos p : hits) {
+            harvestQueue.add(p);
+            harvestVisited.add(p);
+        }
+        veinRoot = hits.get(0);
+        phase = Phase.HARVESTING;
+        thrall.setStatusText("Harvesting (" + hits.size() + ")");
     }
 
     // ------------------------------------------------------------------
@@ -540,20 +575,96 @@ public class ThrallAICollecting extends EntityAIBase {
         thrall.setStatusText("Returning...");
     }
 
+    /**
+     * Teleport home, deposit, then rest briefly before deciding whether to loop (C-3).
+     * With no home set there is nowhere to deposit or loop, so we go terminal via finishDone().
+     */
     private void tickReturning() {
         BlockPos home = thrall.getHomePoint();
         if (home == null) {
-            // No home — just go DONE in place.
             finishDone();
             return;
         }
         thrall.setPositionAndUpdate(home.getX() + 0.5, home.getY(), home.getZ() + 0.5);
         thrall.playTeleportSound();
+        thrall.getNavigator().clearPath();
         ThrallChestHelper.smartDeposit(thrall, home,
                 ModConfig.thrall.collectingChestScanRange, 4, false);
-        finishDone();
+
+        phase = Phase.RESTING;
+        restTicksRemaining = REST_AT_HOME_TICKS;
+        thrall.setStatusText("Resting...");
     }
 
+    /**
+     * Short pause at home between looped sessions. On completion: if the work-timer expired or the
+     * target list is empty, drop to WAITING_FOR_ITEMS ("Waiting for items"); otherwise start a fresh
+     * SEARCHING pass with the same target list (C-3).
+     */
+    private void tickResting() {
+        if (restTicksRemaining > 0) {
+            restTicksRemaining--;
+            return;
+        }
+
+        if (workTimerExpired || targets.isEmpty()) {
+            workTimerExpired = false;
+            enterWaitingForItems();
+            return;
+        }
+
+        // Loop: restart a session with the same targets, resetting per-session counters
+        // but KEEPING the locked target list.
+        harvestQueue.clear();
+        harvestVisited.clear();
+        miningTarget = null;
+        miningSig = null;
+        veinRoot = null;
+        consecutiveEmptyCycles = 0;
+        targetCycleIndex = 0;
+        totalItemsHarvestedThisSession = 0;
+        sessionStartTick = thrall.world.getTotalWorldTime();
+        phase = Phase.SEARCHING;
+        thrall.setStatusText("Searching...");
+        tryLocalScan();
+    }
+
+    /**
+     * Drops the AI into WAITING_FOR_ITEMS at home without leaving COLLECTING mode. Clears the target
+     * list and session state so the player can stage a fresh set of targets.
+     */
+    private void enterWaitingForItems() {
+        phase = Phase.WAITING_FOR_ITEMS;
+        targets.clear();
+        harvestQueue.clear();
+        harvestVisited.clear();
+        miningTarget = null;
+        miningSig = null;
+        veinRoot = null;
+        pausedAtTick = 0;
+        firstItemTick = 0;
+        sessionStartTick = 0;
+        restTicksRemaining = 0;
+        consecutiveEmptyCycles = 0;
+        targetCycleIndex = 0;
+        totalItemsHarvestedThisSession = 0;
+        thrall.setStatusText("Waiting for items");
+    }
+
+    /** Called by EntityThrallMinion when thrallWorkDurationHours elapses while in COLLECTING mode.
+     *  Routes the AI home to deposit, then (via the RESTING branch) into WAITING_FOR_ITEMS — never STAY. */
+    public void onWorkTimerExpired() {
+        workTimerExpired = true;
+        // If already resting/returning, let the existing flow pick up workTimerExpired on rest-end.
+        if (phase == Phase.SEARCHING || phase == Phase.HARVESTING) {
+            beginReturn();
+        } else if (phase == Phase.WAITING_FOR_ITEMS || phase == Phase.DONE) {
+            // Nothing in flight — just clear the flag; we're already idle/waiting.
+            workTimerExpired = false;
+        }
+    }
+
+    /** Terminal path used only when NO home is set (nowhere to deposit or loop). */
     private void finishDone() {
         phase = Phase.DONE;
         int harvested = totalItemsHarvestedThisSession;
@@ -566,6 +677,7 @@ public class ThrallAICollecting extends EntityAIBase {
         pausedAtTick = 0;
         firstItemTick = 0;
         sessionStartTick = 0;
+        restTicksRemaining = 0;
         consecutiveEmptyCycles = 0;
         targetCycleIndex = 0;
         totalItemsHarvestedThisSession = 0;
@@ -581,6 +693,8 @@ public class ThrallAICollecting extends EntityAIBase {
         pausedAtTick = 0;
         firstItemTick = 0;
         sessionStartTick = 0;
+        restTicksRemaining = 0;
+        workTimerExpired = false;
         consecutiveEmptyCycles = 0;
         targetCycleIndex = 0;
         totalItemsHarvestedThisSession = 0;
@@ -617,6 +731,8 @@ public class ThrallAICollecting extends EntityAIBase {
         tag.setInteger("EmptyCycles", consecutiveEmptyCycles);
         tag.setInteger("Harvested", totalItemsHarvestedThisSession);
         tag.setInteger("TargetCycle", targetCycleIndex);
+        tag.setInteger("RestTicks", restTicksRemaining);
+        tag.setBoolean("WorkTimerExpired", workTimerExpired);
 
         NBTTagList list = new NBTTagList();
         for (Sig sig : targets) {
@@ -641,6 +757,8 @@ public class ThrallAICollecting extends EntityAIBase {
         consecutiveEmptyCycles = tag.getInteger("EmptyCycles");
         totalItemsHarvestedThisSession = tag.getInteger("Harvested");
         targetCycleIndex = tag.getInteger("TargetCycle");
+        restTicksRemaining = tag.getInteger("RestTicks");
+        workTimerExpired = tag.getBoolean("WorkTimerExpired");
 
         targets.clear();
         if (tag.hasKey("Targets")) {
@@ -659,6 +777,14 @@ public class ThrallAICollecting extends EntityAIBase {
         veinRoot = null;
         harvestQueue.clear();
         harvestVisited.clear();
+
+        // C-4: a save that landed mid-COLLECTING with phase DONE would otherwise sit idle forever
+        // (DONE does nothing in updateTask and STAY was already applied). Force WAITING so the player
+        // can immediately re-stage targets after load.
+        if (thrall.getMode() == ThrallMode.COLLECTING && phase == Phase.DONE) {
+            phase = Phase.WAITING_FOR_ITEMS;
+            thrall.setStatusText("Waiting for items");
+        }
     }
 
     // ------------------------------------------------------------------

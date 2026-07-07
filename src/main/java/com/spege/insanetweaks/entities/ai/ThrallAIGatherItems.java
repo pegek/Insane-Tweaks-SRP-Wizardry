@@ -35,6 +35,10 @@ public class ThrallAIGatherItems extends EntityAIBase {
     public boolean shouldExecute() {
         if (thrall.getMode() == ThrallMode.STAY) return false;
         if (thrall.getThrallInventory().isFull()) return false;
+        // X-2: while the collecting AI is waiting for the player to toss target items, do not let
+        // this task walk over and swallow them — the player is staging them for target selection.
+        com.spege.insanetweaks.entities.ai.ThrallAICollecting collecting = thrall.getCollectingAI();
+        if (collecting != null && collecting.isWaitingForItems()) return false;
 
         this.targetItem = findNearestItem();
         return this.targetItem != null;

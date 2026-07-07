@@ -280,10 +280,11 @@ public class EntityThrallMinion extends EntityCreature {
             SummonInfectionSafetyHelper.onSummonServerTick(this);
 
             // Auto-return home when inventory is full.
-            // PORTER is excluded — it manages its own deposits via smartDeposit at cycle start/end,
-            // and a mid-cycle teleport here would orphan the porter's manifest run.
+            // PORTER and COLLECTING are excluded — both manage their own deposits via smartDeposit
+            // (PORTER at cycle start/end, COLLECTING in its RETURNING phase). A mid-cycle teleport
+            // here would orphan the porter's manifest run or the collecting AI's harvest state.
             if (thrallInventory.isFull() && !returningHome && getHomePoint() != null
-                    && getMode() != ThrallMode.PORTER) {
+                    && getMode() != ThrallMode.PORTER && getMode() != ThrallMode.COLLECTING) {
                 if (debugLogs()) LOG.info("[Thrall#{}] Inventory FULL — starting return home to {}", getEntityId(), getHomePoint());
                 startReturnHome();
             }
@@ -315,18 +316,25 @@ public class EntityThrallMinion extends EntityCreature {
                 }
             }
 
-            // Work timer — duration from config (0 = disabled)
+            // Work timer — duration from config (0 = disabled).
+            // COLLECTING is included so thrallWorkDurationHours bounds the session-loop (C-3);
+            // when it expires there, the collecting AI's own onWorkTimerExpired() routes to
+            // WAITING_FOR_ITEMS rather than STAY, so the auto-return branch below is skipped for it.
             ThrallMode currentMode = getMode();
             int workHours = ModConfig.tweaks.thrallWorkDurationHours;
             long workDurationTicks = workHours * 72000L; // 1 hour = 20 ticks/s * 3600 s
             if (workHours > 0
                     && (currentMode == ThrallMode.WOODCUTTING || currentMode == ThrallMode.MINESHAFT
-                        || currentMode == ThrallMode.FARMING || currentMode == ThrallMode.PORTER)
+                        || currentMode == ThrallMode.FARMING || currentMode == ThrallMode.PORTER
+                        || currentMode == ThrallMode.COLLECTING)
                     && workStartTick > 0
                     && world.getTotalWorldTime() - workStartTick >= workDurationTicks) {
                 workStartTick = 0;
                 setStatusText("Shift done");
-                if (getHomePoint() != null) {
+                if (currentMode == ThrallMode.COLLECTING && collectingAI != null) {
+                    // Collecting has its own end-of-shift routine: deposit + drop to WAITING_FOR_ITEMS.
+                    collectingAI.onWorkTimerExpired();
+                } else if (getHomePoint() != null) {
                     startReturnHome();
                 } else {
                     setMode(ThrallMode.FOLLOW);
@@ -627,9 +635,11 @@ public class EntityThrallMinion extends EntityCreature {
         ThrallMode prev = getMode();
         this.dataManager.set(MODE_ORDINAL, mode.ordinal());
         if (debugLogs()) LOG.info("[Thrall#{}] setMode {} -> {}", getEntityId(), prev, mode);
-        // Start/reset work timer when entering a work mode
+        // Start/reset work timer when entering a work mode (COLLECTING included so its
+        // session-loop is bounded by thrallWorkDurationHours — see onUpdate work-timer block).
         if (mode == ThrallMode.WOODCUTTING || mode == ThrallMode.MINESHAFT
-                || mode == ThrallMode.FARMING || mode == ThrallMode.PORTER) {
+                || mode == ThrallMode.FARMING || mode == ThrallMode.PORTER
+                || mode == ThrallMode.COLLECTING) {
             if (workStartTick == 0) {
                 workStartTick = world.getTotalWorldTime();
                 if (debugLogs()) LOG.info("[Thrall#{}] Work timer started at tick {}", getEntityId(), workStartTick);
@@ -772,7 +782,12 @@ public class EntityThrallMinion extends EntityCreature {
         if (collectingAI != null) collectingAI.startOrResume();
     }
 
-
+    /** Collecting AI task, or null before initEntityAI has run. Used by ThrallAIGatherItems to
+     *  avoid swallowing items the player is staging while COLLECTING waits for target selection. */
+    @Nullable
+    public ThrallAICollecting getCollectingAI() {
+        return collectingAI;
+    }
 
 
 
