@@ -23,5 +23,6 @@ public final class InsaneTweaksNetwork {
         CHANNEL.registerMessage(PacketSentinelCommand.Handler.class, PacketSentinelCommand.class, 0, Side.SERVER);
         CHANNEL.registerMessage(PacketThrallCommand.Handler.class, PacketThrallCommand.class, 1, Side.SERVER);
         CHANNEL.registerMessage(PacketOpenSentinelLoot.Handler.class, PacketOpenSentinelLoot.class, 3, Side.CLIENT);
+        CHANNEL.registerMessage(PacketSrpParticle.Handler.class, PacketSrpParticle.class, 4, Side.CLIENT);
     }
 }
