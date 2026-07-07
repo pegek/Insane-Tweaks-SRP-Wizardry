@@ -261,8 +261,14 @@ public final class ThrallSlotManager {
                 player.rotationYaw, 0.0F);
         world.spawnEntity(thrall);
 
-        world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE,
-                thrall.posX, thrall.posY + 1.0, thrall.posZ, 0.0, 0.0, 0.0);
+        com.spege.insanetweaks.util.SpellCastFeedback.srpBurst(world,
+                thrall.posX, thrall.posY + 1.0D, thrall.posZ,
+                com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle.FLASH,
+                0x781414, 2, 0.4F, 0.5F, 0.01F);
+        com.spege.insanetweaks.util.SpellCastFeedback.srpBurst(world,
+                thrall.posX, thrall.posY + 0.2D, thrall.posZ,
+                com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle.GCLOUD,
+                0x503232, 4, 0.4F, 0.2F, 0.01F);
         return thrall;
     }
 

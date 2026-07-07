@@ -12,16 +12,19 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle;
+import com.spege.insanetweaks.util.SpellCastFeedback;
 
 @SuppressWarnings("null")
 public class ImmuneBondHandler {
 
     private static final Map<UUID, Integer> activeBonds = new HashMap<>();
+    private static final int BOND_RGB = 0x9646DC;
 
     public static void applyBond(EntityPlayer caster, EntityLivingBase target, int duration) {
         clearBond(caster);
@@ -75,7 +78,7 @@ public class ImmuneBondHandler {
         if (player.world.isRemote) return;
         // Run every 10 ticks for particles, every tick for COTH_E strip is too expensive.
         // But we MUST strip COTH_E quickly — do it every 5 ticks for responsiveness.
-        boolean particleTick  = player.ticksExisted % 10 == 0;
+        boolean particleTick  = player.ticksExisted % 40 == 0;
         boolean protectTick   = player.ticksExisted % 5  == 0;
         if (!particleTick && !protectTick) return;
 
@@ -112,9 +115,9 @@ public class ImmuneBondHandler {
             target.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E, 400, 0, false, false));
         }
 
-        // Spawn particle ring every 10 ticks  
+        // Spawn particle ring every 10 ticks
         if (particleTick) {
-            spawnBondParticles((WorldServer) player.world, target, player.ticksExisted);
+            spawnBondParticles(player.world, target);
         }
     }
 
@@ -134,17 +137,8 @@ public class ImmuneBondHandler {
         }
     }
 
-    private static void spawnBondParticles(WorldServer world, EntityLivingBase target, int tick) {
-        double cx = target.posX;
-        double cy = target.posY + target.height * 0.5D;
-        double cz = target.posZ;
-        double radius = Math.max(0.5D, target.width * 0.7D);
-        for (int i = 0; i < 5; i++) {
-            double angle = (2 * Math.PI / 5) * i + (tick * 0.04D);
-            double px = cx + radius * Math.cos(angle);
-            double pz = cz + radius * Math.sin(angle);
-            world.spawnParticle(EnumParticleTypes.REDSTONE, px, cy, pz, 1, 0, 0, 0, 0,
-                    new int[]{ 255, 220, 0 });
-        }
+    private static void spawnBondParticles(World world, EntityLivingBase target) {
+        SpellCastFeedback.srpBurstAt(world, target, 0.5D, SRPEnumParticle.DOT, BOND_RGB, 5,
+                (float) Math.max(0.4D, target.width * 0.7D), (float) (target.height * 0.3D), 0.0F);
     }
 }
