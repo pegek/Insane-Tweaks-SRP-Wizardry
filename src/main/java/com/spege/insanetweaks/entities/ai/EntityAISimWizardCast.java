@@ -25,7 +25,7 @@ import net.minecraftforge.common.MinecraftForge;
  * Primary attack task for {@link EntitySimWizard}.
  *
  * Two phases per cast:
- *   1. TELEGRAPH - charge-up window ({@code ModConfig.simWizard.castTelegraphTicks}) with
+ *   1. TELEGRAPH - charge-up window ({@code ModConfig.entities.assimilatedWizard.combat.castTelegraphTicks}) with
  *      vocalization + particle ring so the player has a dodge window.
  *   2. FIRE - resolves the chosen spell, swings arm, applies post-cast slowness.
  *
@@ -79,7 +79,8 @@ public class EntityAISimWizardCast extends EntityAIBase {
 
     public EntityAISimWizardCast(EntitySimWizard wizard) {
         this.wizard = wizard;
-        this.decisionRange = ModConfig.simWizard.decisionRange * ModConfig.simWizard.rangeMultiplier;
+        this.decisionRange = ModConfig.entities.assimilatedWizard.combat.decisionRange
+                * ModConfig.entities.assimilatedWizard.combat.rangeMultiplier;
         this.decisionRangeSq = this.decisionRange * this.decisionRange;
         this.setMutexBits(3);
     }
@@ -183,7 +184,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
             return;
         }
 
-        int telegraph = Math.max(0, ModConfig.simWizard.castTelegraphTicks);
+        int telegraph = Math.max(0, ModConfig.entities.assimilatedWizard.combat.castTelegraphTicks);
         if (telegraph == 0) {
             this.pendingSpell = spell;
             this.pendingTarget = target;
@@ -265,7 +266,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
     }
 
     private void applySpellCooldown(Spell spell) {
-        ModConfig.SimWizard cfg = ModConfig.simWizard;
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Combat cfg = ModConfig.entities.assimilatedWizard.combat;
         int divisor = Math.max(1, cfg.spellCooldownDivisor);
         int bonus = Math.min(spell.getCooldown() / divisor, cfg.maxSpellCooldownBonusTicks);
         setCooldown(cfg.baseCastCooldownTicks + bonus);
@@ -329,7 +330,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
         }
 
         float hpPct = this.wizard.getHealth() / this.wizard.getMaxHealth();
-        boolean lowHp = hpPct * 100.0F <= ModConfig.simWizard.retreatHealthPercent;
+        boolean lowHp = hpPct * 100.0F <= ModConfig.entities.assimilatedWizard.combat.retreatHealthPercent;
 
         // ---- LOW HP: random among heal + summons, so the summons actually get used ----
         if (lowHp) {
@@ -350,8 +351,8 @@ public class EntityAISimWizardCast extends EntityAIBase {
         // Deliberately rare (default 20%) so they read as signature moves, not spam:
         //  - banish inside 4.5 blocks: hurl the attacker away instead of melee-scrambling
         //  - life_drain at 4.5-9 blocks: channeled parasitic drain (heals the wizard)
-        if (ModConfig.simWizard.specialSpellChancePercent > 0
-                && this.wizard.getRNG().nextInt(100) < ModConfig.simWizard.specialSpellChancePercent) {
+        if (ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent > 0
+                && this.wizard.getRNG().nextInt(100) < ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent) {
             if (distance <= BANISH_MAX_DISTANCE) {
                 Spell banish = findByName(pool, "banish");
                 if (banish != null) {

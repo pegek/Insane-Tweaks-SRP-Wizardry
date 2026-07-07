@@ -312,7 +312,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         // AoE spells (spark_bomb chains, force_orb splash) never turn the SRP pack against the
         // wizard. Gated by its own flag (the entity is spawnable via /summon regardless of the
         // bridge conversion being enabled, so this must not hide behind enableSrpEbWizardryBridge).
-        if (com.spege.insanetweaks.config.ModConfig.simWizard.enabled) {
+        if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard.spawning.enabled) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SimWizardFactionHandler());
         }
 

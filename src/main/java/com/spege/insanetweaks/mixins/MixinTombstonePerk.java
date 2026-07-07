@@ -33,7 +33,7 @@ public abstract class MixinTombstonePerk {
     private void insanetweaks$clampLevelMax(CallbackInfoReturnable<Integer> cir) {
         if (!ModConfig.tombstone.enableTombstoneTweaks) return;
 
-        ModConfig.PerkConfig cfg = insanetweaks$resolveConfig();
+        com.spege.insanetweaks.config.categories.TombstoneCategory.PerkConfig cfg = insanetweaks$resolveConfig();
         if (cfg == null) return;
 
         int nativeMax = cir.getReturnValue();
@@ -48,7 +48,7 @@ public abstract class MixinTombstonePerk {
             CallbackInfoReturnable<Boolean> cir) {
         if (!ModConfig.tombstone.enableTombstoneTweaks) return;
 
-        ModConfig.PerkConfig cfg = insanetweaks$resolveConfig();
+        com.spege.insanetweaks.config.categories.TombstoneCategory.PerkConfig cfg = insanetweaks$resolveConfig();
         if (cfg == null) return;
 
         if (!cfg.enabled || cfg.maxLevel == 0) {
@@ -57,14 +57,14 @@ public abstract class MixinTombstonePerk {
     }
 
     @Nullable
-    private ModConfig.PerkConfig insanetweaks$resolveConfig() {
+    private com.spege.insanetweaks.config.categories.TombstoneCategory.PerkConfig insanetweaks$resolveConfig() {
         // Safe runtime cast without needing Tombstone in compile classpath
         IForgeRegistryEntry<?> registryEntry = (IForgeRegistryEntry<?>) (Object) this;
         if (registryEntry.getRegistryName() == null) return null;
-        
+
         String perkName = registryEntry.getRegistryName().getResourcePath();
-        
-        ModConfig.TombstoneTweaks ts = ModConfig.tombstone;
+
+        com.spege.insanetweaks.config.categories.TombstoneCategory ts = ModConfig.tombstone;
         switch (perkName) {
             case "alchemist":       return ts.alchemist;
             case "concentration":   return ts.concentration;

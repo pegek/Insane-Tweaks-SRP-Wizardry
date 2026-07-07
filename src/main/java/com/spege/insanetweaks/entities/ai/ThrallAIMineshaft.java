@@ -60,9 +60,9 @@ public class ThrallAIMineshaft extends EntityAIBase {
     private static final int TORCH_INTERVAL = 8;
 
     // Live config accessors — re-read every call so config changes apply without restart
-    private static int minY()              { return ModConfig.thrall.mineshaftDepthMin; }
-    private static int mainTunnelLength()  { return ModConfig.thrall.mineshaftStripLength; }
-    private static int branchInterval()    { return ModConfig.thrall.mineshaftBranchSpacing; }
+    private static int minY()              { return ModConfig.thrall.labour.mineshaftDepthMin; }
+    private static int mainTunnelLength()  { return ModConfig.thrall.labour.mineshaftStripLength; }
+    private static int branchInterval()    { return ModConfig.thrall.labour.mineshaftBranchSpacing; }
 
     // Spiral staircase perimeter offsets (clockwise, relative to center)
     private static final int[][] SPIRAL_OFFSETS = {

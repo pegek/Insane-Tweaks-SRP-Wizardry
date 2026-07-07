@@ -24,7 +24,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * {@code EntityAIHurtByTarget} never triggers - the aggro loop cannot even start.
  *
  * Server-side only; registered in InsaneTweaksMod.init gated by
- * {@code ModConfig.simWizard.enabled}.
+ * {@code ModConfig.entities.assimilatedWizard.spawning.enabled}.
  */
 public class SimWizardFactionHandler {
 

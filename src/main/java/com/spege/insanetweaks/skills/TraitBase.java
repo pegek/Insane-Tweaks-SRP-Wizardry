@@ -7,7 +7,7 @@ import codersafterdark.reskillable.api.skill.Skill;
 import codersafterdark.reskillable.api.unlockable.Trait;
 import codersafterdark.reskillable.api.unlockable.Unlockable;
 import codersafterdark.reskillable.api.ReskillableRegistries;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.config.categories.TraitsCategory;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
@@ -21,7 +21,7 @@ import net.minecraft.util.ResourceLocation;
 @SuppressWarnings("null")
 public abstract class TraitBase extends Trait {
 
-    public TraitBase(String name, int x, int y, ModConfig.TraitConfig cfg, String defaultSkillName, int defaultCost, String... defaultRequirements) {
+    public TraitBase(String name, int x, int y, TraitsCategory.TraitConfig cfg, String defaultSkillName, int defaultCost, String... defaultRequirements) {
         super(
             new ResourceLocation(SkillsModule.DOMAIN, name),
             x, y,

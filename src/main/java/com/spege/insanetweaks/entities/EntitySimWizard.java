@@ -57,8 +57,8 @@ import net.minecraft.world.World;
  *  - Cast/heal pipeline runs through real EBW NPC path: {@code spell.cast(World, EntityLiving,
  *    EnumHand, int, EntityLivingBase, SpellModifiers)}.
  *  - All balance values (HP/armor/speed multipliers, cooldowns, decision range, spell
- *    modifiers) are read from {@link ModConfig.SimWizard}. Hardcoded constants act as safety
- *    fallbacks if the config returns degenerate values.
+ *    modifiers) are read from {@code ModConfig.entities.assimilatedWizard}. Hardcoded constants
+ *    act as safety fallbacks if the config returns degenerate values.
  */
 @SuppressWarnings({"null", "deprecation"})
 public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
@@ -144,12 +144,13 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
 
-        ModConfig.SimWizard cfg = ModConfig.simWizard;
-        this.multiplyBaseAttribute(SharedMonsterAttributes.MAX_HEALTH, cfg.healthMultiplier);
-        this.addBaseAttribute(SharedMonsterAttributes.MAX_HEALTH, cfg.extraHealth);
-        this.multiplyBaseAttribute(SharedMonsterAttributes.ARMOR, cfg.armorMultiplier);
-        this.multiplyBaseAttribute(SharedMonsterAttributes.MOVEMENT_SPEED, cfg.speedMultiplier);
-        this.setMinimumBaseAttribute(SharedMonsterAttributes.FOLLOW_RANGE, cfg.minFollowRange);
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Spawning spawning = ModConfig.entities.assimilatedWizard.spawning;
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Combat combat = ModConfig.entities.assimilatedWizard.combat;
+        this.multiplyBaseAttribute(SharedMonsterAttributes.MAX_HEALTH, spawning.healthMultiplier);
+        this.addBaseAttribute(SharedMonsterAttributes.MAX_HEALTH, spawning.extraHealth);
+        this.multiplyBaseAttribute(SharedMonsterAttributes.ARMOR, spawning.armorMultiplier);
+        this.multiplyBaseAttribute(SharedMonsterAttributes.MOVEMENT_SPEED, spawning.speedMultiplier);
+        this.setMinimumBaseAttribute(SharedMonsterAttributes.FOLLOW_RANGE, combat.minFollowRange);
     }
 
     private void multiplyBaseAttribute(IAttribute attribute, double multiplier) {
@@ -194,7 +195,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * tier system.
      */
     private void applyPhaseScaling() {
-        ModConfig.SimWizard cfg = ModConfig.simWizard;
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Spawning cfg = ModConfig.entities.assimilatedWizard.spawning;
         if (!cfg.enablePhaseScaling || this.world == null || this.world.isRemote) {
             return;
         }
@@ -251,7 +252,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     }
 
     /**
-     * v3.3: the pool is built from {@code ModConfig.simWizard.spellPool} (registry names) -
+     * v3.3: the pool is built from {@code ModConfig.entities.assimilatedWizard.spells.spellPool} (registry names) -
      * repertoire changes are config edits, no recompilation. Unknown ids are skipped with a
      * warning; an empty result falls back to the built-in default so the wizard is never
      * spell-less. {@code summon_*} entries are additionally gated by includeAbominationSummons.
@@ -267,7 +268,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             return;
         }
 
-        for (String id : ModConfig.simWizard.spellPool) {
+        for (String id : ModConfig.entities.assimilatedWizard.spells.spellPool) {
             if (id == null || id.trim().isEmpty()) {
                 continue;
             }
@@ -277,7 +278,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
                         "[InsaneTweaks][SimWizard] Unknown spell id '{}' in simWizard.spellPool - skipped.", id);
                 continue;
             }
-            if (!ModConfig.simWizard.includeAbominationSummons && s.getRegistryName() != null
+            if (!ModConfig.entities.assimilatedWizard.spells.includeAbominationSummons && s.getRegistryName() != null
                     && s.getRegistryName().getResourcePath().startsWith("summon_")) {
                 continue;
             }
@@ -361,14 +362,14 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
 
         if (this.getHealth() < this.getMaxHealth() && this.getHealth() > 0.0F) {
-            this.heal((float) ModConfig.simWizard.selfHealAmount);
+            this.heal((float) ModConfig.entities.assimilatedWizard.combat.selfHealAmount);
             this.playSound(Spells.heal.getSounds()[0], 0.7F, this.rand.nextFloat() * 0.4F + 1.0F);
             this.world.setEntityState(this, STATUS_HEAL_BURST);
         }
 
         this.selfHealCooldown = this.getHealth() < 10.0F
-                ? ModConfig.simWizard.selfHealCooldownLow
-                : ModConfig.simWizard.selfHealCooldownNormal;
+                ? ModConfig.entities.assimilatedWizard.combat.selfHealCooldownLow
+                : ModConfig.entities.assimilatedWizard.combat.selfHealCooldownNormal;
     }
 
     private void spawnCastingAuraParticles() {
@@ -479,9 +480,9 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     public SpellModifiers getModifiers() {
         SpellModifiers modifiers = new SpellModifiers();
         // Phase bonus also folds into spell potency so late-game sim_wizards hit harder.
-        float potency = (float) ModConfig.simWizard.potencyMultiplier * this.cachedPhaseBonus;
+        float potency = (float) ModConfig.entities.assimilatedWizard.combat.potencyMultiplier * this.cachedPhaseBonus;
         modifiers.set(SpellModifiers.POTENCY, potency, true);
-        modifiers.set("range", (float) ModConfig.simWizard.rangeMultiplier, true);
+        modifiers.set("range", (float) ModConfig.entities.assimilatedWizard.combat.rangeMultiplier, true);
         return modifiers;
     }
 

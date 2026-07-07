@@ -149,7 +149,7 @@ public class EntityThrallMinion extends EntityCreature {
     /**
      * Passive pickup (every 5 ticks) complements ThrallAIGatherItems (walks to item).
      * The passive variant fires regardless of active AI mutex, so items dropped right at the thrall's
-     * feet are collected immediately even while mining/woodcutting. Range from ModConfig.thrall.passivePickupRange.
+     * feet are collected immediately even while mining/woodcutting. Range from ModConfig.thrall.general.passivePickupRange.
      */
 
     // -------------------------------------------------------------------------
@@ -321,7 +321,7 @@ public class EntityThrallMinion extends EntityCreature {
             // when it expires there, the collecting AI's own onWorkTimerExpired() routes to
             // WAITING_FOR_ITEMS rather than STAY, so the auto-return branch below is skipped for it.
             ThrallMode currentMode = getMode();
-            int workHours = ModConfig.tweaks.thrallWorkDurationHours;
+            int workHours = ModConfig.thrall.general.workDurationHours;
             long workDurationTicks = workHours * 72000L; // 1 hour = 20 ticks/s * 3600 s
             if (workHours > 0
                     && (currentMode == ThrallMode.WOODCUTTING || currentMode == ThrallMode.MINESHAFT
@@ -372,7 +372,7 @@ public class EntityThrallMinion extends EntityCreature {
         // Immediate teleport if standing in lava (escape damage trap), even before distance check
         boolean inLava = this.isInLava();
 
-        double teleportDist = ModConfig.thrall.followTeleportDistance;
+        double teleportDist = ModConfig.thrall.general.followTeleportDistance;
         double teleportDistSq = teleportDist * teleportDist;
         if (inLava || this.getDistanceSq(owner) > teleportDistSq) {
             // Pick a spot slightly behind the owner based on their look direction
@@ -736,9 +736,9 @@ public class EntityThrallMinion extends EntityCreature {
     // Passive item pickup
     // -------------------------------------------------------------------------
 
-    /** Collects all items within ModConfig.thrall.passivePickupRange. Bypasses AI mutex conflicts. */
+    /** Collects all items within ModConfig.thrall.general.passivePickupRange. Bypasses AI mutex conflicts. */
     private void passiveItemPickup() {
-        double range = ModConfig.thrall.passivePickupRange;
+        double range = ModConfig.thrall.general.passivePickupRange;
         List<net.minecraft.entity.item.EntityItem> items = world.getEntitiesWithinAABB(
                 net.minecraft.entity.item.EntityItem.class,
                 getEntityBoundingBox().grow(range, 2, range));

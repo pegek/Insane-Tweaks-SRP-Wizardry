@@ -72,7 +72,7 @@ public class ThrallAIPorter extends EntityAIBase {
     @Override
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.PORTER) return false;
-        if (!ModConfig.thrall.enablePorterMode) return false;
+        if (!ModConfig.thrall.porter.enablePorterMode) return false;
         return thrall.getHomePoint() != null;
     }
 
@@ -96,7 +96,7 @@ public class ThrallAIPorter extends EntityAIBase {
     @Override
     public void updateTask() {
         long now = thrall.world.getTotalWorldTime();
-        long intervalTicks = (long) ModConfig.thrall.porterIntervalSeconds * 20L;
+        long intervalTicks = (long) ModConfig.thrall.porter.porterIntervalSeconds * 20L;
         if (lastCycleTick != 0 && now - lastCycleTick < intervalTicks) {
             return;
         }
@@ -113,13 +113,13 @@ public class ThrallAIPorter extends EntityAIBase {
         BlockPos home = thrall.getHomePoint();
         if (home == null) return;
 
-        if (ModConfig.thrall.porterDirection
-                == ModConfig.Thrall.PorterDirection.FROM_HOME) {
+        if (ModConfig.thrall.porter.porterDirection
+                == com.spege.insanetweaks.config.categories.ThrallCategory.PorterDirection.FROM_HOME) {
             runReverseCycle(home);
             return;
         }
 
-        int range = ModConfig.thrall.porterChestScanRange;
+        int range = ModConfig.thrall.porter.porterChestScanRange;
 
         // First, drop anything we already carry into home chests so we have room for new pulls.
         // keepTorches=false: porter never mines, so any stray torches just go to chests like everything else.
@@ -129,7 +129,7 @@ public class ThrallAIPorter extends EntityAIBase {
         }
 
         // Active chest sorting — consolidate misplaced item types into their dominant chest.
-        if (ModConfig.thrall.enablePorterSorting) {
+        if (ModConfig.thrall.porter.enablePorterSorting) {
             int sorted = consolidateChests(home, range);
             if (sorted > 0) {
                 thrall.setStatusText("Sorting...");
@@ -166,7 +166,7 @@ public class ThrallAIPorter extends EntityAIBase {
             return;
         }
 
-        double rangeSq = (double) ModConfig.thrall.porterTeleportRange * ModConfig.thrall.porterTeleportRange;
+        double rangeSq = (double) ModConfig.thrall.porter.porterTeleportRange * ModConfig.thrall.porter.porterTeleportRange;
         if (owner.getDistanceSq(home.getX() + 0.5, home.getY(), home.getZ() + 0.5) > rangeSq) {
             thrall.setStatusText("Owner away");
             return;
@@ -204,7 +204,7 @@ public class ThrallAIPorter extends EntityAIBase {
      * the owner couldn't absorb are deposited back into home chests on return.
      */
     private void runReverseCycle(BlockPos home) {
-        int range = ModConfig.thrall.porterChestScanRange;
+        int range = ModConfig.thrall.porter.porterChestScanRange;
         ThrallInventory inv = thrall.getThrallInventory();
 
         // Clear anything we might still be carrying so the pulled items don't mix with stale loot.
@@ -233,7 +233,7 @@ public class ThrallAIPorter extends EntityAIBase {
             thrall.setStatusText("Owner away");
             return;
         }
-        double rangeSq = (double) ModConfig.thrall.porterTeleportRange * ModConfig.thrall.porterTeleportRange;
+        double rangeSq = (double) ModConfig.thrall.porter.porterTeleportRange * ModConfig.thrall.porter.porterTeleportRange;
         if (owner.getDistanceSq(home.getX() + 0.5, home.getY(), home.getZ() + 0.5) > rangeSq) {
             thrall.setStatusText("Owner away");
             return;

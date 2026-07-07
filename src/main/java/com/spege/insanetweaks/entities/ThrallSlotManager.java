@@ -32,9 +32,9 @@ public final class ThrallSlotManager {
 
     private static final Logger LOG = LogManager.getLogger("insanetweaks/ThrallSlots");
     private static final String NBT_KEY   = "InsaneTweaksThralls";
-    /** Live cap from ModConfig.thrall.maxSlotsPerPlayer. Read each access so changes apply without restart. */
+    /** Live cap from ModConfig.thrall.general.maxSlotsPerPlayer. Read each access so changes apply without restart. */
     public static int maxSlots() {
-        return com.spege.insanetweaks.config.ModConfig.thrall.maxSlotsPerPlayer;
+        return com.spege.insanetweaks.config.ModConfig.thrall.general.maxSlotsPerPlayer;
     }
 
     private ThrallSlotManager() {}

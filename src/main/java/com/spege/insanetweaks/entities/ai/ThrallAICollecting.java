@@ -113,7 +113,7 @@ public class ThrallAICollecting extends EntityAIBase {
     @Override
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.COLLECTING) return false;
-        if (!ModConfig.thrall.enableCollectingMode) return false;
+        if (!ModConfig.thrall.collecting.enableCollectingMode) return false;
         return thrall.getHomePoint() != null;
     }
 
@@ -137,7 +137,7 @@ public class ThrallAICollecting extends EntityAIBase {
         // Termination triggers (checked once per tick — cheap)
         if (phase != Phase.RETURNING && phase != Phase.DONE && phase != Phase.WAITING_FOR_ITEMS
                 && phase != Phase.RESTING) {
-            long durationTicks = (long) ModConfig.thrall.collectingDurationMinutes * 60L * 20L;
+            long durationTicks = (long) ModConfig.thrall.collecting.collectingDurationMinutes * 60L * 20L;
             if (now - sessionStartTick >= durationTicks) {
                 if (debugLogs()) LOG.info("[Thrall#{}] Collecting: session timeout", thrall.getEntityId());
                 beginReturn();
@@ -148,7 +148,7 @@ public class ThrallAICollecting extends EntityAIBase {
                 beginReturn();
                 return;
             }
-            if (consecutiveEmptyCycles >= ModConfig.thrall.collectingMaxEmptyCycles) {
+            if (consecutiveEmptyCycles >= ModConfig.thrall.collecting.collectingMaxEmptyCycles) {
                 if (debugLogs()) LOG.info("[Thrall#{}] Collecting: empty-cycle abort", thrall.getEntityId());
                 beginReturn();
                 return;
@@ -186,7 +186,7 @@ public class ThrallAICollecting extends EntityAIBase {
      */
     public void startOrResume() {
         long now = thrall.world.getTotalWorldTime();
-        long resumeWindowTicks = (long) ModConfig.thrall.collectingResumeWindowMinutes * 60L * 20L;
+        long resumeWindowTicks = (long) ModConfig.thrall.collecting.collectingResumeWindowMinutes * 60L * 20L;
         boolean resumeEligible = pausedAtTick > 0
                 && resumeWindowTicks > 0
                 && (now - pausedAtTick) <= resumeWindowTicks
@@ -238,7 +238,7 @@ public class ThrallAICollecting extends EntityAIBase {
             return true;
         }
 
-        int cap = ModConfig.thrall.collectingMaxTargets;
+        int cap = ModConfig.thrall.collecting.collectingMaxTargets;
         if (targets.size() >= cap) {
             thrall.setStatusText("Targets full (" + cap + ")");
             return false;
@@ -263,7 +263,7 @@ public class ThrallAICollecting extends EntityAIBase {
             // No items yet — keep waiting indefinitely.
             return;
         }
-        long timeoutTicks = (long) ModConfig.thrall.collectingItemPickupTimeoutSeconds * 20L;
+        long timeoutTicks = (long) ModConfig.thrall.collecting.collectingItemPickupTimeoutSeconds * 20L;
         if (now - firstItemTick >= timeoutTicks) {
             beginSearch(now);
         }
@@ -322,7 +322,7 @@ public class ThrallAICollecting extends EntityAIBase {
     // ------------------------------------------------------------------
 
     private void tickSearching(long now) {
-        long interval = ModConfig.thrall.collectingTickInterval;
+        long interval = ModConfig.thrall.collecting.collectingTickInterval;
         if (lastCycleTick != 0 && now - lastCycleTick < interval) return;
         lastCycleTick = now;
 
@@ -365,8 +365,8 @@ public class ThrallAICollecting extends EntityAIBase {
     @Nullable
     private BlockPos pickRandomSearchPoint(BlockPos home, YHint hint) {
         World world = thrall.world;
-        int minDist = ModConfig.thrall.collectingMinTpDistance;
-        int maxDist = ModConfig.thrall.collectingMaxTpDistance;
+        int minDist = ModConfig.thrall.collecting.collectingMinTpDistance;
+        int maxDist = ModConfig.thrall.collecting.collectingMaxTpDistance;
         if (maxDist < minDist) maxDist = minDist + 1;
 
         for (int attempt = 0; attempt < 6; attempt++) {
@@ -428,7 +428,7 @@ public class ThrallAICollecting extends EntityAIBase {
     private List<BlockPos> scanForTargets(BlockPos center) {
         List<BlockPos> hits = new ArrayList<>();
         World world = thrall.world;
-        int r = ModConfig.thrall.collectingScanRadius;
+        int r = ModConfig.thrall.collecting.collectingScanRadius;
         int rSq = r * r;
         for (int dx = -r; dx <= r; dx++) {
             for (int dy = -r; dy <= r; dy++) {
@@ -558,7 +558,7 @@ public class ThrallAICollecting extends EntityAIBase {
 
             // Vein-BFS: enqueue 26-neighbours of same sig within frontier radius and not yet visited.
             if (miningSig != null && veinRoot != null
-                    && harvestVisited.size() < ModConfig.thrall.collectingVeinMaxBlocks) {
+                    && harvestVisited.size() < ModConfig.thrall.collecting.collectingVeinMaxBlocks) {
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
                         for (int dz = -1; dz <= 1; dz++) {
@@ -571,7 +571,7 @@ public class ThrallAICollecting extends EntityAIBase {
                             if (nsig != null && nsig.equals(miningSig)) {
                                 harvestVisited.add(n);
                                 harvestQueue.add(n);
-                                if (harvestVisited.size() >= ModConfig.thrall.collectingVeinMaxBlocks) break;
+                                if (harvestVisited.size() >= ModConfig.thrall.collecting.collectingVeinMaxBlocks) break;
                             }
                         }
                     }
@@ -604,7 +604,7 @@ public class ThrallAICollecting extends EntityAIBase {
         thrall.playTeleportSound();
         thrall.getNavigator().clearPath();
         ThrallChestHelper.smartDeposit(thrall, home,
-                ModConfig.thrall.collectingChestScanRange, 4, false);
+                ModConfig.thrall.collecting.collectingChestScanRange, 4, false);
 
         phase = Phase.RESTING;
         restTicksRemaining = REST_AT_HOME_TICKS;

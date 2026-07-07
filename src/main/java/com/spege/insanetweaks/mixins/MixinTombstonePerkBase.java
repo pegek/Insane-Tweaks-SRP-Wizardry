@@ -26,7 +26,7 @@ public abstract class MixinTombstonePerkBase {
             CallbackInfoReturnable<Boolean> cir) {
         if (!ModConfig.tombstone.enableTombstoneTweaks) return;
 
-        ModConfig.PerkConfig cfg = insanetweaks$resolveConfig(name);
+        com.spege.insanetweaks.config.categories.TombstoneCategory.PerkConfig cfg = insanetweaks$resolveConfig(name);
         if (cfg == null) return;
 
         if (!cfg.enabled || cfg.maxLevel == 0) {
@@ -35,9 +35,9 @@ public abstract class MixinTombstonePerkBase {
     }
 
     @Nullable
-    private static ModConfig.PerkConfig insanetweaks$resolveConfig(String perkName) {
+    private static com.spege.insanetweaks.config.categories.TombstoneCategory.PerkConfig insanetweaks$resolveConfig(String perkName) {
         if (perkName == null) return null;
-        ModConfig.TombstoneTweaks ts = ModConfig.tombstone;
+        com.spege.insanetweaks.config.categories.TombstoneCategory ts = ModConfig.tombstone;
         switch (perkName) {
             case "alchemist":       return ts.alchemist;
             case "concentration":   return ts.concentration;

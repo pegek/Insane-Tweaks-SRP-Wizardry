@@ -98,7 +98,7 @@ public class ThrallAIFarming extends EntityAIBase {
     @Override
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.FARMING) return false;
-        if (!ModConfig.thrall.enableFarmingMode) return false;
+        if (!ModConfig.thrall.farming.enableFarmingMode) return false;
         if (thrall.getHomePoint() == null) return false;
         return !thrall.getThrallInventory().isFull();
     }
@@ -203,7 +203,7 @@ public class ThrallAIFarming extends EntityAIBase {
         }
 
         // Phase 4 — only if bone meal use is enabled, look for an immature crop to fertilize
-        if (ModConfig.thrall.farmUseBoneMeal && hasBoneMeal()) {
+        if (ModConfig.thrall.farming.farmUseBoneMeal && hasBoneMeal()) {
             BlockPos immature = findCropInRange(center, false);
             if (immature != null) {
                 targetPos = immature;
@@ -237,7 +237,7 @@ public class ThrallAIFarming extends EntityAIBase {
     @Nullable
     private BlockPos findCropInRange(BlockPos center, boolean wantMature) {
         World world = thrall.world;
-        int radius = ModConfig.thrall.farmRadius;
+        int radius = ModConfig.thrall.farming.farmRadius;
         int radSq = radius * radius;
 
         BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
@@ -294,7 +294,7 @@ public class ThrallAIFarming extends EntityAIBase {
     @Nullable
     private HarvestTarget findHarvestableBlock(BlockPos center) {
         World world = thrall.world;
-        int radius = ModConfig.thrall.farmRadius;
+        int radius = ModConfig.thrall.farming.farmRadius;
         int radSq = radius * radius;
         BlockPos thrallPos = new BlockPos(thrall);
         BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
@@ -377,7 +377,7 @@ public class ThrallAIFarming extends EntityAIBase {
     @Nullable
     private BlockPos findTrampledFarmland(BlockPos center) {
         World world = thrall.world;
-        int radius = ModConfig.thrall.farmRadius;
+        int radius = ModConfig.thrall.farming.farmRadius;
         int radSq = radius * radius;
         BlockPos thrallPos = new BlockPos(thrall);
 
@@ -428,7 +428,7 @@ public class ThrallAIFarming extends EntityAIBase {
     @Nullable
     private HarvestTarget findEmptyFarmland(BlockPos center) {
         World world = thrall.world;
-        int radius = ModConfig.thrall.farmRadius;
+        int radius = ModConfig.thrall.farming.farmRadius;
         int radSq = radius * radius;
         BlockPos thrallPos = new BlockPos(thrall);
         BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();

@@ -28,7 +28,7 @@ import net.minecraft.world.World;
  *
  * Ancient Spellcraft class wizards still use the temporary sim_human fallback
  * until sim_battlemage exists. The sim_wizard target itself can be disabled at
- * runtime via {@link com.spege.insanetweaks.config.ModConfig.SimWizard#enabled};
+ * runtime via {@code ModConfig.entities.assimilatedWizard.spawning.enabled};
  * in that case the bridge falls back to sim_human for both EBW wizard variants.
  */
 public final class SrpWizardryAssimilationHelper {
@@ -116,9 +116,9 @@ public final class SrpWizardryAssimilationHelper {
 
     private static ResourceLocation resolveConversionTarget(ResourceLocation originalId) {
         if (WIZARD_ID.equals(originalId) || EVIL_WIZARD_ID.equals(originalId)) {
-            // ModConfig.simWizard.enabled is a master switch. When disabled, fall back to
-            // sim_human so the bridge keeps working without spawning the custom entity.
-            return ModConfig.simWizard.enabled ? SIM_WIZARD_ID : TEST_SIM_HUMAN_ID;
+            // ModConfig.entities.assimilatedWizard.spawning.enabled is a master switch. When disabled,
+            // fall back to sim_human so the bridge keeps working without spawning the custom entity.
+            return ModConfig.entities.assimilatedWizard.spawning.enabled ? SIM_WIZARD_ID : TEST_SIM_HUMAN_ID;
         }
 
         if (CLASS_WIZARD_ID.equals(originalId) || EVIL_CLASS_WIZARD_ID.equals(originalId)) {

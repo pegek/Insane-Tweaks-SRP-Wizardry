@@ -133,7 +133,7 @@ public class PacketThrallCommand implements IMessage {
                     break;
 
                 case ACTION_FARMING:
-                    if (!com.spege.insanetweaks.config.ModConfig.thrall.enableFarmingMode) {
+                    if (!com.spege.insanetweaks.config.ModConfig.thrall.farming.enableFarmingMode) {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
@@ -144,7 +144,7 @@ public class PacketThrallCommand implements IMessage {
                     break;
 
                 case ACTION_PORTER:
-                    if (!com.spege.insanetweaks.config.ModConfig.thrall.enablePorterMode) {
+                    if (!com.spege.insanetweaks.config.ModConfig.thrall.porter.enablePorterMode) {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
@@ -155,7 +155,7 @@ public class PacketThrallCommand implements IMessage {
                     break;
 
                 case ACTION_COLLECTING:
-                    if (!com.spege.insanetweaks.config.ModConfig.thrall.enableCollectingMode) {
+                    if (!com.spege.insanetweaks.config.ModConfig.thrall.collecting.enableCollectingMode) {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
