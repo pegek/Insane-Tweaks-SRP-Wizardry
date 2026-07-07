@@ -18,9 +18,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Renders yellow-green SRP DOT particles converging on the casting hand while
- * the Yelloweye Gland chargeup is in progress. Purely cosmetic and local to
- * each client, so no networking; EBW itself provides the charge sound and the
- * HUD charge bar.
+ * the Yelloweye Gland chargeup is in progress. Purely cosmetic, no networking;
+ * EBW itself provides the charge sound and the HUD charge bar. Renders for
+ * every charging player this client can see — for remote players the use-tick
+ * counter is a local approximation (vanilla never syncs it), which is fine for
+ * a visual effect.
  */
 @SideOnly(Side.CLIENT)
 public class YelloweyeChargeHandler {
@@ -48,6 +50,9 @@ public class YelloweyeChargeHandler {
         }
 
         Spell spell = ((ISpellCastingItem) stack.getItem()).getCurrentSpell(stack);
+        // Compares against the unscaled chargeup: a chargeup-reducing wand
+        // modifier makes the real shot fire a few ticks before particles stop.
+        // Accepted simplification for a cosmetic effect.
         if (spell != ModSpells.YELLOWEYE_GLAND || player.getItemInUseMaxCount() >= spell.getChargeup()) {
             return;
         }
