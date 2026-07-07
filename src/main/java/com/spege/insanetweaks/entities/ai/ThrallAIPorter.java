@@ -113,6 +113,12 @@ public class ThrallAIPorter extends EntityAIBase {
         BlockPos home = thrall.getHomePoint();
         if (home == null) return;
 
+        if (ModConfig.thrall.porterDirection
+                == ModConfig.Thrall.PorterDirection.FROM_HOME) {
+            runReverseCycle(home);
+            return;
+        }
+
         int range = ModConfig.thrall.porterChestScanRange;
 
         // First, drop anything we already carry into home chests so we have room for new pulls.
@@ -191,6 +197,181 @@ public class ThrallAIPorter extends EntityAIBase {
         }
     }
 
+    /**
+     * FROM_HOME reverse restock (spec 4.3). Tops up the owner's existing partial main-inventory
+     * stacks from home chests. Never introduces new item types (only types the owner already
+     * carries with a non-full stack qualify) and never touches hotbar/armour/offhand. Leftovers
+     * the owner couldn't absorb are deposited back into home chests on return.
+     */
+    private void runReverseCycle(BlockPos home) {
+        int range = ModConfig.thrall.porterChestScanRange;
+        ThrallInventory inv = thrall.getThrallInventory();
+
+        // Clear anything we might still be carrying so the pulled items don't mix with stale loot.
+        if (inv.containsItems()) {
+            ThrallChestHelper.smartDeposit(thrall, home, range, MANIFEST_VRANGE, false);
+        }
+        if (inv.isFull()) {
+            thrall.setStatusText("Full");
+            return;
+        }
+
+        // Owner presence / range checks (mirror the TO_HOME path).
+        EntityLivingBase casterEntity = thrall.getCaster();
+        if (!(casterEntity instanceof EntityPlayer)) {
+            thrall.setStatusText("Awaiting owner");
+            return;
+        }
+        EntityPlayer owner = (EntityPlayer) casterEntity;
+        if (!owner.isEntityAlive()) {
+            thrall.setStatusText("Awaiting owner");
+            return;
+        }
+        if (owner.world.provider.getDimension() != thrall.world.provider.getDimension()) {
+            thrall.setStatusText("Owner away");
+            return;
+        }
+        double rangeSq = (double) ModConfig.thrall.porterTeleportRange * ModConfig.thrall.porterTeleportRange;
+        if (owner.getDistanceSq(home.getX() + 0.5, home.getY(), home.getZ() + 0.5) > rangeSq) {
+            thrall.setStatusText("Owner away");
+            return;
+        }
+
+        // Build the top-up manifest: one entry per owner main-inventory type that has a NON-FULL stack,
+        // with the total missing count (how much would fill every partial stack of that type).
+        Map<Sig, Integer> needed = buildRestockNeeds(owner);
+        if (needed.isEmpty()) {
+            thrall.setStatusText("Standing by...");
+            return;
+        }
+
+        // Pull from home chests only those types, capped at the needed amount, into our bag.
+        int pulled = pullRestockFromChests(home, range, needed);
+        if (pulled <= 0) {
+            thrall.setStatusText("No stock");
+            return;
+        }
+
+        thrall.setStatusText("Restocking...");
+        teleportToOwner(owner);
+        int topped = topUpOwner(owner);
+        teleportToHome(home);
+
+        // Return any leftover (types the owner filled up before we drained our bag) to home chests.
+        if (inv.containsItems()) {
+            ThrallChestHelper.smartDeposit(thrall, home, range, MANIFEST_VRANGE, false);
+        }
+
+        if (topped > 0) {
+            thrall.setStatusText("Restocked " + topped);
+            if (debugLogs()) LOG.info("[Thrall#{}] Porter FROM_HOME topped up {} stacks", thrall.getEntityId(), topped);
+        } else {
+            thrall.setStatusText("Standing by...");
+        }
+    }
+
+    /**
+     * Maps each owner MAIN-inventory item type (slots 9-35) that has at least one non-full stack to
+     * the total count needed to fill every partial stack of that type. Hotbar/armour/offhand ignored.
+     */
+    private Map<Sig, Integer> buildRestockNeeds(EntityPlayer owner) {
+        Map<Sig, Integer> needs = new HashMap<>();
+        for (int i = PLAYER_MAIN_INV_START; i <= PLAYER_MAIN_INV_END; i++) {
+            ItemStack s = owner.inventory.mainInventory.get(i);
+            if (s.isEmpty()) continue;
+            int room = s.getMaxStackSize() - s.getCount();
+            if (room <= 0) continue; // full stack — not eligible
+            Sig sig = Sig.of(s);
+            Integer prev = needs.get(sig);
+            needs.put(sig, (prev == null ? 0 : prev) + room);
+        }
+        return needs;
+    }
+
+    /**
+     * Walks home chests and pulls up to the needed amount of each manifest type into the thrall bag.
+     * Decrements the needs map as it pulls so we never over-draw beyond what the owner can absorb.
+     * Returns the total item count pulled.
+     */
+    private int pullRestockFromChests(BlockPos home, int range, Map<Sig, Integer> needed) {
+        ThrallInventory inv = thrall.getThrallInventory();
+        int pulled = 0;
+        List<IInventory> chests = ThrallChestHelper.findNearbyInventories(thrall.world, home, range, MANIFEST_VRANGE);
+        for (IInventory chest : chests) {
+            for (int i = 0; i < chest.getSizeInventory(); i++) {
+                if (inv.isFull()) return pulled;
+                ItemStack s = chest.getStackInSlot(i);
+                if (s.isEmpty()) continue;
+                Sig sig = Sig.of(s);
+                Integer need = needed.get(sig);
+                if (need == null || need <= 0) continue;
+
+                int take = Math.min(need, s.getCount());
+                ItemStack working = s.copy();
+                working.setCount(take);
+                int requested = working.getCount();
+                inv.addItemStackToInventory(working);
+                int actuallyTaken = requested - working.getCount();
+                if (actuallyTaken > 0) {
+                    s.shrink(actuallyTaken);
+                    if (s.isEmpty()) {
+                        chest.setInventorySlotContents(i, ItemStack.EMPTY);
+                    }
+                    chest.markDirty();
+                    needed.put(sig, need - actuallyTaken);
+                    pulled += actuallyTaken;
+                }
+            }
+        }
+        return pulled;
+    }
+
+    /**
+     * Tops up the owner's existing partial MAIN-inventory stacks (slots 9-35) from the thrall bag.
+     * Only merges into stacks that already exist (never fills empty slots, never creates a new type,
+     * never touches hotbar/armour/offhand). Returns the number of owner slots that received items.
+     */
+    private int topUpOwner(EntityPlayer owner) {
+        ThrallInventory inv = thrall.getThrallInventory();
+        int slotsToppedUp = 0;
+        for (int i = PLAYER_MAIN_INV_START; i <= PLAYER_MAIN_INV_END; i++) {
+            ItemStack dst = owner.inventory.mainInventory.get(i);
+            if (dst.isEmpty()) continue;
+            int room = dst.getMaxStackSize() - dst.getCount();
+            if (room <= 0) continue;
+
+            int moved = drainFromBag(inv, dst, room);
+            if (moved > 0) {
+                dst.grow(moved);
+                slotsToppedUp++;
+            }
+        }
+        if (slotsToppedUp > 0 && owner.inventoryContainer != null) {
+            owner.inventoryContainer.detectAndSendChanges();
+        }
+        return slotsToppedUp;
+    }
+
+    /**
+     * Removes up to {@code want} items matching {@code template} (item+meta+NBT) from the thrall bag.
+     * Returns the count removed. Does not modify {@code template}; caller grows the destination stack.
+     */
+    private int drainFromBag(ThrallInventory inv, ItemStack template, int want) {
+        int drained = 0;
+        for (int i = 0; i < inv.getSizeInventory() && drained < want; i++) {
+            ItemStack s = inv.getStackInSlot(i);
+            if (s.isEmpty()) continue;
+            if (!ItemStack.areItemsEqual(s, template) || !ItemStack.areItemStackTagsEqual(s, template)) continue;
+            int take = Math.min(want - drained, s.getCount());
+            s.shrink(take);
+            if (s.isEmpty()) {
+                inv.setInventorySlotContents(i, ItemStack.EMPTY);
+            }
+            drained += take;
+        }
+        return drained;
+    }
+
     // ------------------------------------------------------------------
     // Manifest
     // ------------------------------------------------------------------
@@ -235,6 +416,8 @@ public class ThrallAIPorter extends EntityAIBase {
     private int pullFromOwner(EntityPlayer owner, List<ItemStack> manifest, ChestBudgetPool pool) {
         ThrallInventory inv = thrall.getThrallInventory();
         int transfers = 0;
+        // Hotbar exclusion (spec 4.1): slots 0-8 are the hotbar, 36-40 armour, 40 offhand — none are
+        // ever read. PLAYER_MAIN_INV_START is pinned to 9 so the porter only manages the main inventory.
         for (int i = PLAYER_MAIN_INV_START; i <= PLAYER_MAIN_INV_END && transfers < MAX_TRANSFERS_PER_CYCLE; i++) {
             ItemStack s = owner.inventory.mainInventory.get(i);
             if (s.isEmpty()) continue;
