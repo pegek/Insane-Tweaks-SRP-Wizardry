@@ -217,8 +217,14 @@ public final class ThrallSlotManager {
                     double tz = player.posZ + Math.cos(angle) * 2.0;
                     thrall.setPositionAndUpdate(tx, ty, tz);
                     thrall.getNavigator().clearPath();
-                    world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE,
-                            tx, ty + 1.0, tz, 0.0, 0.0, 0.0);
+                    com.spege.insanetweaks.util.SpellCastFeedback.srpBurst(world,
+                            tx, ty + 1.0D, tz,
+                            com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle.FLASH,
+                            0x781414, 2, 0.4F, 0.5F, 0.01F);
+                    com.spege.insanetweaks.util.SpellCastFeedback.srpBurst(world,
+                            tx, ty + 0.2D, tz,
+                            com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle.GCLOUD,
+                            0x503232, 4, 0.4F, 0.2F, 0.01F);
                     thrall.smartDeposit(new net.minecraft.util.math.BlockPos(thrall));
                     // Give the player 10 seconds to issue a new order; if none comes, the thrall resumes its prior task.
                     thrall.pauseAfterResummon(200);
