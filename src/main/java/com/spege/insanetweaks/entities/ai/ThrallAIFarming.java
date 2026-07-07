@@ -142,12 +142,24 @@ public class ThrallAIFarming extends EntityAIBase {
         if (now - lastScanTime < SCAN_INTERVAL_TICKS && lastScanTime != 0) return;
         lastScanTime = now;
 
-        // Anchor the scan to the thrall's current position, not the home point.
-        // The home point is the deposit/recall target; the actual farm may be many
-        // blocks away (e.g. home set to a chest in a storage room).
-        if (thrall.getHomePoint() == null) return;
-        BlockPos center = new BlockPos(thrall);
+        // The home point is the deposit/recall target; the actual farm may be many blocks away.
+        // Scan the thrall's current position first (so a thrall deployed onto the farm works locally),
+        // then fall back to scanning around home (F-1) so a thrall standing OFF the field — e.g. parked
+        // at its home chest — still finds and walks/teleports to farm work.
+        BlockPos home = thrall.getHomePoint();
+        if (home == null) return;
 
+        if (searchAround(new BlockPos(thrall))) return;
+        if (!home.equals(new BlockPos(thrall)) && searchAround(home)) return;
+
+        thrall.setStatusText("No crops");
+    }
+
+    /**
+     * Runs the five prioritized farm-task searches around {@code center}. Sets targetPos/targetKind/
+     * state and returns true if a target was found; returns false (no state change) otherwise.
+     */
+    private boolean searchAround(BlockPos center) {
         // Phase 1 — find a mature crop to harvest
         BlockPos mature = findCropInRange(center, true);
         if (mature != null) {
@@ -157,7 +169,7 @@ public class ThrallAIFarming extends EntityAIBase {
             state = State.NAVIGATING;
             navTimer = 0;
             thrall.setStatusText("Harvesting...");
-            return;
+            return true;
         }
 
         // Phase 2 — sugar cane / cactus / melon / pumpkin
@@ -169,7 +181,7 @@ public class ThrallAIFarming extends EntityAIBase {
             state = State.NAVIGATING;
             navTimer = 0;
             thrall.setStatusText("Harvesting...");
-            return;
+            return true;
         }
 
         // Phase 3 — plant on empty farmland (prefer neighbour crop, fall back to any CROP seed)
@@ -181,7 +193,7 @@ public class ThrallAIFarming extends EntityAIBase {
             state = State.NAVIGATING;
             navTimer = 0;
             thrall.setStatusText("Planting...");
-            return;
+            return true;
         }
 
         // Phase 4 — only if bone meal use is enabled, look for an immature crop to fertilize
@@ -194,7 +206,7 @@ public class ThrallAIFarming extends EntityAIBase {
                 state = State.NAVIGATING;
                 navTimer = 0;
                 thrall.setStatusText("Fertilizing...");
-                return;
+                return true;
             }
         }
 
@@ -209,11 +221,11 @@ public class ThrallAIFarming extends EntityAIBase {
                 state = State.NAVIGATING;
                 navTimer = 0;
                 thrall.setStatusText("Restoring...");
-                return;
+                return true;
             }
         }
 
-        thrall.setStatusText("No crops");
+        return false;
     }
 
     @Nullable
