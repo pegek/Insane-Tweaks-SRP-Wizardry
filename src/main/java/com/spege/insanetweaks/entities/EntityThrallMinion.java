@@ -330,13 +330,14 @@ public class EntityThrallMinion extends EntityCreature {
                     && workStartTick > 0
                     && world.getTotalWorldTime() - workStartTick >= workDurationTicks) {
                 workStartTick = 0;
-                setStatusText("Shift done");
                 if (currentMode == ThrallMode.COLLECTING && collectingAI != null) {
                     // Collecting has its own end-of-shift routine: deposit + drop to WAITING_FOR_ITEMS.
                     collectingAI.onWorkTimerExpired();
                 } else if (getHomePoint() != null) {
+                    setStatusText("Shift done");
                     startReturnHome();
                 } else {
+                    setStatusText("Shift done");
                     setMode(ThrallMode.FOLLOW);
                 }
             }

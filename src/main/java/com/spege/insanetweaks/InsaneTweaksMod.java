@@ -332,9 +332,11 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellRestrictionEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteShroudEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImmuneBondHandler());
-            // Invariant B: make every mob ignore the immortal thrall (see spec 2.1).
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
         }
+        // Invariant B: make every mob ignore the immortal thrall (see spec 2.1). Registered
+        // unconditionally — the thrall entity itself registers unconditionally above, so its
+        // protection must not depend on the enableSpells module flag.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
@@ -424,8 +426,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         // substring 'contains' match against the entity's registry name, so the exact id works.
         // Guarded by SRP presence; a mid-game SRP config reload can drop this — the
         // ThrallTargetProtectionHandler remains the always-on guarantee.
-        if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells
-                && Loader.isModLoaded("scapeandrunparasites")) {
+        if (Loader.isModLoaded("scapeandrunparasites")) {
             appendThrallToSrpBlacklist();
         }
 

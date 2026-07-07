@@ -54,7 +54,7 @@ tmp*.*/
 logs/
 crash-reports/
 saves/
-config/
+/config/
 mods/
 options*.txt
 servers.dat
