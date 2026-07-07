@@ -47,7 +47,7 @@ Rules:
 
 - New `client/gui/config/InsaneTweaksGuiFactory implements IModGuiFactory`, registered via `@Mod(guiFactory = "…")` on `InsaneTweaksMod`.
 - The factory builds a `GuiConfig` whose element list is in **explicit order**: `modules → tweaks → traits → tombstone → thrall → entities → client` (gameplay first, debug last).
-- Element source: the mod's `Configuration` instance from `ConfigManager`. In Forge 1.12.2 the `CONFIGS` map is private → accessed via one-time cached reflection with a graceful fallback: if reflection fails, the GUI silently falls back to Forge's default (alphabetical) config GUI instead of crashing. Exact field/signature verified against Forge sources during planning.
+- Element source (planning-time correction — **no reflection needed**): `ConfigElement.from(ModConfig.class).getChildElements()` is the public Forge API the default GUI itself uses (`GuiConfig.collectConfigElements`, verified in Forge 1.12.2-14.23.5.2860 sources); the default merely sorts that list by localized name. Our factory reorders the same list explicitly and passes it to the `GuiConfig(parent, List<IConfigElement>, modid, configID, …)` constructor. The reflection fallback from the original design is dropped.
 - `@Config.LangKey` on the seven category fields + `en_us.lang` entries (`config.insanetweaks.category.modules=Modules & Integrations`, …) so display names are independent of file keys. Field-level LangKeys are out of scope.
 - The existing `OnConfigChangedEvent` → `ConfigManager.sync` handler stays as-is (works with any GUI factory).
 
@@ -70,7 +70,7 @@ Deliverable inside the implementation plan: a table `field → class (restart/wo
 
 ### 5. Old-config detection, backup, player notice
 
-- In `preInit`, BEFORE the first `ConfigManager.sync`: if `config/insanetweaks.cfg` exists and contains the old-structure marker (literal `"[ 1 ]`), copy it to `insanetweaks.cfg.pre-rework`, delete the original, and let Forge regenerate defaults.
+- Planning-time correction on timing: FML syncs annotation configs in `FMLModContainer.constructMod` (line 615 of the 2860 sources), immediately AFTER the mod instance is constructed (line 601) — so `preInit` is too late, but the **mod class constructor** runs before the first sync. The backup hook therefore lives in `new InsaneTweaksMod()`: if `config/insanetweaks.cfg` exists and contains the old-structure marker (literal `"[ 1 ]`), copy it to `insanetweaks.cfg.pre-rework`, delete the original, and let Forge regenerate defaults.
 - Log: `[InsaneTweaks] Config structure changed in <version>; old settings backed up to insanetweaks.cfg.pre-rework — re-apply any customizations.`
 - One-time chat notice on first login (reuse the `RecommendationsLoginHandler` one-shot pattern) telling the player the config was reset and where the backup is.
 
@@ -86,9 +86,16 @@ Deliverable inside the implementation plan: a table `field → class (restart/wo
 
 ## Risks
 
-1. **`ConfigManager` reflection** for the GUI factory — mitigated by cached one-time access + fallback to the default GUI; verified against Forge 1.12.2-14.23.5.2860 sources during planning.
-2. **Two-level POJO nesting** in annotation configs (`thrall.collecting`, `entities.assimilated_wizard.combat`) — believed supported (recursive object handling); verified against Forge source during planning; fallback: flatten to one level with prefixed names.
+1. ~~`ConfigManager` reflection~~ — RESOLVED in planning: `ConfigElement.from(Class)` public API removes the need entirely (see §2).
+2. **POJO nesting depth** — depth 2 (`thrall.collecting`) is proven today by the existing `traits.fastLearner` TraitConfig objects; depth 3 (`entities.assimilated_wizard.combat`) relies on the same unbounded recursion in `ConfigManager.sync` (verified recursive in sources) — confirmed additionally in the manual runClient pass; fallback: flatten Assimilated Wizard sub-categories to depth 2 with prefixed names.
 3. **Missed read-site during field moves** — mitigated by grep-audit per field in the plan + `-Xlint` build (field renames are compile errors, not silent).
+
+## Planning-time audit findings (selected, full table in the plan)
+
+- `tombstone.enableCurseOfPossessionPatch` gates handler REGISTRATION at `init` (InsaneTweaksMod:273) — currently unannotated; gains `@Config.RequiresMcRestart`.
+- `thrall.enableCollectingMode` currently has `@Config.RequiresMcRestart` but is read per-tick in `ThrallAICollecting.shouldExecute` — annotation is WRONG and is removed (live).
+- Assimilated Wizard `healthMultiplier`/`extraHealth`/`armorMultiplier`/`speedMultiplier`/`minFollowRange` (applied in `applyEntityAttributes`) and `decisionRange`/`rangeMultiplier` (baked into the cast-AI constructor) gain `@Config.RequiresWorldRestart`.
+- Version-history sentences in comments ("v2.1: nerfed from …") are trimmed — that context belongs in git history.
 
 ## Verification
 
