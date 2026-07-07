@@ -8,6 +8,7 @@
     "MixinEntityParasiteBase",
     "MixinEntitySummonedCreature",
     "MixinParasiteEventEntity",
+    "MixinRayOfPurification",
     "MixinSpell",
     "MixinSpellMinion",
     "MixinUnlockableReskillable"
