@@ -11,10 +11,10 @@
 - ✅ Task 5: Wizard (4c29a21) — spec+quality OK
 - ✅ Task 6: CallOfDemise (2b7c5e9) — spec+quality OK
 - ✅ Task 7: SpellCastFeedback + ParasiteShroud (c5cc87c) — spec+quality OK
-- ⬜ Task 8: SpellImmuneBond → RayTracer + SpellCastFeedback (pełny kod docelowy w planie, Task 8)
-- ⬜ Task 9: manualna weryfikacja w runClient (checklista w planie) + finalny przegląd całości
+- ✅ Task 8: SpellImmuneBond → RayTracer + SpellCastFeedback (commit 86d4a50) — spec+quality OK; quality review ujawnił 2 dodatkowe odchylenia zachowania (brak aim-assistu = ciaśniejsze celowanie; nieżywe encje mogą blokować promień) — zaakceptowane i dopisane do planu jako deviation 5
+- ⬜ Task 9: manualna weryfikacja w runClient (checklista w planie; dodatkowo sprawdzić odczucie celowania Immune Bond — deviation 5a) + finalny przegląd całości
 
-Wznowienie: kontynuować skill superpowers:subagent-driven-development od Taska 8 (SpellImmuneBond — pełny docelowy kod w planie; implementer → spec review → quality review), potem Task 9 (manualna weryfikacja runClient) i finalny przegląd całości. Build był zielony po każdym tasku.
+Wznowienie: został tylko Task 9 — manualna weryfikacja w `./gradlew runClient` (checklista w planie, Task 9) + finalny przegląd całości. Build był zielony po każdym tasku (1–8).
 
 ## Gdzie jesteśmy
 

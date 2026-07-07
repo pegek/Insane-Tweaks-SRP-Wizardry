@@ -17,6 +17,7 @@
 2. `customizeMinion` runs **before** the damage/health attribute modifiers — this is the order every current spell uses (lifetime → per-spell config → damage → health).
 3. `SpellCastFeedback` wraps the particle burst only, plus one combined `impactAt` (particles + sound at an entity). Bare `world.playSound` calls are already one-liners; wrapping them alone adds nothing.
 4. Known minor behavior change (accepted): `RayTracer.standardEntityRayTrace` respects line of sight — Immune Bond can no longer target entities through walls. Everything else must behave identically.
+5. Two further Immune Bond deviations found in Task 8 quality review, accepted as inherent to `standardEntityRayTrace` (both from decompiled EBW 4.3.19 `RayTracer`): (a) aim tolerance is tighter — the old sweep grew every candidate hitbox by 0.3 blocks, the new call passes `aimAssist = 0` so there is no forgiveness margin (if playtesting in Task 9 shows the spell is frustrating to land, call `RayTracer.rayTrace(...)` directly with `aimAssist ≈ 0.3f`); (b) non-living entities (items, arrows, boats) on the ray can block a living target behind them — the closest `Entity` hit wins and the cast silently fails. Both judged low-impact; verify aim feel in Task 9.
 
 ---
 
@@ -698,7 +699,7 @@ Run: `./gradlew runClient` (working dir `run/`). Create/enter a creative world.
 | Summon Primitive Yelloweye | Spawns **in the air** (2 blocks up); projectile damage scales with potency |
 | Summon Wizard | Spawns on ground; random armour class from {Wizard, Sage, Warlock, Battlemage}; random texture; casts spells |
 | Call of Demise | Spawns exactly **1** Beckon even with minion-count wand upgrades |
-| Immune Bond | Bonds a mob at up to 24 blocks; witch particles + enchantment sound on target; does NOT work through a wall (accepted change); does NOT bond players |
+| Immune Bond | Bonds a mob at up to 24 blocks; witch particles + enchantment sound on target; does NOT work through a wall (accepted change); does NOT bond players; aim feel acceptable despite zero aim-assist (deviation 5a — if too strict, switch to direct `RayTracer.rayTrace` with `aimAssist ≈ 0.3f`) |
 | Parasite Shroud | Shroud applies; ambient particles + enderman sound at caster |
 
 Also confirm for one summon: minion despawns after its lifetime, and health scales with a health-upgrade wand.
