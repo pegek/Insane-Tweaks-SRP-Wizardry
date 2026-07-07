@@ -332,6 +332,8 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellRestrictionEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteShroudEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImmuneBondHandler());
+            // Invariant B: make every mob ignore the immortal thrall (see spec 2.1).
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
         }
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
@@ -417,8 +419,48 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ReskillableGuiHandler());
         }
 
+        // SRP second layer for invariant B: append the thrall's registry name to SRP's public
+        // mobattackingBlackList so parasite targeting selectors skip it. checkEntity() does a
+        // substring 'contains' match against the entity's registry name, so the exact id works.
+        // Guarded by SRP presence; a mid-game SRP config reload can drop this — the
+        // ThrallTargetProtectionHandler remains the always-on guarantee.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells
+                && Loader.isModLoaded("scapeandrunparasites")) {
+            appendThrallToSrpBlacklist();
+        }
+
         // Register IGuiHandler for thrall inventory GUI (syncs slots server->client via Forge)
         NetworkRegistry.INSTANCE.registerGuiHandler(this, this);
+    }
+
+    /**
+     * Appends "insanetweaks:thrall_minion" to SRPConfig.mobattackingBlackList (a public static
+     * String[]) so SRP parasites never target the immortal thrall. Idempotent — skips if already
+     * present. Isolated in its own method so the SRP class link only loads when SRP is present.
+     */
+    private static void appendThrallToSrpBlacklist() {
+        try {
+            String thrallId = MODID + ":thrall_minion";
+            String[] current = com.dhanantry.scapeandrunparasites.util.config.SRPConfig.mobattackingBlackList;
+            if (current == null) {
+                com.dhanantry.scapeandrunparasites.util.config.SRPConfig.mobattackingBlackList =
+                        new String[] { thrallId };
+                LOGGER.info("[InsaneTweaks] Initialised SRP mobattackingBlackList with thrall id.");
+                return;
+            }
+            for (String s : current) {
+                if (thrallId.equals(s)) {
+                    return; // already present
+                }
+            }
+            String[] updated = java.util.Arrays.copyOf(current, current.length + 1);
+            updated[current.length] = thrallId;
+            com.dhanantry.scapeandrunparasites.util.config.SRPConfig.mobattackingBlackList = updated;
+            LOGGER.info("[InsaneTweaks] Added '{}' to SRP mobattackingBlackList (parasites will ignore the thrall).", thrallId);
+        } catch (Throwable t) {
+            // Never fatal — the LivingSetAttackTargetEvent handler is the primary guarantee.
+            LOGGER.warn("[InsaneTweaks] Could not append thrall to SRP mobattackingBlackList: {}", t.toString());
+        }
     }
 
     // -------------------------------------------------------------------------
