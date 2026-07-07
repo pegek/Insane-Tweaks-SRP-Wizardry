@@ -338,6 +338,9 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
+            if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.YelloweyeChargeHandler());
+            }
         }
 
         // --- Build the list of recommended mods that are missing / need updating ---

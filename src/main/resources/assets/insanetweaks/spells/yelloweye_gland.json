@@ -13,8 +13,8 @@
   "tier": "master",
   "element": "magic",
   "type": "attack",
-  "cost": 120,
-  "chargeup": 12,
-  "cooldown": 70,
+  "cost": 140,
+  "chargeup": 30,
+  "cooldown": 100,
   "base_properties": {}
 }
