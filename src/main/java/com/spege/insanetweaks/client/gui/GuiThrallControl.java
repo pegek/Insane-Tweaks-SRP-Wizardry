@@ -24,6 +24,8 @@ public class GuiThrallControl extends GuiScreen {
     public void initGui() {
         int cx = this.width / 2;
         int cy = this.height / 2;
+        // Two columns of 150px + 10px gap need >= 310 scaled px of width; the vanilla
+        // scaled-resolution floor is 320, so this fits everywhere vanilla allows.
         int btnW = 150;
         int btnH = 20;
         int gap = 3;
@@ -59,7 +61,7 @@ public class GuiThrallControl extends GuiScreen {
         this.buttonList.add(new GuiButton(6, rightX, startY + 2 * (btnH + gap), btnW, btnH,
                 I18n.format("gui.insanetweaks.thrall.action.inventory")));
         this.buttonList.add(new GuiButton(7, rightX, startY + 3 * (btnH + gap), btnW, btnH,
-                "§c" + I18n.format("gui.insanetweaks.thrall.action.dismiss")));
+                "\u00a7c" + I18n.format("gui.insanetweaks.thrall.action.dismiss")));
     }
 
     @Override
