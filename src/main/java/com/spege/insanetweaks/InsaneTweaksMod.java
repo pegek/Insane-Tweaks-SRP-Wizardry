@@ -84,6 +84,16 @@ public class InsaneTweaksMod implements IGuiHandler {
     private static final String URL_POTIONCORE = "https://www.curseforge.com/minecraft/mc-mods/potion-core";
 
     // -------------------------------------------------------------------------
+    // Constructor
+    // -------------------------------------------------------------------------
+
+    public InsaneTweaksMod() {
+        // Must run before FML's first ConfigManager.sync (which fires later inside
+        // FMLModContainer.constructMod) - see OldConfigBackup.
+        com.spege.insanetweaks.config.OldConfigBackup.backupOldConfigIfPresent();
+    }
+
+    // -------------------------------------------------------------------------
     // preInit
     // -------------------------------------------------------------------------
 
@@ -337,6 +347,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         // unconditionally — the thrall entity itself registers unconditionally above, so its
         // protection must not depend on the enableSpells module flag.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
+        // One-shot config-reset notice; registered unconditionally - it no-ops unless a migration
+        // happened this launch, and must not be suppressible by a setting that itself just got reset.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
