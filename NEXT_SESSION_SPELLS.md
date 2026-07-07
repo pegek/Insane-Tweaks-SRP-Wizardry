@@ -55,3 +55,19 @@ Fixed 2026-07-07 after in-game testing (commits 6fdf53a, 1c22842, a9f5cbe, 648da
 - [ ] Ray vs Beckon: sustained ray on each Beckon tier (SI–SIV) — first hit procs 20 DMG at potency 1.0 / 80 at ≥1.2 (linear between), kill credit + loot on death; re-cast re-procs; sweeping onto a second Beckon mid-cast procs it independently.
 - [ ] Ray vs Beckon: with SRP `disloBurningDeath` gene rolled, the Beckon still dies (OUT_OF_WORLD fallback) instead of sticking at 1 HP.
 - [ ] Ray: non-Beckon targets and `enableSpells=false` behave exactly like vanilla EBW; hurt flash/sound shows on the non-lethal purge hit.
+
+## ModConfig rework (plan `2026-07-07-config-rework.md`) — deferred manual checklist
+
+All 5 tasks done and committed (2026-07-08; commits 2182766, e814927, 8c375b6, 77e1587, c3a96ae, 2829581). Verify in `runClient`:
+
+- [ ] Fresh world, no old config: insanetweaks.cfg has clean lowercase sections (modules/tweaks/traits/tombstone/thrall/entities/client), thrall/entities show nested sub-sections, no "[ 1 ]" keys anywhere.
+- [ ] Old-format config present at launch: backed up to insanetweaks.cfg.pre-rework (atomic move), fresh file generated, log line present, one-time chat notice on first login incl. the minutes note (fires even with Suppress Startup Chat Warnings = true).
+- [ ] Second launch after a successful migration does NOT re-trigger the backup or the notice.
+- [ ] Forced move failure (make insanetweaks.cfg read-only or hold it open): game still loads, WARN in log, next launch retries cleanly — no permanent hybrid config.
+- [ ] Multiplayer: exactly one joiner (the first) gets the reset notice per launch — confirm that matches intent.
+- [ ] Mod Options GUI: sections in order modules→tweaks→traits→tombstone→thrall→entities→client with localized names; thrall/entities open nested sub-screens (depth 3 renders for entities.assimilated_wizard.*); per-field restart badges still show (not flattened).
+- [ ] Live reload: change Collecting scan radius via GUI while a thrall collects — applies without restart; Enable Collecting Mode shows NO restart flag; Curse of Possession Patch and Assimilated Wizard attribute fields DO show their restart/world flags.
+- [ ] Books cooldowns: set 15 min, use Book of Disenchantment on a tombstone block — cooldown ~15 min; 0 disables.
+- [ ] Assimilated Wizard still spawns/converts correctly (entities.assimilated_wizard config paths wired right); thrall modes all reachable and tunables respected.
+- [ ] runServer boots clean (GUI factory is referenced only as a @Mod guiFactory string; no client classloading on the dedicated server).
+- [ ] Recommendations login notice: with warnings suppressed on the first joiner, a later non-suppressing joiner still receives it (fix 6ccef27).
