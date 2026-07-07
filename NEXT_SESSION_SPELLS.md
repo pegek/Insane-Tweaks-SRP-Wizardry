@@ -42,3 +42,16 @@ Build green after every task; in-game testing deferred by the user (2026-07-07).
 - [ ] GUI: two columns (modes left, actions right); hovering each button shows a wrapped one-line tooltip.
 - [ ] `runServer` boots without a client-classloading crash (ThrallTargetProtectionHandler + SRPConfig append are server-safe).
 - [ ] Mob-ignore works with `Enable Spells = false` (protection is unconditional since d7dc71b — thrall spawned earlier must still be ignored).
+
+**Config migration note:** existing `insanetweaks.cfg` files keep the OLD `collectingMinTpDistance=30`;
+Forge only writes new defaults for missing keys. Delete or reset that key to get the new default 8.
+
+## Farming freeze & Ray-vs-Beckon (plan `2026-07-07-farming-freeze-ray-beckon.md`) — deferred checks
+
+Fixed 2026-07-07 after in-game testing (commits 6fdf53a, 1c22842, a9f5cbe, 648da30). Verify:
+
+- [ ] Farming: no freeze on tiles approached from any diagonal (the old corner-vs-center oscillation); with `enableThrallDebugLogs`, no NAVIGATING↔WORKING flip-flop and the nav-timeout teleport still fires for genuinely fenced-off targets (~5 s).
+- [ ] Farming: knockback mid-work to 2.0–2.5 blocks does NOT abandon the action (hysteresis band); spot-check TILL/PLANT/BONEMEAL besides harvest; test a multi-tier (sloped) field.
+- [ ] Ray vs Beckon: sustained ray on each Beckon tier (SI–SIV) — first hit procs 20 DMG at potency 1.0 / 80 at ≥1.2 (linear between), kill credit + loot on death; re-cast re-procs; sweeping onto a second Beckon mid-cast procs it independently.
+- [ ] Ray vs Beckon: with SRP `disloBurningDeath` gene rolled, the Beckon still dies (OUT_OF_WORLD fallback) instead of sticking at 1 HP.
+- [ ] Ray: non-Beckon targets and `enableSpells=false` behave exactly like vanilla EBW; hurt flash/sound shows on the non-lethal purge hit.
