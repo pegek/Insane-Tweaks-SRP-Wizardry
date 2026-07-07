@@ -57,6 +57,8 @@ public final class RayBeckonPurge {
         }
         if (ticksInUse <= state.lastTicksInUse) {
             // ticksInUse dropped → a new continuous cast started → reset this cast's proc set.
+            // NOTE: this reset relies on SpellRay hitting exactly ONE entity per tick (non-piercing);
+            // if the ray ever became piercing/AoE this would need per-target tick tracking.
             state.procced.clear();
         }
         state.lastTicksInUse = ticksInUse;
@@ -83,6 +85,9 @@ public final class RayBeckonPurge {
         float dmg = purgeDamage(potency);
         float hp = beckon.getHealth();
         if (hp - dmg > 0.0F) {
+            // Deliberately bypasses SRP's on-hurt retaliation (e.g. EntityPStationaryArchitect bomb
+            // spawn) — the "unavoidable" hit is retaliation-free by design; EBW's normal ray ticks
+            // still trigger it.
             beckon.setHealth(hp - dmg);
             // Byte 2 = "entity hurt": red flash + hurt sound on clients. Same channel SRP itself
             // uses (EntityParasiteBase.attackEntityAsMobMinimum -> world.setEntityState(target,(byte)2)).
@@ -93,6 +98,12 @@ public final class RayBeckonPurge {
             beckon.setHealth(1.0F);
             DamageSource src = MagicDamage.causeDirectMagicDamage(caster, MagicDamage.DamageType.RADIANT);
             beckon.attackEntityFrom(src, Float.MAX_VALUE);
+            if (beckon.isEntityAlive()) {
+                // disloBurningDeath gene zeroes non-fire magic; OUT_OF_WORLD bypasses both the
+                // gene and the damage cap (SRP itself force-kills Beckons with it). Kill
+                // attribution is lost only in this rare config-gated case.
+                beckon.attackEntityFrom(DamageSource.OUT_OF_WORLD, Float.MAX_VALUE);
+            }
         }
     }
 }
