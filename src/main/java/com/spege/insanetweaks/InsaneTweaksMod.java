@@ -53,7 +53,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION, dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
+@Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
+        guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
+        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
         "after:srpextra;after:baubles;after:potioncore;before:reskillable")
 public class InsaneTweaksMod implements IGuiHandler {

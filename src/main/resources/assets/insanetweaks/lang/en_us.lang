@@ -208,3 +208,11 @@ gui.insanetweaks.thrall.tooltip.set_home=Sets the thrall's home to its current s
 gui.insanetweaks.thrall.tooltip.return_home=Sends the thrall home right now to deposit its inventory, then wait there.
 gui.insanetweaks.thrall.tooltip.inventory=Opens the thrall's 27-slot backpack.
 gui.insanetweaks.thrall.tooltip.dismiss=Removes the thrall and drops its items. Its slot backup is kept for re-summoning.
+
+config.insanetweaks.category.modules=Modules & Integrations
+config.insanetweaks.category.tweaks=Tweaks & Fixes
+config.insanetweaks.category.traits=Skill Traits
+config.insanetweaks.category.tombstone=Tombstone Tweaks
+config.insanetweaks.category.thrall=Thrall
+config.insanetweaks.category.entities=Entities
+config.insanetweaks.category.client=Client & Debug
