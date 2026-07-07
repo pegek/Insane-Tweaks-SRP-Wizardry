@@ -290,15 +290,15 @@ public class ModConfig {
                 @Config.RangeInt(min = 0, max = 100)
                 public int graveDustDropChance = 100;
 
-                @Config.Comment("Cooldown in hours before the Book of Disenchantment can be used again. Set to 0 to disable cooldown.")
-                @Config.Name("Book of Disenchantment Cooldown (Hours)")
-                @Config.RangeDouble(min = 0, max = 720)
-                public double bookOfDisenchantmentCooldownConfig = 0.1;
+                @Config.Comment("Cooldown in minutes before the Book of Disenchantment can be used again. 0 disables the cooldown. Max 720 = 12 h.")
+                @Config.Name("Book of Disenchantment Cooldown (Minutes)")
+                @Config.RangeInt(min = 0, max = 720)
+                public int bookOfDisenchantmentCooldownMinutes = 6;
 
-                @Config.Comment("Cooldown in hours before the Book of Magic Impregnation can be used again. Set to 0 to disable cooldown.")
-                @Config.Name("Book of Magic Impregnation Cooldown (Hours)")
-                @Config.RangeDouble(min = 0, max = 720)
-                public double bookOfMagicImpregnationCooldownConfig = 0.1;
+                @Config.Comment("Cooldown in minutes before the Book of Magic Impregnation can be used again. 0 disables the cooldown. Max 720 = 12 h.")
+                @Config.Name("Book of Magic Impregnation Cooldown (Minutes)")
+                @Config.RangeInt(min = 0, max = 720)
+                public int bookOfMagicImpregnationCooldownMinutes = 6;
 
                 // ----------------------------------------------------------------
                 // KNOWLEDGE OF DEATH - PERK SETTINGS

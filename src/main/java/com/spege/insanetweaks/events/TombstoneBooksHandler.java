@@ -105,25 +105,25 @@ public class TombstoneBooksHandler {
         }
 
         String regName = bookStack.getItem().getRegistryName().toString();
-        double cooldownHours = 0;
+        int cooldownMinutes = 0;
         String nbtKey = "";
 
         if (regName.equals("tombstone:book_of_disenchantment")) {
-            double conf = com.spege.insanetweaks.config.ModConfig.tombstone.bookOfDisenchantmentCooldownConfig;
+            int conf = com.spege.insanetweaks.config.ModConfig.tombstone.bookOfDisenchantmentCooldownMinutes;
             if (conf <= 0) return;
-            cooldownHours = conf;
+            cooldownMinutes = conf;
             nbtKey = "InsaneTweaks_DisenchantBookCooldown";
         } else if (regName.equals("tombstone:book_of_magic_impregnation")) {
-            double conf = com.spege.insanetweaks.config.ModConfig.tombstone.bookOfMagicImpregnationCooldownConfig;
+            int conf = com.spege.insanetweaks.config.ModConfig.tombstone.bookOfMagicImpregnationCooldownMinutes;
             if (conf <= 0) return;
-            cooldownHours = conf;
+            cooldownMinutes = conf;
             nbtKey = "InsaneTweaks_ImpregnationBookCooldown";
         } else {
             return;
         }
 
         // Just blindly schedule check, we no longer pre-block here since Vanilla Tracker does it
-        long cooldownTicks = (long)(cooldownHours * 60 * 60 * 20);
+        long cooldownTicks = (long) cooldownMinutes * 60L * 20L;
         pendingChecks.add(new PendingCooldownCheck(player, bookHand, bookStack, cooldownTicks, nbtKey));
     }
 
