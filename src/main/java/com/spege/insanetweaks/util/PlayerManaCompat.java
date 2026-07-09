@@ -24,6 +24,8 @@ public final class PlayerManaCompat {
     private static Method getMaxManaMethod;
     private static Method getSpellCostMethod;
     private static Method addMaxManaForPlayerMethod;
+    private static Method setManaMethod;   // ISoul.setMP(EntityPlayer, double)
+    private static Method syncSoulMethod;  // ISoul.sync(EntityPlayer)
     private static Object manaPoolConfig;
     private static java.lang.reflect.Field maxManaCapField;
     private static Item chantCostUpgrade;
@@ -112,6 +114,30 @@ public final class PlayerManaCompat {
             return true;
         } catch (Exception e) {
             logDebugFailure("increase player_mana max MP", e);
+            return false;
+        }
+    }
+
+    /**
+     * Sets the player's CURRENT mana to the given value and syncs it to the client.
+     * Returns false when player_mana is absent or reflection fails.
+     */
+    public static boolean setCurrentMana(EntityPlayer player, double value) {
+        if (player == null || !isAvailable() || setManaMethod == null) {
+            return false;
+        }
+        try {
+            Object soul = getSoulMethod.invoke(null, player);
+            if (soul == null) {
+                return false;
+            }
+            setManaMethod.invoke(soul, player, value);
+            if (syncSoulMethod != null) {
+                syncSoulMethod.invoke(soul, player);
+            }
+            return true;
+        } catch (Exception e) {
+            logDebugFailure("set player_mana MP", e);
             return false;
         }
     }
@@ -221,6 +247,8 @@ public final class PlayerManaCompat {
             getMaxManaMethod = soulClass.getMethod("getMaxMP");
             getSpellCostMethod = eventsHandlerClass.getMethod("getCost", Spell.class);
             addMaxManaForPlayerMethod = soulClass.getMethod("addMaxMana", EntityPlayer.class, Double.TYPE);
+            setManaMethod = soulClass.getMethod("setMP", EntityPlayer.class, Double.TYPE);
+            syncSoulMethod = soulClass.getMethod("sync", EntityPlayer.class);
 
             Object item = sageClass.getField("CHANT_COST").get(null);
             if (item instanceof Item) {
