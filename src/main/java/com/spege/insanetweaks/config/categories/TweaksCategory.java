@@ -13,10 +13,11 @@ public class TweaksCategory {
     public boolean enableCursedRingFix = true;
 
     @Config.Comment({
-            "Additional effects removed by the CLEANSE effect, on top of all effects where isBeneficial() == false.",
-            "Add effect IDs here if a mod's negative effect is not getting removed automatically.",
+            "Additional effects removed by the CLEANSE effect, on top of (a) all effects where",
+            "isBeneficial() == false and (b) the built-in parasite-effect list shipped in the mod",
+            "(all harmful SRParasites/SRPExtra effects — see PotionCleanse.BUILT_IN_CLEANSED_EFFECTS).",
+            "Add effect IDs here only if some other mod's negative effect is not removed automatically.",
             "Example: minecraft:glowing" })
     @Config.Name("Cleanse Effect List")
-    public String[] cleanseAdditionalEffects = { "srparasites:novision", "srparasites:prey",
-            "srparasites:viral" };
+    public String[] cleanseAdditionalEffects = {};
 }
