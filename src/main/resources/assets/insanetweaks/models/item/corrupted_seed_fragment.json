@@ -1,0 +1,4 @@
+{
+  "parent": "item/generated",
+  "textures": { "layer0": "insanetweaks:items/corrupted_seed_fragment" }
+}

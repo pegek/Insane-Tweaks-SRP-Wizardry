@@ -44,6 +44,13 @@ item.bauble_fruit_elytra.name=§dПлод-бабл — Элитры
 item.bauble_fruit_totem.name=§dПлод-бабл — Тотемы
 item.bauble_fruit_trinket.name=§dПлод-бабл — Безделушка
 
+# Corrupted fruit loop
+item.corrupted_seed_fragment.name=Фрагмент осквернённого семени
+item.corrupted_seed.name=Осквернённое семя
+item.corrupted_fruit.name=Осквернённый плод
+entity.insanetweaks.corrupted_sapling.name=Осквернённый росток
+entity.corrupted_sapling.name=Осквернённый росток
+
 # Potion effects
 potion.insanetweaks.cleanse=§eОчищение
 potion.insanetweaks.gilded_stasis=§6Позолоченный стазис

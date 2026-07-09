@@ -40,7 +40,8 @@ public final class EnigmaticLegacyCompat {
         if (blessedRing == null) {
             return false;
         }
-        baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi.getBaublesHandler(player);
+        baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi
+                .getBaublesHandler((net.minecraft.entity.EntityLivingBase) player);
         if (handler == null) {
             return false;
         }

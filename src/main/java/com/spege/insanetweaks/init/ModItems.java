@@ -113,12 +113,22 @@ public class ModItems {
     public static final Item BAUBLE_FRUIT_TOTEM  = new TotemFruitItem();
     public static final Item BAUBLE_FRUIT_TRINKET= new TrinketFruitItem();
 
+    // Corrupted fruit loop (Blessed Ring gate)
+    public static final Item CORRUPTED_SEED_FRAGMENT = new com.spege.insanetweaks.items.fruit.CorruptedSeedFragmentItem();
+    public static final Item CORRUPTED_SEED          = new com.spege.insanetweaks.items.fruit.CorruptedSeedItem();
+    public static final Item CORRUPTED_FRUIT         = new com.spege.insanetweaks.items.fruit.CorruptedFruitItem();
+
     /** All Bauble Fruit items  Efor convenient bulk registration / model registration. */
     private static final Item[] ALL_BAUBLE_FRUITS = {
         BAUBLE_FRUIT_RING, BAUBLE_FRUIT_AMULET, BAUBLE_FRUIT_BODY,
         BAUBLE_FRUIT_HEAD, BAUBLE_FRUIT_CHARM,  BAUBLE_FRUIT_BELT,
         BAUBLE_FRUIT_ELYTRA, BAUBLE_FRUIT_TOTEM, BAUBLE_FRUIT_TRINKET
     };
+
+    /** Typed fruits for the corrupted-fruit random unlock. Defensive copy. */
+    public static Item[] getAllBaubleFruits() {
+        return ALL_BAUBLE_FRUITS.clone();
+    }
 
     private static final Item[] ALL_WIZARDRY_CORES = WizardryCoreItems.ALL_CORES;
 
@@ -154,6 +164,7 @@ public class ModItems {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits
                 && net.minecraftforge.fml.common.Loader.isModLoaded("baubles")) {
             event.getRegistry().registerAll(ALL_BAUBLE_FRUITS);
+            event.getRegistry().registerAll(CORRUPTED_SEED_FRAGMENT, CORRUPTED_SEED, CORRUPTED_FRUIT);
         }
 
         // NOTE: OreDictionary bridge registration is NOT done here. During the Item event the
@@ -225,6 +236,9 @@ public class ModItems {
                     fruit, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("insanetweaks:bauble_fruit", "inventory")
                 );
             }
+            registerModel(CORRUPTED_SEED_FRAGMENT);
+            registerModel(CORRUPTED_SEED);
+            registerModel(CORRUPTED_FRUIT);
         }
     }
 

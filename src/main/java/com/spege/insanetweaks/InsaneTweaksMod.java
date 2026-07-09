@@ -201,6 +201,15 @@ public class InsaneTweaksMod implements IGuiHandler {
                             return new RenderThrallMinion(manager);
                         }
                     });
+            net.minecraftforge.fml.client.registry.RenderingRegistry.registerEntityRenderingHandler(
+                    com.spege.insanetweaks.entities.EntityCorruptedSapling.class,
+                    new net.minecraftforge.fml.client.registry.IRenderFactory<com.spege.insanetweaks.entities.EntityCorruptedSapling>() {
+                        @Override
+                        public net.minecraft.client.renderer.entity.Render<com.spege.insanetweaks.entities.EntityCorruptedSapling> createRenderFor(
+                                net.minecraft.client.renderer.entity.RenderManager manager) {
+                            return new com.spege.insanetweaks.client.renderer.entity.RenderCorruptedSapling(manager);
+                        }
+                    });
 
             // Zhonya rework: golden player tint during Gilded Stasis.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaClientHandler());
@@ -278,6 +287,9 @@ public class InsaneTweaksMod implements IGuiHandler {
                 EntityBeckonSivMinion.class, "beckon_siv_minion", 110, this, 64, 3, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "thrall_minion"),
                 EntityThrallMinion.class, "thrall_minion", 114, this, 64, 3, true);
+        // ID 116 — next free (100-115 used). Never reuse/reorder network-stable IDs.
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "corrupted_sapling"),
+                com.spege.insanetweaks.entities.EntityCorruptedSapling.class, "corrupted_sapling", 116, this, 64, 3, false);
 
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
@@ -428,6 +440,12 @@ public class InsaneTweaksMod implements IGuiHandler {
                 String ver = baubles != null ? baubles.getVersion() : "unknown";
                 LOGGER.info("[InsaneTweaks] Bauble Fruits: Original Baubles v{} detected (not BaublesEX). " +
                         "Running in LEGACY MODE.", ver);
+            }
+
+            if (Loader.isModLoaded("scapeandrunparasites")) {
+                // Corrupted fruit loop (fragment drops + corrupted-eat doom).
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFragmentDropHandler());
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFruitDoomHandler());
             }
         }
 

@@ -61,6 +61,13 @@ item.bauble_fruit_elytra.name=§dBauble Fruit - Elytra
 item.bauble_fruit_totem.name=§dBauble Fruit - Totem
 item.bauble_fruit_trinket.name=§dBauble Fruit - Trinket
 
+# Corrupted fruit loop
+item.corrupted_seed_fragment.name=Corrupted Seed Fragment
+item.corrupted_seed.name=Corrupted Seed
+item.corrupted_fruit.name=Corrupted Fruit
+entity.insanetweaks.corrupted_sapling.name=Corrupted Sapling
+entity.corrupted_sapling.name=Corrupted Sapling
+
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse
 potion.insanetweaks.gilded_stasis=§6Gilded Stasis
