@@ -12,6 +12,7 @@ import com.spege.insanetweaks.spells.SpellTestProjectile;
 import com.spege.insanetweaks.spells.SpellCallOfDemise;
 import com.spege.insanetweaks.spells.SpellImmuneBond;
 import com.spege.insanetweaks.spells.SpellSummonThrall;
+import com.spege.insanetweaks.spells.SpellCleanse;
 import com.spege.insanetweaks.spells.SpellYelloweyeGland;
 import electroblob.wizardry.spell.Spell;
 import net.minecraftforge.event.RegistryEvent;
@@ -33,6 +34,7 @@ public class ModSpells {
     public static final Spell PARASITE_SHROUD = new SpellParasiteShroud();
     public static final Spell IMMUNE_BOND = new SpellImmuneBond();
     public static final Spell SUMMON_THRALL = new SpellSummonThrall();
+    public static final Spell CLEANSE = new SpellCleanse();
 
     @SubscribeEvent
     public static void registerSpells(RegistryEvent.Register<Spell> event) {
@@ -52,5 +54,6 @@ public class ModSpells {
         registry.register(PARASITE_SHROUD);
         registry.register(IMMUNE_BOND);
         registry.register(SUMMON_THRALL);
+        registry.register(CLEANSE);
     }
 }
