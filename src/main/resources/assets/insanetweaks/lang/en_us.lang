@@ -47,6 +47,9 @@ item.insanetweaks:infernal_crown.desc=Every 10th summoned creature is permanentl
 item.insanetweaks.zhonyas_hourglass.name=§eZhonyas Hourglass
 item.insanetweaks:zhonyas_hourglass.desc=Restores SRP-infected entities to their original form when using Purifying Pulse spell. In Creative, right-click to directly restore targeted entity.
 
+item.insanetweaks.restoration_hourglass.name=§eHourglass of Restoration
+item.insanetweaks:restoration_hourglass.desc=Restores SRP-infected entities to their original form when using Purifying Pulse spell. In Creative, right-click to directly restore targeted entity.
+
 # Bauble Fruits
 item.bauble_fruit_ring.name=§dBauble Fruit - Ring
 item.bauble_fruit_amulet.name=§dBauble Fruit - Amulet

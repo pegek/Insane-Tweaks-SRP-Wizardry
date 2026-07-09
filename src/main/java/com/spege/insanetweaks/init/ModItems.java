@@ -100,6 +100,7 @@ public class ModItems {
     public static final Item SENTIENT_AEGIS = new com.spege.insanetweaks.items.shield.SentientAegisItem();
     public static final Item INFERNAL_CROWN = new com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact();
     public static final Item ZHONYAS_HOURGLASS = new ItemZhonyasHourglassArtefact();
+    public static final Item RESTORATION_HOURGLASS = new com.spege.insanetweaks.baubles.ItemRestorationHourglassArtefact();
 
     // Bauble Fruits  Eall 6 slot types
     public static final Item BAUBLE_FRUIT_RING   = new RingFruitItem();
@@ -128,7 +129,7 @@ public class ModItems {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
             event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
             event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT);
-            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS);
+            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS, RESTORATION_HOURGLASS);
 
             // Crafting-component clones: only register when swparasites is NOT present, so the
             // originals aren't duplicated. Recipes resolve via the OreDictionary bridge either way.
@@ -204,6 +205,7 @@ public class ModItems {
             registerModel(SENTIENT_AEGIS);
             registerModel(INFERNAL_CROWN);
             registerModel(ZHONYAS_HOURGLASS);
+            registerModel(RESTORATION_HOURGLASS);
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {

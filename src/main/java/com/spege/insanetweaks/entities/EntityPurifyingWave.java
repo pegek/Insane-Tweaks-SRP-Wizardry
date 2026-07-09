@@ -7,7 +7,7 @@ import java.util.Set;
 import com.dhanantry.scapeandrunparasites.client.particle.SRPEnumParticle;
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import com.dhanantry.scapeandrunparasites.init.SRPPotions;
-import com.spege.insanetweaks.baubles.ItemZhonyasHourglassArtefact;
+import com.spege.insanetweaks.baubles.ItemRestorationHourglassArtefact;
 import com.spege.insanetweaks.util.SpellCastFeedback;
 import com.spege.insanetweaks.util.SrpPurificationHelper;
 
@@ -83,7 +83,7 @@ public class EntityPurifyingWave extends EntityAreaEffectCloud {
 
         this.purifyRing(this.processedRadius, currentRadius);
         this.affectParasites(currentRadius);
-        ItemZhonyasHourglassArtefact.tryRestoreInRange(
+        ItemRestorationHourglassArtefact.tryRestoreInRange(
                 this.world, this.posX, this.posY, this.posZ, currentRadius, this.getOwner());
         this.processedRadius = currentRadius;
     }
