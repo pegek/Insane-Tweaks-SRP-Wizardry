@@ -45,6 +45,20 @@ public class TweaksCategory {
     @Config.RangeInt(min = 0)
     public int zhonyaMinMana = 100;
 
+    @Config.Comment({"Zhonya's Hourglass: when player_mana is NOT installed, fall back to a built-in",
+            "Electroblob's Wizardry mana pool stored on the item itself. Activation then requires",
+            "the item to be fully charged and drains it to zero (recharge with a Mana Flask while",
+            "the artefact is held). The long cooldown still applies on top. When OFF and player_mana",
+            "is absent, the artefact is inert."})
+    @Config.Name("Zhonya EB-Mana Fallback")
+    public boolean zhonyaEbManaFallback = true;
+
+    @Config.Comment({"Zhonya's Hourglass: capacity of the built-in EB mana pool used by the fallback",
+            "(default 3000). A full charge is required to activate and is fully consumed."})
+    @Config.Name("Zhonya EB-Mana Capacity")
+    @Config.RangeInt(min = 1)
+    public int zhonyaEbManaCapacity = 3000;
+
     @Config.Comment({"Corrupted Seed Fragment drop chance from high-tier parasites",
             "(only rolls when the killer wears the Blessed Ring)."})
     @Config.Name("Fragment Drop Chance")
