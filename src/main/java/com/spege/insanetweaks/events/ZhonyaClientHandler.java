@@ -4,6 +4,7 @@ import com.spege.insanetweaks.init.ModPotions;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -16,7 +17,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ZhonyaClientHandler {
 
-    @SubscribeEvent
+    // LOWEST = we tint last, so if any other mod cancels the Pre at higher priority
+    // we never set the color and Post's reset can't be skipped-while-tinted.
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     @SuppressWarnings("null") // ModPotions.GILDED_STASIS is guaranteed non-null at runtime
     public void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
         if (event.getEntityPlayer().isPotionActive(ModPotions.GILDED_STASIS)) {

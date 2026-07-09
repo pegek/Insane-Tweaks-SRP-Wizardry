@@ -94,6 +94,17 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         player.setHealth(player.getMaxHealth());
         player.addPotionEffect(new PotionEffect(ModPotions.GILDED_STASIS, stasisTicks, 0, false, false));
         player.addPotionEffect(new PotionEffect(ModPotions.CLEANSE, stasisTicks, 0, false, false));
+        // True root: SLOWNESS amp 9 = -150% speed (clamps to 0) via the synced attribute
+        // system, so it works on BOTH sides without packets.
+        player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.SLOWNESS, stasisTicks, 9, false, false));
+        // Negative jump boost makes getJumpUpwardsMotion() non-positive — jumping is disabled.
+        player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.JUMP_BOOST, stasisTicks, -6, false, false));
+        player.motionX = 0.0D;
+        player.motionY = 0.0D;
+        player.motionZ = 0.0D;
+        // Freeze mid-air too: no gravity for the stasis window (flag tracked for cleanup).
+        player.setNoGravity(true);
+        player.getEntityData().setBoolean(ZhonyaStasisHandler.TAG_STASIS_NO_GRAVITY, true);
 
         // --- Aggro loss window (NBT timestamp; handler czyści per-tick) ---
         long until = world.getTotalWorldTime() + ModConfig.tweaks.zhonyaAggroLossTicks;
