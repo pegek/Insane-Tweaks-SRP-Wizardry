@@ -39,6 +39,42 @@ public class PotionCleanse extends Potion {
     private static final ResourceLocation CLEANSE_TEXTURE =
             new ResourceLocation("insanetweaks", "textures/gui/potion/cleanse.png");
 
+    /**
+     * Built-in parasite-ecosystem effects removed by Cleanse (audit 2026-07-09,
+     * SRParasites 1.10.7 + SRPExtra 1.10.7.5; SW:Parasites registers no own potions).
+     * Shipped in code rather than as config defaults because Forge @Config values
+     * already written to disk never pick up new defaults.
+     * Deliberately EXCLUDED (protective/mechanic — never add): srparasites:repel,
+     * srparasites:antimall, srparasites:rage, srparasites:jugg, srparasites:pivot,
+     * srparasites:primitive/adapted/pure/crude/feral/nexus,
+     * srparasites:distorted_enlightenment, srparasites:dod_smoke_trail.
+     */
+    private static final String[] BUILT_IN_CLEANSED_EFFECTS = {
+            "srparasites:coth", "srparasites:fear", "srparasites:bleed",
+            "srparasites:corrosive", "srparasites:viral", "srparasites:vomit",
+            "srparasites:senses", "srparasites:prey", "srparasites:debar",
+            "srparasites:needler", "srparasites:foster", "srparasites:link",
+            "srparasites:parate", "srparasites:spotted", "srparasites:braining",
+            "srparasites:novision", "srparasites:indeaf", "srparasites:overheating",
+            "srparasites:conta", "srparasites:muscleout", "srparasites:effectpos",
+            "srparasites:effectneg", "srparasites:the_sign",
+            "srparasites:thornshade_thorns",
+            "srpextra:stung", "srpextra:confused" };
+
+    /** Resolved lazily on first cleanse pulse — registries are complete by then. */
+    private static java.util.List<Potion> builtInResolved = null;
+
+    private static java.util.List<Potion> getBuiltInCleansed() {
+        if (builtInResolved == null) {
+            builtInResolved = new java.util.ArrayList<>();
+            for (String id : BUILT_IN_CLEANSED_EFFECTS) {
+                Potion p = ForgeRegistries.POTIONS.getValue(new ResourceLocation(id));
+                if (p != null) builtInResolved.add(p);
+            }
+        }
+        return builtInResolved;
+    }
+
     public PotionCleanse() {
         super(false, 0xAADDFF); // color: light icy-blue
         this.setPotionName("potion.insanetweaks.cleanse");
@@ -60,10 +96,12 @@ public class PotionCleanse extends Potion {
 
     /**
      * On each trigger (every 10t):
-     *   Pass 1  Eremoves all effects where isBeneficial() == false.
-     *   Pass 2  Eremoves effects listed in ModConfig.tweaks.cleanseAdditionalEffects.
-     *             Handles effects that bypass the isBeneficial() check (e.g. some mod effects
-     *             are incorrectly registered as neutral/beneficial, like srparasites:no_vision).
+     *   Pass 1   removes all effects where isBeneficial() == false.
+     *   Pass 1.5 removes the built-in parasite-ecosystem effect list (BUILT_IN_CLEANSED_EFFECTS),
+     *             covering harmful SRParasites/SRPExtra effects that are incorrectly registered as
+     *             neutral/beneficial (e.g. srparasites:novision) and thus bypass Pass 1.
+     *   Pass 2   removes effects listed in ModConfig.tweaks.cleanseAdditionalEffects, a user-editable
+     *             extension point for any other mod's negative effect not covered by Pass 1 or 1.5.
      * Uses a copy in Pass 1 to avoid ConcurrentModificationException.
      */
     @Override
@@ -72,6 +110,13 @@ public class PotionCleanse extends Potion {
         for (Potion potion : new java.util.ArrayList<>(entity.getActivePotionMap().keySet())) {
             if (!potion.isBeneficial()) {
                 entity.removePotionEffect(potion);
+            }
+        }
+
+        // Pass 1.5: built-in parasite-ecosystem effects (see BUILT_IN_CLEANSED_EFFECTS).
+        for (Potion builtIn : getBuiltInCleansed()) {
+            if (entity.isPotionActive(builtIn)) {
+                entity.removePotionEffect(builtIn);
             }
         }
 
