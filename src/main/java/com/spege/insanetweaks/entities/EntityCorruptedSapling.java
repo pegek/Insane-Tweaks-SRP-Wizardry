@@ -1,12 +1,10 @@
 package com.spege.insanetweaks.entities;
 
-import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
@@ -51,6 +49,34 @@ public class EntityCorruptedSapling extends EntityLiving {
     private UUID ownerId;
     private boolean cachedBlockInfestation;
     private int blockScanCooldown;
+
+    /** SRP presence, cached on first use. Growth is impossible without SRP (dormant, never crashes). */
+    private static Boolean srpLoaded;
+
+    private static boolean isSrpLoaded() {
+        if (srpLoaded == null) {
+            srpLoaded = Boolean.valueOf(net.minecraftforge.fml.common.Loader.isModLoaded("scapeandrunparasites"));
+        }
+        return srpLoaded.booleanValue();
+    }
+
+    /** Isolated in a nested class so EntityParasiteBase only classloads when SRP is present. */
+    private static final class ParasiteScan {
+        private ParasiteScan() {
+        }
+
+        static int countLivingParasites(net.minecraft.world.World world, net.minecraft.util.math.AxisAlignedBB box) {
+            java.util.List<com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase> parasites =
+                    world.getEntitiesWithinAABB(com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase.class, box);
+            int alive = 0;
+            for (com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase p : parasites) {
+                if (p.isEntityAlive()) {
+                    alive++;
+                }
+            }
+            return alive;
+        }
+    }
 
     public EntityCorruptedSapling(World world) {
         super(world);
@@ -136,15 +162,11 @@ public class EntityCorruptedSapling extends EntityLiving {
     }
 
     private boolean infestationNearby(double radius) {
-        AxisAlignedBB box = this.getEntityBoundingBox().grow(radius);
-        List<EntityParasiteBase> parasites =
-                this.world.getEntitiesWithinAABB(EntityParasiteBase.class, box);
-        int alive = 0;
-        for (EntityParasiteBase p : parasites) {
-            if (p.isEntityAlive()) {
-                alive++;
-            }
+        if (!isSrpLoaded()) {
+            return false;
         }
+        AxisAlignedBB box = this.getEntityBoundingBox().grow(radius);
+        int alive = ParasiteScan.countLivingParasites(this.world, box);
         if (alive >= ModConfig.tweaks.saplingMinParasites) {
             return true;
         }

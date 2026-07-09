@@ -64,9 +64,15 @@ public class CorruptedFruitItem extends ItemFood {
         chosen.onFoodEaten(new ItemStack(chosen), worldIn, player);
 
         // 2. The price. Doom window — CorruptedFruitDoomHandler takes it from here.
+        // The eat position is stored too: the Beckon rises where the bargain was
+        // struck, even if the player logs out and rejoins somewhere else.
         long doomAt = worldIn.getTotalWorldTime()
                 + com.spege.insanetweaks.config.ModConfig.tweaks.corruptedFruitDoomTicks;
-        player.getEntityData().setLong(CorruptedFruitDoomHandler.TAG_DOOM_AT, doomAt);
+        net.minecraft.nbt.NBTTagCompound data = player.getEntityData();
+        data.setLong(CorruptedFruitDoomHandler.TAG_DOOM_AT, doomAt);
+        data.setDouble(CorruptedFruitDoomHandler.TAG_DOOM_X, player.posX);
+        data.setDouble(CorruptedFruitDoomHandler.TAG_DOOM_Y, player.posY);
+        data.setDouble(CorruptedFruitDoomHandler.TAG_DOOM_Z, player.posZ);
         player.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, 400, 0, false, false));
         player.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, 400, 0, false, false));
 
