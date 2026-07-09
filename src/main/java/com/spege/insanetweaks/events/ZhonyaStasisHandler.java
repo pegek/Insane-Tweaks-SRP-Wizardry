@@ -32,6 +32,11 @@ public class ZhonyaStasisHandler {
     /** Promień czyszczenia aggro wokół gracza. */
     private static final double AGGRO_CLEAR_RADIUS = 24.0D;
 
+    /** Fixed UUID for the stasis movement-speed root modifier (op 2, -100%). */
+    public static final java.util.UUID STASIS_ROOT_MODIFIER_UUID =
+            java.util.UUID.fromString("7c6f9e41-2b8d-4a53-9c0e-5f1d83b6a2e7");
+    private static final String STASIS_ROOT_MODIFIER_NAME = "InsaneTweaks Zhonya Gilded Stasis Root";
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     @SuppressWarnings("null") // ModPotions.GILDED_STASIS is guaranteed non-null at runtime
     public void onLivingAttack(LivingAttackEvent event) {
@@ -64,7 +69,7 @@ public class ZhonyaStasisHandler {
         if (event.phase != TickEvent.Phase.END) return;
         EntityPlayer player = event.player;
 
-        // Root backstop — obie strony (główny root to SLOWNESS/JUMP_BOOST/noGravity
+        // Root backstop — obie strony (główny root to speed-modifier/JUMP_BOOST/noGravity
         // nałożone przy aktywacji; tu tylko dobijamy resztki pędu).
         if (player.isPotionActive(ModPotions.GILDED_STASIS)) {
             player.motionX = 0.0D;
@@ -86,9 +91,12 @@ public class ZhonyaStasisHandler {
 
         NBTTagCompound data = player.getEntityData();
 
-        // Gravity cleanup: restore gravity when the effect expires, dies, or is otherwise lost.
+        // Gravity + root cleanup: restore both when the effect expires, dies, or is
+        // otherwise lost. The modifier is attribute-NBT-persisted like the flag, so
+        // the same flag-driven cleanup covers logout/rejoin.
         if (!player.isPotionActive(ModPotions.GILDED_STASIS) && data.getBoolean(TAG_STASIS_NO_GRAVITY)) {
             player.setNoGravity(false);
+            removeRootModifier(player);
             data.removeTag(TAG_STASIS_NO_GRAVITY);
         }
 
@@ -105,6 +113,25 @@ public class ZhonyaStasisHandler {
                 data.removeTag(TAG_AGGRO_LOSS_UNTIL);
             }
         }
+    }
+
+    /** Applies the -100% movement-speed root (operation 2 => speed * 0). Idempotent. */
+    public static void applyRootModifier(EntityPlayer player) {
+        net.minecraft.entity.ai.attributes.IAttributeInstance speed =
+                player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.MOVEMENT_SPEED);
+        if (speed == null) return;
+        net.minecraft.entity.ai.attributes.AttributeModifier existing = speed.getModifier(STASIS_ROOT_MODIFIER_UUID);
+        if (existing != null) speed.removeModifier(existing);
+        speed.applyModifier(new net.minecraft.entity.ai.attributes.AttributeModifier(
+                STASIS_ROOT_MODIFIER_UUID, STASIS_ROOT_MODIFIER_NAME, -1.0D, 2));
+    }
+
+    public static void removeRootModifier(EntityPlayer player) {
+        net.minecraft.entity.ai.attributes.IAttributeInstance speed =
+                player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.MOVEMENT_SPEED);
+        if (speed == null) return;
+        net.minecraft.entity.ai.attributes.AttributeModifier existing = speed.getModifier(STASIS_ROOT_MODIFIER_UUID);
+        if (existing != null) speed.removeModifier(existing);
     }
 
     /** Zdejmuje gracza z celownika wszystkich mobów w promieniu. */

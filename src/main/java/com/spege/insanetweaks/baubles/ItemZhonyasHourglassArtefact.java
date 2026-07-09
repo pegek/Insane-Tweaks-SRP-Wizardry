@@ -94,9 +94,10 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
         player.setHealth(player.getMaxHealth());
         player.addPotionEffect(new PotionEffect(ModPotions.GILDED_STASIS, stasisTicks, 0, false, false));
         player.addPotionEffect(new PotionEffect(ModPotions.CLEANSE, stasisTicks, 0, false, false));
-        // True root: SLOWNESS amp 9 = -150% speed (clamps to 0) via the synced attribute
-        // system, so it works on BOTH sides without packets.
-        player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.SLOWNESS, stasisTicks, 9, false, false));
+        // True root: attribute modifier instead of SLOWNESS because our own CLEANSE
+        // strips non-beneficial potions on its first pulse. MOVEMENT_SPEED is a synced
+        // attribute, so it works on BOTH sides without packets.
+        ZhonyaStasisHandler.applyRootModifier(player);
         // Negative jump boost makes getJumpUpwardsMotion() non-positive — jumping is disabled.
         player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.JUMP_BOOST, stasisTicks, -6, false, false));
         player.motionX = 0.0D;
