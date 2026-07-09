@@ -62,7 +62,7 @@ public class PotionCleanse extends Potion {
             "srpextra:stung", "srpextra:confused" };
 
     /** Resolved lazily on first cleanse pulse — registries are complete by then. */
-    private static java.util.List<Potion> builtInResolved = null;
+    private static java.util.List<Potion> builtInResolved;
 
     private static java.util.List<Potion> getBuiltInCleansed() {
         if (builtInResolved == null) {
@@ -73,6 +73,33 @@ public class PotionCleanse extends Potion {
             }
         }
         return builtInResolved;
+    }
+
+    /**
+     * Parasite-ecosystem effects Cleanse must NEVER remove, regardless of how the
+     * runtime classifies them (stock Forge: isBeneficial() is false for ALL SRP
+     * effects because SRP never calls setBeneficial(); Cleanroom may differ).
+     * repel = EPEL_E anti-assimilation protection, antimall = player-brewed ward,
+     * the rest are player-usable kill/lure or discovery mechanics.
+     */
+    private static final String[] BUILT_IN_PROTECTED_EFFECTS = {
+            "srparasites:repel", "srparasites:antimall",
+            "srparasites:primitive", "srparasites:adapted", "srparasites:pure",
+            "srparasites:crude", "srparasites:feral", "srparasites:nexus",
+            "srparasites:distorted_enlightenment" };
+
+    /** Resolved lazily alongside the cleansed list. */
+    private static java.util.Set<Potion> protectedResolved;
+
+    private static java.util.Set<Potion> getBuiltInProtected() {
+        if (protectedResolved == null) {
+            protectedResolved = new java.util.HashSet<>();
+            for (String id : BUILT_IN_PROTECTED_EFFECTS) {
+                Potion p = ForgeRegistries.POTIONS.getValue(new ResourceLocation(id));
+                if (p != null) protectedResolved.add(p);
+            }
+        }
+        return protectedResolved;
     }
 
     public PotionCleanse() {
@@ -96,7 +123,9 @@ public class PotionCleanse extends Potion {
 
     /**
      * On each trigger (every 10t):
-     *   Pass 1   removes all effects where isBeneficial() == false.
+     *   Pass 1   removes all effects where isBeneficial() == false, EXCEPT those in the
+     *             built-in protected set (BUILT_IN_PROTECTED_EFFECTS) — protective/mechanic
+     *             SRP effects like repel and antimall must survive Cleanse.
      *   Pass 1.5 removes the built-in parasite-ecosystem effect list (BUILT_IN_CLEANSED_EFFECTS),
      *             covering harmful SRParasites/SRPExtra effects that are incorrectly registered as
      *             neutral/beneficial (e.g. srparasites:novision) and thus bypass Pass 1.
@@ -106,9 +135,9 @@ public class PotionCleanse extends Potion {
      */
     @Override
     public void performEffect(@Nonnull EntityLivingBase entity, int amplifier) {
-        // Pass 1: standard non-beneficial removal
+        // Pass 1: standard non-beneficial removal (protected SRP effects exempt)
         for (Potion potion : new java.util.ArrayList<>(entity.getActivePotionMap().keySet())) {
-            if (!potion.isBeneficial()) {
+            if (!potion.isBeneficial() && !getBuiltInProtected().contains(potion)) {
                 entity.removePotionEffect(potion);
             }
         }
@@ -120,7 +149,8 @@ public class PotionCleanse extends Potion {
             }
         }
 
-        // Pass 2: config-driven additional removal
+        // Pass 2: config-driven additional removal. Re-resolves from the registry each
+        // pulse intentionally — the config list can change at runtime.
         for (String effectId : ModConfig.tweaks.cleanseAdditionalEffects) {
             if (effectId == null || effectId.isEmpty()) continue;
             Potion extra = ForgeRegistries.POTIONS.getValue(new ResourceLocation(effectId));

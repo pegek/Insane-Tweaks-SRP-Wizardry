@@ -15,7 +15,7 @@ public class TweaksCategory {
     @Config.Comment({
             "Additional effects removed by the CLEANSE effect, on top of (a) all effects where",
             "isBeneficial() == false and (b) the built-in parasite-effect list shipped in the mod",
-            "(all harmful SRParasites/SRPExtra effects — see PotionCleanse.BUILT_IN_CLEANSED_EFFECTS).",
+            "(all harmful SRParasites/SRPExtra effects are already covered by the built-in list).",
             "Add effect IDs here only if some other mod's negative effect is not removed automatically.",
             "Example: minecraft:glowing" })
     @Config.Name("Cleanse Effect List")
