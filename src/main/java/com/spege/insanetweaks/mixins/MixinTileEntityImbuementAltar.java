@@ -71,5 +71,37 @@ public class MixinTileEntityImbuementAltar {
             }
         }
 
+        // RECIPE BUNDLE 2: Corrupted Fruit + receptacle combo -> typed Bauble Fruit.
+        // The four receptacle elements pick which bauble slot the purified fruit grants.
+        if (inputRegName.getResourceDomain().equals("insanetweaks")
+                && inputRegName.getResourcePath().equals("corrupted_fruit")) {
+
+            int earth = 0, healing = 0, fire = 0, lightning = 0, sorcery = 0, necromancy = 0, ice = 0;
+            for (Element el : receptacleElements) {
+                if (el == Element.EARTH) earth++;
+                else if (el == Element.HEALING) healing++;
+                else if (el == Element.FIRE) fire++;
+                else if (el == Element.LIGHTNING) lightning++;
+                else if (el == Element.SORCERY) sorcery++;
+                else if (el == Element.NECROMANCY) necromancy++;
+                else if (el == Element.ICE) ice++;
+            }
+
+            net.minecraft.item.Item result = null;
+            if      (sorcery == 2 && healing == 2)   result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_RING;
+            else if (healing == 4)                   result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_AMULET;
+            else if (earth == 4)                     result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_BODY;
+            else if (sorcery == 4)                   result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_HEAD;
+            else if (fire == 2 && sorcery == 2)      result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_CHARM;
+            else if (earth == 2 && healing == 2)     result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_BELT;
+            else if (lightning == 4)                 result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_ELYTRA;
+            else if (necromancy == 4)                result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_TOTEM;
+            else if (lightning == 2 && ice == 2)     result = (net.minecraft.item.Item) ModItems.BAUBLE_FRUIT_TRINKET;
+
+            if (result != null) {
+                cir.setReturnValue(new ItemStack(result, 1));
+            }
+        }
+
     }
 }
