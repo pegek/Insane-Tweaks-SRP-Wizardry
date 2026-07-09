@@ -63,6 +63,7 @@ item.bauble_fruit_trinket.name=§dBauble Fruit - Trinket
 
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse
+potion.insanetweaks.gilded_stasis=§6Gilded Stasis
 
 # CompatSkills / Reskillable Custom Traits
 # Format: reskillable.unlock.<modid>.<traitid> (name), reskillable.unlock.<modid>.<traitid>.desc (desc)

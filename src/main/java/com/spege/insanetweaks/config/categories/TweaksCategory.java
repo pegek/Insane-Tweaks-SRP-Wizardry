@@ -20,4 +20,27 @@ public class TweaksCategory {
             "Example: minecraft:glowing" })
     @Config.Name("Cleanse Effect List")
     public String[] cleanseAdditionalEffects = {};
+
+    @Config.Comment({"Zhonya's Hourglass: cooldown after activation, in ticks.",
+            "Default 216000 = 3 hours."})
+    @Config.Name("Zhonya Cooldown Ticks")
+    @Config.RangeInt(min = 0)
+    public int zhonyaCooldownTicks = 216000;
+
+    @Config.Comment({"Zhonya's Hourglass: Gilded Stasis duration in ticks (default 60 = 3 s)."})
+    @Config.Name("Zhonya Stasis Duration Ticks")
+    @Config.RangeInt(min = 1)
+    public int zhonyaStasisTicks = 60;
+
+    @Config.Comment({"Zhonya's Hourglass: aggro-loss window in ticks (default 100 = 5 s).",
+            "During this window all mobs targeting the user are de-aggroed every tick."})
+    @Config.Name("Zhonya Aggro Loss Ticks")
+    @Config.RangeInt(min = 0)
+    public int zhonyaAggroLossTicks = 100;
+
+    @Config.Comment({"Zhonya's Hourglass: minimum CURRENT mana required to activate.",
+            "Activation always drains ALL current mana."})
+    @Config.Name("Zhonya Minimum Mana")
+    @Config.RangeInt(min = 0)
+    public int zhonyaMinMana = 100;
 }

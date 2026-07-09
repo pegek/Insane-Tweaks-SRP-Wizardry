@@ -2,6 +2,7 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.potions.PotionCleanse;
+import com.spege.insanetweaks.potions.PotionGildedStasis;
 import com.spege.insanetweaks.potions.PotionImmuneBond;
 
 import net.minecraft.potion.Potion;
@@ -27,6 +28,7 @@ public class ModPotions {
      */
     public static PotionCleanse CLEANSE;
     public static PotionImmuneBond IMMUNE_BOND;
+    public static PotionGildedStasis GILDED_STASIS;
 
     @SubscribeEvent
     public static void registerPotions(RegistryEvent.Register<Potion> event) {
@@ -37,5 +39,9 @@ public class ModPotions {
         IMMUNE_BOND = (PotionImmuneBond) new PotionImmuneBond()
                 .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "immune_bond"));
         event.getRegistry().register(IMMUNE_BOND);
+
+        GILDED_STASIS = (PotionGildedStasis) new PotionGildedStasis()
+                .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "gilded_stasis"));
+        event.getRegistry().register(GILDED_STASIS);
     }
 }

@@ -46,6 +46,7 @@ item.bauble_fruit_trinket.name=§dПлод-бабл — Безделушка
 
 # Potion effects
 potion.insanetweaks.cleanse=§eОчищение
+potion.insanetweaks.gilded_stasis=§6Позолоченный стазис
 
 # CompatSkills / Reskillable Custom Traits
 reskillable.unlock.compatskills.fast_learner=§aБыстрая обучаемость
