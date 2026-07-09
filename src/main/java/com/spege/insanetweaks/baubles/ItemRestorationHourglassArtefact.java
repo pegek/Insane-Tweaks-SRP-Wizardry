@@ -254,7 +254,7 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
         tooltip.add(TextFormatting.YELLOW + "Restored entities gain §630s §7re-infection immunity.");
         tooltip.add("");
         tooltip.add(TextFormatting.GOLD + "" + TextFormatting.ITALIC
-            + "Right-click: instant restore.[30 min cooldown] ");
+            + "Right-click: instant restore. [6 h cooldown]");
     }
 
     @Override

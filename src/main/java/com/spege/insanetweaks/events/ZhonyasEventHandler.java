@@ -53,7 +53,7 @@ public class ZhonyasEventHandler {
      *   2. Na tej samej pozycji szukamy żywego, nie-SRP entity (oryginał).
      *   3. Zapisujemy jego NBT (ResourceLocation ID + pełny NBT dump) do entityData
      *      nowego SRP entity pod kluczem KEY_ORIGINAL_ID i KEY_ORIGINAL_NBT.
-     *   4. Zhonyas Hourglass czyta te klucze przy przywracaniu.
+     *   4. Hourglass of Restoration czyta te klucze przy przywracaniu.
      *
      * EntityPInfected (znane hosty, np. inf_villager):
      *   SRP zapisuje host ID w "parasitehost" NBT. Nasz snapshot dodaje pełny NBT

@@ -37,7 +37,7 @@ import net.minecraft.world.World;
  *    pod kluczem itOriginalNBT i itOriginalId.
  *
  * 3. RESTORE:
- *    ItemZhonyasHourglassArtefact odczytuje te klucze z entity data
+ *    ItemRestorationHourglassArtefact odczytuje te klucze z entity data
  *    i wywołuje performRestore() który tworzy nowe entity z pełnym NBT.
  *
  * Obsługa EntityInhooM/S (Incomplete Form):

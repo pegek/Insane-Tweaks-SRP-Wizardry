@@ -29,7 +29,7 @@ item.sentient_aegis.name=§eРазумная эгида
 item.insanetweaks.infernal_crown.name=§cАдская корона
 item.insanetweaks:infernal_crown.desc=Каждое 10-ое призванное существо навсегда превращается в адскую сущность.
 item.insanetweaks.zhonyas_hourglass.name=§eЧасы Жони
-item.insanetweaks:zhonyas_hourglass.desc=Восстанавливает исходную форму существ, заражённых SRP, при использовании заклинания «Очищающий импульс». В творческом режиме ПКМ по существу восстанавливает его напрямую.
+item.insanetweaks:zhonyas_hourglass.desc=ПКМ погружает вас в золотой стазис: кратковременная неуязвимая заморозка, полное исцеление и очищение, враги забывают о вас. Тратит ВСЮ текущую ману; долгая перезарядка.
 item.insanetweaks.restoration_hourglass.name=§eПесочные часы восстановления
 item.insanetweaks:restoration_hourglass.desc=Восстанавливает исходную форму существ, заражённых SRP, при использовании заклинания «Очищающий импульс». В творческом режиме ПКМ по существу восстанавливает его напрямую.
 

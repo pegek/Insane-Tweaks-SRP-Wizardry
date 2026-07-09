@@ -201,6 +201,9 @@ public class InsaneTweaksMod implements IGuiHandler {
                             return new RenderThrallMinion(manager);
                         }
                     });
+
+            // Zhonya rework: golden player tint during Gilded Stasis.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaClientHandler());
         }
 
         // Auto-detect Baubles; disable Bauble Fruits only if totally missing.
@@ -280,6 +283,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
+
+        // Zhonya rework: Gilded Stasis enforcement (immortality, root, aggro loss).
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaStasisHandler());
 
         if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks) {
             if (com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) {

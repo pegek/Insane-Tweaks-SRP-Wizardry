@@ -5,26 +5,23 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.spege.insanetweaks.InsaneTweaksMod;
-import com.spege.insanetweaks.init.ModItems;
-import com.spege.insanetweaks.util.SrpOriginSnapshotHelper;
+import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.events.ZhonyaStasisHandler;
+import com.spege.insanetweaks.init.ModPotions;
+import com.spege.insanetweaks.util.PlayerManaCompat;
 
 import electroblob.wizardry.item.ItemArtefact;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -33,91 +30,29 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
- * Artefakt: Zhonyas Hourglass
+ * Artefakt: Zhonyas Hourglass (REWORK 2026-07-09)
  *
- * Slot: CHARM (noszony w slocie charm / trzymany w hotbarze gdy Baubles niedostępne).
+ * Dawna funkcja (restoracja SRP entity) przeniesiona 1:1 do
+ * ItemRestorationHourglassArtefact. Ten item ma NOWE działanie:
  *
- * Tryby działania:
- *
- * 1. PASYWNY — Purifying Pulse:
- *    EntityPurifyingWave wywołuje tryRestoreInRange().
- *    Wszystkie zarażone entity SRP w zasięgu fali są przywracane
- *    do oryginalnej postaci z pełnymi atrybutami (dzięki snapshotom).
- *
- * 2. AKTYWNY — Creative Right-Click:
- *    Gracz w trybie Creative celuje w zarażone entity i klika PPM.
- *    Entity zostaje natychmiast przywrócone bez potrzeby fali.
- *
- * System snapshotów:
- *    MixinParasiteEventEntity przechwytuje KAŻDE entity tuż przed
- *    usunięciem przez spawnInsider() i convertEntity(). Pełne NBT
- *    (imię, właściciel, oswojenie, atrybuty) jest zapisywane globalnie.
- *    ZhonyasEventHandler stosuje snapshot do nowo spawnanego SRP entity,
- *    skąd artefakt go odczytuje przy przywracaniu.
- *
- *    Incomplete Form (EntityInhooM/S): mobs bez odpowiednika w SRP — np. modded
- *    entity jak ebwizardry:wizard — trafiają do InhooM lub InhooS.
- *    Snapshot zachowuje pełne ID + NBT, umożliwiając perfekcyjne odtworzenie
- *    dowolnego moda, jeśli snapshot jest dostępny.
- *
- * Efekt po przywróceniu:
- *    performRestore() nakłada na przywrócone entity 30-sekundowy EPEL_E
- *    (ochrona przed ponowną asymilacją/transformacją) + clearCoth.
+ * AKTYWNE (PPM trzymając w ręce):
+ *   1. Koszt: drenaż CAŁEJ aktualnej many (player_mana) + cooldown (config, domyślnie 3 h).
+ *      Wymagane minimum many (config, domyślnie 100) — poniżej aktywacja odmawia
+ *      i nie zużywa cooldownu.
+ *   2. Gilded Stasis (config, domyślnie 3 s): pełna nieśmiertelność + full heal
+ *      + Cleanse + root w miejscu + złoty tint modelu (ZhonyaStasisHandler /
+ *      ZhonyaClientHandler egzekwują efekt — ten item tylko go nakłada).
+ *   3. Aggro loss (config, domyślnie 5 s): wszystkie moby celujące w gracza
+ *      tracą target, per-tick przez całe okno (pokrywa agresywny re-targeting SRP).
  */
 @SuppressWarnings("null")
 public class ItemZhonyasHourglassArtefact extends ItemArtefact {
 
-    /** Minimalny promień sprawdzania w zasięgu fali. */
-    private static final double RESTORE_RADIUS  = 12.0D;
-    /** Zasięg ray-trace dla trybu Creative. */
-    private static final double CREATIVE_REACH  = 20.0D;
-
     public ItemZhonyasHourglassArtefact() {
-        // CHARM = slot "charm/totem" w EBWizardry (najbliższy do TOTEM).
-        // Fallback działa automatycznie: gdy Baubles niedostępne, EBWizardry
-        // sprawdza hotbar/offhand gracza dla danego Type.
-        super(EnumRarity.RARE, Type.CHARM);
+        super(EnumRarity.EPIC, Type.CHARM);
         this.setRegistryName("zhonyas_hourglass");
         this.setUnlocalizedName("insanetweaks.zhonyas_hourglass");
     }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Pasywny tryb: wywoływany przez EntityPurifyingWave
-    // ─────────────────────────────────────────────────────────────────
-
-    /**
-     * Przywraca wszystkie zarażone SRP entity w zasięgu fali puryfikacji.
-     * Wywoływany z EntityPurifyingWave.onUpdate() gdy gracz ma CHARM aktywny.
-     *
-     * Nie używa cooldownu per-entity — performRestore() wykonuje srpEntity.setDead(),
-     * więc entity natychmiast przestaje istnieć po przywróceniu i nie może ponownie
-     * trafić do pętli w tej samej fali.
-     *
-     * UWAGA: Gdy owner (rzucający) wyjdzie poza zasięg chunku lub rozłączy się
-     * podczas aktywnej fali, this.getOwner() zwróci null i przywrócenie zostanie
-     * pominięte. Jest to znane ograniczenie projektowe.
-     */
-    public static void tryRestoreInRange(World world, double ox, double oy, double oz,
-            double radius, @Nullable EntityLivingBase owner) {
-        if (world.isRemote) return;
-        if (!(owner instanceof EntityPlayer)) return;
-
-        EntityPlayer player = (EntityPlayer) owner;
-        if (!ItemArtefact.isArtefactActive(player, ModItems.ZHONYAS_HOURGLASS)) return;
-
-        double r = Math.max(radius, RESTORE_RADIUS);
-        AxisAlignedBB area = new AxisAlignedBB(ox - r, oy - 5, oz - r, ox + r, oy + 5, oz + r);
-
-        for (EntityLivingBase entity : world.getEntitiesWithinAABB(EntityLivingBase.class, area)) {
-            if (!entity.isEntityAlive()) continue;
-            if (!SrpOriginSnapshotHelper.isSrpConvertedEntity(entity)) continue;
-            doRestore(entity, world, player);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Aktywny tryb: Right-Click (Ray-trace)
-    // ─────────────────────────────────────────────────────────────────
 
     @Override
     @Nonnull
@@ -129,109 +64,53 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
             return new ActionResult<>(EnumActionResult.SUCCESS, stack);
         }
 
-        // Ray-trace wzdłuż wektora wzroku
-        Vec3d eyes = player.getPositionEyes(1.0F);
-        Vec3d look = player.getLookVec();
-        Vec3d end   = eyes.addVector(
-            look.x * CREATIVE_REACH, look.y * CREATIVE_REACH, look.z * CREATIVE_REACH);
-
-        AxisAlignedBB searchBox = player.getEntityBoundingBox()
-            .grow(CREATIVE_REACH)
-            .expand(look.x * CREATIVE_REACH, look.y * CREATIVE_REACH, look.z * CREATIVE_REACH);
-
-        EntityLivingBase target = null;
-        double closest = Double.MAX_VALUE;
-
-        for (EntityLivingBase candidate : world.getEntitiesWithinAABB(EntityLivingBase.class, searchBox)) {
-            if (candidate == player || !candidate.isEntityAlive()) continue;
-            if (!SrpOriginSnapshotHelper.isSrpConvertedEntity(candidate)) continue;
-
-            RayTraceResult rtr = candidate.getEntityBoundingBox().grow(0.3)
-                .calculateIntercept(eyes, end);
-            if (rtr == null) continue;
-
-            double dist = eyes.distanceTo(rtr.hitVec);
-            if (dist < closest) {
-                closest = dist;
-                target  = candidate;
-            }
-        }
-
-        if (target == null) {
-            player.sendMessage(new TextComponentString(
-                TextFormatting.GRAY + "[Zhonyas] No infected entity in sight."));
+        if (player.getCooldownTracker().hasCooldown(this)) {
             return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
-        Entity restored = doRestore(target, world, player);
-        if (restored != null) {
+        // --- Koszt: wymaga player_mana i minimum aktualnej many ---
+        if (!PlayerManaCompat.isAvailable()) {
             player.sendMessage(new TextComponentString(
-                TextFormatting.GREEN + "[Zhonyas] Restored: " + restored.getName()));
-            
-            // Nakładamy 6-godzinny cooldown (432 000 ticków) jeśli gracz nie jest na creative.
-            if (!player.isCreative()) {
-                player.getCooldownTracker().setCooldown(this, 432000);
-            }
-            
-            return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+                TextFormatting.GRAY + "[Zhonyas] The hourglass is inert without a mana soul (player_mana missing)."));
+            return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
-        player.sendMessage(new TextComponentString(
-            TextFormatting.RED + "[Zhonyas] No origin data — cannot restore."));
-        return new ActionResult<>(EnumActionResult.FAIL, stack);
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Wewnętrzna logika przywracania
-    // ─────────────────────────────────────────────────────────────────
-
-    @Nullable
-    private static Entity doRestore(EntityLivingBase srpEntity, World world,
-            @Nullable EntityPlayer instigator) {
-        String vanillaId = SrpOriginSnapshotHelper.resolveVanillaId(srpEntity);
-        if (vanillaId == null) {
-            InsaneTweaksMod.LOGGER.debug(
-                "[IT][Zhonyas] Brak ID dla {} ({})",
-                srpEntity.getClass().getSimpleName(),
-                SrpOriginSnapshotHelper.isIncompleteForm(srpEntity) ? "IncompleteForm — brak snapshotu" : "brak mapowania");
-            return null;
+        double currentMana = PlayerManaCompat.getCurrentMana(player);
+        if (currentMana < ModConfig.tweaks.zhonyaMinMana) {
+            player.sendMessage(new TextComponentString(
+                TextFormatting.GRAY + "[Zhonyas] Not enough mana ("
+                + (int) currentMana + "/" + ModConfig.tweaks.zhonyaMinMana + ")."));
+            return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
-        Entity restored = SrpOriginSnapshotHelper.performRestore(srpEntity, world, vanillaId);
-        if (restored == null) return null;
+        // Płacimy: cała mana + cooldown.
+        PlayerManaCompat.setCurrentMana(player, 0.0D);
+        if (!player.isCreative()) {
+            player.getCooldownTracker().setCooldown(this, ModConfig.tweaks.zhonyaCooldownTicks);
+        }
 
-        // Efekty wizualne po stronie serwera
-        double ex = srpEntity.posX;
-        double ey = srpEntity.posY + srpEntity.height * 0.5D;
-        double ez = srpEntity.posZ;
+        // --- Gilded Stasis ---
+        int stasisTicks = ModConfig.tweaks.zhonyaStasisTicks;
+        player.setHealth(player.getMaxHealth());
+        player.addPotionEffect(new PotionEffect(ModPotions.GILDED_STASIS, stasisTicks, 0, false, false));
+        player.addPotionEffect(new PotionEffect(ModPotions.CLEANSE, stasisTicks, 0, false, false));
 
+        // --- Aggro loss window (NBT timestamp; handler czyści per-tick) ---
+        long until = world.getTotalWorldTime() + ModConfig.tweaks.zhonyaAggroLossTicks;
+        player.getEntityData().setLong(ZhonyaStasisHandler.TAG_AGGRO_LOSS_UNTIL, until);
+        ZhonyaStasisHandler.clearAggroAround(player);
+
+        // --- Audio-wizualia ---
+        world.playSound(null, player.posX, player.posY, player.posZ,
+                SoundEvents.BLOCK_END_PORTAL_FRAME_FILL, SoundCategory.PLAYERS, 1.0f, 0.6f);
         if (world instanceof WorldServer) {
-            WorldServer ws = (WorldServer) world;
-            ws.spawnParticle(EnumParticleTypes.SPELL_INSTANT,
-                ex, ey, ez, 25,
-                srpEntity.width * 0.4D, srpEntity.height * 0.3D, srpEntity.width * 0.4D, 0.02D);
-            ws.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                ex, ey, ez, 12,
-                srpEntity.width * 0.5D, srpEntity.height * 0.4D, srpEntity.width * 0.5D, 0.03D);
-            ws.spawnParticle(EnumParticleTypes.HEART,
-                ex, ey + srpEntity.height * 0.5D, ez,
-                5, 0.3D, 0.2D, 0.3D, 0.05D);
+            ((WorldServer) world).spawnParticle(EnumParticleTypes.CRIT_MAGIC,
+                    player.posX, player.posY + player.height * 0.5D, player.posZ, 60,
+                    0.5D, 0.9D, 0.5D, 0.05D);
         }
 
-        world.playSound(null, ex, ey, ez,
-            SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.NEUTRAL, 1.0F, 1.2F);
-
-        InsaneTweaksMod.LOGGER.info(
-            "[IT][Zhonyas] Restored '{}' → '{}' at {},{},{}",
-            srpEntity.getClass().getSimpleName(), vanillaId,
-            (int) ex, (int) srpEntity.posY, (int) ez);
-
-        return restored;
+        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
     }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Tooltip
-    // ─────────────────────────────────────────────────────────────────
 
     @Override
     public boolean hasEffect(@Nonnull ItemStack stack) {
@@ -244,22 +123,18 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact {
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
         tooltip.add(TextFormatting.GRAY + "Time stolen from the parasite hive.");
         tooltip.add("");
-        tooltip.add(TextFormatting.AQUA + "Entity Restoration");
-        tooltip.add(TextFormatting.GRAY + "When using Purifying Pulse spell,");
-        tooltip.add(TextFormatting.GRAY + "restores infected mobs to their original form,");
-        tooltip.add(TextFormatting.GRAY + "preserving name, taming & owner data.");
-        tooltip.add(TextFormatting.GRAY + "Incomplete Forms (modded/unknown mobs)");
-        tooltip.add(TextFormatting.GRAY + "are fully restored if snapshot available.");
+        tooltip.add(TextFormatting.GOLD + "Gilded Stasis");
+        tooltip.add(TextFormatting.GRAY + "Right-click: freeze yourself in golden stasis");
+        tooltip.add(TextFormatting.GRAY + "for a moment — invulnerable, fully healed,");
+        tooltip.add(TextFormatting.GRAY + "cleansed, and forgotten by your enemies.");
         tooltip.add("");
-        tooltip.add(TextFormatting.YELLOW + "Restored entities gain §630s §7re-infection immunity.");
-        tooltip.add("");
-        tooltip.add(TextFormatting.GOLD + "" + TextFormatting.ITALIC
-            + "Right-click: instant restore.[30 min cooldown] ");
+        tooltip.add(TextFormatting.RED + "Cost: ALL of your current mana.");
+        tooltip.add(TextFormatting.RED + "Long cooldown.");
     }
 
     @Override
     @Nonnull
     public net.minecraftforge.common.IRarity getForgeRarity(@Nonnull ItemStack stack) {
-        return EnumRarity.RARE;
+        return EnumRarity.EPIC;
     }
 }
