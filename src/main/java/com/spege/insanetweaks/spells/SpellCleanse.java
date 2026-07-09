@@ -36,17 +36,18 @@ public class SpellCleanse extends SpellRay {
 
     public SpellCleanse() {
         super(InsaneTweaksMod.MODID, "cleanse", SpellActions.POINT, false);
-        this.soundValues(1.0f, 1.2f, 0.2f);
+        this.soundValues(1.0F, 1.2F, 0.2F);
         this.addProperties(EFFECT_DURATION);
     }
 
     @Override
     protected boolean onEntityHit(World world, Entity target, Vec3d hit, EntityLivingBase caster,
             Vec3d origin, int ticksInUse, SpellModifiers modifiers) {
-        if (!(target instanceof EntityLivingBase)) {
-            return false;
+        // Always return true so a hit on a non-living entity (item frame, boat, ...)
+        // stops the ray there instead of falling through to the onMiss self-cast.
+        if (target instanceof EntityLivingBase) {
+            applyCleanse(world, (EntityLivingBase) target, modifiers);
         }
-        applyCleanse(world, (EntityLivingBase) target, modifiers);
         return true;
     }
 
@@ -71,9 +72,11 @@ public class SpellCleanse extends SpellRay {
         }
         int duration = (int) (getProperty(EFFECT_DURATION).floatValue()
                 * modifiers.get(WizardryItems.duration_upgrade));
+        // showParticles=true is intentional (unlike the hardcap's silent application in
+        // ArmorEventHandler) — a spell cast should be visible on the target.
         target.addPotionEffect(new PotionEffect(ModPotions.CLEANSE, duration, 0, false, true));
         world.playSound(null, target.posX, target.posY, target.posZ,
-                SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.PLAYERS, 0.9f, 1.3f);
+                SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.PLAYERS, 0.9F, 1.3F);
     }
 
     @Override
@@ -81,6 +84,6 @@ public class SpellCleanse extends SpellRay {
             double vx, double vy, double vz) {
         // Icy-white cleanse sparkle matching the CLEANSE potion colour (0xAADDFF).
         ParticleBuilder.create(ParticleBuilder.Type.SPARKLE).pos(x, y, z)
-                .time(12 + world.rand.nextInt(8)).clr(0.67f, 0.87f, 1.0f).spawn(world);
+                .time(12 + world.rand.nextInt(8)).clr(0.67F, 0.87F, 1.0F).spawn(world);
     }
 }

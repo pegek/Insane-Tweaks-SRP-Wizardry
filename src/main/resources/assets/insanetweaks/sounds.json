@@ -1,4 +1,8 @@
 {
+  "spell.cleanse": {
+    "category": "spells",
+    "sounds": ["ebwizardry:heal"]
+  },
   "thrall.spawn": {
     "category": "neutral",
     "sounds": ["insanetweaks:thrall/minionspawn"]
