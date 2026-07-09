@@ -55,7 +55,8 @@ public class EntityCorruptedSapling extends EntityLiving {
 
     private static boolean isSrpLoaded() {
         if (srpLoaded == null) {
-            srpLoaded = Boolean.valueOf(net.minecraftforge.fml.common.Loader.isModLoaded("scapeandrunparasites"));
+            srpLoaded = Boolean.valueOf(net.minecraftforge.fml.common.Loader.isModLoaded(
+                    com.spege.insanetweaks.InsaneTweaksMod.SRP_MODID));
         }
         return srpLoaded.booleanValue();
     }

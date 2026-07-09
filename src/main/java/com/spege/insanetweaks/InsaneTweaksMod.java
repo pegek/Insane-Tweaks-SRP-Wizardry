@@ -60,6 +60,12 @@ import java.util.Objects;
         "after:srpextra;after:baubles;after:potioncore;before:reskillable")
 public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
+    /**
+     * Scape and Run Parasites mod id. NOTE: the modid is "srparasites" (see SRP's @Mod
+     * annotation / mcmod.info) even though its Java package is com.dhanantry.scapeandrunparasites.
+     * Using the package name here silently disables every SRP-gated feature — always use this.
+     */
+    public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
     public static final String VERSION = "1.0.26";
 
@@ -351,7 +357,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Gated by SRP presence (required dependency, but kept explicit for clarity).
         // Registered unconditionally of enableSrpEbWizardryBridge — the item can exist
         // without the full bridge being enabled.
-        if (Loader.isModLoaded("scapeandrunparasites")) {
+        if (Loader.isModLoaded(SRP_MODID)) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyasEventHandler());
         }
 
@@ -442,7 +448,7 @@ public class InsaneTweaksMod implements IGuiHandler {
                         "Running in LEGACY MODE.", ver);
             }
 
-            if (Loader.isModLoaded("scapeandrunparasites")) {
+            if (Loader.isModLoaded(SRP_MODID)) {
                 // Corrupted fruit loop (fragment drops + corrupted-eat doom).
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFragmentDropHandler());
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFruitDoomHandler());
@@ -465,7 +471,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         // substring 'contains' match against the entity's registry name, so the exact id works.
         // Guarded by SRP presence; a mid-game SRP config reload can drop this — the
         // ThrallTargetProtectionHandler remains the always-on guarantee.
-        if (Loader.isModLoaded("scapeandrunparasites")) {
+        if (Loader.isModLoaded(SRP_MODID)) {
             appendThrallToSrpBlacklist();
         }
 
