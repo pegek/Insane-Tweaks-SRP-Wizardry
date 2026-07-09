@@ -66,8 +66,9 @@ public abstract class MixinEntitySummonedCreature extends EntityCreature {
             return false;
         }
 
-        // Respect the config toggle — if the fix is disabled, use the vanilla path.
-        if (!ModConfig.tweaks.enableCursedRingFix) {
+        // Respect the config toggles — the Enigmatic Legacy master switch gates this fix,
+        // and the per-fix toggle refines it. If either is off, use the vanilla path.
+        if (!ModConfig.interactions.enableEnigmaticLegacyInteractions || !ModConfig.tweaks.enableCursedRingFix) {
             boolean result = super.isOnSameTeam(entityIn);
             this.insanetweaks$debugDecision("config disabled -> super", entityIn, result);
             return result;

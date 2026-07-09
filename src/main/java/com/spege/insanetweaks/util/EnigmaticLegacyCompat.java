@@ -19,8 +19,14 @@ public final class EnigmaticLegacyCompat {
     private EnigmaticLegacyCompat() {
     }
 
+    /**
+     * True only when Enigmatic Legacy is installed AND the master interaction switch is on.
+     * Gating the Blessed Ring detection here means the whole Bauble Fruit acquisition path
+     * (fragment drops + sapling growth) respects the config switch in one place.
+     */
     public static boolean isLoaded() {
-        return Loader.isModLoaded("enigmaticlegacy");
+        return com.spege.insanetweaks.config.ModConfig.interactions.enableEnigmaticLegacyInteractions
+                && Loader.isModLoaded("enigmaticlegacy");
     }
 
     /**

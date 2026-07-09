@@ -224,6 +224,7 @@ gui.insanetweaks.thrall.tooltip.dismiss=Removes the thrall and drops its items. 
 
 config.insanetweaks.category.modules=Modules & Integrations
 config.insanetweaks.category.tweaks=Tweaks & Fixes
+config.insanetweaks.category.interactions=Cross-Mod Interactions
 config.insanetweaks.category.traits=Skill Traits
 config.insanetweaks.category.tombstone=Tombstone Tweaks
 config.insanetweaks.category.thrall=Thrall

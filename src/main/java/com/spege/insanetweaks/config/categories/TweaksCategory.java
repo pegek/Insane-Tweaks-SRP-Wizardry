@@ -8,7 +8,8 @@ public class TweaksCategory {
             "Prevents the Enigmatic Legacy 'Cursed Ring' from forcing summoned creatures (e.g. Fer Cow Minion) to attack their own caster.",
             "When enabled, all Electroblob's Wizardry summoned creatures correctly report as being 'on the same team' as their owner,",
             "which makes the Cursed Ring's anger loop skip them entirely.",
-            "Safe to leave enabled even if Enigmatic Legacy is not installed — the fix costs nothing when the ring is absent." })
+            "Safe to leave enabled even if Enigmatic Legacy is not installed — the fix costs nothing when the ring is absent.",
+            "This is a sub-toggle of 'Enable Enigmatic Legacy Interactions' (interactions category): if that master switch is OFF, this fix is off regardless." })
     @Config.Name("Enable Cursed Ring Minion Fix")
     public boolean enableCursedRingFix = true;
 

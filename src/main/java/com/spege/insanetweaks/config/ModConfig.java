@@ -3,6 +3,7 @@ package com.spege.insanetweaks.config;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
+import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
@@ -27,6 +28,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.tweaks")
     @Config.Comment("Specific bugfixes and mechanic alterations.")
     public static final TweaksCategory tweaks = new TweaksCategory();
+
+    @Config.Name("interactions")
+    @Config.LangKey("config.insanetweaks.category.interactions")
+    @Config.Comment("Master switches for cross-mod interactions that depend on optional mods.")
+    public static final InteractionsCategory interactions = new InteractionsCategory();
 
     @Config.Name("traits")
     @Config.LangKey("config.insanetweaks.category.traits")
