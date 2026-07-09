@@ -43,4 +43,50 @@ public class TweaksCategory {
     @Config.Name("Zhonya Minimum Mana")
     @Config.RangeInt(min = 0)
     public int zhonyaMinMana = 100;
+
+    @Config.Comment({"Corrupted Seed Fragment drop chance from high-tier parasites",
+            "(only rolls when the killer wears the Blessed Ring)."})
+    @Config.Name("Fragment Drop Chance")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double fragmentDropChance = 0.05;
+
+    @Config.Comment({"Registry-name prefixes of parasites that can drop Corrupted Seed Fragments.",
+            "Exact names work too (a full name is its own prefix)."})
+    @Config.Name("Fragment Drop Entities")
+    public String[] fragmentDropEntities = {
+            "srparasites:ada_", "srparasites:anc_",
+            "srparasites:overseer", "srparasites:vigilante", "srparasites:warden",
+            "srparasites:marauder", "srparasites:monarch", "srparasites:grunt",
+            "srparasites:bomber_light", "srparasites:bomber_heavy", "srparasites:wraith",
+            "srparasites:bogle", "srparasites:haunter", "srparasites:seeker",
+            "srparasites:architect", "srparasites:succor", "srparasites:carrier_colony" };
+
+    @Config.Comment({"Total valid-condition growth time of the Corrupted Sapling, in ticks",
+            "(default 24000 = 20 min). Growth pauses while conditions are unmet."})
+    @Config.Name("Sapling Growth Ticks")
+    @Config.RangeInt(min = 20)
+    public int saplingGrowthTicks = 24000;
+
+    @Config.Comment({"Radius in which the sapling looks for infestation (living parasites)",
+            "and for its Ring-wearing owner."})
+    @Config.Name("Sapling Condition Radius")
+    @Config.RangeInt(min = 4, max = 64)
+    public int saplingConditionRadius = 32;
+
+    @Config.Comment({"Minimum living parasites within the radius for the 'active infestation'",
+            "condition (alternative: any srparasites block within 8 blocks)."})
+    @Config.Name("Sapling Min Parasites")
+    @Config.RangeInt(min = 0)
+    public int saplingMinParasites = 2;
+
+    @Config.Comment({"Corrupted Sapling max health."})
+    @Config.Name("Sapling Max HP")
+    @Config.RangeInt(min = 1)
+    public int saplingMaxHp = 40;
+
+    @Config.Comment({"Delay in ticks between eating a Corrupted Fruit and the unavoidable death",
+            "(default 120 = 6 s)."})
+    @Config.Name("Corrupted Fruit Doom Ticks")
+    @Config.RangeInt(min = 1)
+    public int corruptedFruitDoomTicks = 120;
 }
