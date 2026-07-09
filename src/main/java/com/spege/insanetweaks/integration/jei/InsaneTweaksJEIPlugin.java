@@ -40,6 +40,7 @@ public class InsaneTweaksJEIPlugin implements IModPlugin {
             ItemStack healingDust    = new ItemStack(spectralDust, 1, 7);
             ItemStack fireDust       = new ItemStack(spectralDust, 1, 1);
             ItemStack lightningDust  = new ItemStack(spectralDust, 1, 3);
+            ItemStack iceDust        = new ItemStack(spectralDust, 1, 2);
 
             // Potency Core Inputs (2x Sorcery, 2x Necromancy)
             List<List<ItemStack>> potencyDusts = Arrays.asList(
@@ -92,10 +93,43 @@ public class InsaneTweaksJEIPlugin implements IModPlugin {
             // created by Electroblob's Wizardry.
             registry.addRecipes(generatedRecipes, "ebwizardry:imbuement_altar");
 
+            // Corrupted Fruit purification recipes (mirror MixinTileEntityImbuementAltar
+            // "RECIPE BUNDLE 2"). Only shown when the Bauble Fruits module registered its
+            // items — otherwise the fruit references are null and this block is skipped.
+            if (ModItems.CORRUPTED_FRUIT != null) {
+                ItemStack corruptedFruit = new ItemStack(ModItems.CORRUPTED_FRUIT, 1);
+                List<ImbuementAltarRecipe> fruitRecipes = new ArrayList<>();
+                addFruitRecipe(fruitRecipes, corruptedFruit, sorceryDust, healingDust, sorceryDust, healingDust, ModItems.BAUBLE_FRUIT_RING);
+                addFruitRecipe(fruitRecipes, corruptedFruit, healingDust, healingDust, healingDust, healingDust, ModItems.BAUBLE_FRUIT_AMULET);
+                addFruitRecipe(fruitRecipes, corruptedFruit, earthDust, earthDust, earthDust, earthDust, ModItems.BAUBLE_FRUIT_BODY);
+                addFruitRecipe(fruitRecipes, corruptedFruit, sorceryDust, sorceryDust, sorceryDust, sorceryDust, ModItems.BAUBLE_FRUIT_HEAD);
+                addFruitRecipe(fruitRecipes, corruptedFruit, fireDust, sorceryDust, fireDust, sorceryDust, ModItems.BAUBLE_FRUIT_CHARM);
+                addFruitRecipe(fruitRecipes, corruptedFruit, earthDust, healingDust, earthDust, healingDust, ModItems.BAUBLE_FRUIT_BELT);
+                addFruitRecipe(fruitRecipes, corruptedFruit, lightningDust, lightningDust, lightningDust, lightningDust, ModItems.BAUBLE_FRUIT_ELYTRA);
+                addFruitRecipe(fruitRecipes, corruptedFruit, necromancyDust, necromancyDust, necromancyDust, necromancyDust, ModItems.BAUBLE_FRUIT_TOTEM);
+                addFruitRecipe(fruitRecipes, corruptedFruit, lightningDust, iceDust, lightningDust, iceDust, ModItems.BAUBLE_FRUIT_TRINKET);
+                registry.addRecipes(fruitRecipes, "ebwizardry:imbuement_altar");
+            }
+
         } catch (Exception e) {
             // Failsafe: prevents a complete JEI crash if any ebwizardry item is missing.
             System.err.println("[InsaneTweaks] JEI Integration aborted due to missing dependent items.");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Builds one Corrupted Fruit → typed Bauble Fruit imbuement recipe and appends it.
+     * The four dusts are the receptacle elements (order is irrelevant to the altar, which
+     * counts an element multiset). Skips silently if the result fruit item is unregistered.
+     */
+    private static void addFruitRecipe(@Nonnull List<ImbuementAltarRecipe> out, @Nonnull ItemStack centre,
+            @Nonnull ItemStack d1, @Nonnull ItemStack d2, @Nonnull ItemStack d3, @Nonnull ItemStack d4,
+            Item result) {
+        if (result == null) return;
+        List<List<ItemStack>> receptacles = Arrays.asList(
+                Collections.singletonList(d1), Collections.singletonList(d2),
+                Collections.singletonList(d3), Collections.singletonList(d4));
+        out.add(new ImbuementAltarRecipe(centre, receptacles, new ItemStack(result, 1)));
     }
 }
