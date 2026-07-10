@@ -19,4 +19,22 @@ public class InteractionsCategory {
             "Default is auto-detected: ON when Enigmatic Legacy is present, OFF otherwise." })
     @Config.Name("Enable Enigmatic Legacy Interactions")
     public boolean enableEnigmaticLegacyInteractions = Loader.isModLoaded("enigmaticlegacy");
+
+    @Config.Comment({
+            "When InfernalMobs is installed: every infernal (elite) mob killed by a player",
+            "drops spectral dust of a random element (Electroblob's Wizardry).",
+            "Kills without player credit (environment, other mobs, automated farms) drop nothing." })
+    @Config.Name("Enable Infernal Spectral Dust Drops")
+    @Config.RequiresMcRestart
+    public boolean enableInfernalDustDrops = true;
+
+    @Config.Comment("Minimum spectral dust dropped per infernal kill.")
+    @Config.Name("Infernal Dust: Min")
+    @Config.RangeInt(min = 0, max = 16)
+    public int infernalDustMin = 1;
+
+    @Config.Comment("Maximum spectral dust dropped per infernal kill.")
+    @Config.Name("Infernal Dust: Max")
+    @Config.RangeInt(min = 1, max = 16)
+    public int infernalDustMax = 2;
 }

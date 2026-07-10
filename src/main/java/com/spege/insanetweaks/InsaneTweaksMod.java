@@ -370,6 +370,12 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyasEventHandler());
         }
 
+        // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
+        if (Loader.isModLoaded("infernalmobs")
+                && com.spege.insanetweaks.config.ModConfig.interactions.enableInfernalDustDrops) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.InfernalDustDropHandler());
+        }
+
         // GoldenBook is independent of the SRP/EBWizardry bridge — register
         // unconditionally.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GoldenBookEventHandler());

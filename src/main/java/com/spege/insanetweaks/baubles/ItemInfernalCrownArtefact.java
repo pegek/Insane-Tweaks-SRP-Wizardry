@@ -58,15 +58,15 @@ public class ItemInfernalCrownArtefact extends ItemArtefact {
 
         NBTTagCompound persisted = getOrCreatePersistedData(player);
 
-        if (InfernalMobsDirectAPI.isRare(minion)) {
+        if (com.spege.insanetweaks.util.InfernalMobsCompat.isRare(minion)) {
             persisted.setInteger(SUMMON_COUNT_TAG, 0);
             return;
         }
 
         int count = persisted.getInteger(SUMMON_COUNT_TAG) + 1;
         if (count >= INFERNAL_THRESHOLD) {
-            boolean success = InfernalMobsDirectAPI.forceInfernal(minion);
-            if (success || InfernalMobsDirectAPI.isRare(minion)) {
+            boolean success = com.spege.insanetweaks.util.InfernalMobsCompat.forceInfernal(minion);
+            if (success || com.spege.insanetweaks.util.InfernalMobsCompat.isRare(minion)) {
                 count = 0;
             } else {
                 // Keep the next summon eligible if the direct InfernalMobs call fails.
@@ -93,61 +93,4 @@ public class ItemInfernalCrownArtefact extends ItemArtefact {
         return entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
     }
 
-    /**
-     * Direct InfernalMobs bridge used by the crown. This bypasses the normal
-     * IEntityOwnable spawn restriction by calling addEntityModifiersByString().
-     */
-    public static class InfernalMobsDirectAPI {
-
-        private static java.lang.reflect.Method instanceMethod;
-        private static java.lang.reflect.Method addModifiersMethod;
-        private static java.lang.reflect.Method isRareMethod;
-
-        public static boolean forceInfernal(EntityLivingBase entity) {
-            try {
-                Object core = getCore();
-                if (core == null) return false;
-
-                if (isRare(entity)) {
-                    return true;
-                }
-
-                if (addModifiersMethod == null) {
-                    addModifiersMethod = core.getClass().getDeclaredMethod(
-                            "addEntityModifiersByString", EntityLivingBase.class, String.class);
-                    addModifiersMethod.setAccessible(true);
-                }
-
-                addModifiersMethod.invoke(core, entity, "Regen Sprint");
-                return isRare(entity);
-
-            } catch (Exception e) {
-                InsaneTweaksMod.LOGGER.warn("[InsaneTweaks] Infernal Crown direct API call failed", e);
-                return false;
-            }
-        }
-
-        public static boolean isRare(EntityLivingBase entity) {
-            try {
-                if (isRareMethod == null) {
-                    Class<?> clazz = Class.forName("atomicstryker.infernalmobs.common.InfernalMobsCore");
-                    isRareMethod = clazz.getDeclaredMethod("getIsRareEntity", EntityLivingBase.class);
-                    isRareMethod.setAccessible(true);
-                }
-                Object result = isRareMethod.invoke(null, entity);
-                return result instanceof Boolean && (Boolean) result;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
-        private static Object getCore() throws Exception {
-            if (instanceMethod == null) {
-                Class<?> clazz = Class.forName("atomicstryker.infernalmobs.common.InfernalMobsCore");
-                instanceMethod = clazz.getDeclaredMethod("instance");
-                instanceMethod.setAccessible(true);
-            }
-            return instanceMethod.invoke(null);
-        }
-    }
 }
