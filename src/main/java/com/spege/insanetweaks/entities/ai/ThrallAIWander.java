@@ -75,10 +75,18 @@ public class ThrallAIWander extends EntityAIBase {
         if (now < nextWanderTime) return false;
 
         Vec3d vec = RandomPositionGenerator.getLandPos(thrall, radius, 3);
-        if (vec == null) return false;
+        if (vec == null) {
+            // Debounce: without this the goal selector re-runs the terrain scan every
+            // tick while the thrall idles in STAY (mutex 1 is otherwise free).
+            this.nextWanderTime = now + 20L;
+            return false;
+        }
         // getLandPos is centred on the THRALL, not the anchor — reject picks that
         // would drift outside the anchor radius.
-        if (anchor.distanceSq(vec.x, vec.y, vec.z) > radiusSq) return false;
+        if (anchor.distanceSq(vec.x, vec.y, vec.z) > radiusSq) {
+            this.nextWanderTime = now + 20L;
+            return false;
+        }
 
         this.targetX = vec.x;
         this.targetY = vec.y;

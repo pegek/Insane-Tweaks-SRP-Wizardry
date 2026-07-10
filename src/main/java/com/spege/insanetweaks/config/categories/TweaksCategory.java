@@ -23,8 +23,9 @@ public class TweaksCategory {
     public String[] cleanseAdditionalEffects = {};
 
     @Config.Comment({"Master toggle for the Zhonya's Hourglass artefact (the player-stasis one).",
-            "When false (default), the artefact is inert: right-click does nothing, EB Wizardry",
-            "treats it as a disabled artefact, and the tooltip shows a 'disabled' line.",
+            "When false (default), the artefact is inert: right-click does nothing and the",
+            "tooltip shows a 'disabled' line. (It is also flagged disabled to EB Wizardry's",
+            "artefact API as future-proofing.)",
             "The item stays registered, so existing copies in worlds are unaffected.",
             "The Restoration Hourglass is NOT affected by this switch."})
     @Config.Name("Enable Zhonya's Hourglass")

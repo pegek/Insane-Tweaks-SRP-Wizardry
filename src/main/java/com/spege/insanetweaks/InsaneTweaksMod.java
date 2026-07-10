@@ -303,6 +303,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
         if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableZhonya) {
+            // Defensive future-proofing only: EB consults the enabled flag in
+            // isArtefactActive, so any future caller checking Zhonya that way is covered.
+            // The primary gate is the enableZhonya checks in the item itself.
             ((electroblob.wizardry.item.ItemArtefact) com.spege.insanetweaks.init.ModItems.ZHONYAS_HOURGLASS)
                     .setEnabled(false);
             LOGGER.info("[InsaneTweaks] Zhonya's Hourglass is disabled via config (tweaks.enableZhonya=false).");

@@ -990,6 +990,8 @@ public class EntityThrallMinion extends EntityCreature {
             } catch (IllegalArgumentException ignored) {}
         }
 
+        // Must run BEFORE the ThrallStayAnchor read below: setMode(STAY) re-captures the
+        // anchor at the restored position, and the saved anchor then overwrites it.
         if (tag.hasKey("ThrallMode")) {
             int ordinal = tag.getInteger("ThrallMode");
             ThrallMode[] values = ThrallMode.values();
@@ -1019,7 +1021,9 @@ public class EntityThrallMinion extends EntityCreature {
                 resumeWorkPos = new BlockPos(pos[0], pos[1], pos[2]);
             }
         }
-        if (tag.hasKey("ThrallStayAnchor")) {
+        // Mode guard keeps the "null outside STAY" field invariant self-enforcing even
+        // against inconsistent saves (stray anchor tag alongside a non-STAY mode).
+        if (tag.hasKey("ThrallStayAnchor") && getMode() == ThrallMode.STAY) {
             int[] anchor = tag.getIntArray("ThrallStayAnchor");
             if (anchor.length == 3) {
                 stayAnchor = new BlockPos(anchor[0], anchor[1], anchor[2]);
