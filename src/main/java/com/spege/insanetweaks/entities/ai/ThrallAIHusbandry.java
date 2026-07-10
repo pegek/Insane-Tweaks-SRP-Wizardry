@@ -232,7 +232,9 @@ public class ThrallAIHusbandry extends EntityAIBase {
                     && job.partner.getGrowingAge() == 0 && !job.partner.isInLove();
         }
         if (job.type == JobType.CULL) {
-            return !job.target.isChild() && !job.target.isInLove();
+            // Re-check ownership at execution time — the player may tame the animal
+            // during the walk to it, and owned pets must never be culled (invariant).
+            return !job.target.isChild() && !job.target.isInLove() && !isOwnedPet(job.target);
         }
         return true;
     }

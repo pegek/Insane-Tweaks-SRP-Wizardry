@@ -97,7 +97,7 @@ public class CorruptedFruitItem extends ItemFood {
     @SideOnly(Side.CLIENT)
     public void addInformation(@Nonnull ItemStack stack, @Nullable World world,
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
-        tooltip.add(TextFormatting.DARK_PURPLE + "Grown in tainted soil, under a blessed watch.");
+        tooltip.add(TextFormatting.DARK_PURPLE + "Grown in tainted soil, under a blessed — or cursed — watch.");
         tooltip.add("");
         tooltip.add(TextFormatting.AQUA + "Purify it at an Imbuement Altar to choose its gift.");
         tooltip.add("");
