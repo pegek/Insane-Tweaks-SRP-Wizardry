@@ -122,6 +122,11 @@ public class EntityThrallMinion extends EntityCreature {
     @Nullable
     private ThrallMode resumeMode;
 
+    /** Position captured when the thrall enters STAY mode; wander in STAY is confined
+     *  around this point (spec 2026-07-10 A2). Null outside STAY. */
+    @Nullable
+    private BlockPos stayAnchor;
+
     /** World tick when the current work mode (WOODCUTTING/MINESHAFT) was activated. 0 = not working. */
     private long workStartTick;
 
@@ -456,6 +461,7 @@ public class EntityThrallMinion extends EntityCreature {
         resummonResumeMode = current;
         resummonPauseTicks = durationTicks;
         this.dataManager.set(MODE_ORDINAL, ThrallMode.STAY.ordinal());
+        this.stayAnchor = new BlockPos(this);
         workStartTick = 0;
         lastHeldToolMode = null; // force tool-visual refresh on next tick
         setStatusText("Awaiting orders...");
@@ -635,6 +641,13 @@ public class EntityThrallMinion extends EntityCreature {
     public void setMode(ThrallMode mode) {
         ThrallMode prev = getMode();
         this.dataManager.set(MODE_ORDINAL, mode.ordinal());
+        if (mode == ThrallMode.STAY) {
+            if (prev != ThrallMode.STAY || stayAnchor == null) {
+                stayAnchor = new BlockPos(this);
+            }
+        } else {
+            stayAnchor = null;
+        }
         if (debugLogs()) LOG.info("[Thrall#{}] setMode {} -> {}", getEntityId(), prev, mode);
         // Start/reset work timer when entering a work mode (COLLECTING included so its
         // session-loop is bounded by thrall.general.workDurationHours — see onUpdate work-timer block).
@@ -722,6 +735,12 @@ public class EntityThrallMinion extends EntityCreature {
             this.dataManager.set(HOME_POS, pos.getX() + "," + pos.getY() + "," + pos.getZ());
             if (debugLogs()) LOG.info("[Thrall#{}] Home point set to {}", getEntityId(), pos);
         }
+    }
+
+    /** Anchor of the current STAY session, or null when not in STAY. */
+    @Nullable
+    public BlockPos getStayAnchor() {
+        return stayAnchor;
     }
 
     // -------------------------------------------------------------------------
@@ -932,6 +951,9 @@ public class EntityThrallMinion extends EntityCreature {
         if (resumeWorkPos != null) {
             tag.setIntArray("ThrallResumePos", new int[]{resumeWorkPos.getX(), resumeWorkPos.getY(), resumeWorkPos.getZ()});
         }
+        if (stayAnchor != null) {
+            tag.setIntArray("ThrallStayAnchor", new int[]{stayAnchor.getX(), stayAnchor.getY(), stayAnchor.getZ()});
+        }
         if (resumeMode != null) {
             tag.setInteger("ThrallResumeMode", resumeMode.ordinal());
         }
@@ -995,6 +1017,12 @@ public class EntityThrallMinion extends EntityCreature {
             int[] pos = tag.getIntArray("ThrallResumePos");
             if (pos.length == 3) {
                 resumeWorkPos = new BlockPos(pos[0], pos[1], pos[2]);
+            }
+        }
+        if (tag.hasKey("ThrallStayAnchor")) {
+            int[] anchor = tag.getIntArray("ThrallStayAnchor");
+            if (anchor.length == 3) {
+                stayAnchor = new BlockPos(anchor[0], anchor[1], anchor[2]);
             }
         }
         if (tag.hasKey("ThrallResumeMode")) {
