@@ -147,7 +147,7 @@ public class EntityCorruptedSapling extends EntityLiving {
     }
 
     private boolean conditionsMet() {
-        // Owner nearby, wearing the Blessed Ring.
+        // Owner nearby, wearing a qualifying ring (Blessed or Cursed).
         if (this.ownerId == null) {
             return false;
         }
@@ -156,7 +156,7 @@ public class EntityCorruptedSapling extends EntityLiving {
         if (owner == null || owner.getDistanceSq(this) > radius * radius) {
             return false;
         }
-        if (!EnigmaticLegacyCompat.isWearingBlessedRing(owner)) {
+        if (!EnigmaticLegacyCompat.isWearingQualifyingRing(owner)) {
             return false;
         }
         return infestationNearby(radius);

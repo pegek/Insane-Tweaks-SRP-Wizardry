@@ -51,6 +51,7 @@ item.corrupted_seed.name=Осквернённое семя
 item.corrupted_fruit.name=Осквернённый плод
 entity.insanetweaks.corrupted_sapling.name=Осквернённый росток
 entity.corrupted_sapling.name=Осквернённый росток
+msg.insanetweaks.corrupted_hint=§5Ваше кольцо жадно пульсирует... Сильные паразиты, убитые с Благословенным кольцом или Кольцом семи проклятий, могут оставлять фрагменты порченого семени.
 
 # Potion effects
 potion.insanetweaks.cleanse=§eОчищение

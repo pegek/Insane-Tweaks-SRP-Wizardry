@@ -89,8 +89,9 @@ public class CorruptedSeedItem extends Item {
         tooltip.add(TextFormatting.GRAY + "1. Plant it (right-click the ground) inside an active");
         tooltip.add(TextFormatting.GRAY + "   parasite infestation.");
         tooltip.add(TextFormatting.GRAY + "2. Stay close, wearing the " + TextFormatting.LIGHT_PURPLE
-                + "Blessed Ring" + TextFormatting.GRAY + " — it grows only");
-        tooltip.add(TextFormatting.GRAY + "   under your protection.");
+                + "Blessed Ring" + TextFormatting.GRAY + " or the " + TextFormatting.DARK_RED
+                + "Ring of the Seven Curses" + TextFormatting.GRAY + " —");
+        tooltip.add(TextFormatting.GRAY + "   it grows only under your protection.");
         tooltip.add(TextFormatting.GRAY + "3. The hive will try to reclaim it. " + TextFormatting.RED
                 + "Defend the sapling.");
         tooltip.add(TextFormatting.GRAY + "4. In time it bears a " + TextFormatting.DARK_PURPLE

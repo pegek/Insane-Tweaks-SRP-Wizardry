@@ -66,6 +66,7 @@ item.bauble_fruit_trinket.name=§dBauble Fruit - Trinket
 item.corrupted_seed_fragment.name=Corrupted Seed Fragment
 item.corrupted_seed.name=Corrupted Seed
 item.corrupted_fruit.name=Corrupted Fruit
+msg.insanetweaks.corrupted_hint=§5Your ring pulses hungrily... High-tier parasites slain while wearing the Blessed Ring or the Ring of the Seven Curses may yield Corrupted Seed Fragments.
 entity.insanetweaks.corrupted_sapling.name=Corrupted Sapling
 entity.corrupted_sapling.name=Corrupted Sapling
 
