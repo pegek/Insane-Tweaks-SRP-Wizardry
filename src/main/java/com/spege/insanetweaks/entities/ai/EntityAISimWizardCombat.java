@@ -13,6 +13,7 @@ import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.MobEffects;
 import net.minecraft.potion.PotionEffect;
@@ -22,26 +23,22 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
 
 /**
- * Primary attack task for {@link EntitySimWizard}.
+ * v4 (spec 2026-07-10): the ONE combat task. Replaces EntityAISimWizardCast +
+ * EntityAISimWizardKite + the SRP EntityAIAttackMeleeStatus fallback. Owns both combat
+ * movement and casting under a single mutex, eliminating the multi-task interplay that
+ * plagued v3.x ("rarely casts" class of bugs). The wizard is a pure caster — banish is
+ * its close-quarters answer, there is no melee.
  *
- * Two phases per cast:
- *   1. TELEGRAPH - charge-up window ({@code ModConfig.entities.assimilatedWizard.combat.castTelegraphTicks}) with
- *      vocalization + particle ring so the player has a dodge window.
- *   2. FIRE - resolves the chosen spell, swings arm, applies post-cast slowness.
+ * States (implicit, per tick):
+ *   CHANNEL   channelTicksLeft > 0   -> tickChannel(), stationary
+ *   TELEGRAPH telegraphTicksLeft > 0 -> countdown, stationary, then fireCommittedCast()
+ *   READY     cooldown elapsed       -> pickSpell + start telegraph (or fire instantly)
+ *   HOLD      cooldown pending       -> kite movement: retreat <7, approach >18, else stand
  *
- * v3.1 CRITICAL timing fix: cooldowns are now ABSOLUTE world-time gates
- * ({@code nextCastReadyTime} vs {@code getTotalWorldTime()}), NOT counters decremented in
- * {@code shouldExecute()}. Vanilla {@code EntityAITasks} polls {@code shouldExecute} of
- * non-executing tasks only every {@code tickRate = 3} ticks, so a counter decremented there
- * runs 3x slower than intended - the previous 80-200 tick cooldowns actually took 12-30
- * seconds, which is why the wizard "rarely cast anything".
- *
- * v3.1 variety fix: distance bands collect CANDIDATE lists and pick randomly (previously
- * strict priority made every long-range fight 100% magic_missile), and the low-HP branch
- * picks randomly among heal + summons (previously heal always shadowed the summons, so
- * summon_fer_cow / summon_primitive_yelloweye never fired).
+ * Diagnostics: with {@code client.enableSimWizardDebugLogs} on, every gate rejection
+ * (throttled), spell pick and cast result is logged — see spec E1.
  */
-public class EntityAISimWizardCast extends EntityAIBase {
+public class EntityAISimWizardCombat extends EntityAIBase {
 
     private static final int MIN_RETRY_COOLDOWN = 5;
     private static final int FAILED_CAST_COOLDOWN = 10;
@@ -55,6 +52,13 @@ public class EntityAISimWizardCast extends EntityAIBase {
     private static final double BANISH_MAX_DISTANCE = 4.5D;
     /** life_drain special window upper bound - stays inside the ray's ~10 block base range. */
     private static final double LIFE_DRAIN_MAX_DISTANCE = 9.0D;
+
+    // Movement band (from the retired EntityAISimWizardKite)
+    private static final double RETREAT_DISTANCE = 7.0D;
+    private static final double APPROACH_DISTANCE = 18.0D;
+    private static final int REPATH_INTERVAL = 10;
+    private static final double MOVE_SPEED = 1.0D;
+    private static final double RETREAT_SPEED = 1.25D;
 
     private final EntitySimWizard wizard;
     private final double decisionRange;
@@ -77,7 +81,13 @@ public class EntityAISimWizardCast extends EntityAIBase {
     /** ticksInUse counter passed to the continuous spell's per-tick cast. */
     private int channelCounter;
 
-    public EntityAISimWizardCast(EntitySimWizard wizard) {
+    private int repathTimer;
+
+    // E1 diagnostics
+    private long lastRejectLogTime;
+    private long lastSuccessfulCastTime;
+
+    public EntityAISimWizardCombat(EntitySimWizard wizard) {
         this.wizard = wizard;
         this.decisionRange = ModConfig.entities.assimilatedWizard.combat.decisionRange
                 * ModConfig.entities.assimilatedWizard.combat.rangeMultiplier;
@@ -93,18 +103,36 @@ public class EntityAISimWizardCast extends EntityAIBase {
         this.nextCastReadyTime = this.wizard.world.getTotalWorldTime() + Math.max(0, ticks);
     }
 
+    private void logDiag(String message) {
+        if (!ModConfig.client.enableSimWizardDebugLogs) return;
+        com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
+                "[InsaneTweaks][SimWizard#{}] {}", this.wizard.getEntityId(), message);
+    }
+
+    private void logRejectThrottled(String reason) {
+        if (!ModConfig.client.enableSimWizardDebugLogs) return;
+        long now = this.wizard.world.getTotalWorldTime();
+        if (now - this.lastRejectLogTime < 20L) return;
+        this.lastRejectLogTime = now;
+        logDiag("gate: " + reason);
+    }
+
+    // ------------------------------------------------------------------
+    // Task lifecycle — active whenever a valid target exists (movement included)
+    // ------------------------------------------------------------------
+
     @Override
     public boolean shouldExecute() {
-        if (!isOffCooldown()) {
-            return false;
-        }
-
         EntityLivingBase target = this.wizard.getAttackTarget();
-        if (!isValidSpellTarget(target, this.wizard)) {
+        if (target == null) {
+            logRejectThrottled("no attack target");
             return false;
         }
-
-        return this.wizard.getDistanceSq(target) <= this.decisionRangeSq;
+        if (!isValidSpellTarget(target, this.wizard)) {
+            logRejectThrottled("target invalid: " + target.getName());
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -113,22 +141,15 @@ public class EntityAISimWizardCast extends EntityAIBase {
         if (this.telegraphTicksLeft > 0 || this.channelTicksLeft > 0) {
             return true;
         }
-        if (!isOffCooldown()) {
-            return false;
-        }
-        EntityLivingBase target = this.wizard.getAttackTarget();
-        if (!isValidSpellTarget(target, this.wizard)) {
-            return false;
-        }
-        return this.wizard.getDistanceSq(target) <= this.decisionRangeSq;
+        return shouldExecute();
     }
 
     @Override
     public void startExecuting() {
-        this.wizard.getNavigator().clearPath();
         this.telegraphTicksLeft = 0;
         this.pendingSpell = null;
         this.pendingTarget = null;
+        this.repathTimer = 0;
     }
 
     @Override
@@ -141,6 +162,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
         this.telegraphTicksLeft = 0;
         this.pendingSpell = null;
         this.pendingTarget = null;
+        this.wizard.getNavigator().clearPath();
         // CRITICAL: always end an in-flight channel here, or the continuous-spell visual
         // (getContinuousSpell drives isCastingSpellVisual) loops forever after interruption.
         if (this.channelTicksLeft > 0 || this.channelSpell != null) {
@@ -150,13 +172,13 @@ public class EntityAISimWizardCast extends EntityAIBase {
 
     @Override
     public void updateTask() {
-        // Phase 2: continuous channel in progress (life_drain) - cast every tick.
+        // CHANNEL: continuous spell in progress (life_drain) - cast every tick.
         if (this.channelTicksLeft > 0) {
             this.tickChannel();
             return;
         }
 
-        // Phase 1: telegraph in progress - just keep looking at target and tick down.
+        // TELEGRAPH: keep looking at the target and tick down.
         if (this.telegraphTicksLeft > 0) {
             if (this.pendingTarget != null && this.pendingTarget.isEntityAlive()) {
                 this.wizard.getLookHelper().setLookPositionWithEntity(this.pendingTarget, 30.0F, 30.0F);
@@ -168,34 +190,62 @@ public class EntityAISimWizardCast extends EntityAIBase {
             return;
         }
 
-        // Phase 0: pick a spell + target and either begin telegraph or fire immediately.
         EntityLivingBase target = this.wizard.getAttackTarget();
-        if (target == null) {
-            setCooldown(MIN_RETRY_COOLDOWN);
-            return;
+        if (target == null || !isValidSpellTarget(target, this.wizard)) {
+            return; // shouldContinueExecuting ends the task on the next poll
         }
 
         this.wizard.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
+
+        double distance = this.wizard.getDistance(target);
+
+        // READY: begin a cast if the cooldown elapsed and the target is in decision range.
+        if (isOffCooldown() && distance * distance <= this.decisionRangeSq) {
+            this.beginCast(target, distance);
+            return;
+        }
+
+        // HOLD: kite movement while waiting for cooldown / closing distance.
+        this.tickMovement(target, distance);
+    }
+
+    private void beginCast(EntityLivingBase target, double distance) {
         this.wizard.getNavigator().clearPath();
 
         Spell spell = pickSpell(target);
+        logDiag("pickSpell -> " + (spell == null ? "null" : String.valueOf(spell.getRegistryName()))
+                + " (dist " + String.format("%.1f", distance) + ")");
         if (spell == null || spell == Spells.none) {
             setCooldown(FAILED_CAST_COOLDOWN);
             return;
         }
 
         int telegraph = Math.max(0, ModConfig.entities.assimilatedWizard.combat.castTelegraphTicks);
+        this.pendingSpell = spell;
+        this.pendingTarget = target;
         if (telegraph == 0) {
-            this.pendingSpell = spell;
-            this.pendingTarget = target;
             this.fireCommittedCast();
             return;
         }
-
-        this.pendingSpell = spell;
-        this.pendingTarget = target;
         this.telegraphTicksLeft = telegraph;
         this.wizard.signalCastTelegraph(telegraph);
+    }
+
+    private void tickMovement(EntityLivingBase target, double distance) {
+        if (--this.repathTimer > 0) return;
+        this.repathTimer = REPATH_INTERVAL;
+
+        if (distance < RETREAT_DISTANCE) {
+            Vec3d away = RandomPositionGenerator.findRandomTargetBlockAwayFrom(
+                    this.wizard, 8, 5, new Vec3d(target.posX, target.posY, target.posZ));
+            if (away != null) {
+                this.wizard.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, RETREAT_SPEED);
+            }
+        } else if (distance > APPROACH_DISTANCE) {
+            this.wizard.getNavigator().tryMoveToEntityLiving(target, MOVE_SPEED);
+        } else {
+            this.wizard.getNavigator().clearPath();
+        }
     }
 
     /**
@@ -236,6 +286,13 @@ public class EntityAISimWizardCast extends EntityAIBase {
         }
 
         boolean cast = spell.cast(this.wizard.world, this.wizard, EnumHand.MAIN_HAND, 0, castTarget, modifiers);
+        if (ModConfig.client.enableSimWizardDebugLogs) {
+            long now = this.wizard.world.getTotalWorldTime();
+            logDiag("cast " + spell.getRegistryName() + " -> " + cast
+                    + (cast && this.lastSuccessfulCastTime > 0
+                            ? " (" + (now - this.lastSuccessfulCastTime) + "t since previous)" : ""));
+            if (cast) this.lastSuccessfulCastTime = now;
+        }
         if (!cast) {
             setCooldown(FAILED_CAST_COOLDOWN);
             return;
@@ -246,7 +303,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
 
         this.wizard.swingArm(EnumHand.MAIN_HAND);
 
-        // v3.3: continuous spells (life_drain) are channeled - the first cast tick above
+        // Continuous spells (life_drain) are channeled - the first cast tick above
         // succeeded, now keep casting every tick for CHANNEL_DURATION_TICKS. The continuous
         // spell is published via ISpellCaster so the glow/aura visuals loop for the duration.
         if (spell.isContinuous) {
@@ -347,7 +404,7 @@ public class EntityAISimWizardCast extends EntityAIBase {
 
         double distance = this.wizard.getDistance(target);
 
-        // ---- SPECIAL SPELLS (v3.3): life_drain / banish, gated by a configurable roll ----
+        // ---- SPECIAL SPELLS: life_drain / banish, gated by a configurable roll ----
         // Deliberately rare (default 20%) so they read as signature moves, not spam:
         //  - banish inside 4.5 blocks: hurl the attacker away instead of melee-scrambling
         //  - life_drain at 4.5-9 blocks: channeled parasitic drain (heals the wizard)

@@ -25,6 +25,13 @@ public class ClientCategory {
     public boolean enableThrallDebugLogs = false;
 
     @Config.Comment({
+            "Verbose diagnostic logging for the Sim Wizard casting pipeline: spell pool contents,",
+            "target/cooldown gate rejections (throttled), spell picks and cast results.",
+            "Turn on to diagnose 'wizard is not casting' reports, then send the log to the mod author." })
+    @Config.Name("Sim Wizard Debug Logs")
+    public boolean enableSimWizardDebugLogs = false;
+
+    @Config.Comment({
             "If true, suppresses the mod-recommendation and version-warning messages that appear in chat",
             "when you join a world (e.g. missing optional mods, SRPextra version hints).",
             "Warnings are still written to the log file regardless of this setting."

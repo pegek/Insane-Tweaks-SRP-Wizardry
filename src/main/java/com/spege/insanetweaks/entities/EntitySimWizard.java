@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import com.dhanantry.scapeandrunparasites.entity.ai.EntityAIAttackMeleeStatus;
 import com.dhanantry.scapeandrunparasites.entity.ai.EntityAIGetFollowers;
 import com.dhanantry.scapeandrunparasites.entity.ai.EntityAISwimmingDiving;
 import com.dhanantry.scapeandrunparasites.entity.ai.EntityAIWaterLeapAtTargetStatus;
@@ -14,7 +13,7 @@ import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import com.dhanantry.scapeandrunparasites.entity.monster.infected.EntityInfHuman;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.entities.ai.EntityAISimWizardCast;
+import com.spege.insanetweaks.entities.ai.EntityAISimWizardCombat;
 
 import electroblob.wizardry.entity.living.ISpellCaster;
 import electroblob.wizardry.registry.Spells;
@@ -51,9 +50,9 @@ import net.minecraft.world.World;
  *  - Full-fledged SRP parasite. NO {@code EPEL_E} protection. Attacks everything non-parasite.
  *  - Inherits {@link EntityInfHuman} for SRP collective integration (CircleGroup formation,
  *    GetFollowers attraction, parasiteIDRegister, save data spawn count).
- *  - {@link #initEntityAI()} is OWN composition (does NOT call super.initEntityAI). The SRP
- *    melee task is replaced by {@link EntityAISimWizardCast} as the primary attack task and
- *    demoted melee acts as a fallback when no spell can be cast.
+ *  - {@link #initEntityAI()} is OWN composition (does NOT call super.initEntityAI). v4: ONE
+ *    combat task ({@link com.spege.insanetweaks.entities.ai.EntityAISimWizardCombat}) owns both
+ *    movement and casting; there is NO melee — the wizard is a pure caster.
  *  - Cast/heal pipeline runs through real EBW NPC path: {@code spell.cast(World, EntityLiving,
  *    EnumHand, int, EntityLivingBase, SpellModifiers)}.
  *  - All balance values (HP/armor/speed multipliers, cooldowns, decision range, spell
@@ -123,15 +122,9 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.tasks.addTask(1, new EntityAIOpenDoor(this, true));
         this.tasks.addTask(2, new EntityAIWaterLeapAtTargetStatus(this, 0.7F, 1.5D, 3, 20, 0));
 
-        this.tasks.addTask(3, new EntityAISimWizardCast(this));
-
-        // v3.2: caster movement discipline. Kite (priority 4, mutex 1) owns combat movement -
-        // retreat when crowded, approach when too far, otherwise stand and cast. It yields
-        // only when the target is within 3 blocks, which is the ONLY window in which the
-        // SRP melee task below (priority 5, conflicting mutex) can run - so the wizard claws
-        // exclusively when cornered instead of sprinting into fist range between casts.
-        this.tasks.addTask(4, new com.spege.insanetweaks.entities.ai.EntityAISimWizardKite(this, 1.0D));
-        this.tasks.addTask(5, new EntityAIAttackMeleeStatus(this, 1.2D, false, 0.0D));
+        // v4: single combat task owns movement AND casting (mutex 3). No melee — the
+        // wizard is a pure caster; banish handles close quarters (spec 2026-07-10).
+        this.tasks.addTask(3, new EntityAISimWizardCombat(this));
 
         this.tasks.addTask(6, new EntityAICircleGroup((EntityCreature) this, 1.15D, 8, 4.0D, 10.0D, 16,
                 e -> e instanceof EntityParasiteBase));
@@ -295,6 +288,16 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             this.spells.add(Spells.spark_bomb);
             this.spells.add(Spells.heal);
         }
+
+        if (ModConfig.client.enableSimWizardDebugLogs) {
+            StringBuilder sb = new StringBuilder();
+            for (Spell s : this.spells) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(s.getRegistryName());
+            }
+            InsaneTweaksMod.LOGGER.info("[InsaneTweaks][SimWizard#{}] spell pool built ({}): [{}]",
+                    this.getEntityId(), this.spells.size(), sb);
+        }
     }
 
     /**
@@ -332,14 +335,14 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.setDropChance(EntityEquipmentSlot.MAINHAND, 0.0F);
     }
 
-    /** Server-side hook called by {@link EntityAISimWizardCast} after a successful cast. */
+    /** Server-side hook called by {@link EntityAISimWizardCombat} after a successful cast. */
     public void signalCastBurst(int animationTicks) {
         this.setCastAnimationTicks(animationTicks);
         this.world.setEntityState(this, STATUS_CAST_BURST);
     }
 
     /**
-     * Server-side hook called by {@link EntityAISimWizardCast} at the START of charge-up
+     * Server-side hook called by {@link EntityAISimWizardCombat} at the START of charge-up
      * (before the actual spell.cast). Triggers the telegraph vocalization on the client side
      * and a brief halo particle burst so the player has a tell to dodge.
      */
@@ -550,7 +553,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         if (ticks <= 0) {
             return 0.0F;
         }
-        // 14 is the value passed in by EntityAISimWizardCast.
+        // 14 is the value passed in by EntityAISimWizardCombat.
         float normalized = ticks / 14.0F;
         if (normalized > 1.0F) {
             normalized = 1.0F;
