@@ -13,7 +13,7 @@ public class ThrallCategory {
     public final Collecting collecting = new Collecting();
 
     @Config.Name("Porter")
-    @Config.Comment("PORTER mode: item ferry between the owner and home chests.")
+    @Config.Comment("PORTER mode: chest sorting anchored at the home point.")
     public final Porter porter = new Porter();
 
     @Config.Name("Farming")
@@ -23,9 +23,6 @@ public class ThrallCategory {
     @Config.Name("Labour")
     @Config.Comment("WOODCUTTING and MINESHAFT modes.")
     public final Labour labour = new Labour();
-
-    /** Direction a Porter carries items. Read per cycle (no restart needed). */
-    public enum PorterDirection { TO_HOME, FROM_HOME }
 
     public static class General {
         @Config.Comment({
@@ -131,48 +128,22 @@ public class ThrallCategory {
 
     public static class Porter {
         @Config.Comment({ "Master toggle for the Porter work mode. If false, Thralls cannot enter PORTER mode.",
-                "Porter mode acts as an auto-stocker: the Thrall periodically teleports to its owner,",
-                "pulls items from the owner's inventory that already have a sample stored in chests near home,",
-                "and ferries them back. Anchored to the home point." })
+                "REWORK 2026-07-10: the Porter is a pure chest sorter anchored at the home point.",
+                "Each cycle it deposits its own bag into home chests, then consolidates chest contents",
+                "(each item type migrates into the chest where it already has the most stacks)." })
         @Config.Name("Enable Porter Mode")
         public boolean enablePorterMode = true;
 
-        @Config.Comment({
-                "Seconds between porter delivery cycles. Lower values are more responsive but cause more",
-                "teleport noise/particles. Default is balanced for normal play." })
+        @Config.Comment({ "Seconds between porter sorting cycles." })
         @Config.Name("Porter: Cycle Interval (seconds)")
         @Config.RangeInt(min = 5, max = 300)
         public int porterIntervalSeconds = 30;
 
-        @Config.Comment({
-                "Porter carry direction, read fresh each cycle (no restart needed):",
-                "  TO_HOME   — default. Pulls matching items from the owner's main inventory and stores them",
-                "              in home chests (the classic auto-stocker).",
-                "  FROM_HOME — reverse restock. Pulls from home chests ONLY item types the owner already",
-                "              carries with non-full stacks, teleports to the owner and tops those stacks up.",
-                "              Never introduces new item types and never touches hotbar/armour/offhand." })
-        @Config.Name("Porter: Direction")
-        public PorterDirection porterDirection = PorterDirection.TO_HOME;
-
-        @Config.Comment({
-                "Maximum distance (in blocks) the Porter will travel from its home to reach the owner.",
-                "Beyond this range the Porter idles. Cross-dimension delivery is not supported." })
-        @Config.Name("Porter: Max Range (blocks)")
-        @Config.RangeInt(min = 16, max = 256)
-        public int porterTeleportRange = 96;
-
         @Config.Comment({ "Horizontal radius (in blocks) the Porter scans for chests around its home.",
-                "Used both for the manifest build and for depositing fetched items. Vertical scan is fixed at +/-4 blocks." })
+                "Used both for sorting and for depositing its own bag. Vertical scan is fixed at +/-4 blocks." })
         @Config.Name("Porter: Chest Scan Radius (blocks)")
         @Config.RangeInt(min = 8, max = 64)
         public int porterChestScanRange = 40;
-
-        @Config.Comment({
-                "If true, the Porter actively consolidates chest contents each cycle: items get moved into",
-                "the chest where their type already has the most stacks, so types don't drift across chests over time.",
-                "Bounded by a small per-cycle transfer cap to avoid stutter." })
-        @Config.Name("Porter: Active Chest Sorting")
-        public boolean enablePorterSorting = true;
     }
 
     public static class Farming {
