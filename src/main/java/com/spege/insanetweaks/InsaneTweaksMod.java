@@ -302,6 +302,12 @@ public class InsaneTweaksMod implements IGuiHandler {
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
+        if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableZhonya) {
+            ((electroblob.wizardry.item.ItemArtefact) com.spege.insanetweaks.init.ModItems.ZHONYAS_HOURGLASS)
+                    .setEnabled(false);
+            LOGGER.info("[InsaneTweaks] Zhonya's Hourglass is disabled via config (tweaks.enableZhonya=false).");
+        }
+
         // Zhonya rework: Gilded Stasis enforcement (immortality, root, aggro loss).
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaStasisHandler());
 

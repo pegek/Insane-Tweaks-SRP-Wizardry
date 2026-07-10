@@ -114,6 +114,10 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaS
     @Nonnull
     public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player,
             @Nonnull EnumHand hand) {
+        if (!ModConfig.tweaks.enableZhonya) {
+            return new ActionResult<ItemStack>(EnumActionResult.PASS, player.getHeldItem(hand));
+        }
+
         ItemStack stack = player.getHeldItem(hand);
 
         if (world.isRemote) {
@@ -201,6 +205,10 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaS
     @SideOnly(Side.CLIENT)
     public void addInformation(@Nonnull ItemStack stack, @Nullable World world,
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
+        if (!ModConfig.tweaks.enableZhonya) {
+            tooltip.add(TextFormatting.DARK_GRAY
+                    + net.minecraft.client.resources.I18n.format("item.insanetweaks.zhonyas_hourglass.disabled"));
+        }
         tooltip.add(TextFormatting.GRAY + "Time stolen from the parasite hive.");
         tooltip.add("");
         tooltip.add(TextFormatting.GOLD + "Gilded Stasis");

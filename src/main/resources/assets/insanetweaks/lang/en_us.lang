@@ -46,6 +46,7 @@ item.insanetweaks:infernal_crown.desc=Every 10th summoned creature is permanentl
 
 item.insanetweaks.zhonyas_hourglass.name=§eZhonyas Hourglass
 item.insanetweaks:zhonyas_hourglass.desc=Right-click to enter golden stasis: brief invulnerable freeze, full heal and cleanse, enemies forget you. Costs ALL current mana; long cooldown.
+item.insanetweaks.zhonyas_hourglass.disabled=Disabled in config (tweaks -> Enable Zhonya's Hourglass)
 
 item.insanetweaks.restoration_hourglass.name=§eHourglass of Restoration
 item.insanetweaks:restoration_hourglass.desc=Restores SRP-infected entities to their original form when using Purifying Pulse spell. In Creative, right-click to directly restore targeted entity.
