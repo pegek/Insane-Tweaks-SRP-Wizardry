@@ -26,6 +26,7 @@ public class PacketThrallCommand implements IMessage {
     public static final int ACTION_PORTER      = 9;
     public static final int ACTION_RETURN_HOME = 10;
     public static final int ACTION_COLLECTING  = 11;
+    public static final int ACTION_HUSBANDRY   = 12;
 
     private int entityId;
     private int actionId;
@@ -162,6 +163,17 @@ public class PacketThrallCommand implements IMessage {
                     thrall.startOrResumeCollectingMode();
                     thrall.playSoundOrder();
                     player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.collecting"), true);
+                    break;
+
+                case ACTION_HUSBANDRY:
+                    if (!com.spege.insanetweaks.config.ModConfig.thrall.husbandry.enableHusbandryMode) {
+                        player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
+                        break;
+                    }
+                    thrall.setMode(ThrallMode.HUSBANDRY);
+                    thrall.setStatusText("Tending...");
+                    thrall.playSoundOrder();
+                    player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.husbandry"), true);
                     break;
 
                 case ACTION_RETURN_HOME:

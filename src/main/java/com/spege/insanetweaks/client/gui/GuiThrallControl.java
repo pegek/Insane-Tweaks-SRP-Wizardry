@@ -52,6 +52,8 @@ public class GuiThrallControl extends GuiScreen {
                 I18n.format("gui.insanetweaks.thrall.action.porter")));
         this.buttonList.add(new GuiButton(11, leftX, startY + 6 * (btnH + gap), btnW, btnH,
                 I18n.format("gui.insanetweaks.thrall.action.collecting")));
+        this.buttonList.add(new GuiButton(12, leftX, startY + 7 * (btnH + gap), btnW, btnH,
+                I18n.format("gui.insanetweaks.thrall.action.husbandry")));
 
         // ---- Right column: actions ----
         this.buttonList.add(new GuiButton(4, rightX, startY, btnW, btnH,
@@ -79,6 +81,7 @@ public class GuiThrallControl extends GuiScreen {
             case 9: action = PacketThrallCommand.ACTION_PORTER;      break;
             case 10: action = PacketThrallCommand.ACTION_RETURN_HOME; break;
             case 11: action = PacketThrallCommand.ACTION_COLLECTING; break;
+            case 12: action = PacketThrallCommand.ACTION_HUSBANDRY; break;
         }
         if (action >= 0) {
             InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketThrallCommand(this.entityId, action));
@@ -145,6 +148,7 @@ public class GuiThrallControl extends GuiScreen {
             case 8:  return "gui.insanetweaks.thrall.tooltip.farming";
             case 9:  return "gui.insanetweaks.thrall.tooltip.porter";
             case 11: return "gui.insanetweaks.thrall.tooltip.collecting";
+            case 12: return "gui.insanetweaks.thrall.tooltip.husbandry";
             case 4:  return "gui.insanetweaks.thrall.tooltip.set_home";
             case 10: return "gui.insanetweaks.thrall.tooltip.return_home";
             case 6:  return "gui.insanetweaks.thrall.tooltip.inventory";

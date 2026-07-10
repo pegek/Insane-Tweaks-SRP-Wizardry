@@ -7,7 +7,8 @@ public enum ThrallMode {
     MINESHAFT("mineshaft"),
     FARMING("farming"),
     PORTER("porter"),
-    COLLECTING("collecting");
+    COLLECTING("collecting"),
+    HUSBANDRY("husbandry");
 
     private final String translationSuffix;
 

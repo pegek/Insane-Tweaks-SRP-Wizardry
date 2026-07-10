@@ -16,6 +16,10 @@ public class ThrallCategory {
     @Config.Comment("PORTER mode: chest sorting anchored at the home point.")
     public final Porter porter = new Porter();
 
+    @Config.Name("Husbandry")
+    @Config.Comment("HUSBANDRY mode: breed, shear and cull farm animals around the home point.")
+    public final Husbandry husbandry = new Husbandry();
+
     @Config.Name("Farming")
     @Config.Comment("FARMING mode: harvest, replant, bone-meal and re-till.")
     public final Farming farming = new Farming();
@@ -144,6 +148,31 @@ public class ThrallCategory {
         @Config.Name("Porter: Chest Scan Radius (blocks)")
         @Config.RangeInt(min = 8, max = 64)
         public int porterChestScanRange = 40;
+    }
+
+    public static class Husbandry {
+        @Config.Comment({ "Master toggle for the Husbandry work mode. If false, Thralls cannot enter HUSBANDRY mode.",
+                "The thrall works animals within the radius around its home point: shears shearable animals",
+                "(needs shears in a home chest), culls adults above the population cap (drops are collected),",
+                "and breeds pairs below the cap (needs matching feed in a home chest)." })
+        @Config.Name("Enable Husbandry Mode")
+        public boolean enableHusbandryMode = true;
+
+        @Config.Comment("Working radius (blocks) around the home point.")
+        @Config.Name("Husbandry: Radius")
+        @Config.RangeInt(min = 4, max = 48)
+        public int husbandryRadius = 16;
+
+        @Config.Comment("Seconds between husbandry work cycles.")
+        @Config.Name("Husbandry: Cycle Interval (seconds)")
+        @Config.RangeInt(min = 5, max = 600)
+        public int husbandryIntervalSeconds = 30;
+
+        @Config.Comment({ "Maximum ADULT animals per species within the radius. Excess adults are culled;",
+                "breeding is skipped at/above the cap. Babies, in-love animals and owned pets never count as excess." })
+        @Config.Name("Husbandry: Population Cap")
+        @Config.RangeInt(min = 2, max = 64)
+        public int husbandryPopulationCap = 8;
     }
 
     public static class Farming {

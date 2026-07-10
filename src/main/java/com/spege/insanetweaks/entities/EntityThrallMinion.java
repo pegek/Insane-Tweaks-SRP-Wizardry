@@ -6,6 +6,7 @@ import com.spege.insanetweaks.entities.ai.ThrallAICollecting;
 import com.spege.insanetweaks.entities.ai.ThrallAIFarming;
 import com.spege.insanetweaks.entities.ai.ThrallAIFollowCaster;
 import com.spege.insanetweaks.entities.ai.ThrallAIGatherItems;
+import com.spege.insanetweaks.entities.ai.ThrallAIHusbandry;
 import com.spege.insanetweaks.entities.ai.ThrallAIMineshaft;
 import com.spege.insanetweaks.entities.ai.ThrallAIPorter;
 import com.spege.insanetweaks.entities.ai.ThrallAIWander;
@@ -181,6 +182,7 @@ public class EntityThrallMinion extends EntityCreature {
         this.tasks.addTask(1, mineshaftAI);
         this.tasks.addTask(1, new ThrallAIFarming(this));
         this.tasks.addTask(1, new ThrallAIPorter(this));
+        this.tasks.addTask(1, new ThrallAIHusbandry(this));
         this.collectingAI = new ThrallAICollecting(this);
         this.tasks.addTask(1, collectingAI);
         this.tasks.addTask(3, new ThrallAIGatherItems(this));
@@ -653,7 +655,7 @@ public class EntityThrallMinion extends EntityCreature {
         // session-loop is bounded by thrall.general.workDurationHours — see onUpdate work-timer block).
         if (mode == ThrallMode.WOODCUTTING || mode == ThrallMode.MINESHAFT
                 || mode == ThrallMode.FARMING || mode == ThrallMode.PORTER
-                || mode == ThrallMode.COLLECTING) {
+                || mode == ThrallMode.COLLECTING || mode == ThrallMode.HUSBANDRY) {
             if (workStartTick == 0) {
                 workStartTick = world.getTotalWorldTime();
                 if (debugLogs()) LOG.info("[Thrall#{}] Work timer started at tick {}", getEntityId(), workStartTick);
