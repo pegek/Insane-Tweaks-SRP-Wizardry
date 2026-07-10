@@ -112,6 +112,17 @@ public class EntitySentinel extends EntityCreature
             DataSerializers.VARINT);
     private static final DataParameter<Integer> SHIELD_DISABLED_TICK = EntityDataManager.createKey(EntitySentinel.class,
             DataSerializers.VARINT);
+    private static final DataParameter<Boolean> AGGRESSIVE_STANCE = EntityDataManager.createKey(EntitySentinel.class,
+            DataSerializers.BOOLEAN);
+    private static final DataParameter<Integer> GUARD_RADIUS = EntityDataManager.createKey(EntitySentinel.class,
+            DataSerializers.VARINT);
+    private static final DataParameter<Boolean> COLLECT_ALL = EntityDataManager.createKey(EntitySentinel.class,
+            DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> AUTO_DEPOSIT = EntityDataManager.createKey(EntitySentinel.class,
+            DataSerializers.BOOLEAN);
+
+    public static final int MIN_GUARD_RADIUS = 8;
+    public static final int MAX_GUARD_RADIUS = 48;
 
     private final List<Spell> spells = new ArrayList<Spell>(SENTINEL_STANDARD_SPELL_COUNT + 1);
     private final List<BlockPos> guardPatrolPoints = new ArrayList<BlockPos>();
@@ -148,6 +159,50 @@ public class EntitySentinel extends EntityCreature
         this.dataManager.register(GUARD_ANCHOR_Y, 0);
         this.dataManager.register(GUARD_ANCHOR_Z, 0);
         this.dataManager.register(SHIELD_DISABLED_TICK, 0);
+        this.dataManager.register(AGGRESSIVE_STANCE, Boolean.TRUE);
+        this.dataManager.register(GUARD_RADIUS, DEFAULT_GUARD_RADIUS);
+        this.dataManager.register(COLLECT_ALL, Boolean.TRUE);
+        this.dataManager.register(AUTO_DEPOSIT, Boolean.TRUE);
+    }
+
+    // ---- F2/F3 per-entity settings (spec 2026-07-10) ----
+
+    /** Aggressive = proactive targeting of hostiles; Defensive = retaliation + owner defense only. */
+    public boolean isAggressiveStance() {
+        return this.dataManager.get(AGGRESSIVE_STANCE);
+    }
+
+    public void setAggressiveStance(boolean aggressive) {
+        this.dataManager.set(AGGRESSIVE_STANCE, aggressive);
+        if (!aggressive) {
+            this.setAttackTarget(null);
+        }
+    }
+
+    public int getGuardRadius() {
+        return MathHelper.clamp(this.dataManager.get(GUARD_RADIUS), MIN_GUARD_RADIUS, MAX_GUARD_RADIUS);
+    }
+
+    public void setGuardRadius(int radius) {
+        this.dataManager.set(GUARD_RADIUS, MathHelper.clamp(radius, MIN_GUARD_RADIUS, MAX_GUARD_RADIUS));
+        this.guardRegionDirty = true;
+    }
+
+    /** True = pick up every item; false = only config-listed valuables. */
+    public boolean isCollectAll() {
+        return this.dataManager.get(COLLECT_ALL);
+    }
+
+    public void setCollectAll(boolean collectAll) {
+        this.dataManager.set(COLLECT_ALL, collectAll);
+    }
+
+    public boolean isAutoDeposit() {
+        return this.dataManager.get(AUTO_DEPOSIT);
+    }
+
+    public void setAutoDeposit(boolean autoDeposit) {
+        this.dataManager.set(AUTO_DEPOSIT, autoDeposit);
     }
 
     @Override
@@ -155,6 +210,10 @@ public class EntitySentinel extends EntityCreature
         this.targetSelector = entity -> entity != null
                 && entity != this
                 && entity != this.getOwnerEntity()
+                // F2: Defensive stance disables PROACTIVE targeting only — retaliation
+                // (EntityAIHurtByTarget) and owner defense (syncOwnerPriorityTarget)
+                // do not consult this selector and stay active.
+                && this.isAggressiveStance()
                 && !entity.isInvisible()
                 && AllyDesignationSystem.isValidTarget(this, entity)
                 && this.isSupportedTargetType(entity)
@@ -177,9 +236,9 @@ public class EntitySentinel extends EntityCreature
         this.tasks.addTask(8, new EntityAILookIdle(this));
 
         this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, true));
+        // F2: priority-ordered proactive targeting (parasites > undead > rest, config-driven).
         this.targetTasks.addTask(2,
-                new EntityAINearestAttackableTarget<EntityLivingBase>(this, EntityLivingBase.class, 0, false, true,
-                        this.targetSelector));
+                new com.spege.insanetweaks.entities.ai.EntityAISentinelTargetPriority(this, this.targetSelector));
     }
 
     @Override
@@ -352,7 +411,15 @@ public class EntitySentinel extends EntityCreature
     }
 
     private void tickPassiveSelfHeal() {
+        double regenAmount = com.spege.insanetweaks.config.ModConfig.entities.sentinel.regenAmount;
+        if (regenAmount <= 0.0D) {
+            return;
+        }
         if (this.isPotionActive(WizardryPotions.arcane_jammer)) {
+            return;
+        }
+        // F3: out-of-combat regeneration only.
+        if (this.getAttackTarget() != null) {
             return;
         }
 
@@ -362,7 +429,7 @@ public class EntitySentinel extends EntityCreature
         }
 
         if (this.getHealth() < this.getMaxHealth() && this.getHealth() > 0.0F) {
-            float healAmount = this.getElement() == Element.HEALING ? 7.5F : 3.75F;
+            float healAmount = (float) (this.getElement() == Element.HEALING ? regenAmount * 2.0D : regenAmount);
             this.heal(healAmount);
             this.playSound(Spells.heal.getSounds()[0], 0.7F, this.rand.nextFloat() * 0.4F + 1.0F);
         }
@@ -383,6 +450,11 @@ public class EntitySentinel extends EntityCreature
 
             ItemStack stack = entityItem.getItem();
             if (stack.isEmpty()) {
+                continue;
+            }
+
+            // F3: pickup filter — valuables-only mode skips anything not keyword-matched.
+            if (!this.isCollectAll() && !isValuable(stack)) {
                 continue;
             }
 
@@ -434,7 +506,19 @@ public class EntitySentinel extends EntityCreature
         return remaining;
     }
 
+    private static boolean isValuable(ItemStack stack) {
+        if (stack.getItem().getRegistryName() == null) return false;
+        String path = stack.getItem().getRegistryName().getResourcePath();
+        for (String keyword : com.spege.insanetweaks.config.ModConfig.entities.sentinel.valuableKeywords) {
+            if (keyword != null && !keyword.isEmpty() && path.contains(keyword)) return true;
+        }
+        return false;
+    }
+
     private void tickGuardChestDeposit() {
+        if (!this.isAutoDeposit()) {
+            return;
+        }
         if (this.getCommandMode() != SentinelCommandMode.GUARD || !this.hasLootItems() || this.ticksExisted % 40 != 0) {
             return;
         }
@@ -605,13 +689,13 @@ public class EntitySentinel extends EntityCreature
 
         EntityLivingBase target = this.getAttackTarget();
         if (target != null && target.isEntityAlive()) {
-            double maxDistance = (DEFAULT_GUARD_RADIUS + 6) * (DEFAULT_GUARD_RADIUS + 6);
+            double maxDistance = (this.getGuardRadius() + 6) * (this.getGuardRadius() + 6);
             if (target.getDistanceSqToCenter(anchor) > maxDistance) {
                 this.setAttackTarget(null);
             }
         }
 
-        if (this.getDistanceSqToGuardAnchor() > (DEFAULT_GUARD_RADIUS + 8) * (DEFAULT_GUARD_RADIUS + 8)) {
+        if (this.getDistanceSqToGuardAnchor() > (this.getGuardRadius() + 8) * (this.getGuardRadius() + 8)) {
             this.setAttackTarget(null);
             this.getNavigator().tryMoveToXYZ(anchor.getX() + 0.5D, anchor.getY(), anchor.getZ() + 0.5D, 1.0D);
         }
@@ -691,8 +775,8 @@ public class EntitySentinel extends EntityCreature
                     continue;
                 }
 
-                if (next.distanceSq(anchor.getX(), anchor.getY(), anchor.getZ()) > (DEFAULT_GUARD_RADIUS + 1)
-                        * (DEFAULT_GUARD_RADIUS + 1)) {
+                if (next.distanceSq(anchor.getX(), anchor.getY(), anchor.getZ()) > (this.getGuardRadius() + 1)
+                        * (this.getGuardRadius() + 1)) {
                     continue;
                 }
 
@@ -767,8 +851,8 @@ public class EntitySentinel extends EntityCreature
         }
 
         BlockPos anchor = this.getGuardAnchor();
-        return anchor == null || target.getDistanceSqToCenter(anchor) <= (DEFAULT_GUARD_RADIUS + 4)
-                * (DEFAULT_GUARD_RADIUS + 4);
+        return anchor == null || target.getDistanceSqToCenter(anchor) <= (this.getGuardRadius() + 4)
+                * (this.getGuardRadius() + 4);
     }
 
     private boolean isSupportedTargetType(EntityLivingBase entity) {
@@ -1127,6 +1211,11 @@ public class EntitySentinel extends EntityCreature
         compound.setTag("SentinelSpells", spellList);
 
         compound.setTag("SentinelLootInventory", this.writeLootInventoryToNBT());
+
+        compound.setBoolean("SentinelAggressive", this.isAggressiveStance());
+        compound.setInteger("SentinelGuardRadius", this.getGuardRadius());
+        compound.setBoolean("SentinelCollectAll", this.isCollectAll());
+        compound.setBoolean("SentinelAutoDeposit", this.isAutoDeposit());
     }
 
     @Override
@@ -1190,6 +1279,20 @@ public class EntitySentinel extends EntityCreature
 
                 this.lootInventory.set(slot, new ItemStack(slotTag.getCompoundTag("Stack")));
             }
+        }
+
+        // Legacy saves (pre-2026-07-10) lack these tags — keep the registered defaults then.
+        if (compound.hasKey("SentinelAggressive")) {
+            this.setAggressiveStance(compound.getBoolean("SentinelAggressive"));
+        }
+        if (compound.hasKey("SentinelGuardRadius")) {
+            this.setGuardRadius(compound.getInteger("SentinelGuardRadius"));
+        }
+        if (compound.hasKey("SentinelCollectAll")) {
+            this.setCollectAll(compound.getBoolean("SentinelCollectAll"));
+        }
+        if (compound.hasKey("SentinelAutoDeposit")) {
+            this.setAutoDeposit(compound.getBoolean("SentinelAutoDeposit"));
         }
     }
 }

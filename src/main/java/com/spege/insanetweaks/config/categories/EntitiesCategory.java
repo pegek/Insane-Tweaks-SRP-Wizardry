@@ -11,6 +11,30 @@ public class EntitiesCategory {
     @Config.Comment("The Assimilated Wizard parasite-mage (registry name sim_wizard): a full SRP parasite, aggressive vs non-parasites.")
     public final AssimilatedWizard assimilatedWizard = new AssimilatedWizard();
 
+    @Config.Name("sentinel")
+    @Config.LangKey("config.insanetweaks.category.entities.sentinel")
+    @Config.Comment("The Sentinel ally battlemage: target priorities, pickup filter, regeneration.")
+    public final Sentinel sentinel = new Sentinel();
+
+    public static class Sentinel {
+        @Config.Comment({ "Registry-name prefixes defining target priority, highest first.",
+                "Entities matching an earlier prefix are attacked before later ones;",
+                "undead rank after all listed prefixes; everything else last." })
+        @Config.Name("Sentinel: Target Priority Prefixes")
+        public String[] targetPriorityPrefixes = { "srparasites:", "srpextra:" };
+
+        @Config.Comment({ "Registry-path keywords that count as 'valuable' for the pickup filter",
+                "(used when a Sentinel's 'collect everything' toggle is OFF)." })
+        @Config.Name("Sentinel: Valuable Keywords")
+        public String[] valuableKeywords = { "ore", "ingot", "gem", "diamond", "emerald",
+                "gold", "crystal", "dust", "wand", "scroll", "book", "pearl" };
+
+        @Config.Comment("Out-of-combat self-heal amount per pulse (0 disables regeneration; HEALING-element Sentinels heal double).")
+        @Config.Name("Sentinel: Regen Amount")
+        @Config.RangeDouble(min = 0.0, max = 20.0)
+        public double regenAmount = 3.75;
+    }
+
     public static class AssimilatedWizard {
 
         @Config.Name("spawning")

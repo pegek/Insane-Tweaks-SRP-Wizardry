@@ -173,7 +173,15 @@ gui.insanetweaks.sentinel.action.follow=Follow Owner
 gui.insanetweaks.sentinel.action.guard_here=Guard Here
 gui.insanetweaks.sentinel.anchor.none=No guard anchor
 gui.insanetweaks.sentinel.anchor.coords=Anchor: %s, %s, %s
+gui.insanetweaks.sentinel.stance.aggressive=Stance: Aggressive
+gui.insanetweaks.sentinel.stance.defensive=Stance: Defensive
+gui.insanetweaks.sentinel.radius=Radius: %d
+gui.insanetweaks.sentinel.deposit.on=Deposit: On
+gui.insanetweaks.sentinel.deposit.off=Deposit: Off
+gui.insanetweaks.sentinel.pickup.all=Pickup: Everything
+gui.insanetweaks.sentinel.pickup.valuables=Pickup: Valuables
 container.insanetweaks.sentinel_loot=Sentinel Loot
+config.insanetweaks.category.entities.sentinel=Sentinel
 
 # Thrall
 spell.insanetweaks:summon_thrall=Summon Thrall

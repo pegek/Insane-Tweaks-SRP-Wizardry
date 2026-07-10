@@ -17,6 +17,14 @@ public class PacketSentinelCommand implements IMessage {
     public static final int ACTION_FOLLOW = 0;
     public static final int ACTION_GUARD_HERE = 1;
     public static final int ACTION_OPEN_GUI = 3;
+    public static final int ACTION_STANCE_TOGGLE = 4;
+    public static final int ACTION_RADIUS_UP = 5;
+    public static final int ACTION_RADIUS_DOWN = 6;
+    public static final int ACTION_TOGGLE_DEPOSIT = 7;
+    public static final int ACTION_TOGGLE_PICKUP_FILTER = 8;
+
+    /** Guard-radius step per button press (blocks). */
+    public static final int RADIUS_STEP = 4;
 
     private int entityId;
     private int actionId;
@@ -87,6 +95,31 @@ public class PacketSentinelCommand implements IMessage {
                 player.openGui(com.spege.insanetweaks.InsaneTweaksMod.INSTANCE,
                         com.spege.insanetweaks.InsaneTweaksMod.GUI_ID_SENTINEL,
                         player.world, sentinel.getEntityId(), 0, 0);
+                return;
+            }
+
+            if (message.actionId == ACTION_STANCE_TOGGLE) {
+                sentinel.setAggressiveStance(!sentinel.isAggressiveStance());
+                return;
+            }
+
+            if (message.actionId == ACTION_RADIUS_UP) {
+                sentinel.setGuardRadius(sentinel.getGuardRadius() + RADIUS_STEP);
+                return;
+            }
+
+            if (message.actionId == ACTION_RADIUS_DOWN) {
+                sentinel.setGuardRadius(sentinel.getGuardRadius() - RADIUS_STEP);
+                return;
+            }
+
+            if (message.actionId == ACTION_TOGGLE_DEPOSIT) {
+                sentinel.setAutoDeposit(!sentinel.isAutoDeposit());
+                return;
+            }
+
+            if (message.actionId == ACTION_TOGGLE_PICKUP_FILTER) {
+                sentinel.setCollectAll(!sentinel.isCollectAll());
             }
         }
     }

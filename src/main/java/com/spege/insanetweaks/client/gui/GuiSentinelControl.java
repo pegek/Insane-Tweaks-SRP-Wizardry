@@ -33,6 +33,11 @@ public class GuiSentinelControl extends GuiContainer {
     private final int entityId;
     private GuiButton followButton;
     private GuiButton guardButton;
+    private GuiButton stanceButton;
+    private GuiButton radiusDownButton;
+    private GuiButton radiusUpButton;
+    private GuiButton depositButton;
+    private GuiButton pickupButton;
 
     public GuiSentinelControl(SentinelLootContainer container, int entityId) {
         super(container);
@@ -45,28 +50,60 @@ public class GuiSentinelControl extends GuiContainer {
     public void initGui() {
         super.initGui();
         int left = this.guiLeft - 105;
-        int top = this.guiTop + 18;
+        int top = this.guiTop + 8;
         this.buttonList.clear();
         this.followButton = new GuiButton(0, left, top,
                 100, 20, I18n.format("gui.insanetweaks.sentinel.action.follow"));
         this.guardButton = new GuiButton(1, left, top + 24,
                 100, 20, I18n.format("gui.insanetweaks.sentinel.action.guard_here"));
+        this.stanceButton = new GuiButton(2, left, top + 48, 100, 20, "");
+        this.radiusDownButton = new GuiButton(3, left, top + 72, 20, 20, "-");
+        this.radiusUpButton = new GuiButton(4, left + 80, top + 72, 20, 20, "+");
+        this.depositButton = new GuiButton(5, left, top + 96, 100, 20, "");
+        this.pickupButton = new GuiButton(6, left, top + 120, 100, 20, "");
         this.buttonList.add(this.followButton);
         this.buttonList.add(this.guardButton);
+        this.buttonList.add(this.stanceButton);
+        this.buttonList.add(this.radiusDownButton);
+        this.buttonList.add(this.radiusUpButton);
+        this.buttonList.add(this.depositButton);
+        this.buttonList.add(this.pickupButton);
+        this.refreshButtonLabels();
     }
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
-        // Commands do NOT close the screen — the mode label updates live.
-        if (button.id == 0) {
-            InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketSentinelCommand(this.entityId,
-                    PacketSentinelCommand.ACTION_FOLLOW));
-            return;
+        // Commands do NOT close the screen — labels update live via refreshButtonLabels.
+        int action;
+        switch (button.id) {
+            case 0: action = PacketSentinelCommand.ACTION_FOLLOW;               break;
+            case 1: action = PacketSentinelCommand.ACTION_GUARD_HERE;           break;
+            case 2: action = PacketSentinelCommand.ACTION_STANCE_TOGGLE;        break;
+            case 3: action = PacketSentinelCommand.ACTION_RADIUS_DOWN;          break;
+            case 4: action = PacketSentinelCommand.ACTION_RADIUS_UP;            break;
+            case 5: action = PacketSentinelCommand.ACTION_TOGGLE_DEPOSIT;       break;
+            case 6: action = PacketSentinelCommand.ACTION_TOGGLE_PICKUP_FILTER; break;
+            default: return;
         }
-        if (button.id == 1) {
-            InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketSentinelCommand(this.entityId,
-                    PacketSentinelCommand.ACTION_GUARD_HERE));
-        }
+        InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketSentinelCommand(this.entityId, action));
+    }
+
+    /** Live labels mirroring the sentinel's DataManager-synced settings. */
+    private void refreshButtonLabels() {
+        EntitySentinel sentinel = this.getSentinel();
+        if (sentinel == null) return;
+        this.stanceButton.displayString = I18n.format(sentinel.isAggressiveStance()
+                ? "gui.insanetweaks.sentinel.stance.aggressive"
+                : "gui.insanetweaks.sentinel.stance.defensive");
+        this.depositButton.displayString = I18n.format(sentinel.isAutoDeposit()
+                ? "gui.insanetweaks.sentinel.deposit.on"
+                : "gui.insanetweaks.sentinel.deposit.off");
+        this.pickupButton.displayString = I18n.format(sentinel.isCollectAll()
+                ? "gui.insanetweaks.sentinel.pickup.all"
+                : "gui.insanetweaks.sentinel.pickup.valuables");
+        boolean guarding = sentinel.getGuardAnchor() != null;
+        this.radiusDownButton.enabled = guarding;
+        this.radiusUpButton.enabled = guarding;
     }
 
     @Override
@@ -101,12 +138,18 @@ public class GuiSentinelControl extends GuiContainer {
                     + "  " + (int) sentinel.getHealth() + "/" + (int) sentinel.getMaxHealth() + " HP";
             this.fontRenderer.drawString(status, 8, this.ySize - 94, 0x404040);
 
+            // Radius readout centered in the gap between the -/+ stepper buttons
+            // (buttons occupy relative x -105..-85 and -25..-5 at y 80..100).
+            String radiusText = I18n.format("gui.insanetweaks.sentinel.radius", sentinel.getGuardRadius());
+            int radiusWidth = this.fontRenderer.getStringWidth(radiusText);
+            this.fontRenderer.drawString(radiusText, -55 - radiusWidth / 2, 86, 0x404040);
+
             BlockPos anchor = sentinel.getGuardAnchor();
             if (anchor != null) {
-                // Anchor coords in the left button margin, below the buttons.
+                // Anchor coords in the left button margin, below the toggle buttons.
                 String anchorText = I18n.format("gui.insanetweaks.sentinel.anchor.coords",
                         anchor.getX(), anchor.getY(), anchor.getZ());
-                this.fontRenderer.drawString(anchorText, -105, 68, 0xA0A0A0);
+                this.fontRenderer.drawString(anchorText, -105, 8 + 146, 0xA0A0A0);
             }
         }
     }
@@ -121,7 +164,9 @@ public class GuiSentinelControl extends GuiContainer {
         super.updateScreen();
         if (this.getSentinel() == null) {
             this.mc.player.closeScreen();
+            return;
         }
+        this.refreshButtonLabels();
     }
 
     private EntitySentinel getSentinel() {
