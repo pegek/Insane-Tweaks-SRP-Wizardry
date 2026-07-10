@@ -51,6 +51,17 @@ public class ThrallCategory {
         @Config.Name("Follow Teleport Distance")
         @Config.RangeDouble(min = 6.0, max = 64.0)
         public double followTeleportDistance = 18.0;
+
+        @Config.Comment({"Wander radius (blocks) around the STAY anchor. In STAY mode the thrall",
+                "only strolls within this distance of the spot where it was told to stay." })
+        @Config.Name("Stay: Wander Radius")
+        @Config.RangeInt(min = 1, max = 16)
+        public int stayWanderRadius = 4;
+
+        @Config.Comment({"Movement speed of the STAY-mode stroll (other modes wander at 0.6)." })
+        @Config.Name("Stay: Wander Speed")
+        @Config.RangeDouble(min = 0.1, max = 1.0)
+        public double stayWanderSpeed = 0.4;
     }
 
     public static class Collecting {
