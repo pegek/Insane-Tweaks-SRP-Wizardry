@@ -22,6 +22,15 @@ public class TweaksCategory {
     @Config.Name("Cleanse Effect List")
     public String[] cleanseAdditionalEffects = {};
 
+    @Config.Comment({"Master toggle for the Zhonya's Hourglass artefact (the player-stasis one).",
+            "When false (default), the artefact is inert: right-click does nothing, EB Wizardry",
+            "treats it as a disabled artefact, and the tooltip shows a 'disabled' line.",
+            "The item stays registered, so existing copies in worlds are unaffected.",
+            "The Restoration Hourglass is NOT affected by this switch."})
+    @Config.Name("Enable Zhonya's Hourglass")
+    @Config.RequiresMcRestart
+    public boolean enableZhonya = false;
+
     @Config.Comment({"Zhonya's Hourglass: cooldown after activation, in ticks.",
             "Default 216000 = 3 hours."})
     @Config.Name("Zhonya Cooldown Ticks")
