@@ -32,6 +32,12 @@ public class ClientCategory {
     public boolean enableSimWizardDebugLogs = false;
 
     @Config.Comment({
+            "Verbose diagnostic logging for the Sentinel combat pipeline: target gates,",
+            "spell picks, cast results, melee/cast state transitions." })
+    @Config.Name("Sentinel Debug Logs")
+    public boolean enableSentinelDebugLogs = false;
+
+    @Config.Comment({
             "If true, suppresses the mod-recommendation and version-warning messages that appear in chat",
             "when you join a world (e.g. missing optional mods, SRPextra version hints).",
             "Warnings are still written to the log file regardless of this setting."

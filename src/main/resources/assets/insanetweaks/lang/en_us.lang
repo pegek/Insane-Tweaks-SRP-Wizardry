@@ -171,12 +171,9 @@ gui.insanetweaks.sentinel.mode.follow=Mode: Follow
 gui.insanetweaks.sentinel.mode.guard=Mode: Guard
 gui.insanetweaks.sentinel.action.follow=Follow Owner
 gui.insanetweaks.sentinel.action.guard_here=Guard Here
-gui.insanetweaks.sentinel.action.loot=View Loot
 gui.insanetweaks.sentinel.anchor.none=No guard anchor
 gui.insanetweaks.sentinel.anchor.coords=Anchor: %s, %s, %s
-gui.insanetweaks.sentinel.loot.title=Sentinel Loot
-gui.insanetweaks.sentinel.loot.empty=No collected items
-gui.insanetweaks.sentinel.loot.summary=Filled slots: %s / %s
+container.insanetweaks.sentinel_loot=Sentinel Loot
 
 # Thrall
 spell.insanetweaks:summon_thrall=Summon Thrall

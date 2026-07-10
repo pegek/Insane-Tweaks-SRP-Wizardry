@@ -72,6 +72,9 @@ public class InsaneTweaksMod implements IGuiHandler {
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
 
+    /** GUI ID for the combined Sentinel control + loot screen. */
+    public static final int GUI_ID_SENTINEL = 2;
+
     @Mod.Instance
     public static InsaneTweaksMod INSTANCE;
 
@@ -555,6 +558,16 @@ public class InsaneTweaksMod implements IGuiHandler {
                         player, thrall.getThrallInventory(), thrall.getEntityId());
             }
         }
+        if (id == GUI_ID_SENTINEL) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof com.spege.insanetweaks.entities.EntitySentinel) {
+                com.spege.insanetweaks.entities.EntitySentinel sentinel =
+                        (com.spege.insanetweaks.entities.EntitySentinel) entity;
+                return new com.spege.insanetweaks.client.gui.SentinelLootContainer(player,
+                        new com.spege.insanetweaks.entities.inventory.SentinelLootInventory(sentinel),
+                        sentinel.getEntityId());
+            }
+        }
         return null;
     }
 
@@ -571,6 +584,18 @@ public class InsaneTweaksMod implements IGuiHandler {
                 com.spege.insanetweaks.entities.EntityThrallMinion thrall =
                         (com.spege.insanetweaks.entities.EntityThrallMinion) entity;
                 return new com.spege.insanetweaks.client.gui.GuiThrallInventory(player, thrall);
+            }
+        }
+        if (id == GUI_ID_SENTINEL) {
+            net.minecraft.entity.Entity entity = world.getEntityByID(x);
+            if (entity instanceof com.spege.insanetweaks.entities.EntitySentinel) {
+                com.spege.insanetweaks.entities.EntitySentinel sentinel =
+                        (com.spege.insanetweaks.entities.EntitySentinel) entity;
+                return new com.spege.insanetweaks.client.gui.GuiSentinelControl(
+                        new com.spege.insanetweaks.client.gui.SentinelLootContainer(player,
+                                new com.spege.insanetweaks.entities.inventory.SentinelLootInventory(sentinel),
+                                sentinel.getEntityId()),
+                        sentinel.getEntityId());
             }
         }
         return null;

@@ -16,7 +16,7 @@ public class PacketSentinelCommand implements IMessage {
 
     public static final int ACTION_FOLLOW = 0;
     public static final int ACTION_GUARD_HERE = 1;
-    public static final int ACTION_OPEN_LOOT = 2;
+    public static final int ACTION_OPEN_GUI = 3;
 
     private int entityId;
     private int actionId;
@@ -82,9 +82,11 @@ public class PacketSentinelCommand implements IMessage {
                 return;
             }
 
-            if (message.actionId == ACTION_OPEN_LOOT) {
-                InsaneTweaksNetwork.CHANNEL.sendTo(new PacketOpenSentinelLoot(message.entityId,
-                        sentinel.writeLootInventoryToNBT()), player);
+            if (message.actionId == ACTION_OPEN_GUI) {
+                // Container-backed GUI — vanilla slot sync handles the loot contents.
+                player.openGui(com.spege.insanetweaks.InsaneTweaksMod.INSTANCE,
+                        com.spege.insanetweaks.InsaneTweaksMod.GUI_ID_SENTINEL,
+                        player.world, sentinel.getEntityId(), 0, 0);
             }
         }
     }

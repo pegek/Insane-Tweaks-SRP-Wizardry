@@ -19,8 +19,6 @@ import com.spege.insanetweaks.entities.ai.EntityAISentinelReturnToAnchor;
 import com.windanesz.ancientspellcraft.entity.ai.EntityAIBlockWithShield;
 import com.windanesz.ancientspellcraft.entity.ai.IShieldUser;
 import com.windanesz.ancientspellcraft.entity.living.ICustomCooldown;
-import com.windanesz.ancientspellcraft.entity.ai.EntityAIBattlemageMelee;
-import com.windanesz.ancientspellcraft.entity.ai.EntityAIBattlemageSpellcasting;
 
 import electroblob.wizardry.constants.Element;
 import electroblob.wizardry.constants.Tier;
@@ -119,8 +117,6 @@ public class EntitySentinel extends EntityCreature
     private final List<BlockPos> guardPatrolPoints = new ArrayList<BlockPos>();
     private final NonNullList<ItemStack> lootInventory = NonNullList.withSize(LOOT_SLOT_COUNT, ItemStack.EMPTY);
     private Predicate<EntityLivingBase> targetSelector;
-    private EntityAIBattlemageMelee<EntitySentinel> battlemageMeleeAI;
-    private EntityAIBattlemageSpellcasting<EntitySentinel> battlemageSpellcastingAI;
     private EntityAIBlockWithShield<EntitySentinel> shieldAI;
     private EntityAISentinelFollowOwner followOwnerAI;
     private EntityAISentinelReturnToAnchor returnToAnchorAI;
@@ -166,17 +162,15 @@ public class EntitySentinel extends EntityCreature
                 && this.isAllowedByCurrentCommandMode(entity);
 
         this.shieldAI = new EntityAIBlockWithShield<EntitySentinel>(this);
-        this.battlemageMeleeAI = new EntityAIBattlemageMelee<EntitySentinel>(this, 0.8D, true);
-        this.battlemageSpellcastingAI = new EntityAIBattlemageSpellcasting<EntitySentinel>(this, 0.65D, 14.0F, 25,
-                50);
         this.followOwnerAI = new EntityAISentinelFollowOwner(this, 1.0D, 5.0F, 9.0F);
         this.returnToAnchorAI = new EntityAISentinelReturnToAnchor(this, 0.95D);
         this.guardPatrolAI = new EntityAISentinelGuardPatrol(this, 0.7D);
 
         this.tasks.addTask(0, new EntityAISwimming(this));
         this.tasks.addTask(2, this.shieldAI);
-        this.tasks.addTask(3, this.battlemageMeleeAI);
-        this.tasks.addTask(3, this.battlemageSpellcastingAI);
+        // F1 (spec 2026-07-10): single combat task (melee <=6 blocks, cast beyond) replaces
+        // ASC's battlemage melee/spellcasting pair, which cast far too rarely.
+        this.tasks.addTask(3, new com.spege.insanetweaks.entities.ai.EntityAISentinelCombat(this));
         this.tasks.addTask(4, this.returnToAnchorAI);
         this.tasks.addTask(5, this.followOwnerAI);
         this.tasks.addTask(6, this.guardPatrolAI);
@@ -892,6 +886,11 @@ public class EntitySentinel extends EntityCreature
 
     public boolean canPlayerCommand(EntityPlayer player) {
         return player != null && (this.ownerUUID == null || player.getUniqueID().equals(this.ownerUUID));
+    }
+
+    /** Direct access for the loot container GUI (server-side authoritative). */
+    public NonNullList<ItemStack> getLootInventoryList() {
+        return this.lootInventory;
     }
 
     public NBTTagList writeLootInventoryToNBT() {
