@@ -93,10 +93,12 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
 
     /**
      * Own AI composition - does NOT call super.initEntityAI(). The SRP target tasks
-     * {@code EntityAINearestAttackableTargetStatus<EntityPlayer/EntityLiving>} are added
-     * by {@link com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPInfected}'s
-     * constructor (priority 4) and are automatically inherited - sim_wizard already attacks
-     * everything non-parasite via that path.
+     * {@code EntityAINearestAttackableTargetStatus<EntityPlayer/EntityLiving>} inherited
+     * from {@link com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPInfected}'s
+     * constructor CANNOT be relied on: their shouldExecute bails when
+     * {@code getParasiteStatus() != 0} AND rolls rand.nextInt(10) != 0 (bytecode-verified
+     * 2026-07-16) - the long-lived "wizard rarely fights" root cause. v4.1 therefore adds
+     * an OWN un-gated proactive target task at priority 2.
      *
      * Tasks layout (matches {@link EntityInfHuman} but replaces the melee primary with
      * the dedicated cast task and widens the CircleGroup predicate to include sim_wizard
@@ -117,6 +119,13 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
                 return super.isSuitableTarget(target, includeInvincibles);
             }
         });
+
+        // v4.1: OWN proactive targeting, NOT gated by SRP parasite status (the inherited
+        // Status tasks return false whenever getParasiteStatus() != 0 and pass only 1 in 10
+        // polls even at status 0). chance=5 keeps acquisition snappy without per-tick scans.
+        this.targetTasks.addTask(2, new net.minecraft.entity.ai.EntityAINearestAttackableTarget<EntityLivingBase>(
+                this, EntityLivingBase.class, 5, true, false,
+                e -> EntityAISimWizardCombat.isValidSpellTarget(e, this)));
 
         this.tasks.addTask(0, new EntityAISwimmingDiving(this, 0.08));
         this.tasks.addTask(1, new EntityAIOpenDoor(this, true));
