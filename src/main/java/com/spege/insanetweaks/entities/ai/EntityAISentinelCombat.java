@@ -128,6 +128,9 @@ public class EntityAISentinelCombat extends EntityAIBase {
         SpellModifiers modifiers = this.sentinel.getModifiers();
         if (MinecraftForge.EVENT_BUS.post(
                 new SpellCastEvent.Pre(SpellCastEvent.Source.NPC, spell, this.sentinel, modifiers))) {
+            // Some OTHER mod's listener vetoed this NPC cast — log which spell so pack
+            // conflicts (tier gates, suppression artefacts, class-spell locks) are visible.
+            logDiag("cast VETOED by another mod's Pre listener (" + spell.getRegistryName() + ")");
             setCooldown(FAILED_CAST_COOLDOWN);
             return;
         }

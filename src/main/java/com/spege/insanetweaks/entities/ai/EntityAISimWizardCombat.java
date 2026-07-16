@@ -272,6 +272,7 @@ public class EntityAISimWizardCombat extends EntityAIBase {
             if (!isValidSpellTarget(castTarget, this.wizard)
                     || this.wizard.getDistanceSq(castTarget) > this.decisionRangeSq) {
                 // Telegraph "wasted" - the target left during wind-up. Short cooldown only.
+                logDiag("fire dropped: target left during telegraph (" + spell.getRegistryName() + ")");
                 setCooldown(FAILED_CAST_COOLDOWN);
                 return;
             }
@@ -281,6 +282,9 @@ public class EntityAISimWizardCombat extends EntityAIBase {
 
         if (MinecraftForge.EVENT_BUS.post(
                 new SpellCastEvent.Pre(SpellCastEvent.Source.NPC, spell, this.wizard, modifiers))) {
+            // Some OTHER mod's listener vetoed this NPC cast — log which spell so pack
+            // conflicts (tier gates, suppression artefacts, class-spell locks) are visible.
+            logDiag("fire dropped: SpellCastEvent.Pre CANCELLED by another mod (" + spell.getRegistryName() + ")");
             setCooldown(EVENT_BLOCK_COOLDOWN);
             return;
         }
