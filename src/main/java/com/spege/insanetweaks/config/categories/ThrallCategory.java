@@ -63,6 +63,13 @@ public class ThrallCategory {
         @Config.Name("Stay: Wander Speed")
         @Config.RangeDouble(min = 0.1, max = 1.0)
         public double stayWanderSpeed = 0.4;
+
+        @Config.Comment({"How many recent work sites the thrall remembers (spec 2026-07-16).",
+                "A work site is recorded wherever a work-mode command is issued; the newest one",
+                "anchors the current work while HOME stays the deposit/supply depot." })
+        @Config.Name("Work Site Memory Size")
+        @Config.RangeInt(min = 1, max = 8)
+        public int workSiteMemorySize = 3;
     }
 
     public static class Collecting {
@@ -168,11 +175,19 @@ public class ThrallCategory {
         @Config.RangeInt(min = 5, max = 600)
         public int husbandryIntervalSeconds = 30;
 
-        @Config.Comment({ "Maximum ADULT animals per species within the radius. Excess adults are culled;",
-                "breeding is skipped at/above the cap. Babies, in-love animals and owned pets never count as excess." })
+        @Config.Comment({ "Target ADULT animals per species within the radius. Breeding is allowed while the",
+                "count is at or below the cap (so the herd overshoots to cap+1); adults above the cap are",
+                "culled PERIODICALLY, one per cull interval, for a steady trickle of drops.",
+                "Babies, in-love animals and owned pets are never culled." })
         @Config.Name("Husbandry: Population Cap")
         @Config.RangeInt(min = 2, max = 64)
         public int husbandryPopulationCap = 8;
+
+        @Config.Comment({ "Seconds between periodic culls. While a species is above the cap, exactly one",
+                "adult is slaughtered per interval (spec 2026-07-16)." })
+        @Config.Name("Husbandry: Cull Interval (seconds)")
+        @Config.RangeInt(min = 10, max = 3600)
+        public int husbandryCullIntervalSeconds = 120;
     }
 
     public static class Farming {

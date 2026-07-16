@@ -8,7 +8,6 @@ import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
@@ -27,13 +26,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * AI task: HUSBANDRY mode (spec 2026-07-10). Anchored at HOME. Each cycle builds a job
- * queue over farm animals in the working radius, walks to each target and acts:
- *   1. SHEAR every ready IShearable adult (requires shears in a home chest; durability is consumed).
- *   2. CULL adults above the per-species population cap (direct damage — NO combat AI;
- *      this is the single user-approved exception to the "never aggressive" invariant).
- *   3. BREED pairs below the cap (requires 2 matching feed items in a home chest per pair).
- * Then deposits its bag into home chests. Never touches babies, in-love animals or owned pets.
+ * AI task: HUSBANDRY mode (spec 2026-07-10, reworked 2026-07-16). Anchored at the WORK
+ * SITE (where the command was issued; falls back to HOME on legacy saves). Each cycle it
+ * builds a job queue over farm animals in the working radius, walks to each target and acts:
+ *   1. SHEAR every ready IShearable adult (shears carried in the bag).
+ *   2. CULL one adult per cull interval while a species is ABOVE the population cap
+ *      (periodic slaughter — the single user-approved exception to "never aggressive").
+ *   3. BREED pairs while the species is at or below the cap (herd overshoots to cap+1,
+ *      feeding the periodic cull; feed carried in the bag).
+ * Supplies (shears/feed) are fetched from HOME by a teleport provisioning trip at cycle
+ * start, which also deposits the bag; a FULL bag mid-cycle is covered by the entity-level
+ * auto-return shuttle. Never touches babies, in-love animals or owned pets.
  */
 @SuppressWarnings("null")
 public class ThrallAIHusbandry extends EntityAIBase {
@@ -46,6 +49,8 @@ public class ThrallAIHusbandry extends EntityAIBase {
     private static final int JOB_TIMEOUT_TICKS = 200;
     private static final int MAX_JOBS_PER_CYCLE = 8;
     private static final float CULL_DAMAGE = 1000.0F;
+    /** Feed withdrawn per breed-species on a provisioning trip (covers a few pairs). */
+    private static final int FEED_PER_SPECIES = 8;
 
     private enum JobType { SHEAR, CULL, BREED }
 
@@ -65,6 +70,8 @@ public class ThrallAIHusbandry extends EntityAIBase {
     private final EntityThrallMinion thrall;
     private final Deque<Job> jobs = new ArrayDeque<Job>();
     private long nextCycleTime;
+    /** World time before which no periodic cull may happen (spec 2026-07-16). */
+    private long nextCullTime;
     private int jobTicks;
 
     public ThrallAIHusbandry(EntityThrallMinion thrall) {
@@ -80,7 +87,7 @@ public class ThrallAIHusbandry extends EntityAIBase {
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.HUSBANDRY) return false;
         if (!ModConfig.thrall.husbandry.enableHusbandryMode) return false;
-        return thrall.getHomePoint() != null;
+        return thrall.getWorkAnchor() != null;
     }
 
     @Override
@@ -104,15 +111,15 @@ public class ThrallAIHusbandry extends EntityAIBase {
 
     @Override
     public void updateTask() {
-        BlockPos home = thrall.getHomePoint();
-        if (home == null) return;
+        BlockPos anchor = thrall.getWorkAnchor();
+        if (anchor == null) return;
 
         if (jobs.isEmpty()) {
             long now = thrall.world.getTotalWorldTime();
             if (now < nextCycleTime) return;
             nextCycleTime = now + (long) ModConfig.thrall.husbandry.husbandryIntervalSeconds * 20L;
-            buildJobQueue(home);
-            depositBag(home);
+            buildJobQueue(anchor);
+            provisionAtDepot(anchor);
             if (jobs.isEmpty()) {
                 thrall.setStatusText("Standing by...");
             }
@@ -141,12 +148,11 @@ public class ThrallAIHusbandry extends EntityAIBase {
         }
 
         thrall.getNavigator().clearPath();
-        performJob(job, home);
+        performJob(job);
         jobs.pollFirst();
         jobTicks = 0;
 
         if (jobs.isEmpty()) {
-            depositBag(home);
             thrall.setStatusText("Standing by...");
         }
     }
@@ -155,11 +161,11 @@ public class ThrallAIHusbandry extends EntityAIBase {
     // Queue building
     // ------------------------------------------------------------------
 
-    private void buildJobQueue(BlockPos home) {
+    private void buildJobQueue(BlockPos anchor) {
         int radius = ModConfig.thrall.husbandry.husbandryRadius;
         int cap = ModConfig.thrall.husbandry.husbandryPopulationCap;
 
-        AxisAlignedBB box = new AxisAlignedBB(home).grow(radius, 8, radius);
+        AxisAlignedBB box = new AxisAlignedBB(anchor).grow(radius, 8, radius);
         List<EntityAnimal> animals = thrall.world.getEntitiesWithinAABB(EntityAnimal.class, box,
                 a -> a != null && a.isEntityAlive() && !isOwnedPet(a));
 
@@ -188,26 +194,34 @@ public class ThrallAIHusbandry extends EntityAIBase {
             }
         }
 
-        // 2. CULL — excess adults per species (never in-love; babies/pets excluded above).
-        for (Map.Entry<Class<?>, List<EntityAnimal>> e : adultsBySpecies.entrySet()) {
-            int excess = e.getValue().size() - cap;
-            for (EntityAnimal a : e.getValue()) {
-                if (queued >= MAX_JOBS_PER_CYCLE || excess <= 0) break;
-                if (a.isInLove()) continue;
-                jobs.addLast(new Job(JobType.CULL, a, null));
-                queued++;
-                excess--;
+        // 2. PERIODIC CULL — at most ONE adult per cull interval, only while a species
+        //    is ABOVE the cap (spec 2026-07-16: steady meat trickle, not instant purges).
+        long now = thrall.world.getTotalWorldTime();
+        if (now >= nextCullTime && queued < MAX_JOBS_PER_CYCLE) {
+            outer:
+            for (Map.Entry<Class<?>, List<EntityAnimal>> e : adultsBySpecies.entrySet()) {
+                if (e.getValue().size() <= cap) continue;
+                for (EntityAnimal a : e.getValue()) {
+                    if (a.isInLove()) continue;
+                    jobs.addLast(new Job(JobType.CULL, a, null));
+                    queued++;
+                    if (debugLogs()) LOG.info("[Thrall#{}] Husbandry periodic cull queued: {} ({} > cap {})",
+                            thrall.getEntityId(), a.getName(), e.getValue().size(), cap);
+                    break outer;
+                }
             }
         }
 
-        // 3. BREED — pair up eligible adults while below the cap.
+        // 3. BREED — pair up eligible adults while the species is at or below the cap
+        //    (the herd overshoots to cap+1, which the periodic cull then harvests).
         for (Map.Entry<Class<?>, List<EntityAnimal>> e : adultsBySpecies.entrySet()) {
             if (queued >= MAX_JOBS_PER_CYCLE) break;
+            if (e.getValue().size() > cap) continue;
             List<EntityAnimal> eligible = new ArrayList<EntityAnimal>();
             for (EntityAnimal a : e.getValue()) {
                 if (a.getGrowingAge() == 0 && !a.isInLove()) eligible.add(a);
             }
-            int room = cap - e.getValue().size();
+            int room = cap + 1 - e.getValue().size();
             for (int i = 0; i + 1 < eligible.size() && room > 0 && queued < MAX_JOBS_PER_CYCLE; i += 2) {
                 jobs.addLast(new Job(JobType.BREED, eligible.get(i), eligible.get(i + 1)));
                 queued++;
@@ -216,7 +230,7 @@ public class ThrallAIHusbandry extends EntityAIBase {
         }
 
         if (debugLogs() && !jobs.isEmpty()) {
-            LOG.info("[Thrall#{}] Husbandry queued {} jobs", thrall.getEntityId(), jobs.size());
+            LOG.info("[Thrall#{}] Husbandry queued {} jobs at site {}", thrall.getEntityId(), jobs.size(), anchor);
         }
     }
 
@@ -240,30 +254,89 @@ public class ThrallAIHusbandry extends EntityAIBase {
     }
 
     // ------------------------------------------------------------------
+    // Depot provisioning (spec 2026-07-16: teleport shuttle, no remote chest magic)
+    // ------------------------------------------------------------------
+
+    /**
+     * One teleport round-trip to HOME at cycle start when the queued jobs need supplies
+     * the bag lacks: deposits the whole bag (wool, drops, stale supplies), withdraws
+     * shears (1) and feed per queued breed species, then returns to the work site.
+     * No HOME set -> works with whatever is already in the bag.
+     */
+    private void provisionAtDepot(BlockPos anchor) {
+        BlockPos home = thrall.getHomePoint();
+        if (home == null || jobs.isEmpty()) return;
+
+        boolean needShears = false;
+        List<EntityAnimal> feedSpecies = new ArrayList<EntityAnimal>();
+        for (Job job : jobs) {
+            if (job.type == JobType.SHEAR && countInBag(SHEARS_MATCHER) == 0) {
+                needShears = true;
+            } else if (job.type == JobType.BREED) {
+                final EntityAnimal rep = job.target;
+                boolean covered = false;
+                for (EntityAnimal seen : feedSpecies) {
+                    if (seen.getClass() == rep.getClass()) { covered = true; break; }
+                }
+                if (!covered && countInBag(new ThrallChestHelper.StackMatcher() {
+                    @Override public boolean matches(ItemStack s) { return rep.isBreedingItem(s); }
+                }) < 2) {
+                    feedSpecies.add(rep);
+                }
+            }
+        }
+        if (!needShears && feedSpecies.isEmpty()) return;
+
+        int range = ModConfig.thrall.porter.porterChestScanRange;
+        BlockPos returnPos = new BlockPos(thrall);
+
+        thrall.setStatusText("Restocking...");
+        thrall.teleportWithEffects(home);
+        ThrallChestHelper.smartDeposit(thrall, home, range, CHEST_VRANGE, false);
+
+        int got = 0;
+        if (needShears) {
+            got += ThrallChestHelper.withdrawFromChests(thrall, home, range, CHEST_VRANGE, SHEARS_MATCHER, 1);
+        }
+        for (final EntityAnimal rep : feedSpecies) {
+            got += ThrallChestHelper.withdrawFromChests(thrall, home, range, CHEST_VRANGE,
+                    new ThrallChestHelper.StackMatcher() {
+                        @Override public boolean matches(ItemStack s) { return rep.isBreedingItem(s); }
+                    }, FEED_PER_SPECIES);
+        }
+
+        thrall.teleportWithEffects(returnPos);
+        if (debugLogs()) LOG.info("[Thrall#{}] Husbandry depot trip: deposited bag, withdrew {} supply item(s)",
+                thrall.getEntityId(), got);
+    }
+
+    private static final ThrallChestHelper.StackMatcher SHEARS_MATCHER = new ThrallChestHelper.StackMatcher() {
+        @Override public boolean matches(ItemStack s) { return s.getItem() == Items.SHEARS; }
+    };
+
+    // ------------------------------------------------------------------
     // Job execution
     // ------------------------------------------------------------------
 
-    private void performJob(Job job, BlockPos home) {
+    private void performJob(Job job) {
         switch (job.type) {
-            case SHEAR: performShear(job.target, home); break;
-            case CULL:  performCull(job.target);        break;
-            case BREED: performBreed(job, home);        break;
+            case SHEAR: performShear(job.target); break;
+            case CULL:  performCull(job.target);  break;
+            case BREED: performBreed(job);        break;
         }
     }
 
-    private void performShear(EntityAnimal animal, BlockPos home) {
-        ChestSlotRef shears = findChestStack(home, new StackPredicate() {
-            @Override public boolean test(ItemStack s) { return s.getItem() == Items.SHEARS; }
-        });
+    private void performShear(EntityAnimal animal) {
+        ItemStack shears = findBagStack(SHEARS_MATCHER);
         if (shears == null) {
             thrall.setStatusText("No shears");
             return;
         }
         IShearable shearable = (IShearable) animal;
         BlockPos pos = new BlockPos(animal);
-        if (!shearable.isShearable(shears.stack, thrall.world, pos)) return;
+        if (!shearable.isShearable(shears, thrall.world, pos)) return;
 
-        List<ItemStack> drops = shearable.onSheared(shears.stack, thrall.world, pos, 0);
+        List<ItemStack> drops = shearable.onSheared(shears, thrall.world, pos, 0);
         for (ItemStack drop : drops) {
             ItemStack working = drop.copy();
             thrall.getThrallInventory().addItemStackToInventory(working);
@@ -271,76 +344,80 @@ public class ThrallAIHusbandry extends EntityAIBase {
                 animal.entityDropItem(working, 0.5F);
             }
         }
-        shears.stack.damageItem(1, thrall);
-        if (shears.stack.isEmpty()) {
-            shears.chest.setInventorySlotContents(shears.slot, ItemStack.EMPTY);
-        }
-        shears.chest.markDirty();
+        shears.damageItem(1, thrall);
+        clearEmptyBagSlots();
         thrall.setStatusText("Shearing...");
     }
 
     private void performCull(EntityAnimal animal) {
         thrall.swingArm(EnumHand.MAIN_HAND);
         animal.attackEntityFrom(DamageSource.causeMobDamage(thrall), CULL_DAMAGE);
+        this.nextCullTime = thrall.world.getTotalWorldTime()
+                + (long) ModConfig.thrall.husbandry.husbandryCullIntervalSeconds * 20L;
         thrall.setStatusText("Culling...");
+        if (debugLogs()) LOG.info("[Thrall#{}] Husbandry culled {}; next cull in {} s",
+                thrall.getEntityId(), animal.getName(), ModConfig.thrall.husbandry.husbandryCullIntervalSeconds);
         // Drops land inside the thrall's passive pickup range (it is standing next to
-        // the animal) and are banked during the end-of-queue deposit.
+        // the animal) and are banked on the next depot trip or full-bag auto-return.
     }
 
-    private void performBreed(Job job, BlockPos home) {
+    private void performBreed(Job job) {
         final EntityAnimal first = job.target;
-        ChestSlotRef feed = findChestStack(home, new StackPredicate() {
-            @Override public boolean test(ItemStack s) { return first.isBreedingItem(s); }
-        });
-        if (feed == null || feed.stack.getCount() < 2) {
+        ThrallChestHelper.StackMatcher feedMatcher = new ThrallChestHelper.StackMatcher() {
+            @Override public boolean matches(ItemStack s) { return first.isBreedingItem(s); }
+        };
+        if (countInBag(feedMatcher) < 2) {
             thrall.setStatusText("No feed");
             return;
         }
         job.target.setInLove(null);
         job.partner.setInLove(null);
-        feed.stack.shrink(2);
-        if (feed.stack.isEmpty()) {
-            feed.chest.setInventorySlotContents(feed.slot, ItemStack.EMPTY);
-        }
-        feed.chest.markDirty();
+        consumeFromBag(feedMatcher, 2);
         thrall.setStatusText("Breeding...");
     }
 
-    private void depositBag(BlockPos home) {
-        if (thrall.getThrallInventory().containsItems()) {
-            ThrallChestHelper.smartDeposit(thrall, home,
-                    ModConfig.thrall.porter.porterChestScanRange, CHEST_VRANGE, false);
-        }
-    }
-
     // ------------------------------------------------------------------
-    // Chest access
+    // Bag access (supplies live in the thrall inventory between depot trips)
     // ------------------------------------------------------------------
 
-    /** Local single-method predicate — avoids mixing guava/java.util.function here. */
-    private interface StackPredicate { boolean test(ItemStack stack); }
-
-    private static final class ChestSlotRef {
-        final IInventory chest;
-        final int slot;
-        final ItemStack stack;
-        ChestSlotRef(IInventory chest, int slot, ItemStack stack) {
-            this.chest = chest; this.slot = slot; this.stack = stack;
+    private int countInBag(ThrallChestHelper.StackMatcher matcher) {
+        int count = 0;
+        for (int i = 0; i < thrall.getThrallInventory().getSizeInventory(); i++) {
+            ItemStack s = thrall.getThrallInventory().getStackInSlot(i);
+            if (!s.isEmpty() && matcher.matches(s)) count += s.getCount();
         }
+        return count;
     }
 
     @Nullable
-    private ChestSlotRef findChestStack(BlockPos home, StackPredicate predicate) {
-        List<IInventory> chests = ThrallChestHelper.findNearbyInventories(thrall.world, home,
-                ModConfig.thrall.porter.porterChestScanRange, CHEST_VRANGE);
-        for (IInventory chest : chests) {
-            for (int i = 0; i < chest.getSizeInventory(); i++) {
-                ItemStack s = chest.getStackInSlot(i);
-                if (!s.isEmpty() && predicate.test(s)) {
-                    return new ChestSlotRef(chest, i, s);
-                }
-            }
+    private ItemStack findBagStack(ThrallChestHelper.StackMatcher matcher) {
+        for (int i = 0; i < thrall.getThrallInventory().getSizeInventory(); i++) {
+            ItemStack s = thrall.getThrallInventory().getStackInSlot(i);
+            if (!s.isEmpty() && matcher.matches(s)) return s;
         }
         return null;
+    }
+
+    private void consumeFromBag(ThrallChestHelper.StackMatcher matcher, int amount) {
+        for (int i = 0; i < thrall.getThrallInventory().getSizeInventory() && amount > 0; i++) {
+            ItemStack s = thrall.getThrallInventory().getStackInSlot(i);
+            if (s.isEmpty() || !matcher.matches(s)) continue;
+            int take = Math.min(amount, s.getCount());
+            s.shrink(take);
+            amount -= take;
+            if (s.isEmpty()) {
+                thrall.getThrallInventory().setInventorySlotContents(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    /** Clears bag slots whose stacks were emptied in place (e.g. shears breaking). */
+    private void clearEmptyBagSlots() {
+        for (int i = 0; i < thrall.getThrallInventory().getSizeInventory(); i++) {
+            ItemStack s = thrall.getThrallInventory().getStackInSlot(i);
+            if (!s.isEmpty() && s.getCount() <= 0) {
+                thrall.getThrallInventory().setInventorySlotContents(i, ItemStack.EMPTY);
+            }
+        }
     }
 }

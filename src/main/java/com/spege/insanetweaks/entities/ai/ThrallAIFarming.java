@@ -99,14 +99,14 @@ public class ThrallAIFarming extends EntityAIBase {
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.FARMING) return false;
         if (!ModConfig.thrall.farming.enableFarmingMode) return false;
-        if (thrall.getHomePoint() == null) return false;
+        if (thrall.getWorkAnchor() == null) return false;
         return !thrall.getThrallInventory().isFull();
     }
 
     @Override
     public boolean shouldContinueExecuting() {
         if (thrall.getMode() != ThrallMode.FARMING) return false;
-        if (thrall.getHomePoint() == null) return false;
+        if (thrall.getWorkAnchor() == null) return false;
         return !thrall.getThrallInventory().isFull();
     }
 
@@ -148,17 +148,50 @@ public class ThrallAIFarming extends EntityAIBase {
         if (now - lastScanTime < SCAN_INTERVAL_TICKS && lastScanTime != 0) return;
         lastScanTime = now;
 
-        // The home point is the deposit/recall target; the actual farm may be many blocks away.
-        // Scan the thrall's current position first (so a thrall deployed onto the farm works locally),
-        // then fall back to scanning around home (F-1) so a thrall standing OFF the field — e.g. parked
-        // at its home chest — still finds and walks/teleports to farm work.
-        BlockPos home = thrall.getHomePoint();
-        if (home == null) return;
+        // Spec 2026-07-16: the farm anchors at the WORK SITE (where the command was issued);
+        // HOME is only the deposit depot. Scan the thrall's current position first (so a
+        // thrall deployed onto the field works locally), then fall back to the anchor.
+        BlockPos anchor = thrall.getWorkAnchor();
+        if (anchor == null) return;
+
+        restockBoneMealIfNeeded();
 
         if (searchAround(new BlockPos(thrall))) return;
-        if (!home.equals(new BlockPos(thrall)) && searchAround(home)) return;
+        if (!anchor.equals(new BlockPos(thrall)) && searchAround(anchor)) return;
 
         thrall.setStatusText("No crops");
+    }
+
+    /** World time before which no bone-meal depot trip may happen (throttles trips when
+     *  the depot itself is out of bone meal). */
+    private long nextBoneMealTripTime;
+
+    /**
+     * Spec 2026-07-16 depot shuttle: when fertilizing is enabled and the bag ran out of
+     * bone meal, teleport to HOME, deposit the bag, withdraw a batch and return. At most
+     * one trip per minute so an empty depot doesn't cause a teleport loop.
+     */
+    private void restockBoneMealIfNeeded() {
+        if (!ModConfig.thrall.farming.farmUseBoneMeal || hasBoneMeal()) return;
+        BlockPos home = thrall.getHomePoint();
+        if (home == null) return;
+        long now = thrall.world.getTotalWorldTime();
+        if (now < nextBoneMealTripTime) return;
+        nextBoneMealTripTime = now + 1200L;
+
+        // Withdraw-only trip: depositing here would dump the seeds the replant phase
+        // relies on. The full-bag auto-return shuttle handles deposits.
+        BlockPos returnPos = new BlockPos(thrall);
+        thrall.setStatusText("Restocking...");
+        thrall.teleportWithEffects(home);
+        int got = com.spege.insanetweaks.entities.ThrallChestHelper.withdrawFromChests(thrall, home, 30, 4,
+                new com.spege.insanetweaks.entities.ThrallChestHelper.StackMatcher() {
+                    @Override public boolean matches(net.minecraft.item.ItemStack s) {
+                        return s.getItem() == net.minecraft.init.Items.DYE && s.getMetadata() == 15;
+                    }
+                }, 32);
+        thrall.teleportWithEffects(returnPos);
+        if (debugLogs()) LOG.info("[Thrall#{}] Farming depot trip: withdrew {} bone meal", thrall.getEntityId(), got);
     }
 
     /**

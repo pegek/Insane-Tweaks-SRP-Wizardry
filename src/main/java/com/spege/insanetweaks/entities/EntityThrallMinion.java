@@ -79,6 +79,12 @@ public class EntityThrallMinion extends EntityCreature {
     /** Persistent slot number (1-3). 0 = unassigned. Synced to client for nameplate. */
     private static final DataParameter<Integer> THRALL_SLOT =
             EntityDataManager.createKey(EntityThrallMinion.class, DataSerializers.VARINT);
+    /**
+     * Active work site synced to client as "x,y,z" string (empty = not set) so the GUI
+     * can show it. Spec 2026-07-16: work modes anchor here; HOME is the depot only.
+     */
+    private static final DataParameter<String> ACTIVE_SITE =
+            EntityDataManager.createKey(EntityThrallMinion.class, DataSerializers.STRING);
 
     // -------------------------------------------------------------------------
     // Sounds (borrowed from Minions mod)
@@ -127,6 +133,20 @@ public class EntityThrallMinion extends EntityCreature {
      *  around this point (spec 2026-07-10 A2). Null outside STAY. */
     @Nullable
     private BlockPos stayAnchor;
+
+    /** One remembered work site: where a work command was issued + which mode it was. */
+    public static final class WorkSite {
+        public final BlockPos pos;
+        public final int modeOrdinal;
+        public WorkSite(BlockPos pos, int modeOrdinal) { this.pos = pos; this.modeOrdinal = modeOrdinal; }
+    }
+
+    /** Recent work sites, newest first (spec 2026-07-16). Size capped by
+     *  thrall.general.workSiteMemorySize. Persisted in NBT. */
+    private final java.util.List<WorkSite> workSites = new java.util.ArrayList<WorkSite>();
+
+    /** Two sites closer than this collapse into one remembered entry. */
+    private static final double WORK_SITE_DEDUPE_RANGE_SQ = 8.0D * 8.0D;
 
     /** World tick when the current work mode (WOODCUTTING/MINESHAFT) was activated. 0 = not working. */
     private long workStartTick;
@@ -333,7 +353,7 @@ public class EntityThrallMinion extends EntityCreature {
             if (workHours > 0
                     && (currentMode == ThrallMode.WOODCUTTING || currentMode == ThrallMode.MINESHAFT
                         || currentMode == ThrallMode.FARMING || currentMode == ThrallMode.PORTER
-                        || currentMode == ThrallMode.COLLECTING)
+                        || currentMode == ThrallMode.COLLECTING || currentMode == ThrallMode.HUSBANDRY)
                     && workStartTick > 0
                     && world.getTotalWorldTime() - workStartTick >= workDurationTicks) {
                 workStartTick = 0;
@@ -579,6 +599,7 @@ public class EntityThrallMinion extends EntityCreature {
         this.dataManager.register(MODE_ORDINAL, ThrallMode.FOLLOW.ordinal());
         this.dataManager.register(HOME_POS, "");
         this.dataManager.register(THRALL_SLOT, 0);
+        this.dataManager.register(ACTIVE_SITE, "");
     }
 
     // -------------------------------------------------------------------------
@@ -737,6 +758,79 @@ public class EntityThrallMinion extends EntityCreature {
             this.dataManager.set(HOME_POS, pos.getX() + "," + pos.getY() + "," + pos.getZ());
             if (debugLogs()) LOG.info("[Thrall#{}] Home point set to {}", getEntityId(), pos);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Work sites (spec 2026-07-16: HOME is the depot; work anchors at command sites)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Records the thrall's current position as the active work site for {@code mode}.
+     * Called by the command handler when a work-mode order is issued. Sites within
+     * {@link #WORK_SITE_DEDUPE_RANGE_SQ} of an existing entry replace it (moved to front);
+     * the list is trimmed to thrall.general.workSiteMemorySize, newest first.
+     */
+    public void recordWorkSite(ThrallMode mode) {
+        BlockPos here = new BlockPos(this);
+        for (java.util.Iterator<WorkSite> it = workSites.iterator(); it.hasNext();) {
+            if (it.next().pos.distanceSq(here) <= WORK_SITE_DEDUPE_RANGE_SQ) {
+                it.remove();
+            }
+        }
+        workSites.add(0, new WorkSite(here, mode.ordinal()));
+        int cap = Math.max(1, ModConfig.thrall.general.workSiteMemorySize);
+        while (workSites.size() > cap) {
+            workSites.remove(workSites.size() - 1);
+        }
+        this.dataManager.set(ACTIVE_SITE, here.getX() + "," + here.getY() + "," + here.getZ());
+        if (debugLogs()) LOG.info("[Thrall#{}] Work site recorded for {}: {} ({} remembered)",
+                getEntityId(), mode, here, workSites.size());
+    }
+
+    /** Active work site (client-readable via DataManager), or null when none recorded. */
+    @Nullable
+    public BlockPos getActiveWorkSite() {
+        String raw = this.dataManager.get(ACTIVE_SITE);
+        if (raw == null || raw.isEmpty()) return null;
+        try {
+            String[] parts = raw.split(",");
+            return new BlockPos(
+                    Integer.parseInt(parts[0]),
+                    Integer.parseInt(parts[1]),
+                    Integer.parseInt(parts[2]));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Anchor for work-mode scanning: the active work site when one is recorded,
+     * otherwise HOME (legacy behavior for old saves / no command site yet).
+     */
+    @Nullable
+    public BlockPos getWorkAnchor() {
+        BlockPos site = getActiveWorkSite();
+        return site != null ? site : getHomePoint();
+    }
+
+    /** Recent work sites, newest first (read-only view for future UI/commands). */
+    public java.util.List<WorkSite> getWorkSites() {
+        return java.util.Collections.unmodifiableList(workSites);
+    }
+
+    /**
+     * Teleports with the standard departure/arrival feedback (particles + Enderman
+     * whoosh x2 — thrall invariant #4). Shared by the depot-shuttle flows.
+     */
+    public void teleportWithEffects(BlockPos target) {
+        playTeleportSound();
+        world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE,
+                this.posX, this.posY + 1.0, this.posZ, 0.0, 0.0, 0.0);
+        this.setPositionAndUpdate(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
+        world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE,
+                this.posX, this.posY + 1.0, this.posZ, 0.0, 0.0, 0.0);
+        playTeleportSound();
+        this.getNavigator().clearPath();
     }
 
     /** Anchor of the current STAY session, or null when not in STAY. */
@@ -956,6 +1050,21 @@ public class EntityThrallMinion extends EntityCreature {
         if (stayAnchor != null) {
             tag.setIntArray("ThrallStayAnchor", new int[]{stayAnchor.getX(), stayAnchor.getY(), stayAnchor.getZ()});
         }
+
+        if (!workSites.isEmpty()) {
+            net.minecraft.nbt.NBTTagList siteList = new net.minecraft.nbt.NBTTagList();
+            for (WorkSite site : workSites) {
+                net.minecraft.nbt.NBTTagCompound siteTag = new net.minecraft.nbt.NBTTagCompound();
+                siteTag.setIntArray("Pos", new int[]{site.pos.getX(), site.pos.getY(), site.pos.getZ()});
+                siteTag.setInteger("Mode", site.modeOrdinal);
+                siteList.appendTag(siteTag);
+            }
+            tag.setTag("ThrallWorkSites", siteList);
+        }
+        BlockPos active = getActiveWorkSite();
+        if (active != null) {
+            tag.setIntArray("ThrallActiveSite", new int[]{active.getX(), active.getY(), active.getZ()});
+        }
         if (resumeMode != null) {
             tag.setInteger("ThrallResumeMode", resumeMode.ordinal());
         }
@@ -1029,6 +1138,25 @@ public class EntityThrallMinion extends EntityCreature {
             int[] anchor = tag.getIntArray("ThrallStayAnchor");
             if (anchor.length == 3) {
                 stayAnchor = new BlockPos(anchor[0], anchor[1], anchor[2]);
+            }
+        }
+
+        workSites.clear();
+        if (tag.hasKey("ThrallWorkSites", net.minecraftforge.common.util.Constants.NBT.TAG_LIST)) {
+            net.minecraft.nbt.NBTTagList siteList =
+                    tag.getTagList("ThrallWorkSites", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
+            for (int i = 0; i < siteList.tagCount(); i++) {
+                net.minecraft.nbt.NBTTagCompound siteTag = siteList.getCompoundTagAt(i);
+                int[] pos = siteTag.getIntArray("Pos");
+                if (pos.length == 3) {
+                    workSites.add(new WorkSite(new BlockPos(pos[0], pos[1], pos[2]), siteTag.getInteger("Mode")));
+                }
+            }
+        }
+        if (tag.hasKey("ThrallActiveSite")) {
+            int[] site = tag.getIntArray("ThrallActiveSite");
+            if (site.length == 3) {
+                this.dataManager.set(ACTIVE_SITE, site[0] + "," + site[1] + "," + site[2]);
             }
         }
         if (tag.hasKey("ThrallResumeMode")) {

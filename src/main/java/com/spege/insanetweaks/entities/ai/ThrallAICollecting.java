@@ -114,7 +114,9 @@ public class ThrallAICollecting extends EntityAIBase {
     public boolean shouldExecute() {
         if (thrall.getMode() != ThrallMode.COLLECTING) return false;
         if (!ModConfig.thrall.collecting.enableCollectingMode) return false;
-        return thrall.getHomePoint() != null;
+        // Work site anchors the exploration ring; HOME is still required as the deposit
+        // target of the RETURNING phase, but getWorkAnchor falls back to it anyway.
+        return thrall.getWorkAnchor() != null;
     }
 
     @Override
@@ -326,15 +328,17 @@ public class ThrallAICollecting extends EntityAIBase {
         if (lastCycleTick != 0 && now - lastCycleTick < interval) return;
         lastCycleTick = now;
 
-        BlockPos home = thrall.getHomePoint();
-        if (home == null) { beginReturn(); return; }
+        // Spec 2026-07-16: the teleport-search ring is centred on the WORK SITE
+        // (falls back to HOME on legacy saves); deposits still go to HOME.
+        BlockPos anchor = thrall.getWorkAnchor();
+        if (anchor == null) { beginReturn(); return; }
 
         // Pick a target whose YHint biases this cycle's TP selection.
         Sig hintTarget = targets.get(targetCycleIndex % targets.size());
         targetCycleIndex++;
         YHint hint = classify(hintTarget.block);
 
-        BlockPos tpPoint = pickRandomSearchPoint(home, hint);
+        BlockPos tpPoint = pickRandomSearchPoint(anchor, hint);
         if (tpPoint == null) {
             consecutiveEmptyCycles++;
             return;

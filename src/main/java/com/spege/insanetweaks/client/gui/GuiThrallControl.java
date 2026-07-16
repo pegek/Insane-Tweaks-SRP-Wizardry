@@ -118,6 +118,12 @@ public class GuiThrallControl extends GuiScreen {
                     ? I18n.format("gui.insanetweaks.thrall.home.none")
                     : I18n.format("gui.insanetweaks.thrall.home.coords", home.getX(), home.getY(), home.getZ());
             this.drawCenteredString(this.fontRenderer, homeStr, cx, cy + 142, 0x808080);
+
+            net.minecraft.util.math.BlockPos site = thrall.getActiveWorkSite();
+            String siteStr = site == null
+                    ? I18n.format("gui.insanetweaks.thrall.site.none")
+                    : I18n.format("gui.insanetweaks.thrall.site.coords", site.getX(), site.getY(), site.getZ());
+            this.drawCenteredString(this.fontRenderer, siteStr, cx, cy + 154, 0x808080);
         }
 
         // Hover tooltip for whichever button the mouse is over.

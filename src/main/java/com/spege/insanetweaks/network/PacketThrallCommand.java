@@ -119,6 +119,7 @@ public class PacketThrallCommand implements IMessage {
                     break;
 
                 case ACTION_WOODCUTTING:
+                    thrall.recordWorkSite(ThrallMode.WOODCUTTING);
                     thrall.setMode(ThrallMode.WOODCUTTING);
                     thrall.setStatusText("Woodcutting...");
                     thrall.playSoundOrder();
@@ -138,6 +139,7 @@ public class PacketThrallCommand implements IMessage {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
+                    thrall.recordWorkSite(ThrallMode.FARMING);
                     thrall.setMode(ThrallMode.FARMING);
                     thrall.setStatusText("Farming...");
                     thrall.playSoundOrder();
@@ -160,6 +162,7 @@ public class PacketThrallCommand implements IMessage {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
+                    thrall.recordWorkSite(ThrallMode.COLLECTING);
                     thrall.startOrResumeCollectingMode();
                     thrall.playSoundOrder();
                     player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.collecting"), true);
@@ -170,6 +173,7 @@ public class PacketThrallCommand implements IMessage {
                         player.sendStatusMessage(new TextComponentTranslation("gui.insanetweaks.thrall.mode.disabled"), true);
                         break;
                     }
+                    thrall.recordWorkSite(ThrallMode.HUSBANDRY);
                     thrall.setMode(ThrallMode.HUSBANDRY);
                     thrall.setStatusText("Tending...");
                     thrall.playSoundOrder();

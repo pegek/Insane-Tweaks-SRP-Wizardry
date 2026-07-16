@@ -44,6 +44,45 @@ public final class ThrallChestHelper {
         return result;
     }
 
+    /** Single-method stack filter for {@link #withdrawFromChests} (avoids guava/j.u.f mixing). */
+    public interface StackMatcher {
+        boolean matches(ItemStack stack);
+    }
+
+    /**
+     * Pulls up to {@code max} items matching {@code matcher} from chests near {@code center}
+     * into the thrall's bag (spec 2026-07-16 depot-supply trips). Returns the count pulled.
+     */
+    public static int withdrawFromChests(EntityThrallMinion thrall, BlockPos center,
+            int hRange, int vRange, StackMatcher matcher, int max) {
+        ThrallInventory inv = thrall.getThrallInventory();
+        int pulled = 0;
+        List<IInventory> chests = findNearbyInventories(thrall.world, center, hRange, vRange);
+        for (IInventory chest : chests) {
+            for (int i = 0; i < chest.getSizeInventory() && pulled < max; i++) {
+                if (inv.isFull()) return pulled;
+                ItemStack s = chest.getStackInSlot(i);
+                if (s.isEmpty() || !matcher.matches(s)) continue;
+
+                int take = Math.min(max - pulled, s.getCount());
+                ItemStack working = s.copy();
+                working.setCount(take);
+                int requested = working.getCount();
+                inv.addItemStackToInventory(working);
+                int actuallyTaken = requested - working.getCount();
+                if (actuallyTaken > 0) {
+                    s.shrink(actuallyTaken);
+                    if (s.isEmpty()) {
+                        chest.setInventorySlotContents(i, ItemStack.EMPTY);
+                    }
+                    chest.markDirty();
+                    pulled += actuallyTaken;
+                }
+            }
+        }
+        return pulled;
+    }
+
     /**
      * Deposits Thrall inventory into nearby chests (within 30 blocks of center).
      * Prefers chests that already contain matching item types.
