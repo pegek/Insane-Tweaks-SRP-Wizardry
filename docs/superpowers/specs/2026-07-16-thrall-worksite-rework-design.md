@@ -1,7 +1,7 @@
 # Spec: Thrall work-site memory + HOME-as-depot rework
 
 Date: 2026-07-16
-Status: approved verbally by user (2026-07-16); awaiting spec review
+Status: IMPLEMENTED (commit 96b5dd5, 2026-07-16) — user approved via "implementuj"
 
 ## Goal
 
