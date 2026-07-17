@@ -449,6 +449,22 @@ public class InsaneTweaksMod implements IGuiHandler {
             }
         }
 
+        // Ars Magica 2's EBW compat layer gates NPC spellcasting behind AM2 burnout/mana
+        // (our sim wizard and sentinel lose everything above the cheapest novice spells)
+        // and despawns EBW summons over AM2's own summon cap. Diagnosed 2026-07-17 from
+        // the SpellCastEvent.Pre veto logs; there is no clean code-side workaround that
+        // wouldn't also break legitimate cast vetoes (e.g. ASC's suppression charm).
+        if (Loader.isModLoaded("arsmagica2")) {
+            LOGGER.warn("[InsaneTweaks] Ars Magica 2 detected: its EB Wizardry compat blocks NPC "
+                    + "spellcasting (sim wizard, sentinel) and culls summons over AM2's cap. "
+                    + "Remove AM2 if these entities stop casting.");
+            recommendations.add(new String[] {
+                    "Ars Magica 2 conflict",
+                    "AM2 blocks NPC spellcasting (sim wizard/sentinel cast almost nothing) and despawns summons over its cap. Consider removing AM2.",
+                    ""
+            });
+        }
+
         // Register login handler only if there is something to report.
         if (!recommendations.isEmpty()) {
             final List<String[]> finalRecs = recommendations;
@@ -645,15 +661,17 @@ public class InsaneTweaksMod implements IGuiHandler {
                             TextFormatting.YELLOW + "\u25BA " + TextFormatting.WHITE + name +
                                     TextFormatting.GRAY + " — " + reason));
 
-                    // Line 2: clickable CurseForge link
-                    TextComponentString linkPrefix = new TextComponentString(
-                            TextFormatting.GRAY + "  Download: ");
-                    TextComponentString linkText = new TextComponentString(
-                            TextFormatting.AQUA + "" + TextFormatting.UNDERLINE + url);
-                    linkText.setStyle(new Style()
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url)));
-                    linkPrefix.appendSibling(linkText);
-                    event.player.sendMessage(linkPrefix);
+                    // Line 2: clickable CurseForge link (skipped for pure warnings without one)
+                    if (url != null && !url.isEmpty()) {
+                        TextComponentString linkPrefix = new TextComponentString(
+                                TextFormatting.GRAY + "  Download: ");
+                        TextComponentString linkText = new TextComponentString(
+                                TextFormatting.AQUA + "" + TextFormatting.UNDERLINE + url);
+                        linkText.setStyle(new Style()
+                                .setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url)));
+                        linkPrefix.appendSibling(linkText);
+                        event.player.sendMessage(linkPrefix);
+                    }
                 }
 
                 event.player.sendMessage(new TextComponentString(
