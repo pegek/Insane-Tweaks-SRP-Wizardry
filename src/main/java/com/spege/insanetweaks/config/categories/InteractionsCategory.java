@@ -37,4 +37,17 @@ public class InteractionsCategory {
     @Config.Name("Infernal Dust: Max")
     @Config.RangeInt(min = 1, max = 16)
     public int infernalDustMax = 2;
+
+    @Config.Comment({
+            "Second-opinion check for NPC spell casts vetoed via SpellCastEvent.Pre.",
+            "Some mods (notably Ars Magica 2's EB Wizardry compat) blanket-cancel NPC casts",
+            "for reasons that cannot apply to this mod's casters (AM2 burnout/mana). When ON,",
+            "a vetoed cast by the Sim Wizard or Sentinel is re-checked against the KNOWN",
+            "legitimate veto conditions (EB per-spell NPC disable, ASC suppression charm,",
+            "ASC dimensional anchor, AM2 silence); if none applies, the cast proceeds.",
+            "AUTO default: enabled only when Ars Magica 2 is installed." })
+    @Config.Name("NPC Cast Veto Second Opinion")
+    public NpcVetoSecondOpinion npcCastVetoSecondOpinion = NpcVetoSecondOpinion.AUTO;
+
+    public enum NpcVetoSecondOpinion { AUTO, ON, OFF }
 }

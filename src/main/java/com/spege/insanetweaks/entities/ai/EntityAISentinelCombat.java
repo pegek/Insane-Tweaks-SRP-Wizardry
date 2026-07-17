@@ -128,11 +128,16 @@ public class EntityAISentinelCombat extends EntityAIBase {
         SpellModifiers modifiers = this.sentinel.getModifiers();
         if (MinecraftForge.EVENT_BUS.post(
                 new SpellCastEvent.Pre(SpellCastEvent.Source.NPC, spell, this.sentinel, modifiers))) {
-            // Some OTHER mod's listener vetoed this NPC cast — log which spell so pack
-            // conflicts (tier gates, suppression artefacts, class-spell locks) are visible.
-            logDiag("cast VETOED by another mod's Pre listener (" + spell.getRegistryName() + ")");
-            setCooldown(FAILED_CAST_COOLDOWN);
-            return;
+            // Some OTHER mod's listener vetoed this NPC cast. Second-opinion arbiter: if no
+            // KNOWN legitimate veto condition applies to us, this is AM2's burnout false
+            // positive — cast anyway. Otherwise honor the veto (log which spell so real pack
+            // conflicts like tier gates or suppression artefacts stay visible).
+            if (!com.spege.insanetweaks.util.NpcCastVetoArbiter.shouldOverrideVeto(this.sentinel, spell)) {
+                logDiag("cast VETOED by another mod's Pre listener, second opinion UPHELD (" + spell.getRegistryName() + ")");
+                setCooldown(FAILED_CAST_COOLDOWN);
+                return;
+            }
+            logDiag("cast: Pre VETOED but second opinion OVERRODE it — casting anyway (" + spell.getRegistryName() + ")");
         }
 
         boolean cast = spell.cast(this.sentinel.world, this.sentinel, EnumHand.MAIN_HAND, 0, castTarget, modifiers);

@@ -282,11 +282,16 @@ public class EntityAISimWizardCombat extends EntityAIBase {
 
         if (MinecraftForge.EVENT_BUS.post(
                 new SpellCastEvent.Pre(SpellCastEvent.Source.NPC, spell, this.wizard, modifiers))) {
-            // Some OTHER mod's listener vetoed this NPC cast — log which spell so pack
-            // conflicts (tier gates, suppression artefacts, class-spell locks) are visible.
-            logDiag("fire dropped: SpellCastEvent.Pre CANCELLED by another mod (" + spell.getRegistryName() + ")");
-            setCooldown(EVENT_BLOCK_COOLDOWN);
-            return;
+            // Some OTHER mod's listener vetoed this NPC cast. Second-opinion arbiter: if no
+            // KNOWN legitimate veto condition applies to us, this is AM2's burnout false
+            // positive — cast anyway. Otherwise honor the veto (log which spell so real pack
+            // conflicts like tier gates or suppression artefacts stay visible).
+            if (!com.spege.insanetweaks.util.NpcCastVetoArbiter.shouldOverrideVeto(this.wizard, spell)) {
+                logDiag("fire dropped: SpellCastEvent.Pre CANCELLED, second opinion UPHELD (" + spell.getRegistryName() + ")");
+                setCooldown(EVENT_BLOCK_COOLDOWN);
+                return;
+            }
+            logDiag("fire: SpellCastEvent.Pre cancelled but second opinion OVERRODE it — casting anyway (" + spell.getRegistryName() + ")");
         }
 
         boolean cast = spell.cast(this.wizard.world, this.wizard, EnumHand.MAIN_HAND, 0, castTarget, modifiers);
