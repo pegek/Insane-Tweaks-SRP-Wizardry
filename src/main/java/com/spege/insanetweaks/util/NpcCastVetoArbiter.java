@@ -23,7 +23,10 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
  * cancel; otherwise we attribute it to AM2's false positive and let the cast proceed.
  *
  * <p>The honored conditions were bytecode-verified against the installed base mods on
- * 2026-07-17 (EB Wizardry 4.3.19, Ancient Spellcraft 1.8.2). Two conditions from the
+ * 2026-07-17 (EB Wizardry 4.3.19, Ancient Spellcraft 1.8.2, MorphSpellPack 1.2.4): EBW
+ * {@code !isEnabled(Context.NPCS)}, EBW {@code ArcaneJammer} (arcane_jammer potion), ASC
+ * suppression charm, ASC {@code DimensionalAnchor}, MorphSpellPack {@code ILichSpell}, and AM2
+ * silence. See {@code notes/mod_analysis_2026-07.md} §5 for the full cross-mod vetoer registry. Two conditions from the
  * original design were dropped after that verification because they can NOT fire for our
  * casters (which are neither players nor ASC {@code EntityAnimatedItem}s):
  * <ul>
@@ -44,6 +47,7 @@ public final class NpcCastVetoArbiter {
 
     private static final String AM2 = "arsmagica2";
     private static final String ASC = "ancientspellcraft";
+    private static final String MSP = "morphspellpack";
 
     /** ASC Tier ordinal above which the suppression charm applies (ADVANCED = 2, MASTER = 3). */
     private static final int SUPPRESSION_MIN_TIER_ORDINAL = 1;
@@ -81,7 +85,13 @@ public final class NpcCastVetoArbiter {
         if (isDisabledForNpcs(spell)) {
             return false;
         }
+        if (isArcaneJammed(caster)) {
+            return false;
+        }
         if (Loader.isModLoaded(ASC) && ascWouldVeto(caster, spell)) {
+            return false;
+        }
+        if (Loader.isModLoaded(MSP) && morphSpellPackWouldVeto(spell)) {
             return false;
         }
         if (Loader.isModLoaded(AM2) && am2Silenced(caster)) {
@@ -97,6 +107,25 @@ public final class NpcCastVetoArbiter {
     /** EB Wizardry's {@code WizardryEventHandler} cancels casts disabled in the NPC context. */
     private static boolean isDisabledForNpcs(Spell spell) {
         return !spell.isEnabled(SpellProperties.Context.NPCS);
+    }
+
+    /**
+     * EB Wizardry's {@code ArcaneJammer} (HIGHEST-priority Pre listener) cancels casts by ANY caster
+     * afflicted with the {@code arcane_jammer} potion (probabilistically). If our caster carries it,
+     * the cancel is a legitimate debuff — honor it. WizardryPotions is always present (EBW is a hard
+     * dependency), so no Loader guard is needed.
+     */
+    private static boolean isArcaneJammed(EntityLiving caster) {
+        return caster.isPotionActive(electroblob.wizardry.registry.WizardryPotions.arcane_jammer);
+    }
+
+    /**
+     * MorphSpellPack's {@code EventHandler.onSpellCastEventPre} blanket-cancels any NON-player caster
+     * of an {@code ILichSpell}. Our casters are always non-players, so a class-spell match means MSP
+     * would legitimately veto. Class ref isolated here for classload safety when MSP is absent.
+     */
+    private static boolean morphSpellPackWouldVeto(Spell spell) {
+        return spell instanceof com.windanesz.morphspellpack.spell.ILichSpell;
     }
 
     /** AM2's silence potion legitimately blocks all casting; resolve it by registry name. */
