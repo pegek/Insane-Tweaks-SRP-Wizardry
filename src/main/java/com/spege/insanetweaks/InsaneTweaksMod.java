@@ -385,6 +385,13 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyasEventHandler());
         }
 
+        // Sanctuary Dome: veto SRP natural spawns inside an active sanctuary. LOWEST-priority
+        // CheckSpawn listener, not a mixin - overrides SRP's own spawn-check result.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary
+                && Loader.isModLoaded(SRP_MODID)) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
+        }
+
         // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
         if (Loader.isModLoaded("infernalmobs")
                 && com.spege.insanetweaks.config.ModConfig.interactions.enableInfernalDustDrops) {
