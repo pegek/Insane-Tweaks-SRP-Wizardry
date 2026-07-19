@@ -159,7 +159,14 @@ public abstract class BaseBaubleFruitItem extends ItemFood implements ITweaksPro
             AbstractAttributeMap map = playerMP.getAttributeMap();
             AdvancedInstance instance = AttributeManager.getInstance(map, slotType);
             double current = instance.getAnonymousModifier(0);
-            instance.applyAnonymousModifier(0, current + 1);
+
+            // Use BaublesEX's public helper instead of the low-level AdvancedInstance call.
+            // CommonHelper.applyAnonymousModifier does the same +1 modifier AND sends a PacketModifier
+            // to the client, so the client's expanded bauble container is rebuilt to the new slot count.
+            // Calling instance.applyAnonymousModifier(...) directly updated the server only, leaving the
+            // client container one slot short -> IndexOutOfBounds in ContainerPlayerExpanded and an
+            // inventory desync (Slot N not in valid range) when the new slot is synced.
+            baubles.util.CommonHelper.applyAnonymousModifier(playerMP, slotType, 1);
 
             persistent.setBoolean(consumedTag, true);
             playerMP.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
