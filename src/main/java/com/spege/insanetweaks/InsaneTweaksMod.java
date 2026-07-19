@@ -119,6 +119,15 @@ public class InsaneTweaksMod implements IGuiHandler {
         logCompatibilityReport();
         com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
+        // Sanctuary Dome is an SRP-compat feature end-to-end (blocks, spawn veto, TE logic
+        // all key off SRParasites). Defensively disable if SRP isn't present so the module
+        // flag can't linger true with a half-registered feature.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary
+                && !Loader.isModLoaded(SRP_MODID)) {
+            com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary = false;
+            LOGGER.warn("[InsaneTweaks] Sanctuary module auto-disabled: SRParasites not present.");
+        }
+
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             RenderingRegistry.registerEntityRenderingHandler(EntitySentinel.class,
                     new IRenderFactory<EntitySentinel>() {

@@ -25,7 +25,8 @@ public class ModBlocks {
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
-        if (!ModConfig.modules.enableSanctuary) {
+        if (!ModConfig.modules.enableSanctuary
+                || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
         }
         SANCTUARY_CORE = (BlockSanctuaryCore) new BlockSanctuaryCore()
@@ -41,7 +42,8 @@ public class ModBlocks {
 
     @SubscribeEvent
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
-        if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null) {
+        if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
+                || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
         }
         ItemBlock ib = new ItemBlock(SANCTUARY_CORE);
@@ -52,7 +54,8 @@ public class ModBlocks {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
-        if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null) {
+        if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
+                || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
         }
         Item item = Item.getItemFromBlock(SANCTUARY_CORE);
