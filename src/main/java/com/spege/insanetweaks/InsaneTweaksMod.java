@@ -331,6 +331,18 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
 
+        // Grimoire enchantment runtime (boost recompute, owner-binding, anvil lock).
+        // The enchantment itself registers on the MOD bus in ModEnchantments under the same flag.
+        // Drop protection is conferred via the Ashen Legacy property (LegendaryDropHelper +
+        // the always-on IndestructibleDropHandler above); the client tooltip handler surfaces
+        // that property on Grimoire-enchanted vanilla items.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableGrimoire) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.GrimoireHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GrimoireTooltipHandler());
+            }
+        }
+
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             electroblob.wizardry.util.WandHelper.registerSpecialUpgrade(
                     com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE, "adaptation");
