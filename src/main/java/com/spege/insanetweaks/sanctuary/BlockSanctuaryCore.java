@@ -31,4 +31,16 @@ public class BlockSanctuaryCore extends Block {
         }
         super.breakBlock(world, pos, state);
     }
+
+    @Override
+    public boolean onBlockActivated(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos,
+            net.minecraft.block.state.IBlockState state, net.minecraft.entity.player.EntityPlayer player,
+            net.minecraft.util.EnumHand hand, net.minecraft.util.EnumFacing facing,
+            float hitX, float hitY, float hitZ) {
+        if (!world.isRemote && world.getTileEntity(pos) instanceof TileEntitySanctuaryCore) {
+            player.openGui(com.spege.insanetweaks.InsaneTweaksMod.INSTANCE,
+                    com.spege.insanetweaks.InsaneTweaksMod.GUI_ID_SANCTUARY, world, pos.getX(), pos.getY(), pos.getZ());
+        }
+        return true;
+    }
 }

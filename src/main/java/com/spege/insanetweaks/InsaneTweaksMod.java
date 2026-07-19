@@ -75,6 +75,9 @@ public class InsaneTweaksMod implements IGuiHandler {
     /** GUI ID for the combined Sentinel control + loot screen. */
     public static final int GUI_ID_SENTINEL = 2;
 
+    /** GUI ID for the Sanctuary Core screen. */
+    public static final int GUI_ID_SANCTUARY = 3;
+
     @Mod.Instance
     public static InsaneTweaksMod INSTANCE;
 
@@ -612,6 +615,13 @@ public class InsaneTweaksMod implements IGuiHandler {
                         sentinel.getEntityId());
             }
         }
+        if (id == GUI_ID_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.ContainerSanctuaryCore(
+                        player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te);
+            }
+        }
         return null;
     }
 
@@ -640,6 +650,14 @@ public class InsaneTweaksMod implements IGuiHandler {
                                 new com.spege.insanetweaks.entities.inventory.SentinelLootInventory(sentinel),
                                 sentinel.getEntityId()),
                         sentinel.getEntityId());
+            }
+        }
+        if (id == GUI_ID_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.GuiSanctuaryCore(
+                        new com.spege.insanetweaks.sanctuary.gui.ContainerSanctuaryCore(
+                                player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te));
             }
         }
         return null;
