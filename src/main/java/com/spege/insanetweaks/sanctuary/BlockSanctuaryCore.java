@@ -21,4 +21,14 @@ public class BlockSanctuaryCore extends Block {
             net.minecraft.block.state.IBlockState state) {
         return new TileEntitySanctuaryCore();
     }
+
+    @Override
+    public void breakBlock(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos,
+            net.minecraft.block.state.IBlockState state) {
+        net.minecraft.tileentity.TileEntity te = world.getTileEntity(pos);
+        if (te instanceof TileEntitySanctuaryCore) {
+            ((TileEntitySanctuaryCore) te).onRemovedFromWorld();
+        }
+        super.breakBlock(world, pos, state);
+    }
 }
