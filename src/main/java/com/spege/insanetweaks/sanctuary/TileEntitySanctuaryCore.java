@@ -118,7 +118,64 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             pyramidTickCounter = 0;
             revalidateAndSync();
         }
-        // Task 9 inserts upkeep + cleanse here.
+        runCleanse();
+    }
+
+    private int cleanseCursor; // rolling index over the cylinder volume
+
+    private boolean consumeFuelUnit() {
+        if (fuelStored > 0) { fuelStored--; markDirty(); return true; }
+        net.minecraft.item.ItemStack stack = inventory.getStackInSlot(SLOT_FUEL);
+        if (stack.isEmpty()) { return false; }
+        net.minecraft.util.ResourceLocation rn = stack.getItem().getRegistryName();
+        if (rn == null) { return false; }
+        int value = fuelValueFor(rn.toString());
+        if (value <= 0) { return false; }
+        stack.shrink(1);
+        inventory.setStackInSlot(SLOT_FUEL, stack);
+        fuelStored = value - 1; // consume one conversion now
+        markDirty();
+        return true;
+    }
+
+    private static int fuelValueFor(String registryName) {
+        for (String line : com.spege.insanetweaks.config.ModConfig.sanctuary.fuelItems) {
+            int eq = line.indexOf('=');
+            if (eq <= 0) { continue; }
+            if (line.substring(0, eq).trim().equalsIgnoreCase(registryName)) {
+                try { return Integer.parseInt(line.substring(eq + 1).trim()); } catch (NumberFormatException ex) { return 0; }
+            }
+        }
+        return 0;
+    }
+
+    private void runCleanse() {
+        if (!cleanseEnabled || tier < 1 || effectiveRadius <= 0) { cleanseStalled = false; return; }
+        int r = effectiveRadius;
+        int diameter = r * 2 + 1;
+        int height = world.getHeight(); // full column
+        int perTick = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseBlocksPerTick;
+        boolean anyStall = false;
+        for (int i = 0; i < perTick; i++) {
+            long total = (long) diameter * diameter * height;
+            if (total <= 0) { break; }
+            int idx = (int) (((long) cleanseCursor) % total);
+            cleanseCursor = (int) (((long) cleanseCursor + 1) % total);
+            int y = idx / (diameter * diameter);
+            int rem = idx % (diameter * diameter);
+            int dx = (rem / diameter) - r;
+            int dz = (rem % diameter) - r;
+            if ((long) dx * dx + (long) dz * dz > (long) r * r) { continue; }
+            net.minecraft.util.math.BlockPos p = new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
+            if (!isInfestedQuick(p)) { continue; }
+            if (!consumeFuelUnit()) { anyStall = true; break; }
+            com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p);
+        }
+        cleanseStalled = anyStall;
+    }
+
+    private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
+        return com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(world.getBlockState(p));
     }
 
     @Override
