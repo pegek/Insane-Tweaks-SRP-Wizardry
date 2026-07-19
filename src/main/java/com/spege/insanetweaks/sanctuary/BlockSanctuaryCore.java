@@ -13,4 +13,12 @@ public class BlockSanctuaryCore extends Block {
         setLightLevel(0.5F);
         // registry name + creative tab set in ModBlocks
     }
+
+    @Override public boolean hasTileEntity(net.minecraft.block.state.IBlockState state) { return true; }
+
+    @Override
+    public net.minecraft.tileentity.TileEntity createTileEntity(net.minecraft.world.World world,
+            net.minecraft.block.state.IBlockState state) {
+        return new TileEntitySanctuaryCore();
+    }
 }

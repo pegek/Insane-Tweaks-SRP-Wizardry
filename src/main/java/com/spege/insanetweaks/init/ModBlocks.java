@@ -33,6 +33,10 @@ public class ModBlocks {
                 .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "sanctuary_core"));
         SANCTUARY_CORE.setCreativeTab(CreativeTabs.MISC);
         event.getRegistry().register(SANCTUARY_CORE);
+
+        net.minecraftforge.fml.common.registry.GameRegistry.registerTileEntity(
+                com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,
+                new ResourceLocation(InsaneTweaksMod.MODID, "sanctuary_core"));
     }
 
     @SubscribeEvent
