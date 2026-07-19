@@ -1,1 +1,1 @@
-{ "parent": "block/cube_all", "textures": { "all": "blocks/lapis_block" } }
+{ "parent": "block/cube_all", "textures": { "all": "insanetweaks:blocks/sanctuary_core" } }
