@@ -5,6 +5,7 @@ import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
+import com.spege.insanetweaks.config.categories.SrpCompatCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
@@ -58,6 +59,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.client")
     @Config.Comment("Visual toggles and debugging tools.")
     public static final ClientCategory client = new ClientCategory();
+
+    @Config.Name("srpCompat")
+    @Config.LangKey("config.insanetweaks.category.srpCompat")
+    @Config.Comment("Native patch module for Scape and Run: Parasites (SRP 1.10.7). Per-fix toggles, default OFF.")
+    public static final SrpCompatCategory srpCompat = new SrpCompatCategory();
 
     @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
     private static class EventHandler {
