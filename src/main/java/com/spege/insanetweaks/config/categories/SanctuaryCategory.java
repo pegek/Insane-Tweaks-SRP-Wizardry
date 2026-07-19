@@ -25,6 +25,13 @@ public class SanctuaryCategory {
     @Config.RangeInt(min = 1, max = 256)
     public int cleanseBlocksPerTick = 8;
 
+    @Config.Comment({"Cylinder positions the cleanse scan EXAMINES per tick (cheap block-state reads).",
+            "Separate from Cleanse Blocks Per Tick (actual reverts). Higher = faster sweep of a large dome.",
+            "Read live (no restart)."})
+    @Config.Name("Cleanse Scan Per Tick")
+    @Config.RangeInt(min = 64, max = 65536)
+    public int cleanseScanPerTick = 4096;
+
     @Config.Comment("Ticks between pyramid re-validations in the core TE. Read live.")
     @Config.Name("Pyramid Revalidate Interval")
     @Config.RangeInt(min = 20, max = 1200)

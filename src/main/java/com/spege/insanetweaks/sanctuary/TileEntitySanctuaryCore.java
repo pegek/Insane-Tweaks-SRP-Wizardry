@@ -154,11 +154,13 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         int r = effectiveRadius;
         int diameter = r * 2 + 1;
         int height = world.getHeight(); // full column
-        int perTick = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseBlocksPerTick;
-        boolean anyStall = false;
-        for (int i = 0; i < perTick; i++) {
-            long total = (long) diameter * diameter * height;
-            if (total <= 0) { break; }
+        long total = (long) diameter * diameter * height;
+        if (total <= 0) { cleanseStalled = false; return; }
+        int scanBudget = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseScanPerTick;
+        int convertBudget = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseBlocksPerTick;
+        int converted = 0;
+        boolean stalled = false;
+        for (int i = 0; i < scanBudget && converted < convertBudget; i++) {
             int idx = (int) (((long) cleanseCursor) % total);
             cleanseCursor = (int) (((long) cleanseCursor + 1) % total);
             int y = idx / (diameter * diameter);
@@ -168,10 +170,10 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             if ((long) dx * dx + (long) dz * dz > (long) r * r) { continue; }
             net.minecraft.util.math.BlockPos p = new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
             if (!isInfestedQuick(p)) { continue; }
-            if (!consumeFuelUnit()) { anyStall = true; break; }
-            com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p);
+            if (!consumeFuelUnit()) { stalled = true; break; }
+            if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) { converted++; }
         }
-        cleanseStalled = anyStall;
+        cleanseStalled = stalled;
     }
 
     private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
