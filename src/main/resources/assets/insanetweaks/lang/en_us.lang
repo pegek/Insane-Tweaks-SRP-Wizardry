@@ -1,3 +1,4 @@
+enchantment.grimoire=Grimoire
 item.cost_core.name=Cost Core
 item.potency_core.name=Potency Core
 item.speedcast_core.name=Speedcast Core
@@ -243,6 +244,8 @@ config.insanetweaks.category.thrall=Thrall
 config.insanetweaks.category.entities=Entities
 config.insanetweaks.category.client=Client & Debug
 config.insanetweaks.category.srpCompat=SRP Compatibility
+config.insanetweaks.category.sanctuary=Sanctuary Dome
+config.insanetweaks.category.grimoire=Grimoire Enchantment
 config.insanetweaks.category.entities.assimilated_wizard=Assimilated Wizard
 config.insanetweaks.category.entities.assimilated_wizard.spawning=Spawning & Stats
 config.insanetweaks.category.entities.assimilated_wizard.combat=Combat
