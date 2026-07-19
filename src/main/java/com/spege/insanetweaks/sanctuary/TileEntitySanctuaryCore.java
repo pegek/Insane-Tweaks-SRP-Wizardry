@@ -77,7 +77,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private int countUpgradeRadiusItems() {
         int n = 0;
         for (int slot = 1; slot <= UPGRADE_SLOTS; slot++) {
-            if (!getInventory().getStackInSlot(slot).isEmpty()) { n += getInventory().getStackInSlot(slot).getCount(); }
+            if (!getInventory().getStackInSlot(slot).isEmpty()) { n++; }
         }
         return n;
     }
@@ -87,8 +87,13 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         int radius = 0;
         if (newTier >= 1) {
             int[] radii = com.spege.insanetweaks.config.ModConfig.sanctuary.tierRadii;
-            int base = radii[Math.min(newTier, radii.length) - 1];
-            radius = base + countUpgradeRadiusItems() * com.spege.insanetweaks.config.ModConfig.sanctuary.upgradeRadiusBonus;
+            if (radii.length == 0) {
+                radius = 0;
+            } else {
+                int base = radii[Math.min(newTier, radii.length) - 1];
+                radius = base + countUpgradeRadiusItems() * com.spege.insanetweaks.config.ModConfig.sanctuary.upgradeRadiusBonus;
+                radius = Math.min(radius, 256);
+            }
         }
         setTier(newTier);
         setEffectiveRadius(radius);
@@ -169,6 +174,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             int dz = (rem % diameter) - r;
             if ((long) dx * dx + (long) dz * dz > (long) r * r) { continue; }
             net.minecraft.util.math.BlockPos p = new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
+            if (!world.isBlockLoaded(p)) { continue; }
             if (!isInfestedQuick(p)) { continue; }
             if (!consumeFuelUnit()) { stalled = true; break; }
             if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) { converted++; }
@@ -177,6 +183,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     }
 
     private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
+        if (!world.isBlockLoaded(p)) { return false; }
         return com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(world.getBlockState(p));
     }
 
