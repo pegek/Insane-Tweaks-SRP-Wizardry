@@ -263,23 +263,20 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private void clientParticleTick() {
         if (!com.spege.insanetweaks.config.ModConfig.sanctuary.particleBorder) { return; }
         if (tier < 1 || effectiveRadius <= 0) { return; }
-        if (++particleTimer < 15) { return; }
+        // EBW's SPHERE ("dome") particle is anchored at the core, so it is NOT distance-culled the way
+        // a ring of boundary particles would be at large radii, and it draws the whole protection shell.
+        if (!net.minecraftforge.fml.common.Loader.isModLoaded("ebwizardry")) { return; }
+        // Re-emit a little before the previous sphere fades (time 25 vs interval 20) so it never blinks.
+        if (++particleTimer < 20) { return; }
         particleTimer = 0;
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
-        if (mc.player == null) { return; }
-        double cx = pos.getX() + 0.5, cz = pos.getZ() + 0.5, cy = pos.getY() + 0.5;
-        double r = effectiveRadius;
-        // angle from core to player; draw a short arc of points centred on it
-        double base = Math.atan2(mc.player.posZ - cz, mc.player.posX - cx);
-        int points = 16;
-        double spread = Math.PI / 2; // 90-degree arc facing the player
-        for (int i = 0; i < points; i++) {
-            double a = base - spread / 2 + spread * i / (points - 1);
-            double px = cx + Math.cos(a) * r;
-            double pz = cz + Math.sin(a) * r;
-            world.spawnParticle(net.minecraft.util.EnumParticleTypes.ENCHANTMENT_TABLE,
-                    px, cy, pz, 0.0D, 0.05D, 0.0D);
-        }
+        double cx = pos.getX() + 0.5, cy = pos.getY() + 0.5, cz = pos.getZ() + 0.5;
+        electroblob.wizardry.util.ParticleBuilder
+                .create(electroblob.wizardry.util.ParticleBuilder.Type.SPHERE)
+                .pos(cx, cy, cz)
+                .scale((float) effectiveRadius)
+                .clr(0.55F, 0.75F, 1.0F)
+                .time(25)
+                .spawn(world);
     }
 
     @Override
