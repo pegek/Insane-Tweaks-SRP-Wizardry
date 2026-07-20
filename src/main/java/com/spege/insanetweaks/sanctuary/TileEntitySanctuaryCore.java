@@ -232,7 +232,6 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         int scanBudget = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseScanPerTick;
         int convertBudget = com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseBlocksPerTick;
         int converted = 0;
-        boolean stalled = false;
         for (int i = 0; i < scanBudget && converted < convertBudget; i++) {
             int idx = (int) (((long) cleanseCursor) % total);
             cleanseCursor = (int) (((long) cleanseCursor + 1) % total);
@@ -244,10 +243,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             net.minecraft.util.math.BlockPos p = new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
             if (!world.isBlockLoaded(p)) { continue; }
             if (!isInfestedQuick(p)) { continue; }
-            if (!consumeFuelUnit()) { stalled = true; break; }
+            // cleanseStalled is latched: it stays set until fuel is next consumed, so the status
+            // line and transition messages don't flicker on ticks whose scan misses infested blocks.
+            if (!consumeFuelUnit()) { cleanseStalled = true; return; }
+            cleanseStalled = false;
             if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) { converted++; }
         }
-        cleanseStalled = stalled;
     }
 
     private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
