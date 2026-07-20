@@ -215,7 +215,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         cleanseStalled = c.getBoolean("stalled");
         fuelStored = c.getInteger("fuel");
         initialized = c.getBoolean("init");
-        statusCode = c.getInteger("status");
+        if (c.hasKey("status")) { statusCode = c.getInteger("status"); }
     }
 
     @Override
