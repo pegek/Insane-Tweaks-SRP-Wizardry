@@ -274,7 +274,9 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 .create(electroblob.wizardry.util.ParticleBuilder.Type.SPHERE)
                 .pos(cx, cy, cz)
                 .scale((float) effectiveRadius)
-                .clr(0.55F, 0.75F, 1.0F)
+                // EBW's SPHERE has no alpha setter; colour intensity is the transparency lever
+                // (dimmer + channel-balanced = more neutral and more see-through).
+                .clr(0.50F, 0.52F, 0.55F)
                 .time(25)
                 .spawn(world);
     }
