@@ -128,7 +128,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
 
     @Override
     public void update() {
-        if (world == null || world.isRemote) { return; }
+        if (world == null) { return; }
+        if (world.isRemote) { clientParticleTick(); return; }
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) { return; }
         if (com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isDimensionBlacklisted(world)) {
             if (getTier() != 0 || statusCode != SanctuaryStatus.DIM_BLACKLISTED.ordinal()) {
@@ -252,6 +253,32 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
         if (!world.isBlockLoaded(p)) { return false; }
         return com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(world.getBlockState(p));
+    }
+
+    @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
+    private int particleTimer;
+
+    @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
+    private void clientParticleTick() {
+        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.particleBorder) { return; }
+        if (tier < 1 || effectiveRadius <= 0) { return; }
+        if (++particleTimer < 15) { return; }
+        particleTimer = 0;
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+        if (mc.player == null) { return; }
+        double cx = pos.getX() + 0.5, cz = pos.getZ() + 0.5, cy = pos.getY() + 0.5;
+        double r = effectiveRadius;
+        // angle from core to player; draw a short arc of points centred on it
+        double base = Math.atan2(mc.player.posZ - cz, mc.player.posX - cx);
+        int points = 16;
+        double spread = Math.PI / 2; // 90-degree arc facing the player
+        for (int i = 0; i < points; i++) {
+            double a = base - spread / 2 + spread * i / (points - 1);
+            double px = cx + Math.cos(a) * r;
+            double pz = cz + Math.sin(a) * r;
+            world.spawnParticle(net.minecraft.util.EnumParticleTypes.ENCHANTMENT_TABLE,
+                    px, cy, pz, 0.0D, 0.05D, 0.0D);
+        }
     }
 
     @Override
