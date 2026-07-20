@@ -281,7 +281,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+    public void onDataPacket(NetworkManager manager, SPacketUpdateTileEntity pkt) {
         readDisplayTag(pkt.getNbtCompound());
     }
 
