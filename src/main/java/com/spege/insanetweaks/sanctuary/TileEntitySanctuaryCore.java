@@ -22,6 +22,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private boolean cleanseStalled; // true when cleanse wants to run but fuel == 0
     private int fuelStored;      // remaining cleanse-conversions from consumed fuel items
     private boolean initialized; // first-tick default for cleanseEnabled
+    private int statusCode = SanctuaryStatus.NO_PYRAMID.ordinal(); // SanctuaryStatus ordinal
 
     public ItemStackHandler getInventory() { return inventory; }
     public int getTier() { return tier; }
@@ -29,6 +30,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     public boolean isCleanseEnabled() { return cleanseEnabled; }
     public boolean isCleanseStalled() { return cleanseStalled; }
     public void setCleanseEnabled(boolean v) { this.cleanseEnabled = v; markDirty(); }
+    public int getStatusCode() { return statusCode; }
+    public SanctuaryStatus getStatus() { return SanctuaryStatus.byId(statusCode); }
 
     // setters used by tick logic (Task 5/9)
     void setTier(int t) { this.tier = t; }
@@ -95,10 +98,20 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 radius = Math.min(radius, 256);
             }
         }
+        int oldTier = tier;
         setTier(newTier);
         setEffectiveRadius(radius);
+        statusCode = (newTier >= 1) ? SanctuaryStatus.ACTIVE.ordinal()
+                                    : SanctuaryStatus.NO_PYRAMID.ordinal();
         SanctuaryWorldData.get(world).setRegion(pos, radius); // radius<=0 removes
         markDirty();
+        if (com.spege.insanetweaks.config.ModConfig.sanctuary.debugLogging && newTier != oldTier) {
+            com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
+                "[InsaneTweaks] Sanctuary @ (" + pos.getX() + "," + pos.getY() + "," + pos.getZ()
+                + ") dim" + world.provider.getDimension() + ": tier=" + newTier + " radius=" + radius
+                + " status=" + SanctuaryStatus.byId(statusCode)
+                + " cleanse=" + CleanseState.of(newTier, cleanseEnabled, cleanseStalled));
+        }
     }
 
     public void onRemovedFromWorld() {
@@ -112,7 +125,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         if (world == null || world.isRemote) { return; }
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) { return; }
         if (com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isDimensionBlacklisted(world)) {
-            if (getTier() != 0) { setTier(0); setEffectiveRadius(0); SanctuaryWorldData.get(world).removeRegion(pos); }
+            if (getTier() != 0 || statusCode != SanctuaryStatus.DIM_BLACKLISTED.ordinal()) {
+                setTier(0); setEffectiveRadius(0);
+                statusCode = SanctuaryStatus.DIM_BLACKLISTED.ordinal();
+                SanctuaryWorldData.get(world).removeRegion(pos);
+                markDirty();
+            }
             return;
         }
         if (!isInitialized()) {
@@ -197,6 +215,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         cleanseStalled = c.getBoolean("stalled");
         fuelStored = c.getInteger("fuel");
         initialized = c.getBoolean("init");
+        statusCode = c.getInteger("status");
     }
 
     @Override
@@ -209,6 +228,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         c.setBoolean("stalled", cleanseStalled);
         c.setInteger("fuel", fuelStored);
         c.setBoolean("init", initialized);
+        c.setInteger("status", statusCode);
         return c;
     }
 

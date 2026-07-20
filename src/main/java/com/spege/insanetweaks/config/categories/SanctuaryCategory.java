@@ -64,4 +64,9 @@ public class SanctuaryCategory {
     @Config.Comment("Client: render the particle border of active domes. Read live.")
     @Config.Name("Particle Border")
     public boolean particleBorder = true;
+
+    @Config.Comment({"Log per-core sanctuary state to the game log on tier/status change.",
+            "For debugging whether a pyramid is detected. Read live (no restart)."})
+    @Config.Name("Debug Logging")
+    public boolean debugLogging = false;
 }
