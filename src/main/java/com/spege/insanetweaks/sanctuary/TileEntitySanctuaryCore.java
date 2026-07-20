@@ -43,7 +43,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     void setTier(int t) { this.tier = t; }
     void setEffectiveRadius(int r) { this.effectiveRadius = r; }
     void setCleanseStalled(boolean v) { this.cleanseStalled = v; }
-    int getFuelStored() { return fuelStored; }
+    public int getFuelStored() { return fuelStored; }
     void setFuelStored(int v) { this.fuelStored = v; }
     boolean isInitialized() { return initialized; }
     void markInitialized() { this.initialized = true; }
