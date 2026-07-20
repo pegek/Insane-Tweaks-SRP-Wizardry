@@ -17,17 +17,17 @@ public class ContainerSanctuaryCore extends Container {
 
     public ContainerSanctuaryCore(InventoryPlayer playerInv, TileEntitySanctuaryCore te) {
         this.te = te;
-        addSlotToContainer(new SlotItemHandler(te.getInventory(), TileEntitySanctuaryCore.SLOT_FUEL, 26, 35));
+        addSlotToContainer(new SlotItemHandler(te.getInventory(), TileEntitySanctuaryCore.SLOT_FUEL, 26, 104));
         for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
-            addSlotToContainer(new SlotItemHandler(te.getInventory(), 1 + i, 80 + i * 18, 35));
+            addSlotToContainer(new SlotItemHandler(te.getInventory(), 1 + i, 80 + i * 18, 104));
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlotToContainer(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                addSlotToContainer(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 128 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlotToContainer(new Slot(playerInv, col, 8 + col * 18, 142));
+            addSlotToContainer(new Slot(playerInv, col, 8 + col * 18, 186));
         }
     }
 

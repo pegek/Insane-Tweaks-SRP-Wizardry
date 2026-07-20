@@ -15,12 +15,12 @@ public class GuiSanctuaryCore extends GuiContainer {
         super(container);
         this.container = container;
         this.xSize = 176;
-        this.ySize = 166;
+        this.ySize = 210;
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        this.drawDefaultBackground(); // dark overlay (fixes HEI warning)
+        this.drawDefaultBackground();
         super.drawScreen(mouseX, mouseY, partialTicks);
         this.renderHoveredToolTip(mouseX, mouseY);
     }
@@ -29,25 +29,22 @@ public class GuiSanctuaryCore extends GuiContainer {
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
-        // panel body
         drawGradientRect(x, y, x + xSize, y + ySize, 0xF0202028, 0xF03A2A3A);
-        drawRect(x, y, x + xSize, y + 1, 0xFF6A4A7A);            // top accent
-        // core slots: fuel (26,35) + upgrades (80,98,116,134 ; 35)
-        drawSocket(x + 26, y + 35);
+        drawRect(x, y, x + xSize, y + 1, 0xFF6A4A7A);
+        drawSocket(x + 26, y + 104);
         for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
-            drawSocket(x + 80 + i * 18, y + 35);
+            drawSocket(x + 80 + i * 18, y + 104);
         }
-        // player inventory sockets
         for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) { drawSocket(x + 8 + col * 18, y + 84 + row * 18); }
+            for (int col = 0; col < 9; col++) { drawSocket(x + 8 + col * 18, y + 128 + row * 18); }
         }
-        for (int col = 0; col < 9; col++) { drawSocket(x + 8 + col * 18, y + 142); }
+        for (int col = 0; col < 9; col++) { drawSocket(x + 8 + col * 18, y + 186); }
     }
 
-    /** An 18x18 recessed slot background at the container slot origin (x,y are the -1 border corner). */
+    /** An 18x18 recessed slot background at the container slot origin (sx,sy are the slot's top-left). */
     private void drawSocket(int sx, int sy) {
-        drawRect(sx - 1, sy - 1, sx + 17, sy + 17, 0xFF120C16); // dark inset
-        drawRect(sx, sy, sx + 16, sy + 16, 0xFF473557);          // slot face
+        drawRect(sx - 1, sy - 1, sx + 17, sy + 17, 0xFF120C16);
+        drawRect(sx, sy, sx + 16, sy + 16, 0xFF473557);
     }
 
     @Override
@@ -58,47 +55,43 @@ public class GuiSanctuaryCore extends GuiContainer {
         SanctuaryStatus status = te.getStatus();
         CleanseState cleanse = CleanseState.of(tier, te.isCleanseEnabled(), te.isCleanseStalled());
 
-        int white = 0xFFFFFF;
-        this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.title"), 8, 6, 0xE0D0F0);
-        this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.tier", tier), 8, 18, white);
+        this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.title"), 8, 8, 0xE0D0F0);
+        this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.tier", tier), 8, 22, 0xFFFFFF);
 
-        // protection line (colored)
         if (tier >= 1) {
-            this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.protection_on", radius), 8, 30, 0x55FF55);
+            this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.protection_on", radius), 8, 36, 0x55FF55);
         } else {
-            this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.protection_off"), 8, 30, 0xAAAAAA);
+            this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.protection_off"), 8, 36, 0xAAAAAA);
         }
 
-        // cleanse line (colored)
         switch (cleanse) {
-            case RUNNING: this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_running"), 8, 42, 0x55FF55); break;
-            case STALLED: this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_stalled"), 8, 42, 0xFF5555); break;
-            default:      this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_off"), 8, 42, 0xAAAAAA); break;
+            case RUNNING: this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_running"), 8, 50, 0x55FF55); break;
+            case STALLED: this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_stalled"), 8, 50, 0xFF5555); break;
+            default:      this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.cleanse_off"), 8, 50, 0xAAAAAA); break;
         }
 
-        // hint when inactive
+        // Row at y=64: active -> fuel + gauge; inactive -> the actionable hint instead.
+        // Fuel is irrelevant while there is no active pyramid, so they never need to coexist.
         if (status == SanctuaryStatus.NO_PYRAMID) {
-            this.fontRenderer.drawSplitString(I18n.format("gui.insanetweaks.sanctuary.hint_pyramid"), 8, 56, 160, 0xC0A0C0);
+            this.fontRenderer.drawSplitString(I18n.format("gui.insanetweaks.sanctuary.hint_pyramid"), 8, 64, 158, 0xC0A0C0);
         } else if (status == SanctuaryStatus.DIM_BLACKLISTED) {
-            this.fontRenderer.drawSplitString(I18n.format("gui.insanetweaks.sanctuary.hint_blacklist"), 8, 56, 160, 0xC0A0C0);
+            this.fontRenderer.drawSplitString(I18n.format("gui.insanetweaks.sanctuary.hint_blacklist"), 8, 64, 158, 0xC0A0C0);
+        } else {
+            int fuel = container.getClientFuel();
+            this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.fuel", fuel), 8, 64, 0xC0C0C0);
+            drawFuelGauge(8, 76, fuel);
         }
 
-        // fuel gauge (from window property) drawn near the fuel slot
-        int fuel = container.getClientFuel();
-        this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.fuel", fuel), 8, 68, 0xC0C0C0);
-        drawFuelGauge(8, 78, fuel);
-
-        // slot tooltips
-        drawSlotTooltip(mouseX, mouseY, 26, 35, I18n.format("gui.insanetweaks.sanctuary.slot_fuel"));
+        drawSlotTooltip(mouseX, mouseY, 26, 104, I18n.format("gui.insanetweaks.sanctuary.slot_fuel"));
         for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
-            drawSlotTooltip(mouseX, mouseY, 80 + i * 18, 35, I18n.format("gui.insanetweaks.sanctuary.slot_upgrade"));
+            drawSlotTooltip(mouseX, mouseY, 80 + i * 18, 104, I18n.format("gui.insanetweaks.sanctuary.slot_upgrade"));
         }
     }
 
     /** A simple 8-segment bar; full at >=64 conversions remaining. */
     private void drawFuelGauge(int gx, int gy, int fuel) {
         int segments = 8;
-        int filled = Math.min(segments, (fuel + 7) / 8); // 8 conversions per segment, ceil
+        int filled = Math.min(segments, (fuel + 7) / 8);
         for (int i = 0; i < segments; i++) {
             int color = (i < filled) ? 0xFF55FF55 : 0xFF303030;
             int sx = gx + i * 6;
@@ -108,8 +101,8 @@ public class GuiSanctuaryCore extends GuiContainer {
 
     /**
      * mouseX/Y are screen coords; slotX/Y are container-local slot origins.
-     * drawHoveringText is called inside the foreground layer (already translated by the GUI
-     * origin), so it must receive GUI-local mouse coords.
+     * drawHoveringText runs inside the foreground layer (already translated by the GUI origin),
+     * so it must receive GUI-local mouse coords.
      */
     private void drawSlotTooltip(int mouseX, int mouseY, int slotX, int slotY, String text) {
         int left = (this.width - this.xSize) / 2;
