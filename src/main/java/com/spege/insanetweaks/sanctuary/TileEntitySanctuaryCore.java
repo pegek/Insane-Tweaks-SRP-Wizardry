@@ -1,6 +1,8 @@
 package com.spege.insanetweaks.sanctuary;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraftforge.common.capabilities.Capability;
@@ -23,6 +25,10 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private int fuelStored;      // remaining cleanse-conversions from consumed fuel items
     private boolean initialized; // first-tick default for cleanseEnabled
     private int statusCode = SanctuaryStatus.NO_PYRAMID.ordinal(); // SanctuaryStatus ordinal
+
+    // last display snapshot pushed to clients (server-side), for change detection
+    private int sentTier = -1, sentRadius = -1, sentStatus = -1;
+    private boolean sentCleanse, sentStalled, snapshotInit;
 
     public ItemStackHandler getInventory() { return inventory; }
     public int getTier() { return tier; }
@@ -131,6 +137,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 SanctuaryWorldData.get(world).removeRegion(pos);
                 markDirty();
             }
+            syncDisplayIfChanged();
             return;
         }
         if (!isInitialized()) {
@@ -142,6 +149,19 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             revalidateAndSync();
         }
         runCleanse();
+        syncDisplayIfChanged();
+    }
+
+    /** Server-side: if any display field changed since the last push, send a block update. */
+    private void syncDisplayIfChanged() {
+        boolean changed = !snapshotInit
+                || tier != sentTier || effectiveRadius != sentRadius || statusCode != sentStatus
+                || cleanseEnabled != sentCleanse || cleanseStalled != sentStalled;
+        if (!changed) { return; }
+        sentTier = tier; sentRadius = effectiveRadius; sentStatus = statusCode;
+        sentCleanse = cleanseEnabled; sentStalled = cleanseStalled; snapshotInit = true;
+        net.minecraft.block.state.IBlockState st = world.getBlockState(pos);
+        world.notifyBlockUpdate(pos, st, st, 3);
     }
 
     private int cleanseCursor; // rolling index over the cylinder volume
@@ -230,6 +250,44 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         c.setBoolean("init", initialized);
         c.setInteger("status", statusCode);
         return c;
+    }
+
+    /** Compact tag of just the client-display fields (no inventory). */
+    private NBTTagCompound writeDisplayTag(NBTTagCompound c) {
+        c.setInteger("tier", tier);
+        c.setInteger("radius", effectiveRadius);
+        c.setBoolean("cleanse", cleanseEnabled);
+        c.setBoolean("stalled", cleanseStalled);
+        c.setInteger("status", statusCode);
+        return c;
+    }
+
+    private void readDisplayTag(NBTTagCompound c) {
+        tier = c.getInteger("tier");
+        effectiveRadius = c.getInteger("radius");
+        cleanseEnabled = c.getBoolean("cleanse");
+        cleanseStalled = c.getBoolean("stalled");
+        statusCode = c.getInteger("status");
+    }
+
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        return writeDisplayTag(super.getUpdateTag()); // super adds id + x/y/z
+    }
+
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket() {
+        return new SPacketUpdateTileEntity(pos, 1, writeDisplayTag(new NBTTagCompound()));
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        readDisplayTag(pkt.getNbtCompound());
+    }
+
+    @Override
+    public void handleUpdateTag(NBTTagCompound tag) {
+        readDisplayTag(tag); // do NOT call super (would readFromNBT and clear inventory client-side)
     }
 
     @Override
