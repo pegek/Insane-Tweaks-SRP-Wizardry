@@ -38,8 +38,13 @@ public class BlockSanctuaryCore extends Block {
             net.minecraft.util.EnumHand hand, net.minecraft.util.EnumFacing facing,
             float hitX, float hitY, float hitZ) {
         if (!world.isRemote && world.getTileEntity(pos) instanceof TileEntitySanctuaryCore) {
-            player.openGui(com.spege.insanetweaks.InsaneTweaksMod.INSTANCE,
-                    com.spege.insanetweaks.InsaneTweaksMod.GUI_ID_SANCTUARY, world, pos.getX(), pos.getY(), pos.getZ());
+            TileEntitySanctuaryCore te = (TileEntitySanctuaryCore) world.getTileEntity(pos);
+            if (player.isSneaking()) {
+                te.sendStatusTo(player);
+            } else {
+                player.openGui(com.spege.insanetweaks.InsaneTweaksMod.INSTANCE,
+                        com.spege.insanetweaks.InsaneTweaksMod.GUI_ID_SANCTUARY, world, pos.getX(), pos.getY(), pos.getZ());
+            }
         }
         return true;
     }

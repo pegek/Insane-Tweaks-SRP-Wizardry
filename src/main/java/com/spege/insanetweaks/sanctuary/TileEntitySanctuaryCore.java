@@ -158,10 +158,39 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 || tier != sentTier || effectiveRadius != sentRadius || statusCode != sentStatus
                 || cleanseEnabled != sentCleanse || cleanseStalled != sentStalled;
         if (!changed) { return; }
+
+        if (snapshotInit) { // don't announce on first load
+            boolean wasActive = sentTier >= 1;
+            boolean nowActive = tier >= 1;
+            if (!wasActive && nowActive) { announce("msg.insanetweaks.sanctuary.activated", tier, effectiveRadius); }
+            else if (wasActive && !nowActive) { announce("msg.insanetweaks.sanctuary.deactivated"); }
+            if (!sentStalled && cleanseStalled) { announce("msg.insanetweaks.sanctuary.stalled"); }
+            else if (sentStalled && !cleanseStalled && tier >= 1 && cleanseEnabled) { announce("msg.insanetweaks.sanctuary.resumed"); }
+        }
+
         sentTier = tier; sentRadius = effectiveRadius; sentStatus = statusCode;
         sentCleanse = cleanseEnabled; sentStalled = cleanseStalled; snapshotInit = true;
         net.minecraft.block.state.IBlockState st = world.getBlockState(pos);
         world.notifyBlockUpdate(pos, st, st, 3);
+    }
+
+    public void sendStatusTo(net.minecraft.entity.player.EntityPlayer player) {
+        CleanseState cs = CleanseState.of(tier, cleanseEnabled, cleanseStalled);
+        player.sendMessage(new net.minecraft.util.text.TextComponentTranslation(
+                "msg.insanetweaks.sanctuary.status", tier, effectiveRadius,
+                (tier >= 1 ? "ON" : "OFF"), cs.name(), fuelStored));
+    }
+
+    private void announce(String key, Object... args) {
+        if (world == null || world.isRemote) { return; }
+        net.minecraft.util.text.TextComponentTranslation msg =
+                new net.minecraft.util.text.TextComponentTranslation(key, args);
+        double r = Math.max(effectiveRadius, 8);
+        for (net.minecraft.entity.player.EntityPlayer p : world.playerEntities) {
+            double dx = p.posX - (pos.getX() + 0.5);
+            double dz = p.posZ - (pos.getZ() + 0.5);
+            if (dx * dx + dz * dz <= r * r) { p.sendMessage(msg); }
+        }
     }
 
     private int cleanseCursor; // rolling index over the cylinder volume
