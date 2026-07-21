@@ -22,6 +22,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModBlocks {
 
     public static BlockSanctuaryCore SANCTUARY_CORE;
+    public static com.spege.insanetweaks.sanctuary.BlockCreativeSanctuary CREATIVE_SANCTUARY;
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
@@ -38,6 +39,13 @@ public class ModBlocks {
         net.minecraftforge.fml.common.registry.GameRegistry.registerTileEntity(
                 com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,
                 new ResourceLocation(InsaneTweaksMod.MODID, "sanctuary_core"));
+
+        CREATIVE_SANCTUARY = (com.spege.insanetweaks.sanctuary.BlockCreativeSanctuary)
+                new com.spege.insanetweaks.sanctuary.BlockCreativeSanctuary()
+                        .setUnlocalizedName(InsaneTweaksMod.MODID + ".creative_sanctuary")
+                        .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "creative_sanctuary"));
+        CREATIVE_SANCTUARY.setCreativeTab(CreativeTabs.MISC);
+        event.getRegistry().register(CREATIVE_SANCTUARY);
     }
 
     @SubscribeEvent
@@ -49,6 +57,12 @@ public class ModBlocks {
         ItemBlock ib = new com.spege.insanetweaks.sanctuary.ItemBlockSanctuaryCore(SANCTUARY_CORE);
         ib.setRegistryName(SANCTUARY_CORE.getRegistryName());
         event.getRegistry().register(ib);
+
+        if (CREATIVE_SANCTUARY != null) {
+            ItemBlock cib = new ItemBlock(CREATIVE_SANCTUARY);
+            cib.setRegistryName(CREATIVE_SANCTUARY.getRegistryName());
+            event.getRegistry().register(cib);
+        }
     }
 
     @SideOnly(Side.CLIENT)
@@ -61,5 +75,11 @@ public class ModBlocks {
         Item item = Item.getItemFromBlock(SANCTUARY_CORE);
         ModelLoader.setCustomModelResourceLocation(item, 0,
                 new ModelResourceLocation(SANCTUARY_CORE.getRegistryName(), "inventory"));
+
+        if (CREATIVE_SANCTUARY != null) {
+            Item citem = Item.getItemFromBlock(CREATIVE_SANCTUARY);
+            ModelLoader.setCustomModelResourceLocation(citem, 0,
+                    new ModelResourceLocation(CREATIVE_SANCTUARY.getRegistryName(), "inventory"));
+        }
     }
 }
