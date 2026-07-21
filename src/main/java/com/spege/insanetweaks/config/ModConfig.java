@@ -2,8 +2,8 @@ package com.spege.insanetweaks.config;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ClientCategory;
+import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
-import com.spege.insanetweaks.config.categories.SentientCodexCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.OtgCompatCategory;
@@ -73,10 +73,10 @@ public class ModConfig {
     @Config.Comment("Sanctuary Dome tunables (radius tiers, fuel, cleanse, dimension blacklist). Master toggle is modules.enableSanctuary.")
     public static final SanctuaryCategory sanctuary = new SanctuaryCategory();
 
-    @Config.Name("sentientcodex")
-    @Config.LangKey("config.insanetweaks.category.sentientcodex")
-    @Config.Comment("Tunables for the Sentient Codex enchantment (boost formula, owner-binding, drop/anvil protection). Master toggle is modules.enableSentientCodex.")
-    public static final SentientCodexCategory sentientCodex = new SentientCodexCategory();
+    @Config.Name("enchantments")
+    @Config.LangKey("config.insanetweaks.category.enchantments")
+    @Config.Comment("Tunables for the mod's custom enchantments (currently Sentient Codex).")
+    public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
 
     @Config.Name("otgCompat")
     @Config.LangKey("config.insanetweaks.category.otgCompat")

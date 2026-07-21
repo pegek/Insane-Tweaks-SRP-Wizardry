@@ -1,6 +1,7 @@
 package com.spege.insanetweaks.enchant;
 
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.config.categories.SentientCodexCategory;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.EntityPlayer;
@@ -13,23 +14,28 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
- * Runtime behaviour of the {@link EnchantmentSentientCodex} enchantment: per-tick boost
- * recompute, owner-binding, and the anvil lock. Registered on the Forge event bus in
+ * Runtime behaviour of the {@link EnchantmentSentientCodex} enchantment: per-tick monotonic step
+ * growth (each XP threshold adds +1 to the item's enchantments, capped per-enchant at maxLevel +
+ * config), owner-binding, and the anvil lock. Registered on the Forge event bus in
  * {@code InsaneTweaksMod#init} under {@code modules.enableSentientCodex}.
  *
  * <p>Drop protection (no burn / lingers far longer) is NOT handled here: a Sentient Codex item
  * confers the "Ashen Legacy" property, so {@code LegendaryDropHelper.isLegendaryDropItem}
  * routes it through {@code EntityItemIndestructible} via the always-on
- * {@code IndestructibleDropHandler}. Gated by {@code ModConfig.sentientCodex.conferAshenLegacy}.
+ * {@code IndestructibleDropHandler}. Gated by {@code ModConfig.enchantments.sentientCodex.conferAshenLegacy}.
  *
  * <p>Enchantment registration itself is NOT here (that is {@code ModEnchantments} on the
  * MOD bus) - this class is a plain Forge-bus handler instance.
  *
- * <p>Every config lookup goes through {@code ModConfig.sentientCodex.*} so the tunables are
- * live (no restart), matching the codebase config convention.
+ * <p>Every config lookup goes through {@code ModConfig.enchantments.sentientCodex.*} so the tunables
+ * are live (no restart), matching the codebase config convention.
  */
 @SuppressWarnings("null")
 public class SentientCodexHandler {
+
+    /** UE "Grimoire II" formula multiplier applied inside the log. Kept as a constant (the enchant
+     *  is unified to level 1 here, so the level-2 tuning is baked in rather than exposed). */
+    private static final double GRIMOIRE_MULTIPLIER = 2.0;
 
     // --- pseudo-tick: recompute boost + owner-binding (SERVER only) ---
     @SubscribeEvent
@@ -44,7 +50,7 @@ public class SentientCodexHandler {
         if (EnchantmentSentientCodex.INSTANCE == null) {
             return;
         }
-        if (p.ticksExisted % Math.max(1, ModConfig.sentientCodex.tickInterval) != 0) {
+        if (p.ticksExisted % Math.max(1, ModConfig.enchantments.sentientCodex.tickInterval) != 0) {
             return;
         }
 
@@ -64,65 +70,67 @@ public class SentientCodexHandler {
         if (gLvl <= 0) {
             return;
         }
+        SentientCodexCategory cfg = ModConfig.enchantments.sentientCodex;
+        // Frozen: stop applying growth. Already-granted levels stay baked in (we keep no base
+        // snapshot to restore). To fully remove the enchant, unregister via modules.enableSentientCodex.
+        if (!cfg.enabled) {
+            return;
+        }
         if (!stack.hasTagCompound()) {
             stack.setTagCompound(new NBTTagCompound());
         }
         NBTTagCompound tag = stack.getTagCompound();
 
         // owner-binding
-        if (ModConfig.sentientCodex.ownerBinding) {
+        if (cfg.ownerBinding) {
             String owner = tag.getString(EnchantmentSentientCodex.OWNER_TAG);
             String me = p.getUniqueID().toString();
             if (owner.isEmpty()) {
                 tag.setString(EnchantmentSentientCodex.OWNER_TAG, me);
             } else if (!owner.equals(me)) {
-                p.attackEntityFrom(DamageSource.OUT_OF_WORLD, (float) ModConfig.sentientCodex.bindingDamage);
+                p.attackEntityFrom(DamageSource.OUT_OF_WORLD, (float) cfg.bindingDamage);
             }
         }
 
-        // capture the base enchantments once (without Sentient Codex), into sentientcodex_storage
-        if (!tag.hasKey(EnchantmentSentientCodex.STORAGE_TAG)) {
-            NBTTagList live = stack.getEnchantmentTagList(); // reads "ench"
-            NBTTagList storage = new NBTTagList();
-            int gid = Enchantment.getEnchantmentID(EnchantmentSentientCodex.INSTANCE);
-            for (int i = 0; i < live.tagCount(); i++) {
-                NBTTagCompound en = live.getCompoundTagAt(i);
-                if (en.getShort("id") == gid) {
-                    continue;
-                }
-                storage.appendTag(en.copy());
-            }
-            tag.setTag(EnchantmentSentientCodex.STORAGE_TAG, storage);
+        // Monotonic step growth: as XP crosses thresholds the target step count rises; each NEW step
+        // adds +1 to every non-excluded enchant, up to that enchant's getMaxLevel() + Max Levels Above
+        // Cap. We only ever raise levels (losing XP never lowers them) and store just the step counter
+        // - no base snapshot, no rebuild. The anvil lock freezes the enchant set once SC is applied, so
+        // the live "ench" list IS the source of truth, edited in place.
+        int target = computeBoost(p.experienceLevel);
+        int applied = tag.getInteger(EnchantmentSentientCodex.LAST_BOOST_TAG);
+        if (target <= applied) {
+            return;
         }
+        int delta = target - applied;
 
-        // compute boost and rebuild "ench" = Sentient Codex + (base+boost) for every stored enchant
-        // Unified to level 1, but uses formula values of Grimoire II (multiplier 2)
-        int boost = computeBoost(p.experienceLevel, 2);
-        NBTTagList storage = tag.getTagList(EnchantmentSentientCodex.STORAGE_TAG, 10);
-        NBTTagList out = new NBTTagList();
-        // keep Sentient Codex itself
-        NBTTagCompound self = new NBTTagCompound();
-        self.setShort("id", (short) Enchantment.getEnchantmentID(EnchantmentSentientCodex.INSTANCE));
-        self.setShort("lvl", (short) gLvl);
-        out.appendTag(self);
-        for (int i = 0; i < storage.tagCount(); i++) {
-            NBTTagCompound en = storage.getCompoundTagAt(i);
+        int scId = Enchantment.getEnchantmentID(EnchantmentSentientCodex.INSTANCE);
+        NBTTagList ench = stack.getEnchantmentTagList(); // live "ench" list, edited in place
+        for (int i = 0; i < ench.tagCount(); i++) {
+            NBTTagCompound en = ench.getCompoundTagAt(i);
             int id = en.getShort("id");
-            int base = en.getShort("lvl");
-            Enchantment ench = Enchantment.getEnchantmentByID(id);
-            int lvl = (ench != null && isExcluded(ench)) ? base : base + boost;
-            NBTTagCompound o = new NBTTagCompound();
-            o.setShort("id", (short) id);
-            o.setShort("lvl", (short) lvl);
-            out.appendTag(o);
+            if (id == scId) {
+                continue; // never boost Sentient Codex itself
+            }
+            Enchantment ench2 = Enchantment.getEnchantmentByID(id);
+            if (ench2 == null || isExcluded(ench2)) {
+                continue;
+            }
+            int cap = ench2.getMaxLevel() + cfg.maxLevelsAboveCap;
+            int lvl = en.getShort("lvl");
+            if (lvl < cap) {
+                en.setShort("lvl", (short) Math.min(lvl + delta, cap));
+            }
         }
-        tag.setTag("ench", out);
-        tag.setInteger(EnchantmentSentientCodex.LAST_BOOST_TAG, boost);
+        tag.setInteger(EnchantmentSentientCodex.LAST_BOOST_TAG, target);
     }
 
-    private static int computeBoost(int playerLevel, int multiplier) {
-        double v = Math.log((ModConfig.sentientCodex.startLevel + playerLevel) * (double) multiplier)
-                * ModConfig.sentientCodex.levelScaling - ModConfig.sentientCodex.stepSkip;
+    private static int computeBoost(int playerLevel) {
+        SentientCodexCategory cfg = ModConfig.enchantments.sentientCodex;
+        // Progression Rate slows the climb by scaling the XP term (0.3 = ~70% slower). The log slope
+        // (levelScaling) is untouched, so the boost still reaches the per-enchant cap - just later.
+        double xpTerm = cfg.startLevel + playerLevel * cfg.progressionRate;
+        double v = Math.log(xpTerm * GRIMOIRE_MULTIPLIER) * cfg.levelScaling - cfg.stepSkip;
         int b = (int) Math.floor(v);
         return b < 0 ? 0 : b;
     }
@@ -132,7 +140,7 @@ public class SentientCodexHandler {
             return false;
         }
         String rn = ench.getRegistryName().toString();
-        for (String s : ModConfig.sentientCodex.excluded) {
+        for (String s : ModConfig.enchantments.sentientCodex.excluded) {
             if (s.equalsIgnoreCase(rn)) {
                 return true;
             }
@@ -144,7 +152,7 @@ public class SentientCodexHandler {
     // book onto a clean item) ---
     @SubscribeEvent
     public void onAnvil(AnvilUpdateEvent e) {
-        if (!ModConfig.sentientCodex.blockAnvil) {
+        if (!ModConfig.enchantments.sentientCodex.blockAnvil) {
             return;
         }
         if (EnchantmentSentientCodex.hasSentientCodex(e.getLeft())) {

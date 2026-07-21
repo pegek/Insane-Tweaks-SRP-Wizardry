@@ -27,7 +27,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Sentient Codex stacks, but defers to {@code GlobalPropertyTooltipHandler} when the item is
  * already a property holder to avoid a duplicate line.
  *
- * <p>Only active when {@code ModConfig.sentientCodex.conferAshenLegacy} is ON - the same flag that
+ * <p>Only active when {@code ModConfig.enchantments.sentientCodex.conferAshenLegacy} is ON - the same flag that
  * routes the drop through {@code EntityItemIndestructible}.
  */
 public class SentientCodexTooltipHandler {
@@ -35,7 +35,7 @@ public class SentientCodexTooltipHandler {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltip(ItemTooltipEvent event) {
-        if (!ModConfig.sentientCodex.conferAshenLegacy) {
+        if (!ModConfig.enchantments.sentientCodex.conferAshenLegacy) {
             return;
         }
         ItemStack stack = event.getItemStack();

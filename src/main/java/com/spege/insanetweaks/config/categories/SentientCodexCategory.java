@@ -12,10 +12,21 @@ import net.minecraftforge.common.config.Config;
  * {@code @Config.RequiresMcRestart} on that flag). The fields below are read live at
  * runtime by {@code SentientCodexHandler}/{@code EnchantmentSentientCodex}, so most need no restart.
  *
- * <p>Boost formula (1:1 with UE):
- * {@code boost = max(0, floor( ln((Start Level + xpLevel) * 2) * Level Scaling - Step Skip ))}.
+ * <p>Boost formula (UE base, with our progression-rate slowdown folded into the XP term):
+ * {@code boost = max(0, floor( ln((Start Level + xpLevel * Progression Rate) * 2) * Level Scaling - Step Skip ))}.
+ * The resulting boost is then applied per enchantment and clamped to
+ * {@code enchantment.getMaxLevel() + Max Levels Above Cap} (works for non-vanilla enchantments too).
  */
 public class SentientCodexCategory {
+
+    @Config.Comment({
+            "Master live toggle for the Sentient Codex growth EFFECT. When OFF the handler FREEZES: it",
+            "stops adding levels and owner-binding goes idle. Levels already granted stay baked in (no",
+            "base snapshot is kept to restore). The enchantment stays registered. Read live (no restart).",
+            "To fully remove/unregister the enchantment instead, use modules.enableSentientCodex (restart)."
+    })
+    @Config.Name("Enchant Enabled")
+    public boolean enabled = true;
 
     @Config.Comment({
             "Maximum enchantment level of Sentient Codex itself (UE ships max 5, unified to 1 here).",
@@ -25,6 +36,26 @@ public class SentientCodexCategory {
     @Config.RangeInt(min = 1, max = 10)
     @Config.RequiresMcRestart
     public int maxLevel = 1;
+
+    @Config.Comment({
+            "Slows how fast the boost climbs with the holder's XP by scaling the XP term inside the",
+            "formula. 1.0 = UE speed; 0.3 = ~70% slower (the same boost needs ~3.3x the XP level).",
+            "Does NOT touch the log slope, so the boost still reaches the cap - it just takes longer.",
+            "Read live (no restart)."
+    })
+    @Config.Name("Progression Rate")
+    @Config.RangeDouble(min = 0.01, max = 10.0)
+    public double progressionRate = 0.3;
+
+    @Config.Comment({
+            "How many levels ABOVE each enchantment's own max level the boost may push it. Vanilla",
+            "Sharpness caps at V, so with 2 the boosted ceiling is Sharpness VII. Applied per enchantment",
+            "using enchantment.getMaxLevel(), so non-vanilla enchantments are capped at their own max + this.",
+            "Read live (no restart)."
+    })
+    @Config.Name("Max Levels Above Cap")
+    @Config.RangeInt(min = 0, max = 10)
+    public int maxLevelsAboveCap = 2;
 
     @Config.Comment({
             "UE START_LEVEL constant in the boost formula. Higher = larger baseline inside the log,",

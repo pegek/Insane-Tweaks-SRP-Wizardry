@@ -26,11 +26,9 @@ import net.minecraft.util.text.translation.I18n;
  */
 public class EnchantmentSentientCodex extends Enchantment {
 
-    /** NBTTagList of the item's base (pre-boost) enchantments, captured once. */
-    public static final String STORAGE_TAG = "sentientcodex_storage";
     /** String UUID of the bound owner (owner-binding). */
     public static final String OWNER_TAG = "sentientcodex_owner";
-    /** int: the last boost value written to the live "ench" list. */
+    /** int: cumulative growth-step count already applied to the item's live "ench" levels. */
     public static final String LAST_BOOST_TAG = "sentientcodex_boost";
 
     public static EnchantmentSentientCodex INSTANCE;
@@ -50,7 +48,7 @@ public class EnchantmentSentientCodex extends Enchantment {
 
     @Override
     public int getMaxLevel() {
-        return ModConfig.sentientCodex.maxLevel;
+        return ModConfig.enchantments.sentientCodex.maxLevel;
     }
 
     @Override

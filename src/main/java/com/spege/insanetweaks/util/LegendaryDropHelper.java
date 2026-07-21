@@ -31,7 +31,7 @@ public final class LegendaryDropHelper {
         if (stack == null || stack.isEmpty()) return false;
         // Sentient Codex confers the Ashen Legacy property on ANY item (the enchant works on vanilla
         // gear that can't implement ITweaksPropertyHolder), so detect it by enchant presence.
-        if (ModConfig.sentientCodex.conferAshenLegacy && EnchantmentSentientCodex.hasSentientCodex(stack)) {
+        if (ModConfig.enchantments.sentientCodex.conferAshenLegacy && EnchantmentSentientCodex.hasSentientCodex(stack)) {
             return true;
         }
         Item item = stack.getItem();
