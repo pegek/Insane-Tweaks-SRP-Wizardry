@@ -63,6 +63,12 @@ public class SanctuaryCategory {
     @Config.RequiresMcRestart
     public boolean vetoBlockInfestation = true;
 
+    @Config.Comment({"Veto SRP parasite-node structure generation inside a sanctuary (mixin on",
+            "WorldGenParasiteNodeCore). Stops the node-vs-cleanse block-update storm at the source.",
+            "Read live (the mixin is always loaded; this only gates its effect)."})
+    @Config.Name("Veto Node Generation")
+    public boolean vetoNodeGeneration = true;
+
     @Config.Comment("Whether cleanse is ON by default on a freshly placed core. Read live.")
     @Config.Name("Cleanse Enabled By Default")
     public boolean cleanseEnabledByDefault = true;
