@@ -6,7 +6,7 @@ import java.util.List;
 import com.spege.insanetweaks.api.AdvPropertyRegistry;
 import com.spege.insanetweaks.api.ITweaksPropertyHolder;
 import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.enchant.EnchantmentGrimoire;
+import com.spege.insanetweaks.enchant.EnchantmentSentientCodex;
 import com.spege.insanetweaks.util.TooltipUtils;
 
 import net.minecraft.client.gui.GuiScreen;
@@ -19,30 +19,30 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
- * Renders the "Ashen Legacy" property line on Grimoire-enchanted items.
+ * Renders the "Ashen Legacy" property line on Sentient Codex-enchanted items.
  *
  * <p>The advanced-property tooltip system ({@code GlobalPropertyTooltipHandler}) only fires
- * for items whose class implements {@link ITweaksPropertyHolder}. Grimoire can sit on any
+ * for items whose class implements {@link ITweaksPropertyHolder}. Sentient Codex can sit on any
  * vanilla item, so this handler surfaces the same property line (matching visual style) for
- * Grimoire stacks, but defers to {@code GlobalPropertyTooltipHandler} when the item is
+ * Sentient Codex stacks, but defers to {@code GlobalPropertyTooltipHandler} when the item is
  * already a property holder to avoid a duplicate line.
  *
- * <p>Only active when {@code ModConfig.grimoire.conferAshenLegacy} is ON - the same flag that
+ * <p>Only active when {@code ModConfig.sentientCodex.conferAshenLegacy} is ON - the same flag that
  * routes the drop through {@code EntityItemIndestructible}.
  */
-public class GrimoireTooltipHandler {
+public class SentientCodexTooltipHandler {
 
     @SideOnly(Side.CLIENT)
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onItemTooltip(ItemTooltipEvent event) {
-        if (!ModConfig.grimoire.conferAshenLegacy) {
+        if (!ModConfig.sentientCodex.conferAshenLegacy) {
             return;
         }
         ItemStack stack = event.getItemStack();
         if (stack.isEmpty() || stack.getItem() instanceof ITweaksPropertyHolder) {
             return; // property holders are handled by GlobalPropertyTooltipHandler
         }
-        if (!EnchantmentGrimoire.hasGrimoire(stack)) {
+        if (!EnchantmentSentientCodex.hasSentientCodex(stack)) {
             return;
         }
 

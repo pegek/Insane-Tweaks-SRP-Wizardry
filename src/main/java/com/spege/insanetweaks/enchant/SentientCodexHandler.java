@@ -13,23 +13,23 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
- * Runtime behaviour of the {@link EnchantmentGrimoire} enchantment: per-tick boost
+ * Runtime behaviour of the {@link EnchantmentSentientCodex} enchantment: per-tick boost
  * recompute, owner-binding, and the anvil lock. Registered on the Forge event bus in
- * {@code InsaneTweaksMod#init} under {@code modules.enableGrimoire}.
+ * {@code InsaneTweaksMod#init} under {@code modules.enableSentientCodex}.
  *
- * <p>Drop protection (no burn / lingers far longer) is NOT handled here: a Grimoire item
+ * <p>Drop protection (no burn / lingers far longer) is NOT handled here: a Sentient Codex item
  * confers the "Ashen Legacy" property, so {@code LegendaryDropHelper.isLegendaryDropItem}
  * routes it through {@code EntityItemIndestructible} via the always-on
- * {@code IndestructibleDropHandler}. Gated by {@code ModConfig.grimoire.conferAshenLegacy}.
+ * {@code IndestructibleDropHandler}. Gated by {@code ModConfig.sentientCodex.conferAshenLegacy}.
  *
  * <p>Enchantment registration itself is NOT here (that is {@code ModEnchantments} on the
  * MOD bus) - this class is a plain Forge-bus handler instance.
  *
- * <p>Every config lookup goes through {@code ModConfig.grimoire.*} so the tunables are
+ * <p>Every config lookup goes through {@code ModConfig.sentientCodex.*} so the tunables are
  * live (no restart), matching the codebase config convention.
  */
 @SuppressWarnings("null")
-public class GrimoireHandler {
+public class SentientCodexHandler {
 
     // --- pseudo-tick: recompute boost + owner-binding (SERVER only) ---
     @SubscribeEvent
@@ -41,10 +41,10 @@ public class GrimoireHandler {
         if (p == null || p.world.isRemote) {
             return;
         }
-        if (EnchantmentGrimoire.INSTANCE == null) {
+        if (EnchantmentSentientCodex.INSTANCE == null) {
             return;
         }
-        if (p.ticksExisted % Math.max(1, ModConfig.grimoire.tickInterval) != 0) {
+        if (p.ticksExisted % Math.max(1, ModConfig.sentientCodex.tickInterval) != 0) {
             return;
         }
 
@@ -60,7 +60,7 @@ public class GrimoireHandler {
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        int gLvl = EnchantmentGrimoire.getGrimoireLevel(stack);
+        int gLvl = EnchantmentSentientCodex.getSentientCodexLevel(stack);
         if (gLvl <= 0) {
             return;
         }
@@ -70,21 +70,21 @@ public class GrimoireHandler {
         NBTTagCompound tag = stack.getTagCompound();
 
         // owner-binding
-        if (ModConfig.grimoire.ownerBinding) {
-            String owner = tag.getString(EnchantmentGrimoire.OWNER_TAG);
+        if (ModConfig.sentientCodex.ownerBinding) {
+            String owner = tag.getString(EnchantmentSentientCodex.OWNER_TAG);
             String me = p.getUniqueID().toString();
             if (owner.isEmpty()) {
-                tag.setString(EnchantmentGrimoire.OWNER_TAG, me);
+                tag.setString(EnchantmentSentientCodex.OWNER_TAG, me);
             } else if (!owner.equals(me)) {
-                p.attackEntityFrom(DamageSource.OUT_OF_WORLD, (float) ModConfig.grimoire.bindingDamage);
+                p.attackEntityFrom(DamageSource.OUT_OF_WORLD, (float) ModConfig.sentientCodex.bindingDamage);
             }
         }
 
-        // capture the base enchantments once (without Grimoire), into grimoire_storage
-        if (!tag.hasKey(EnchantmentGrimoire.STORAGE_TAG)) {
+        // capture the base enchantments once (without Sentient Codex), into sentientcodex_storage
+        if (!tag.hasKey(EnchantmentSentientCodex.STORAGE_TAG)) {
             NBTTagList live = stack.getEnchantmentTagList(); // reads "ench"
             NBTTagList storage = new NBTTagList();
-            int gid = Enchantment.getEnchantmentID(EnchantmentGrimoire.INSTANCE);
+            int gid = Enchantment.getEnchantmentID(EnchantmentSentientCodex.INSTANCE);
             for (int i = 0; i < live.tagCount(); i++) {
                 NBTTagCompound en = live.getCompoundTagAt(i);
                 if (en.getShort("id") == gid) {
@@ -92,16 +92,17 @@ public class GrimoireHandler {
                 }
                 storage.appendTag(en.copy());
             }
-            tag.setTag(EnchantmentGrimoire.STORAGE_TAG, storage);
+            tag.setTag(EnchantmentSentientCodex.STORAGE_TAG, storage);
         }
 
-        // compute boost and rebuild "ench" = Grimoire + (base+boost) for every stored enchant
-        int boost = computeBoost(p.experienceLevel, gLvl);
-        NBTTagList storage = tag.getTagList(EnchantmentGrimoire.STORAGE_TAG, 10);
+        // compute boost and rebuild "ench" = Sentient Codex + (base+boost) for every stored enchant
+        // Unified to level 1, but uses formula values of Grimoire II (multiplier 2)
+        int boost = computeBoost(p.experienceLevel, 2);
+        NBTTagList storage = tag.getTagList(EnchantmentSentientCodex.STORAGE_TAG, 10);
         NBTTagList out = new NBTTagList();
-        // keep Grimoire itself
+        // keep Sentient Codex itself
         NBTTagCompound self = new NBTTagCompound();
-        self.setShort("id", (short) Enchantment.getEnchantmentID(EnchantmentGrimoire.INSTANCE));
+        self.setShort("id", (short) Enchantment.getEnchantmentID(EnchantmentSentientCodex.INSTANCE));
         self.setShort("lvl", (short) gLvl);
         out.appendTag(self);
         for (int i = 0; i < storage.tagCount(); i++) {
@@ -116,12 +117,12 @@ public class GrimoireHandler {
             out.appendTag(o);
         }
         tag.setTag("ench", out);
-        tag.setInteger(EnchantmentGrimoire.LAST_BOOST_TAG, boost);
+        tag.setInteger(EnchantmentSentientCodex.LAST_BOOST_TAG, boost);
     }
 
-    private static int computeBoost(int playerLevel, int gLvl) {
-        double v = Math.log((ModConfig.grimoire.startLevel + playerLevel) * (double) gLvl)
-                * ModConfig.grimoire.levelScaling - ModConfig.grimoire.stepSkip;
+    private static int computeBoost(int playerLevel, int multiplier) {
+        double v = Math.log((ModConfig.sentientCodex.startLevel + playerLevel) * (double) multiplier)
+                * ModConfig.sentientCodex.levelScaling - ModConfig.sentientCodex.stepSkip;
         int b = (int) Math.floor(v);
         return b < 0 ? 0 : b;
     }
@@ -131,7 +132,7 @@ public class GrimoireHandler {
             return false;
         }
         String rn = ench.getRegistryName().toString();
-        for (String s : ModConfig.grimoire.excluded) {
+        for (String s : ModConfig.sentientCodex.excluded) {
             if (s.equalsIgnoreCase(rn)) {
                 return true;
             }
@@ -139,16 +140,16 @@ public class GrimoireHandler {
         return false;
     }
 
-    // --- anvil block: don't modify an already-Grimoire'd item (but DO allow applying the
+    // --- anvil block: don't modify an already-SentientCodex'd item (but DO allow applying the
     // book onto a clean item) ---
     @SubscribeEvent
     public void onAnvil(AnvilUpdateEvent e) {
-        if (!ModConfig.grimoire.blockAnvil) {
+        if (!ModConfig.sentientCodex.blockAnvil) {
             return;
         }
-        if (EnchantmentGrimoire.hasGrimoire(e.getLeft())) {
-            e.setCanceled(true); // left = target; already Grimoire'd -> locked
+        if (EnchantmentSentientCodex.hasSentientCodex(e.getLeft())) {
+            e.setCanceled(true); // left = target; already SentientCodex'd -> locked
         }
-        // right = Grimoire book onto a clean left -> allowed (creates a locked item)
+        // right = Sentient Codex book onto a clean left -> allowed (creates a locked item)
     }
 }

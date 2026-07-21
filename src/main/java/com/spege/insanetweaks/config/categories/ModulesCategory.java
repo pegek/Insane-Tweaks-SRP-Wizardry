@@ -32,13 +32,13 @@ public class ModulesCategory {
     public boolean enableBaubleFruits = true;
 
     @Config.Comment({
-            "Registers the Grimoire enchantment (native port of UniqueEnchantments' Grimoire) and its",
+            "Registers the Sentient Codex enchantment (native port of UniqueEnchantments' Grimoire) and its",
             "runtime handler. VERY_RARE, reward-only: it dynamically raises the level of every other",
             "enchantment on the item as the holder's XP level grows, with owner-binding and drop/anvil",
-            "protection. Tunables live in the 'grimoire' category. Disable to remove it entirely." })
-    @Config.Name("Enable Grimoire Enchantment")
+            "protection. Tunables live in the 'sentientcodex' category. Disable to remove it entirely." })
+    @Config.Name("Enable Sentient Codex Enchantment")
     @Config.RequiresMcRestart
-    public boolean enableGrimoire = true;
+    public boolean enableSentientCodex = true;
 
     @Config.Comment({
             "Enables the Sanctuary Dome: a pyramid-based core block that blocks SRParasites spawning",

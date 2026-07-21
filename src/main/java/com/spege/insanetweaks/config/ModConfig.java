@@ -3,9 +3,10 @@ package com.spege.insanetweaks.config;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
-import com.spege.insanetweaks.config.categories.GrimoireCategory;
+import com.spege.insanetweaks.config.categories.SentientCodexCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
+import com.spege.insanetweaks.config.categories.OtgCompatCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
 import com.spege.insanetweaks.config.categories.SrpCompatCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
@@ -72,10 +73,15 @@ public class ModConfig {
     @Config.Comment("Sanctuary Dome tunables (radius tiers, fuel, cleanse, dimension blacklist). Master toggle is modules.enableSanctuary.")
     public static final SanctuaryCategory sanctuary = new SanctuaryCategory();
 
-    @Config.Name("grimoire")
-    @Config.LangKey("config.insanetweaks.category.grimoire")
-    @Config.Comment("Tunables for the Grimoire enchantment (boost formula, owner-binding, drop/anvil protection). Master toggle is modules.enableGrimoire.")
-    public static final GrimoireCategory grimoire = new GrimoireCategory();
+    @Config.Name("sentientcodex")
+    @Config.LangKey("config.insanetweaks.category.sentientcodex")
+    @Config.Comment("Tunables for the Sentient Codex enchantment (boost formula, owner-binding, drop/anvil protection). Master toggle is modules.enableSentientCodex.")
+    public static final SentientCodexCategory sentientCodex = new SentientCodexCategory();
+
+    @Config.Name("otgCompat")
+    @Config.LangKey("config.insanetweaks.category.otgCompat")
+    @Config.Comment("Compatibility fixes for Open Terrain Generator (OTG).")
+    public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
 
     @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
     private static class EventHandler {

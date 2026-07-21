@@ -4,7 +4,7 @@ import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import com.spege.insanetweaks.api.AdvPropertyRegistry;
 import com.spege.insanetweaks.api.ITweaksPropertyHolder;
 import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.enchant.EnchantmentGrimoire;
+import com.spege.insanetweaks.enchant.EnchantmentSentientCodex;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
@@ -29,9 +29,9 @@ public final class LegendaryDropHelper {
 
     public static boolean isLegendaryDropItem(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
-        // Grimoire confers the Ashen Legacy property on ANY item (the enchant works on vanilla
+        // Sentient Codex confers the Ashen Legacy property on ANY item (the enchant works on vanilla
         // gear that can't implement ITweaksPropertyHolder), so detect it by enchant presence.
-        if (ModConfig.grimoire.conferAshenLegacy && EnchantmentGrimoire.hasGrimoire(stack)) {
+        if (ModConfig.sentientCodex.conferAshenLegacy && EnchantmentSentientCodex.hasSentientCodex(stack)) {
             return true;
         }
         Item item = stack.getItem();
