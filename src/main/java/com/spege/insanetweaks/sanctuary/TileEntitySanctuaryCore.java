@@ -26,6 +26,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private int fuelStored;      // remaining cleanse-conversions from consumed fuel items
     private boolean initialized; // first-tick default for cleanseEnabled
     private int statusCode = SanctuaryStatus.NO_PYRAMID.ordinal(); // SanctuaryStatus ordinal
+    private int progress;       // 0..6 consumed lure offerings; permanent. Tier derived from this.
+    private int ritualTicks;    // transient: >0 while channeling a completed lure ring
 
     // last display snapshot pushed to clients (server-side), for change detection
     private int sentTier = -1, sentRadius = -1, sentStatus = -1;
@@ -33,6 +35,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
 
     public ItemStackHandler getInventory() { return inventory; }
     public int getTier() { return tier; }
+    public int getProgress() { return progress; }
     public int getEffectiveRadius() { return effectiveRadius; }
     public boolean isCleanseEnabled() { return cleanseEnabled; }
     public boolean isCleanseStalled() { return cleanseStalled; }
@@ -303,6 +306,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         super.readFromNBT(c);
         inventory.deserializeNBT(c.getCompoundTag("inv"));
         tier = c.getInteger("tier");
+        progress = c.getInteger("progress"); // 0 default: pre-ritual worlds reset to tier 0, rebuild via ritual
         effectiveRadius = c.getInteger("radius");
         cleanseEnabled = c.getBoolean("cleanse");
         cleanseStalled = c.getBoolean("stalled");
@@ -316,6 +320,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         super.writeToNBT(c);
         c.setTag("inv", inventory.serializeNBT());
         c.setInteger("tier", tier);
+        c.setInteger("progress", progress);
         c.setInteger("radius", effectiveRadius);
         c.setBoolean("cleanse", cleanseEnabled);
         c.setBoolean("stalled", cleanseStalled);
