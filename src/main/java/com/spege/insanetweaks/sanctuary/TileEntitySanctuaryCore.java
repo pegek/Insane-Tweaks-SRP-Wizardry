@@ -246,7 +246,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     @Override
     public void update() {
         if (world == null) { return; }
-        if (world.isRemote) { return; } // dome is drawn by RenderSanctuaryDome (TESR), no client tick work
+        if (world.isRemote) { clientPulseTick(); return; } // dome = TESR; locator ping = clientPulseTick
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) { return; }
         if (com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isDimensionBlacklisted(world)) {
             if (getTier() != 0 || statusCode != SanctuaryStatus.DIM_BLACKLISTED.ordinal()) {
@@ -391,6 +391,28 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     @Override
     public double getMaxRenderDistanceSquared() {
         return 65536.0D; // 256 blocks; per-frame distance cull in RenderSanctuaryDome does the fine gating
+    }
+
+    /** Ticks between locator pings, and the ticks each ping expands over. */
+    private static final int PULSE_INTERVAL = 30;
+    private static final int PULSE_LIFETIME = 18;
+
+    /**
+     * Client-side: a small pulsing EBW SPHERE that expands from the block to {@code pulseRadius} and
+     * fades, repeated every {@link #PULSE_INTERVAL} ticks while the sanctuary is ACTIVE - a locator
+     * "ping" for the block itself (deliberately a few blocks, NOT the full dome). EBW is a hard
+     * dependency, so ParticleBuilder is always available. Only ever called from the isRemote branch.
+     */
+    private void clientPulseTick() {
+        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.pulseLocator) { return; }
+        if (getStatus() != SanctuaryStatus.ACTIVE) { return; }
+        if (world.getTotalWorldTime() % PULSE_INTERVAL != 0L) { return; }
+        electroblob.wizardry.util.ParticleBuilder.create(electroblob.wizardry.util.ParticleBuilder.Type.SPHERE)
+                .pos(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D)
+                .scale((float) com.spege.insanetweaks.config.ModConfig.sanctuary.pulseRadius)
+                .clr(0.60F, 0.82F, 0.90F)
+                .time(PULSE_LIFETIME)
+                .spawn(world);
     }
 
     @Override

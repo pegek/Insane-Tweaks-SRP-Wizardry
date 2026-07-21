@@ -71,6 +71,17 @@ public class SanctuaryCategory {
     @Config.Name("Render Dome")
     public boolean renderDome = true;
 
+    @Config.Comment({"Client: emit a small pulsing 'ping' sphere at ACTIVE sanctuaries so the block is easy",
+            "to locate (separate from the full dome). Read live."})
+    @Config.Name("Pulse Locator")
+    public boolean pulseLocator = true;
+
+    @Config.Comment({"Radius (blocks) the locator ping expands to each pulse. A few blocks - it marks the",
+            "block, not the whole dome. Read live."})
+    @Config.Name("Pulse Radius")
+    @Config.RangeDouble(min = 1.0D, max = 16.0D)
+    public double pulseRadius = 3.5D;
+
     @Config.Comment({"Log per-core sanctuary state to the game log on tier/status change.",
             "For debugging whether a pyramid is detected. Read live (no restart)."})
     @Config.Name("Debug Logging")
