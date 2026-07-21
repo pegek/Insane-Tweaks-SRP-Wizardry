@@ -37,7 +37,14 @@ public class MixinWorldGenParasiteNodeCore {
         if (!ModConfig.sanctuary.vetoNodeGeneration) {
             return;
         }
-        if (SanctuaryRegionHelper.isProtected(world, pos)) {
+        boolean protectedHere = SanctuaryRegionHelper.isProtected(world, pos);
+        if (ModConfig.sanctuary.debugLogging && pos != null && world != null && !world.isRemote) {
+            com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] node-gen @ (" + pos.getX() + "," + pos.getY() + "," + pos.getZ()
+                    + ") dim" + world.provider.getDimension() + " inside=" + protectedHere
+                    + (protectedHere ? " -> VETOED" : " -> allowed"));
+        }
+        if (protectedHere) {
             cir.setReturnValue(Boolean.FALSE);
         }
     }
