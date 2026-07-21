@@ -104,10 +104,26 @@ public class TweaksCategory {
     @Config.RangeInt(min = 0)
     public int saplingMinParasites = 2;
 
-    @Config.Comment({"Corrupted Sapling max health."})
-    @Config.Name("Sapling Max HP")
+    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 1-3 (also the phase-0",
+            "fallback, though planting is blocked at phase 0). Read live; re-evaluated every 20t."})
+    @Config.Name("Sapling HP Phase 1-3")
     @Config.RangeInt(min = 1)
-    public int saplingMaxHp = 40;
+    public int saplingHpPhase1 = 50;
+
+    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 4-5."})
+    @Config.Name("Sapling HP Phase 4-5")
+    @Config.RangeInt(min = 1)
+    public int saplingHpPhase4 = 80;
+
+    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 6-8."})
+    @Config.Name("Sapling HP Phase 6-8")
+    @Config.RangeInt(min = 1)
+    public int saplingHpPhase6 = 100;
+
+    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 9-10."})
+    @Config.Name("Sapling HP Phase 9-10")
+    @Config.RangeInt(min = 1)
+    public int saplingHpPhase9 = 140;
 
     @Config.Comment({"Delay in ticks between eating a Corrupted Fruit and the unavoidable death",
             "(default 120 = 6 s)."})
