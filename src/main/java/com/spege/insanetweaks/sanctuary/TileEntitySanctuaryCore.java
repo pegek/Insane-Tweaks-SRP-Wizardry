@@ -52,39 +52,15 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     boolean isInitialized() { return initialized; }
     void markInitialized() { this.initialized = true; }
 
-    private int pyramidTickCounter;
+    private int revalidateTickCounter;
 
-    private boolean isPyramidBlock(net.minecraft.block.state.IBlockState state) {
-        net.minecraft.util.ResourceLocation rn = state.getBlock().getRegistryName();
-        if (rn == null) { return false; }
-        String s = rn.toString();
-        for (String allowed : com.spege.insanetweaks.config.ModConfig.sanctuary.pyramidBlocks) {
-            if (allowed.equalsIgnoreCase(s)) { return true; }
-        }
-        return false;
-    }
-
-    /** Beacon-style: count complete pyramid layers directly below the core. Returns 0..4.
-     *  Layer L is the (2L+1)x(2L+1) square of blocks at y = coreY - L. Layers must be
-     *  contiguous from the top: the first incomplete layer stops the count. */
-    private int scanPyramidTier() {
-        int tiers = 0;
-        for (int layer = 1; layer <= 4; layer++) {
-            int y = pos.getY() - layer;
-            boolean complete = true;
-            for (int dx = -layer; dx <= layer && complete; dx++) {
-                for (int dz = -layer; dz <= layer; dz++) {
-                    net.minecraft.util.math.BlockPos p =
-                            new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
-                    if (!isPyramidBlock(world.getBlockState(p))) {
-                        complete = false;
-                        break;
-                    }
-                }
-            }
-            if (complete) { tiers = layer; } else { break; }
-        }
-        return tiers;
+    /** Progress (0..6 consumed offerings) -> tier. T1 at 2 offerings, T2 at 4, T3 at 5, T4 at 6. */
+    private static int tierFromProgress(int p) {
+        if (p >= 6) { return 4; }
+        if (p >= 5) { return 3; }
+        if (p >= 4) { return 2; }
+        if (p >= 2) { return 1; }
+        return 0;
     }
 
     private int countUpgradeRadiusItems() {
@@ -96,7 +72,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     }
 
     private void revalidateAndSync() {
-        int newTier = scanPyramidTier();
+        int newTier = tierFromProgress(progress);
         int radius = 0;
         if (newTier >= 1) {
             int[] radii = com.spege.insanetweaks.config.ModConfig.sanctuary.tierRadii;
@@ -171,9 +147,10 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         if (!isInitialized()) {
             setCleanseEnabled(com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseEnabledByDefault);
             markInitialized();
+            revalidateAndSync(); // establish tier/radius/region from stored progress on load
         }
-        if (++pyramidTickCounter >= com.spege.insanetweaks.config.ModConfig.sanctuary.pyramidRevalidateInterval) {
-            pyramidTickCounter = 0;
+        if (++revalidateTickCounter >= com.spege.insanetweaks.config.ModConfig.sanctuary.revalidateInterval) {
+            revalidateTickCounter = 0;
             revalidateAndSync();
             logParasitesInZoneDebug();
         }
