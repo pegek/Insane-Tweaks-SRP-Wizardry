@@ -78,6 +78,9 @@ public class InsaneTweaksMod implements IGuiHandler {
     /** GUI ID for the Sanctuary Core screen. */
     public static final int GUI_ID_SANCTUARY = 3;
 
+    /** GUI ID for the Creative Sanctuary radius slider. */
+    public static final int GUI_ID_CREATIVE_SANCTUARY = 4;
+
     @Mod.Instance
     public static InsaneTweaksMod INSTANCE;
 
@@ -638,6 +641,13 @@ public class InsaneTweaksMod implements IGuiHandler {
                         player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te);
             }
         }
+        if (id == GUI_ID_CREATIVE_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.ContainerCreativeSanctuary(
+                        (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te);
+            }
+        }
         return null;
     }
 
@@ -674,6 +684,14 @@ public class InsaneTweaksMod implements IGuiHandler {
                 return new com.spege.insanetweaks.sanctuary.gui.GuiSanctuaryCore(
                         new com.spege.insanetweaks.sanctuary.gui.ContainerSanctuaryCore(
                                 player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te));
+            }
+        }
+        if (id == GUI_ID_CREATIVE_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.GuiCreativeSanctuary(
+                        new com.spege.insanetweaks.sanctuary.gui.ContainerCreativeSanctuary(
+                                (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te));
             }
         }
         return null;
