@@ -10,11 +10,6 @@ public class SanctuaryCategory {
     @Config.Name("Tier Radii")
     public int[] tierRadii = new int[] { 16, 32, 48, 64 };
 
-    @Config.Comment({"Blocks allowed in the pyramid layers, by registry name (e.g. minecraft:iron_block).",
-            "A layer counts only if fully built from these. Read live."})
-    @Config.Name("Pyramid Blocks")
-    public String[] pyramidBlocks = new String[] { "minecraft:iron_block", "minecraft:diamond_block" };
-
     @Config.Comment({"Fuel items for the cleanse function, one per line as 'registry=value'.",
             "'value' = how many cleanse-conversions one item powers. Read live. Malformed lines ignored."})
     @Config.Name("Fuel Items")
@@ -32,10 +27,21 @@ public class SanctuaryCategory {
     @Config.RangeInt(min = 64, max = 65536)
     public int cleanseScanPerTick = 4096;
 
-    @Config.Comment("Ticks between pyramid re-validations in the core TE. Read live.")
-    @Config.Name("Pyramid Revalidate Interval")
+    @Config.Comment("Ticks between Nexus tier/radius/region re-validations in the core TE. Read live.")
+    @Config.Name("Revalidate Interval")
     @Config.RangeInt(min = 20, max = 1200)
-    public int pyramidRevalidateInterval = 40;
+    public int revalidateInterval = 40;
+
+    @Config.Comment({"Registry name of the block the Nexus ritual consumes (SRP evolution lure).",
+            "Read live."})
+    @Config.Name("Lure Block Id")
+    public String lureBlockId = "srparasites:evolutionlure";
+
+    @Config.Comment({"Ticks the Nexus channels a completed lure ring before consuming it (40 = 2s).",
+            "Read live."})
+    @Config.Name("Ritual Duration Ticks")
+    @Config.RangeInt(min = 1, max = 400)
+    public int ritualDurationTicks = 40;
 
     @Config.Comment("Extra radius (blocks) granted per radius-upgrade item in the core. Read live.")
     @Config.Name("Upgrade Radius Bonus")
