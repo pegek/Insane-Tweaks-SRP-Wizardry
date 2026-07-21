@@ -32,6 +32,17 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private java.util.UUID ownerId;   // player who placed this ritual Nexus (null for creative / unowned)
     private String ownerName = "";    // cached owner name for the GUI nameplate
 
+    // "Cost of Power" (see SanctuaryCostCategory): fuel upkeep + empty-tank drain escalation.
+    private boolean unfueled;   // true once an upkeep charge went unpaid; drives Layer B/C drain
+    private boolean sentStarving; // owner-warning latch for the unfueled transition
+    private int upkeepCounter;   // ticks toward the next upkeep charge
+    private int drainCounter;    // ticks toward the next drain pulse
+    private boolean registered;  // whether this TE is currently in SanctuaryRegistry
+
+    /** Life-essence tithe drained from the owner when no wand mana is available inside. */
+    public static final net.minecraft.util.DamageSource SANCTUARY_TITHE =
+            new net.minecraft.util.DamageSource("sanctuary_tithe").setDamageBypassesArmor().setMagicDamage();
+
     // last display snapshot pushed to clients (server-side), for change detection
     private int sentTier = -1, sentRadius = -1, sentStatus = -1;
     private boolean sentCleanse, sentStalled, snapshotInit;
@@ -94,12 +105,53 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         return 0;
     }
 
-    private int countUpgradeRadiusItems() {
-        int n = 0;
-        for (int slot = 1; slot <= UPGRADE_SLOTS; slot++) {
-            if (!getInventory().getStackInSlot(slot).isEmpty()) { n++; }
-        }
-        return n;
+    // --- Upgrade slots: each of the 4 slots is bound to one specific item (see SanctuaryCostCategory). ---
+    // Slot 1 = U1 (efficiency), 2 = U2 (owner HP relief), 3 = U3 (+radius), 4 = U4 (ascension).
+
+    private boolean slotHas(int slot, String regName, int meta, int count) {
+        net.minecraft.item.ItemStack s = inventory.getStackInSlot(slot);
+        if (s.isEmpty() || s.getCount() < count) { return false; }
+        net.minecraft.util.ResourceLocation rn = s.getItem().getRegistryName();
+        if (rn == null || regName == null || !rn.toString().equals(regName)) { return false; }
+        if (meta >= 0 && s.getMetadata() != meta) { return false; }
+        return true;
+    }
+
+    public boolean u1Active() {
+        return slotHas(1, com.spege.insanetweaks.config.ModConfig.sanctuaryCost.upgradeItemU1, -1, 1);
+    }
+    public boolean u2Active() {
+        com.spege.insanetweaks.config.categories.SanctuaryCostCategory c =
+                com.spege.insanetweaks.config.ModConfig.sanctuaryCost;
+        return slotHas(2, c.upgradeItemU2, c.u2Meta, c.u2Count);
+    }
+    public boolean u3Active() {
+        return slotHas(3, com.spege.insanetweaks.config.ModConfig.sanctuaryCost.upgradeItemU3, -1, 1);
+    }
+    /** Ascension: the U4 item AND all three lower upgrades present. */
+    public boolean u4Active() {
+        return slotHas(4, com.spege.insanetweaks.config.ModConfig.sanctuaryCost.upgradeItemU4, -1, 1)
+                && u1Active() && u2Active() && u3Active();
+    }
+
+    /** True when this Sanctuary imposes no presence tax (creative, U4 ascension, or cost disabled). */
+    public boolean penaltiesSuppressed() {
+        return creativeRadius > 0
+                || !com.spege.insanetweaks.config.ModConfig.sanctuaryCost.enableCost
+                || u4Active();
+    }
+
+    public boolean isOwner(net.minecraft.entity.player.EntityPlayer player) {
+        return ownerId != null && player != null && ownerId.equals(player.getUniqueID());
+    }
+
+    /** Radius bonus (blocks) from the +radius upgrades: U3 and U4 each grant Upgrade Radius Bonus. */
+    private int upgradeRadiusBonus() {
+        int bonus = com.spege.insanetweaks.config.ModConfig.sanctuary.upgradeRadiusBonus;
+        int total = 0;
+        if (u3Active()) { total += bonus; }
+        if (u4Active()) { total += bonus; }
+        return total;
     }
 
     private void revalidateAndSync() {
@@ -119,7 +171,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 radius = 0;
             } else {
                 int base = radii[Math.min(newTier, radii.length) - 1];
-                radius = base + countUpgradeRadiusItems() * com.spege.insanetweaks.config.ModConfig.sanctuary.upgradeRadiusBonus;
+                radius = base + upgradeRadiusBonus();
                 radius = Math.min(radius, 256);
             }
         }
@@ -258,6 +310,27 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 SanctuaryOwnerData.get(world).remove(ownerId, world.provider.getDimension(), pos);
             }
         }
+        deregister();
+    }
+
+    /** Drop out of the loaded-active index (removal, chunk unload, or TE invalidation). */
+    private void deregister() {
+        if (registered) {
+            com.spege.insanetweaks.sanctuary.SanctuaryRegistry.unregister(this);
+            registered = false;
+        }
+    }
+
+    @Override
+    public void invalidate() {
+        deregister();
+        super.invalidate();
+    }
+
+    @Override
+    public void onChunkUnload() {
+        deregister();
+        super.onChunkUnload();
     }
 
     @Override
@@ -289,6 +362,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             revalidateAndSync();
             logParasitesInZoneDebug();
         }
+        syncRegistry();
+        tickCost();
         runCleanse();
         syncDisplayIfChanged();
     }
@@ -362,6 +437,118 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         return 0;
     }
 
+    /** Keep this TE's membership in the loaded-active index in sync with its tier. */
+    private void syncRegistry() {
+        boolean shouldBe = tier >= 1;
+        if (shouldBe && !registered) {
+            com.spege.insanetweaks.sanctuary.SanctuaryRegistry.register(this);
+            registered = true;
+        } else if (!shouldBe && registered) {
+            com.spege.insanetweaks.sanctuary.SanctuaryRegistry.unregister(this);
+            registered = false;
+        }
+    }
+
+    /**
+     * The "Cost of Power" tick: burn mana-fuel for upkeep, and once the tank runs dry, escalate to
+     * draining wand mana from casters inside (Layer B) and, if none is available, the owner's HP
+     * (Layer C). A fully-ascended (U4) Sanctuary pays nothing. Server-side only.
+     */
+    private void tickCost() {
+        com.spege.insanetweaks.config.categories.SanctuaryCostCategory c =
+                com.spege.insanetweaks.config.ModConfig.sanctuaryCost;
+        if (!c.enableCost || tier < 1) { unfueled = false; sentStarving = false; return; }
+        if (creativeRadius > 0) { unfueled = false; sentStarving = false; return; } // creative: always free
+        if (u4Active()) { unfueled = false; sentStarving = false; return; } // ascended: free forever
+
+        // Upkeep: spend fuel every interval (U1 doubles the interval -> half the burn rate).
+        int interval = u1Active() ? c.upkeepIntervalTicks * 2 : c.upkeepIntervalTicks;
+        if (++upkeepCounter >= interval) {
+            upkeepCounter = 0;
+            boolean paid = true;
+            for (int i = 0; i < c.upkeepCost; i++) {
+                if (!consumeFuelUnit()) { paid = false; break; }
+            }
+            unfueled = !paid;
+        }
+
+        if (unfueled) {
+            if (!sentStarving) { warnOwner("msg.insanetweaks.sanctuary.starving"); sentStarving = true; }
+            if (++drainCounter >= c.drainIntervalTicks) {
+                drainCounter = 0;
+                drainPulse(c);
+            }
+        } else {
+            sentStarving = false;
+        }
+    }
+
+    /** One drain pulse: mana from every wand-carrying player inside, else the owner's HP. */
+    private void drainPulse(com.spege.insanetweaks.config.categories.SanctuaryCostCategory c) {
+        double mult = u1Active() ? 0.5D : 1.0D;
+        int manaPer = (int) Math.round(c.manaDrainAmount * mult);
+        long drained = 0;
+        double r = effectiveRadius;
+        double rr = r * r;
+        for (int i = 0; i < world.playerEntities.size(); i++) {
+            net.minecraft.entity.player.EntityPlayer p = world.playerEntities.get(i);
+            double dx = p.posX - (pos.getX() + 0.5D);
+            double dz = p.posZ - (pos.getZ() + 0.5D);
+            if (dx * dx + dz * dz > rr) { continue; }
+            drained += drainWandMana(p, manaPer);
+        }
+        if (drained <= 0L) { // no wand mana anywhere inside -> tithe the owner's life essence
+            net.minecraft.entity.player.EntityPlayer owner = resolveOwner();
+            if (owner != null) {
+                float dmg = (float) (c.ownerHpDrain * mult);
+                if (dmg > 0.0F) { owner.attackEntityFrom(SANCTUARY_TITHE, dmg); }
+            }
+        }
+    }
+
+    /** Drain up to {@code amount} mana from the player's EBW wands (main inventory + offhand). */
+    private static int drainWandMana(net.minecraft.entity.player.EntityPlayer p, int amount) {
+        if (amount <= 0) { return 0; }
+        int remaining = amount;
+        int total = 0;
+        total += drainFromList(p.inventory.mainInventory, remaining - total, p);
+        total += drainFromList(p.inventory.offHandInventory, amount - total, p);
+        return total;
+    }
+
+    private static int drainFromList(java.util.List<net.minecraft.item.ItemStack> stacks, int budget,
+            net.minecraft.entity.EntityLivingBase wielder) {
+        if (budget <= 0) { return 0; }
+        int drained = 0;
+        for (int i = 0; i < stacks.size() && drained < budget; i++) {
+            net.minecraft.item.ItemStack s = stacks.get(i);
+            if (s.isEmpty() || !(s.getItem() instanceof electroblob.wizardry.item.IManaStoringItem)) { continue; }
+            electroblob.wizardry.item.IManaStoringItem wand = (electroblob.wizardry.item.IManaStoringItem) s.getItem();
+            int mana = wand.getMana(s);
+            if (mana <= 0) { continue; }
+            int take = Math.min(mana, budget - drained);
+            wand.consumeMana(s, take, wielder);
+            drained += take;
+        }
+        return drained;
+    }
+
+    /** The owning player if online (any dimension), else null. */
+    private net.minecraft.entity.player.EntityPlayer resolveOwner() {
+        if (ownerId == null) { return null; }
+        net.minecraft.server.MinecraftServer server = world.getMinecraftServer();
+        if (server == null) { return null; }
+        return server.getPlayerList().getPlayerByUUID(ownerId);
+    }
+
+    /** Send a chat line to the online owner (used for the starving warning). */
+    private void warnOwner(String key) {
+        net.minecraft.entity.player.EntityPlayer owner = resolveOwner();
+        if (owner != null) {
+            owner.sendMessage(new net.minecraft.util.text.TextComponentTranslation(key));
+        }
+    }
+
     private void runCleanse() {
         if (!cleanseEnabled || tier < 1 || effectiveRadius <= 0) { cleanseStalled = false; return; }
         int r = effectiveRadius;
@@ -383,10 +570,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             net.minecraft.util.math.BlockPos p = new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
             if (!world.isBlockLoaded(p)) { continue; }
             if (!isInfestedQuick(p)) { continue; }
-            // cleanseStalled is latched: it stays set until fuel is next consumed, so the status
-            // line and transition messages don't flicker on ticks whose scan misses infested blocks.
-            if (!consumeFuelUnit()) { cleanseStalled = true; return; }
-            cleanseStalled = false;
+            // Cleanse is no longer fuel-gated (fuel now powers the Sanctuary's upkeep, not cleanse).
+            // It runs freely while the Sanctuary is active; the mana tank is spent by tickCost().
             net.minecraft.util.ResourceLocation cleansedId = world.getBlockState(p).getBlock().getRegistryName();
             if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) {
                 converted++;

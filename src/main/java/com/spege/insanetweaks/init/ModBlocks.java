@@ -23,9 +23,18 @@ public class ModBlocks {
 
     public static BlockSanctuaryCore SANCTUARY_CORE;
     public static com.spege.insanetweaks.sanctuary.BlockCreativeSanctuary CREATIVE_SANCTUARY;
+    public static com.spege.insanetweaks.dormant.BlockDormantWaystone DORMANT_WAYSTONE;
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        // Dormant waystone: registered unconditionally (core Dormant Eye feature, no SRP/module gate).
+        DORMANT_WAYSTONE = (com.spege.insanetweaks.dormant.BlockDormantWaystone)
+                new com.spege.insanetweaks.dormant.BlockDormantWaystone()
+                        .setUnlocalizedName(InsaneTweaksMod.MODID + ".dormant_waystone")
+                        .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "dormant_waystone"));
+        DORMANT_WAYSTONE.setCreativeTab(CreativeTabs.MISC);
+        event.getRegistry().register(DORMANT_WAYSTONE);
+
         if (!ModConfig.modules.enableSanctuary
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
@@ -50,6 +59,12 @@ public class ModBlocks {
 
     @SubscribeEvent
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
+        if (DORMANT_WAYSTONE != null) {
+            ItemBlock dib = new ItemBlock(DORMANT_WAYSTONE);
+            dib.setRegistryName(DORMANT_WAYSTONE.getRegistryName());
+            event.getRegistry().register(dib);
+        }
+
         if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
@@ -68,6 +83,12 @@ public class ModBlocks {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
+        if (DORMANT_WAYSTONE != null) {
+            Item ditem = Item.getItemFromBlock(DORMANT_WAYSTONE);
+            ModelLoader.setCustomModelResourceLocation(ditem, 0,
+                    new ModelResourceLocation(DORMANT_WAYSTONE.getRegistryName(), "inventory"));
+        }
+
         if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;

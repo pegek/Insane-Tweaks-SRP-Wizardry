@@ -8,11 +8,13 @@ import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.OtgCompatCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
+import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.SrpCompatCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
+import com.spege.insanetweaks.config.categories.WorldgenCategory;
 
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -73,6 +75,11 @@ public class ModConfig {
     @Config.Comment("Sanctuary Dome tunables (radius tiers, fuel, cleanse, dimension blacklist). Master toggle is modules.enableSanctuary.")
     public static final SanctuaryCategory sanctuary = new SanctuaryCategory();
 
+    @Config.Name("sanctuaryCost")
+    @Config.LangKey("config.insanetweaks.category.sanctuaryCost")
+    @Config.Comment("Sanctuary 'Cost of Power': presence tax, mana-fuel upkeep, drain escalation, upgrade slots.")
+    public static final SanctuaryCostCategory sanctuaryCost = new SanctuaryCostCategory();
+
     @Config.Name("enchantments")
     @Config.LangKey("config.insanetweaks.category.enchantments")
     @Config.Comment("Tunables for the mod's custom enchantments (currently Sentient Codex).")
@@ -82,6 +89,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.otgCompat")
     @Config.Comment("Compatibility fixes for Open Terrain Generator (OTG).")
     public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
+
+    @Config.Name("worldgen")
+    @Config.LangKey("config.insanetweaks.category.worldgen")
+    @Config.Comment("World generation tunables (dormant waystone rarity for the Dormant Eye feature).")
+    public static final WorldgenCategory worldgen = new WorldgenCategory();
 
     @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
     private static class EventHandler {

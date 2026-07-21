@@ -10,10 +10,16 @@ public class SanctuaryCategory {
     @Config.Name("Tier Radii")
     public int[] tierRadii = new int[] { 16, 32, 48, 64 };
 
-    @Config.Comment({"Fuel items for the cleanse function, one per line as 'registry=value'.",
-            "'value' = how many cleanse-conversions one item powers. Read live. Malformed lines ignored."})
+    @Config.Comment({"Mana-fuel items for the Sanctuary's upkeep, one per line as 'registry=value'.",
+            "'value' = how many upkeep units one item is worth (see sanctuaryCost.Upkeep). Cleanse is NOT",
+            "fuel-gated any more. Read live. Malformed lines ignored."})
     @Config.Name("Fuel Items")
-    public String[] fuelItems = new String[] { "minecraft:emerald=64" };
+    public String[] fuelItems = new String[] {
+            "ebwizardry:crystal_shard=4",
+            "ebwizardry:magic_crystal=36",
+            "ebwizardry:grand_crystal=180",
+            "ebwizardry:astral_diamond=360",
+            "ebwizardry:crystal_flower=8" };
 
     @Config.Comment("Infested blocks the cleanse reverts per tick (spread load). Read live.")
     @Config.Name("Cleanse Blocks Per Tick")

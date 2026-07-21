@@ -5,7 +5,11 @@ import com.spege.insanetweaks.sanctuary.SanctuaryStatus;
 import com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.item.ItemStack;
 
 public class GuiSanctuaryCore extends GuiContainer {
 
@@ -87,10 +91,43 @@ public class GuiSanctuaryCore extends GuiContainer {
             drawFuelGauge(8, 76, fuel);
         }
 
-        drawSlotTooltip(mouseX, mouseY, 26, 104, I18n.format("gui.insanetweaks.sanctuary.slot_fuel"));
+        // Ghost the required upgrade item in each EMPTY upgrade slot as a hint.
         for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
-            drawSlotTooltip(mouseX, mouseY, 80 + i * 18, 104, I18n.format("gui.insanetweaks.sanctuary.slot_upgrade"));
+            if (isUpgradeSlotEmpty(i)) {
+                drawUpgradeGhost(i, 80 + i * 18, 104);
+            }
         }
+
+        drawSlotTooltip(mouseX, mouseY, 26, 104, I18n.format("gui.insanetweaks.sanctuary.slot_fuel"));
+        // Empty upgrade slot -> our hint tooltip; occupied -> vanilla item tooltip handles it.
+        for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
+            if (isUpgradeSlotEmpty(i)) {
+                drawSlotTooltip(mouseX, mouseY, 80 + i * 18, 104,
+                        I18n.format("gui.insanetweaks.sanctuary.slot_u" + (i + 1)));
+            }
+        }
+    }
+
+    private boolean isUpgradeSlotEmpty(int upgradeIndex) {
+        return this.inventorySlots.getSlot(1 + upgradeIndex).getStack().isEmpty();
+    }
+
+    /** Draw a faded (ghost) copy of the required upgrade item at the given GUI-local slot origin. */
+    private void drawUpgradeGhost(int upgradeIndex, int slotX, int slotY) {
+        ItemStack hint = ContainerSanctuaryCore.upgradeHintStack(upgradeIndex);
+        if (hint.isEmpty()) { return; }
+        RenderItem ri = this.mc.getRenderItem();
+        RenderHelper.enableGUIStandardItemLighting();
+        ri.zLevel = 100.0F;
+        ri.renderItemIntoGUI(hint, slotX, slotY);
+        ri.renderItemOverlayIntoGUI(this.fontRenderer, hint, slotX, slotY, null); // stack count hint
+        ri.zLevel = 0.0F;
+        RenderHelper.disableStandardItemLighting();
+        // Fade it so it reads as a placeholder, not a real item.
+        GlStateManager.disableDepth();
+        GlStateManager.enableBlend();
+        drawRect(slotX, slotY, slotX + 16, slotY + 16, 0x99201828);
+        GlStateManager.enableDepth();
     }
 
     /** A simple 8-segment bar; full at >=64 conversions remaining. */

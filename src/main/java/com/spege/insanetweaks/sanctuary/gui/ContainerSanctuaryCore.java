@@ -1,5 +1,7 @@
 package com.spege.insanetweaks.sanctuary.gui;
 
+import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -7,6 +9,8 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerSanctuaryCore extends Container {
@@ -19,7 +23,13 @@ public class ContainerSanctuaryCore extends Container {
         this.te = te;
         addSlotToContainer(new SlotItemHandler(te.getInventory(), TileEntitySanctuaryCore.SLOT_FUEL, 26, 104));
         for (int i = 0; i < TileEntitySanctuaryCore.UPGRADE_SLOTS; i++) {
-            addSlotToContainer(new SlotItemHandler(te.getInventory(), 1 + i, 80 + i * 18, 104));
+            final int upgradeIndex = i; // 0..3 -> U1..U4, each slot bound to one item
+            addSlotToContainer(new SlotItemHandler(te.getInventory(), 1 + i, 80 + i * 18, 104) {
+                @Override
+                public boolean isItemValid(ItemStack stack) {
+                    return isValidUpgrade(upgradeIndex, stack);
+                }
+            });
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -32,6 +42,40 @@ public class ContainerSanctuaryCore extends Container {
     }
 
     public TileEntitySanctuaryCore getTe() { return te; }
+
+    /** Whether the upgrade slot (0..3 -> U1..U4) accepts the stack. Empty is always allowed. */
+    static boolean isValidUpgrade(int index, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) { return true; }
+        ResourceLocation rn = stack.getItem().getRegistryName();
+        if (rn == null) { return false; }
+        SanctuaryCostCategory c = ModConfig.sanctuaryCost;
+        switch (index) {
+            case 0: return rn.toString().equals(c.upgradeItemU1);
+            case 1: return rn.toString().equals(c.upgradeItemU2)
+                    && (c.u2Meta < 0 || stack.getMetadata() == c.u2Meta);
+            case 2: return rn.toString().equals(c.upgradeItemU3);
+            case 3: return rn.toString().equals(c.upgradeItemU4);
+            default: return true;
+        }
+    }
+
+    /** The hint stack a GUI ghosts in empty upgrade slot {@code index} (0..3), or EMPTY. */
+    public static ItemStack upgradeHintStack(int index) {
+        SanctuaryCostCategory c = ModConfig.sanctuaryCost;
+        switch (index) {
+            case 0: return makeStack(c.upgradeItemU1, 0, 1);
+            case 1: return makeStack(c.upgradeItemU2, Math.max(0, c.u2Meta), c.u2Count);
+            case 2: return makeStack(c.upgradeItemU3, 0, 1);
+            case 3: return makeStack(c.upgradeItemU4, 0, 1);
+            default: return ItemStack.EMPTY;
+        }
+    }
+
+    private static ItemStack makeStack(String regName, int meta, int count) {
+        net.minecraft.item.Item item = net.minecraft.item.Item.getByNameOrId(regName);
+        if (item == null) { return ItemStack.EMPTY; }
+        return new ItemStack(item, count, meta);
+    }
 
     /** Client-side fuel value (0 until first window-property arrives). */
     public int getClientFuel() { return clientFuel; }

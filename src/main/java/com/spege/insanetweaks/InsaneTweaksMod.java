@@ -67,7 +67,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -412,6 +412,8 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryPurgeFireHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryBlockBreakVetoHandler());
+            // "Cost of Power": Layer A presence tax (max-HP tithe + regen suppression).
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryCostHandler());
         }
 
         // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
@@ -432,6 +434,16 @@ public class InsaneTweaksMod implements IGuiHandler {
         // unconditionally — the thrall entity itself registers unconditionally above, so its
         // protection must not depend on the enableSpells module flag.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
+        // Dormant Eye: native foundation for the discreet-waystone underneath-access feature.
+        // Overworld-only worldgen is gated by config (restart-gated registration); the manual
+        // place/break registry hooks register unconditionally so the persistent registry stays
+        // consistent regardless of the worldgen toggle. All logic (teleport, locator, return-anchor
+        // placement in dim 150, tooltip) lives in GroovyScript, which consumes DormantWaystoneRegistry.
+        if (com.spege.insanetweaks.config.ModConfig.worldgen.dormantWaystoneEnabled) {
+            net.minecraftforge.fml.common.registry.GameRegistry.registerWorldGenerator(
+                    new com.spege.insanetweaks.dormant.DormantWaystoneWorldGen(), 0);
+        }
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.dormant.DormantWaystoneEventHandler());
         // One-shot config-reset notice; registered unconditionally - it no-ops unless a migration
         // happened this launch, and must not be suppressible by a setting that itself just got reset.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
