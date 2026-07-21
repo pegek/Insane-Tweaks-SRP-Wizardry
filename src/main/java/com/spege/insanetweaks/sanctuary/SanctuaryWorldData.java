@@ -62,6 +62,21 @@ public class SanctuaryWorldData extends WorldSavedData {
         return false;
     }
 
+    /** Cylinder test using min(regionRadius, radiusCap) — for effects with a smaller cap than protection. */
+    public boolean isInsideCapped(int x, int z, int radiusCap) {
+        for (int i = 0; i < regions.size(); i++) {
+            int[] r = regions.get(i);
+            int eff = Math.min(r[3], radiusCap);
+            long dx = x - r[0];
+            long dz = z - r[2];
+            long rr = (long) eff * eff;
+            if (dx * dx + dz * dz <= rr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void readFromNBT(NBTTagCompound c) {
         regions.clear();

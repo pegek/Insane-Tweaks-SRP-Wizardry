@@ -69,4 +69,27 @@ public class SanctuaryCategory {
             "For debugging whether a pyramid is detected. Read live (no restart)."})
     @Config.Name("Debug Logging")
     public boolean debugLogging = false;
+
+    @Config.Comment("Purge Fire: an active sanctuary ignites/damages parasites inside it. Read live.")
+    @Config.Name("Enable Purge Fire")
+    public boolean enablePurgeFire = true;
+
+    @Config.Comment("Fire damage dealt to each parasite per Purge Fire cadence. Read live.")
+    @Config.Name("Purge Fire Damage")
+    @Config.RangeDouble(min = 0.0D, max = 100.0D)
+    public double purgeFireDamage = 1.0D;
+
+    @Config.Comment("Ticks between Purge Fire damage applications (10 = 0.5s, Aegis parity). Read live.")
+    @Config.Name("Purge Fire Interval")
+    @Config.RangeInt(min = 1, max = 200)
+    public int purgeFireInterval = 10;
+
+    @Config.Comment("Hard cap (blocks) on the Purge Fire radius, regardless of protection radius. Read live.")
+    @Config.Name("Purge Fire Radius Cap")
+    @Config.RangeInt(min = 1, max = 128)
+    public int purgeFireRadiusCap = 128;
+
+    @Config.Comment("Veto parasite block-breaking/griefing inside an active sanctuary. Read live.")
+    @Config.Name("Veto Block Break")
+    public boolean vetoBlockBreak = true;
 }
