@@ -54,6 +54,15 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
 
     private int revalidateTickCounter;
 
+    private static final String[] LURE_KEYS = { "one", "two", "three", "four", "five", "six" };
+
+    /** SRP block-name lang key for the lure meta the given progress (0..5) demands, so chat shows the
+     *  exact in-game lure name + colour (e.g. "Lure (Weakened)"). Clamped to the 6-lure range. */
+    public static String lureNameKey(int progress) {
+        int i = Math.max(0, Math.min(LURE_KEYS.length - 1, progress));
+        return "tile.srparasites.evolutionlure_" + LURE_KEYS[i] + ".name";
+    }
+
     /** Progress (0..6 consumed offerings) -> tier. T1 at 2 offerings, T2 at 4, T3 at 5, T4 at 6. */
     private static int tierFromProgress(int p) {
         if (p >= 6) { return 4; }
@@ -180,7 +189,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                         "msg.insanetweaks.sanctuary.whole"));
             } else {
                 p.sendMessage(new net.minecraft.util.text.TextComponentTranslation(
-                        "msg.insanetweaks.sanctuary.demand", progress + 1)); // display 1..6
+                        "msg.insanetweaks.sanctuary.demand",
+                        new net.minecraft.util.text.TextComponentTranslation(lureNameKey(progress))));
             }
         }
     }

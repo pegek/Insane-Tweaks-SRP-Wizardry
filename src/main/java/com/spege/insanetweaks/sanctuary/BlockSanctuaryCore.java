@@ -40,7 +40,9 @@ public class BlockSanctuaryCore extends Block {
         if (!world.isRemote && placer instanceof net.minecraft.entity.player.EntityPlayer) {
             ((net.minecraft.entity.player.EntityPlayer) placer).sendMessage(
                     new net.minecraft.util.text.TextComponentTranslation(
-                            "msg.insanetweaks.sanctuary.demand", 1)); // demands Evolution Lure 1 (meta 0)
+                            "msg.insanetweaks.sanctuary.demand",
+                            new net.minecraft.util.text.TextComponentTranslation(
+                                    TileEntitySanctuaryCore.lureNameKey(0)))); // demands Lure (Weakened)
         }
     }
 

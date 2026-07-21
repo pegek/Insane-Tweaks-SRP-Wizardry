@@ -46,7 +46,7 @@ public class ModBlocks {
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
         }
-        ItemBlock ib = new ItemBlock(SANCTUARY_CORE);
+        ItemBlock ib = new com.spege.insanetweaks.sanctuary.ItemBlockSanctuaryCore(SANCTUARY_CORE);
         ib.setRegistryName(SANCTUARY_CORE.getRegistryName());
         event.getRegistry().register(ib);
     }
