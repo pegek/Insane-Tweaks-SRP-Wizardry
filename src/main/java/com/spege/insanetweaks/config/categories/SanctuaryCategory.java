@@ -37,12 +37,6 @@ public class SanctuaryCategory {
     @Config.Name("Lure Block Id")
     public String lureBlockId = "srparasites:evolutionlure";
 
-    @Config.Comment({"Ticks the Nexus channels a completed lure ring before consuming it (40 = 2s).",
-            "Read live."})
-    @Config.Name("Ritual Duration Ticks")
-    @Config.RangeInt(min = 1, max = 400)
-    public int ritualDurationTicks = 40;
-
     @Config.Comment("Extra radius (blocks) granted per radius-upgrade item in the core. Read live.")
     @Config.Name("Upgrade Radius Bonus")
     @Config.RangeInt(min = 0, max = 128)

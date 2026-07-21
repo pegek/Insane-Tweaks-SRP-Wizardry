@@ -59,10 +59,12 @@ public class GuiCreativeSanctuary extends GuiContainer implements GuiPageButtonL
     @Override
     protected void mouseReleased(int mouseX, int mouseY, int state) {
         super.mouseReleased(mouseX, mouseY, state);
-        // Commit the chosen radius to the server when the drag ends.
-        if (initialised) {
-            BlockPos pos = te.getPos();
-            InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketSetSanctuaryRadius(pos, this.radius));
+        // Read the slider's authoritative mapped value (16..256) directly, rather than the cached
+        // `radius` from setEntryValue - inside a GuiContainer the responder callback may not fire on
+        // every drag, which previously left the value stuck at its initial position.
+        if (initialised && this.slider != null) {
+            int r = Math.round(this.slider.getSliderValue());
+            InsaneTweaksNetwork.CHANNEL.sendToServer(new PacketSetSanctuaryRadius(te.getPos(), r));
         }
     }
 

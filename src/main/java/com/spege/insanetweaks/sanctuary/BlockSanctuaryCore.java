@@ -7,8 +7,11 @@ import net.minecraft.block.material.Material;
 public class BlockSanctuaryCore extends Block {
     public BlockSanctuaryCore() {
         super(Material.ROCK);
-        setHardness(4.0F);
-        setResistance(2000.0F); // blast-resistant like a beacon base
+        // Obsidian-tier durability: slow to mine, needs a diamond pickaxe, and the 2000 resistance
+        // (-> 6000 blast) shrugs off TNT/creepers.
+        setHardness(50.0F);
+        setResistance(2000.0F);
+        setHarvestLevel("pickaxe", 3);
         setSoundType(SoundType.STONE);
         setLightLevel(0.5F);
         // registry name + creative tab set in ModBlocks

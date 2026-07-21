@@ -167,12 +167,15 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
     }
 
-    /** Detect a completed demanded ring, channel it for ritualDurationTicks, then consume + advance. */
+    /** Ticks the Nexus channels a completed lure ring before consuming it (40 = 2s). */
+    private static final int RITUAL_DURATION_TICKS = 40;
+
+    /** Detect a completed demanded ring, channel it for RITUAL_DURATION_TICKS, then consume + advance. */
     private void tickRitual() {
         if (progress >= 6) { ritualTicks = 0; return; }        // fully built
         if (!lureRingComplete(progress)) { ritualTicks = 0; return; } // no/incorrect ring -> idle
         if (ritualTicks <= 0) {
-            ritualTicks = Math.max(1, com.spege.insanetweaks.config.ModConfig.sanctuary.ritualDurationTicks);
+            ritualTicks = RITUAL_DURATION_TICKS;
         }
         spawnRitualFx();
         if (--ritualTicks <= 0) {
@@ -453,6 +456,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         c.setBoolean("cleanse", cleanseEnabled);
         c.setBoolean("stalled", cleanseStalled);
         c.setInteger("status", statusCode);
+        c.setInteger("creativeRadius", creativeRadius);
         return c;
     }
 
@@ -462,6 +466,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         cleanseEnabled = c.getBoolean("cleanse");
         cleanseStalled = c.getBoolean("stalled");
         statusCode = c.getInteger("status");
+        creativeRadius = c.getInteger("creativeRadius");
     }
 
     @Override
