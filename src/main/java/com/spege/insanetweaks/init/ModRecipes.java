@@ -372,6 +372,30 @@ public class ModRecipes {
                             'F', rupter, 'P', hiveScrap, 'B', bladeFrag,
                             'C', new ItemStack(safeItem("srparasites", "living_core")), 'S', new ItemStack(bootsItem, 1, 32767)));
         }
+
+        // ---------------------------------------------------------------------
+        // Sanctuary Nexus. Ingredients come from SRP + Ancient Spellcraft, so gate on both
+        // (safeItem throws if an ingredient is missing). Output is the sanctuary_core ItemBlock,
+        // which only exists when the Sanctuary module + SRP are on.
+        //   Eye of Beholder | Beacon      | Eye of Beholder
+        //   (empty)         | Level Clock | (empty)
+        //   Devoritium Blk  | False Apple | Devoritium Blk
+        // ---------------------------------------------------------------------
+        if (ModBlocks.SANCTUARY_CORE != null
+                && Loader.isModLoaded("srparasites") && Loader.isModLoaded("ancientspellcraft")) {
+            registerFallback(event, "sanctuary_nexus",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "sanctuary_nexus"),
+                            new ItemStack(ModBlocks.SANCTUARY_CORE),
+                            "PBP",
+                            " C ",
+                            "DFD",
+                            'P', new ItemStack(safeItem("srparasites", "pearl")),
+                            'B', new ItemStack(safeItem("minecraft", "beacon")),
+                            'C', new ItemStack(safeItem("srparasites", "levelclock")),
+                            'D', new ItemStack(safeItem("ancientspellcraft", "devoritium_block")),
+                            'F', new ItemStack(safeItem("srparasites", "false_apple"))));
+        }
     }
 
     /**
