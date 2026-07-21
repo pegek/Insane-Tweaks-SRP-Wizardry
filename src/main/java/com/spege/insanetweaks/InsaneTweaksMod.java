@@ -343,15 +343,15 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
 
-        // Grimoire enchantment runtime (boost recompute, owner-binding, anvil lock).
+        // Sentient Codex enchantment runtime (boost recompute, owner-binding, anvil lock).
         // The enchantment itself registers on the MOD bus in ModEnchantments under the same flag.
         // Drop protection is conferred via the Ashen Legacy property (LegendaryDropHelper +
         // the always-on IndestructibleDropHandler above); the client tooltip handler surfaces
-        // that property on Grimoire-enchanted vanilla items.
-        if (com.spege.insanetweaks.config.ModConfig.modules.enableGrimoire) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.GrimoireHandler());
+        // that property on Sentient Codex-enchanted vanilla items.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.SentientCodexHandler());
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GrimoireTooltipHandler());
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
             }
         }
 
@@ -402,6 +402,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary
                 && Loader.isModLoaded(SRP_MODID)) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryPurgeFireHandler());
         }
 
         // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
