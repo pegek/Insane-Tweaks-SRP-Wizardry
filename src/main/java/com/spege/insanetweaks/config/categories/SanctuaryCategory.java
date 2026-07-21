@@ -61,9 +61,9 @@ public class SanctuaryCategory {
     @Config.Name("Cleanse Enabled By Default")
     public boolean cleanseEnabledByDefault = true;
 
-    @Config.Comment("Client: render the particle border of active domes. Read live.")
-    @Config.Name("Particle Border")
-    public boolean particleBorder = true;
+    @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
+    @Config.Name("Render Dome")
+    public boolean renderDome = true;
 
     @Config.Comment({"Log per-core sanctuary state to the game log on tier/status change.",
             "For debugging whether a pyramid is detected. Read live (no restart)."})

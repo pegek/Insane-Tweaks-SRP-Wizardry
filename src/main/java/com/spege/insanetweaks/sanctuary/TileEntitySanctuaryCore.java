@@ -5,6 +5,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -152,7 +153,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     @Override
     public void update() {
         if (world == null) { return; }
-        if (world.isRemote) { clientParticleTick(); return; }
+        if (world.isRemote) { return; } // dome is drawn by RenderSanctuaryDome (TESR), no client tick work
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) { return; }
         if (com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isDimensionBlacklisted(world)) {
             if (getTier() != 0 || statusCode != SanctuaryStatus.DIM_BLACKLISTED.ordinal()) {
@@ -285,11 +286,16 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         return com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(world.getBlockState(p));
     }
 
-    @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
-    private void clientParticleTick() {
-        // Dome particle disabled: EBW's SPHERE inherently expands (rendered scale = age/maxAge) and
-        // cannot be static, so it pulsed constantly. A dedicated static dome renderer is tracked
-        // separately. Left as a no-op so the client tick wiring + particleBorder config stay in place.
+    /** Render the dome even when the core block itself is off-screen / far behind the camera. */
+    @Override
+    public AxisAlignedBB getRenderBoundingBox() {
+        return INFINITE_EXTENT_AABB;
+    }
+
+    /** Keep the dome renderer alive while the viewer is anywhere near the sphere (radius up to ~128). */
+    @Override
+    public double getMaxRenderDistanceSquared() {
+        return 65536.0D; // 256 blocks; per-frame distance cull in RenderSanctuaryDome does the fine gating
     }
 
     @Override

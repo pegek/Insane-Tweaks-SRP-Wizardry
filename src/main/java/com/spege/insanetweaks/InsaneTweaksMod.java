@@ -129,6 +129,11 @@ public class InsaneTweaksMod implements IGuiHandler {
         }
 
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) {
+                net.minecraftforge.fml.client.registry.ClientRegistry.bindTileEntitySpecialRenderer(
+                        com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,
+                        new com.spege.insanetweaks.client.renderer.tile.RenderSanctuaryDome());
+            }
             RenderingRegistry.registerEntityRenderingHandler(EntitySentinel.class,
                     new IRenderFactory<EntitySentinel>() {
                         @Override
