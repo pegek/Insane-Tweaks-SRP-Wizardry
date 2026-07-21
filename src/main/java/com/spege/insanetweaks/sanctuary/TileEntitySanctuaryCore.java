@@ -100,6 +100,65 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
     }
 
+    /** True when all 24 cells of the flat 5x5 ring at the Nexus's Y level are the demanded lure meta. */
+    private boolean lureRingComplete(int meta) {
+        String lureId = com.spege.insanetweaks.config.ModConfig.sanctuary.lureBlockId;
+        int y = pos.getY();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) { continue; } // Nexus occupies the center
+                net.minecraft.util.math.BlockPos p =
+                        new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz);
+                net.minecraft.block.state.IBlockState st = world.getBlockState(p);
+                net.minecraft.util.ResourceLocation rn = st.getBlock().getRegistryName();
+                if (rn == null || !rn.toString().equals(lureId)) { return false; }
+                if (st.getBlock().getMetaFromState(st) != meta) { return false; }
+            }
+        }
+        return true;
+    }
+
+    /** Set the 24 ring cells to air (the offering is consumed). */
+    private void consumeRing() {
+        int y = pos.getY();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) { continue; }
+                world.setBlockToAir(new net.minecraft.util.math.BlockPos(pos.getX() + dx, y, pos.getZ() + dz));
+            }
+        }
+    }
+
+    /** Ambient channel particles while a ritual is winding down. */
+    private void spawnRitualFx() {
+        if (world instanceof net.minecraft.world.WorldServer) {
+            ((net.minecraft.world.WorldServer) world).spawnParticle(
+                    net.minecraft.util.EnumParticleTypes.SPELL_WITCH,
+                    pos.getX() + 0.5D, pos.getY() + 0.8D, pos.getZ() + 0.5D,
+                    6, 1.6D, 0.3D, 1.6D, 0.02D);
+        }
+    }
+
+    /** Detect a completed demanded ring, channel it for ritualDurationTicks, then consume + advance. */
+    private void tickRitual() {
+        if (progress >= 6) { ritualTicks = 0; return; }        // fully built
+        if (!lureRingComplete(progress)) { ritualTicks = 0; return; } // no/incorrect ring -> idle
+        if (ritualTicks <= 0) {
+            ritualTicks = Math.max(1, com.spege.insanetweaks.config.ModConfig.sanctuary.ritualDurationTicks);
+        }
+        spawnRitualFx();
+        if (--ritualTicks <= 0) {
+            consumeRing();
+            progress++;
+            onProgressAdvanced();
+        }
+    }
+
+    /** Called right after progress increments: refresh tier/radius/region + (Task 5) notify the player. */
+    private void onProgressAdvanced() {
+        revalidateAndSync(); // tier/radius/region update immediately from the new progress
+    }
+
     /** Debug-only: counts parasites in the purge cylinder and logs a summary. Runs ONLY when
      *  debugLogging is on, so the AABB scan has no cost in normal play. */
     private void logParasitesInZoneDebug() {
@@ -149,6 +208,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             markInitialized();
             revalidateAndSync(); // establish tier/radius/region from stored progress on load
         }
+        tickRitual();
         if (++revalidateTickCounter >= com.spege.insanetweaks.config.ModConfig.sanctuary.revalidateInterval) {
             revalidateTickCounter = 0;
             revalidateAndSync();
