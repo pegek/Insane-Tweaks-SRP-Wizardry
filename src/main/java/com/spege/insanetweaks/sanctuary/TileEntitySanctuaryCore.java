@@ -120,6 +120,29 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
     }
 
+    /** Debug-only: counts parasites in the purge cylinder and logs a summary. Runs ONLY when
+     *  debugLogging is on, so the AABB scan has no cost in normal play. */
+    private void logParasitesInZoneDebug() {
+        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.debugLogging || tier < 1) {
+            return;
+        }
+        int cap = Math.min(effectiveRadius, com.spege.insanetweaks.config.ModConfig.sanctuary.purgeFireRadiusCap);
+        net.minecraft.util.math.AxisAlignedBB box = new net.minecraft.util.math.AxisAlignedBB(
+                pos.getX() - cap, 0, pos.getZ() - cap,
+                pos.getX() + cap + 1, world.getHeight(), pos.getZ() + cap + 1);
+        java.util.List<net.minecraft.entity.EntityLivingBase> parasites =
+                world.getEntitiesWithinAABB(net.minecraft.entity.EntityLivingBase.class, box,
+                        new com.google.common.base.Predicate<net.minecraft.entity.EntityLivingBase>() {
+                            @Override
+                            public boolean apply(net.minecraft.entity.EntityLivingBase ent) {
+                                return com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isSrpParasite(ent);
+                            }
+                        });
+        com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "in-zone",
+                "parasitesInZone=" + parasites.size() + " tier=" + tier + " r=" + effectiveRadius
+                + " purgeFire=" + (com.spege.insanetweaks.config.ModConfig.sanctuary.enablePurgeFire ? "on" : "off"));
+    }
+
     public void onRemovedFromWorld() {
         if (world != null && !world.isRemote) {
             SanctuaryWorldData.get(world).removeRegion(pos);
@@ -148,6 +171,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         if (++pyramidTickCounter >= com.spege.insanetweaks.config.ModConfig.sanctuary.pyramidRevalidateInterval) {
             pyramidTickCounter = 0;
             revalidateAndSync();
+            logParasitesInZoneDebug();
         }
         runCleanse();
         syncDisplayIfChanged();
@@ -247,7 +271,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             // line and transition messages don't flicker on ticks whose scan misses infested blocks.
             if (!consumeFuelUnit()) { cleanseStalled = true; return; }
             cleanseStalled = false;
-            if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) { converted++; }
+            net.minecraft.util.ResourceLocation cleansedId = world.getBlockState(p).getBlock().getRegistryName();
+            if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) {
+                converted++;
+                com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "cleansed",
+                        "@(" + p.getX() + "," + p.getY() + "," + p.getZ() + ") " + cleansedId);
+            }
         }
     }
 
@@ -257,28 +286,10 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     }
 
     @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
-    private int particleTimer;
-
-    @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
     private void clientParticleTick() {
-        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.particleBorder) { return; }
-        if (tier < 1 || effectiveRadius <= 0) { return; }
-        // EBW's SPHERE ("dome") particle is anchored at the core, so it is NOT distance-culled the way
-        // a ring of boundary particles would be at large radii, and it draws the whole protection shell.
-        if (!net.minecraftforge.fml.common.Loader.isModLoaded("ebwizardry")) { return; }
-        // Re-emit a little before the previous sphere fades (time 25 vs interval 20) so it never blinks.
-        if (++particleTimer < 20) { return; }
-        particleTimer = 0;
-        double cx = pos.getX() + 0.5, cy = pos.getY() + 0.5, cz = pos.getZ() + 0.5;
-        electroblob.wizardry.util.ParticleBuilder
-                .create(electroblob.wizardry.util.ParticleBuilder.Type.SPHERE)
-                .pos(cx, cy, cz)
-                .scale((float) effectiveRadius)
-                // EBW's SPHERE has no alpha setter; colour intensity is the transparency lever
-                // (dimmer + channel-balanced = more neutral and more see-through).
-                .clr(0.50F, 0.52F, 0.55F)
-                .time(25)
-                .spawn(world);
+        // Dome particle disabled: EBW's SPHERE inherently expands (rendered scale = age/maxAge) and
+        // cannot be static, so it pulsed constantly. A dedicated static dome renderer is tracked
+        // separately. Left as a no-op so the client tick wiring + particleBorder config stay in place.
     }
 
     @Override

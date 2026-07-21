@@ -25,6 +25,9 @@ public class SanctuarySpawnVetoHandler {
         if (SanctuaryRegionHelper.isProtected(event.getWorld(),
                 (int) Math.floor(event.getX()), (int) Math.floor(event.getZ()))) {
             event.setResult(Event.Result.DENY);
+            SanctuaryDebug.log(event.getWorld().getTotalWorldTime(), "spawn-vetoed",
+                    e.getName() + " @(" + ((int) Math.floor(event.getX())) + ","
+                    + ((int) Math.floor(event.getY())) + "," + ((int) Math.floor(event.getZ())) + ")");
         }
     }
 }
