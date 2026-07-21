@@ -154,9 +154,35 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
     }
 
-    /** Called right after progress increments: refresh tier/radius/region + (Task 5) notify the player. */
+    /** Called right after progress increments: refresh tier/region, play FX, notify the nearest player. */
     private void onProgressAdvanced() {
+        int oldTier = tier;
         revalidateAndSync(); // tier/radius/region update immediately from the new progress
+
+        if (world instanceof net.minecraft.world.WorldServer) {
+            ((net.minecraft.world.WorldServer) world).spawnParticle(
+                    net.minecraft.util.EnumParticleTypes.SPELL_MOB,
+                    pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
+                    40, 1.2D, 0.6D, 1.2D, 0.1D);
+        }
+        world.playSound(null, pos, net.minecraft.init.SoundEvents.BLOCK_END_PORTAL_SPAWN,
+                net.minecraft.util.SoundCategory.BLOCKS, 0.6F, 1.4F);
+
+        net.minecraft.entity.player.EntityPlayer p = world.getClosestPlayer(
+                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 64.0D, false);
+        if (p != null) {
+            if (tier > oldTier) {
+                p.sendMessage(new net.minecraft.util.text.TextComponentTranslation(
+                        "msg.insanetweaks.sanctuary.tierup", tier));
+            }
+            if (progress >= 6) {
+                p.sendMessage(new net.minecraft.util.text.TextComponentTranslation(
+                        "msg.insanetweaks.sanctuary.whole"));
+            } else {
+                p.sendMessage(new net.minecraft.util.text.TextComponentTranslation(
+                        "msg.insanetweaks.sanctuary.demand", progress + 1)); // display 1..6
+            }
+        }
     }
 
     /** Debug-only: counts parasites in the purge cylinder and logs a summary. Runs ONLY when
