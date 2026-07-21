@@ -33,6 +33,18 @@ public class BlockSanctuaryCore extends Block {
     }
 
     @Override
+    public void onBlockPlacedBy(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos,
+            net.minecraft.block.state.IBlockState state, net.minecraft.entity.EntityLivingBase placer,
+            net.minecraft.item.ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
+        if (!world.isRemote && placer instanceof net.minecraft.entity.player.EntityPlayer) {
+            ((net.minecraft.entity.player.EntityPlayer) placer).sendMessage(
+                    new net.minecraft.util.text.TextComponentTranslation(
+                            "msg.insanetweaks.sanctuary.demand", 1)); // demands Evolution Lure 1 (meta 0)
+        }
+    }
+
+    @Override
     public boolean onBlockActivated(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos,
             net.minecraft.block.state.IBlockState state, net.minecraft.entity.player.EntityPlayer player,
             net.minecraft.util.EnumHand hand, net.minecraft.util.EnumFacing facing,
