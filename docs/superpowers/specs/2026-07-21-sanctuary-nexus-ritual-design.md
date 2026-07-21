@@ -43,6 +43,18 @@ delay your doom" — and stores the earned tier permanently in the Nexus so no s
 
 `progress` is the count of consumed offerings (0–6), permanent and irreversible.
 
+**Tier cost (the human-readable view):**
+- **T1** = Lure 0 + Lure 1 (2 offerings)
+- **T2** = + Lure 2 + Lure 3 (4 total)
+- **T3** = + Lure 4 (5 total)
+- **T4** = + Lure 5 (6 total)
+
+Because 6 offerings map onto 4 tiers, two offerings fall *within* a tier and don't bump it (offering
+Lure 0 stays tier 0 until Lure 1 completes T1; offering Lure 2 stays T1 until Lure 3 completes T2).
+This is intended (user's original spec).
+
+**Implementation lookup (progress → tier):**
+
 | progress | last consumed | tier |
 |---------:|:--------------|:----:|
 | 0 | — | 0 (inert) |
