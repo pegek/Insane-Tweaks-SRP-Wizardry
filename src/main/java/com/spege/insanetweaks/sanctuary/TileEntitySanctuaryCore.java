@@ -29,6 +29,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private int progress;       // 0..6 consumed lure offerings; permanent. Tier derived from this.
     private int ritualTicks;    // transient: >0 while channeling a completed lure ring
     private int creativeRadius; // 0 = normal ritual mode; >0 = creative forced (tier 4 at this radius)
+    private java.util.UUID ownerId;   // player who placed this ritual Nexus (null for creative / unowned)
+    private String ownerName = "";    // cached owner name for the GUI nameplate
 
     // last display snapshot pushed to clients (server-side), for change detection
     private int sentTier = -1, sentRadius = -1, sentStatus = -1;
@@ -48,6 +50,15 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
     }
     public int getEffectiveRadius() { return effectiveRadius; }
+    public java.util.UUID getOwnerId() { return ownerId; }
+    public String getOwnerName() { return ownerName; }
+
+    /** Bind this ritual Nexus to its placing player (owner nameplate + per-player limit). */
+    public void setOwner(java.util.UUID id, String name) {
+        this.ownerId = id;
+        this.ownerName = name == null ? "" : name;
+        markDirty();
+    }
     public boolean isCleanseEnabled() { return cleanseEnabled; }
     public boolean isCleanseStalled() { return cleanseStalled; }
     public void setCleanseEnabled(boolean v) { this.cleanseEnabled = v; markDirty(); }
@@ -243,6 +254,9 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     public void onRemovedFromWorld() {
         if (world != null && !world.isRemote) {
             SanctuaryWorldData.get(world).removeRegion(pos);
+            if (ownerId != null) {
+                SanctuaryOwnerData.get(world).remove(ownerId, world.provider.getDimension(), pos);
+            }
         }
     }
 
@@ -265,6 +279,9 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             setCleanseEnabled(com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseEnabledByDefault);
             markInitialized();
             revalidateAndSync(); // establish tier/radius/region from stored progress on load
+            if (ownerId != null) { // self-heal the global owner registry for a loaded owned Nexus
+                SanctuaryOwnerData.get(world).add(ownerId, world.provider.getDimension(), pos);
+            }
         }
         if (creativeRadius <= 0) { tickRitual(); }
         if (++revalidateTickCounter >= com.spege.insanetweaks.config.ModConfig.sanctuary.revalidateInterval) {
@@ -431,6 +448,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         fuelStored = c.getInteger("fuel");
         initialized = c.getBoolean("init");
         if (c.hasKey("status")) { statusCode = c.getInteger("status"); }
+        ownerId = c.hasUniqueId("ownerId") ? c.getUniqueId("ownerId") : null;
+        ownerName = c.getString("ownerName");
     }
 
     @Override
@@ -446,6 +465,8 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         c.setInteger("fuel", fuelStored);
         c.setBoolean("init", initialized);
         c.setInteger("status", statusCode);
+        if (ownerId != null) { c.setUniqueId("ownerId", ownerId); }
+        c.setString("ownerName", ownerName == null ? "" : ownerName);
         return c;
     }
 
@@ -457,6 +478,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         c.setBoolean("stalled", cleanseStalled);
         c.setInteger("status", statusCode);
         c.setInteger("creativeRadius", creativeRadius);
+        c.setString("ownerName", ownerName == null ? "" : ownerName);
         return c;
     }
 
@@ -467,6 +489,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         cleanseStalled = c.getBoolean("stalled");
         statusCode = c.getInteger("status");
         creativeRadius = c.getInteger("creativeRadius");
+        ownerName = c.getString("ownerName");
     }
 
     @Override

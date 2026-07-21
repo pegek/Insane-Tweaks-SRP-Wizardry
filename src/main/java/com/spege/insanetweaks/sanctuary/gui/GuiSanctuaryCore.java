@@ -56,6 +56,11 @@ public class GuiSanctuaryCore extends GuiContainer {
         CleanseState cleanse = CleanseState.of(tier, te.isCleanseEnabled(), te.isCleanseStalled());
 
         this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.title"), 8, 8, 0xE0D0F0);
+        String owner = te.getOwnerName();
+        if (owner != null && !owner.isEmpty()) {
+            String label = I18n.format("gui.insanetweaks.sanctuary.owner", owner);
+            this.fontRenderer.drawString(label, this.xSize - 8 - this.fontRenderer.getStringWidth(label), 8, 0xB090C0);
+        }
         this.fontRenderer.drawString(I18n.format("gui.insanetweaks.sanctuary.tier", tier), 8, 22, 0xFFFFFF);
 
         if (tier >= 1) {

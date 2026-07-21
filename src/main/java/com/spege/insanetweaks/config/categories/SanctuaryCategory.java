@@ -103,4 +103,19 @@ public class SanctuaryCategory {
     @Config.Comment("Veto parasite block-breaking/griefing inside an active sanctuary. Read live.")
     @Config.Name("Veto Block Break")
     public boolean vetoBlockBreak = true;
+
+    @Config.Comment("Enforce a per-player cap on ritual Sanctuaries (the Creative Sanctuary never counts). Read live.")
+    @Config.Name("Limit Sanctuaries Per Player")
+    public boolean enableSanctuaryLimit = true;
+
+    @Config.Comment("Maximum ritual Sanctuaries one player may own (within the scope below). Read live.")
+    @Config.Name("Max Sanctuaries Per Player")
+    @Config.RangeInt(min = 1, max = 64)
+    public int maxSanctuariesPerPlayer = 1;
+
+    @Config.Comment({"Does the per-player limit count across EVERY dimension, or per single dimension?",
+            "True  = every dimension: 1 sanctuary total anywhere (build in the Overworld -> can't build in the Nether).",
+            "False = single dimension: the limit applies separately per dimension. Read live."})
+    @Config.Name("Limit Counts Every Dimension")
+    public boolean limitEveryDimension = true;
 }
