@@ -403,6 +403,7 @@ public class InsaneTweaksMod implements IGuiHandler {
                 && Loader.isModLoaded(SRP_MODID)) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryPurgeFireHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryBlockBreakVetoHandler());
         }
 
         // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
