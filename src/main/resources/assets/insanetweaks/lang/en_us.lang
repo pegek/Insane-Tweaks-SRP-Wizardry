@@ -246,6 +246,7 @@ config.insanetweaks.category.thrall=Thrall
 config.insanetweaks.category.entities=Entities
 config.insanetweaks.category.client=Client & Debug
 config.insanetweaks.category.srpCompat=SRP Compatibility
+config.insanetweaks.category.threadingCompat=Threading Compatibility
 config.insanetweaks.category.sanctuary=Sanctuary Dome
 config.insanetweaks.category.sanctuaryCost=Sanctuary Cost of Power
 config.insanetweaks.category.worldgen=World Generation

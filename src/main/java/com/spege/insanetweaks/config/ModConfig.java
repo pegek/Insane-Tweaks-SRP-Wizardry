@@ -11,6 +11,7 @@ import com.spege.insanetweaks.config.categories.SanctuaryCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.SrpCompatCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
+import com.spege.insanetweaks.config.categories.ThreadingCompatCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
@@ -89,6 +90,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.otgCompat")
     @Config.Comment("Compatibility fixes for Open Terrain Generator (OTG).")
     public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
+
+    @Config.Name("threadingCompat")
+    @Config.LangKey("config.insanetweaks.category.threadingCompat")
+    @Config.Comment("Thread-safety patches for multithreaded entity ticking (EntityThreading).")
+    public static final ThreadingCompatCategory threadingCompat = new ThreadingCompatCategory();
 
     @Config.Name("worldgen")
     @Config.LangKey("config.insanetweaks.category.worldgen")
