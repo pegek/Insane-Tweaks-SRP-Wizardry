@@ -412,6 +412,8 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryPurgeFireHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryBlockBreakVetoHandler());
+            // Suppress parasite drops + XP inside the dome (no free AFK farm from the purge).
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryDropVetoHandler());
             // "Cost of Power": Layer A presence tax (max-HP tithe + regen suppression).
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryCostHandler());
         }

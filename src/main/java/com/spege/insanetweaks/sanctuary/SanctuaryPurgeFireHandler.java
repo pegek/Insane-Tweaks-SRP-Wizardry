@@ -35,9 +35,12 @@ public class SanctuaryPurgeFireHandler {
         }
         if (e.ticksExisted % ModConfig.sanctuary.purgeFireInterval == 0) {
             e.hurtResistantTime = 0; // break i-frames so the DoT actually lands each cadence
-            e.attackEntityFrom(DamageSource.IN_FIRE, (float) ModConfig.sanctuary.purgeFireDamage);
+            // Flat + percent-of-max-HP, so it scales against SRP's huge parasite HP pools.
+            float dmg = (float) (ModConfig.sanctuary.purgeFireDamage
+                    + e.getMaxHealth() * ModConfig.sanctuary.purgeFirePercentDamage / 100.0D);
+            e.attackEntityFrom(DamageSource.IN_FIRE, dmg);
             SanctuaryDebug.log(world.getTotalWorldTime(), "purge-fire",
-                    e.getName() + " hp=" + ((int) e.getHealth())
+                    e.getName() + " dmg=" + ((int) dmg) + " hp=" + ((int) e.getHealth())
                     + " @(" + x + "," + ((int) Math.floor(e.posY)) + "," + z + ")");
         }
         if (!e.isBurning()) {

@@ -120,10 +120,16 @@ public class SanctuaryCategory {
     @Config.Name("Enable Purge Fire")
     public boolean enablePurgeFire = true;
 
-    @Config.Comment("Fire damage dealt to each parasite per Purge Fire cadence. Read live.")
+    @Config.Comment("Flat fire damage dealt to each parasite per Purge Fire cadence. Read live.")
     @Config.Name("Purge Fire Damage")
     @Config.RangeDouble(min = 0.0D, max = 100.0D)
     public double purgeFireDamage = 1.0D;
+
+    @Config.Comment({"Extra fire damage per cadence as a PERCENT of the parasite's max HP (added to the",
+            "flat damage). Scales against SRP's huge HP pools. 5 = 5% of max HP each hit. Read live."})
+    @Config.Name("Purge Fire Percent Damage")
+    @Config.RangeDouble(min = 0.0D, max = 100.0D)
+    public double purgeFirePercentDamage = 5.0D;
 
     @Config.Comment("Ticks between Purge Fire damage applications (10 = 0.5s, Aegis parity). Read live.")
     @Config.Name("Purge Fire Interval")
@@ -138,6 +144,11 @@ public class SanctuaryCategory {
     @Config.Comment("Veto parasite block-breaking/griefing inside an active sanctuary. Read live.")
     @Config.Name("Veto Block Break")
     public boolean vetoBlockBreak = true;
+
+    @Config.Comment({"Suppress item drops AND XP from SRP parasites that die inside a sanctuary, so the",
+            "dome's own purge (fire/cleanse) can't be AFK-farmed for free loot. Read live."})
+    @Config.Name("Veto Parasite Drops In Zone")
+    public boolean vetoParasiteDrops = true;
 
     @Config.Comment("Enforce a per-player cap on ritual Sanctuaries (the Creative Sanctuary never counts). Read live.")
     @Config.Name("Limit Sanctuaries Per Player")
