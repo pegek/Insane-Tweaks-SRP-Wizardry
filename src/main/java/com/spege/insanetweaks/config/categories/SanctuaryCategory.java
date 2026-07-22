@@ -126,10 +126,10 @@ public class SanctuaryCategory {
     public double purgeFireDamage = 1.0D;
 
     @Config.Comment({"Extra fire damage per cadence as a PERCENT of the parasite's max HP (added to the",
-            "flat damage). Scales against SRP's huge HP pools. 5 = 5% of max HP each hit. Read live."})
+            "flat damage). Scales against SRP's huge HP pools. 1 = 1% of max HP each hit. Read live."})
     @Config.Name("Purge Fire Percent Damage")
     @Config.RangeDouble(min = 0.0D, max = 100.0D)
-    public double purgeFirePercentDamage = 5.0D;
+    public double purgeFirePercentDamage = 1.0D;
 
     @Config.Comment("Ticks between Purge Fire damage applications (10 = 0.5s, Aegis parity). Read live.")
     @Config.Name("Purge Fire Interval")
