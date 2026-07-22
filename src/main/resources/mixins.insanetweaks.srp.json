@@ -9,6 +9,7 @@
     "MixinSrpPointsDiag",
     "MixinSrpSpawningCapPurge",
     "MixinSrpSaveDataPoints",
+    "MixinSrpSaveDataThreadSafety",
     "MixinSrpMobCapMulti",
     "MixinBeckonBlockInfestation",
     "MixinWorldGenParasiteNodeCore"
