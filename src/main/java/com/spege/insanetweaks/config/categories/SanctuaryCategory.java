@@ -90,13 +90,6 @@ public class SanctuaryCategory {
     @Config.RangeInt(min = 20, max = 6000)
     public int biomeResetIntervalTicks = 100;
 
-    @Config.Comment({"Max radius (blocks) of the native biome reset. Kept modest so it stays within",
-            "loaded chunks near the Nexus (a large radius would probe/generate unloaded chunks).",
-            "Capped further by the dome's own radius. Read live."})
-    @Config.Name("Biome Reset Radius")
-    @Config.RangeInt(min = 8, max = 128)
-    public int biomeResetRadius = 48;
-
     @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
     @Config.Name("Render Dome")
     public boolean renderDome = true;

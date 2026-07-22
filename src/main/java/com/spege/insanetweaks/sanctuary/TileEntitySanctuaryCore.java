@@ -452,7 +452,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         int interval = com.spege.insanetweaks.config.ModConfig.sanctuary.biomeResetIntervalTicks;
         if (++biomeResetCounter < interval) { return; }
         biomeResetCounter = 0;
-        int radius = Math.min(effectiveRadius, com.spege.insanetweaks.config.ModConfig.sanctuary.biomeResetRadius);
+        // Cover the WHOLE dome (capped at 256): on a large dome the parasite biome outside a small
+        // radius keeps spreading and re-infesting faster than the block cleanse can revert it, so
+        // the biome reset must reach the dome edge to stop the spread at its root. killBiome uses
+        // World.getBiome (no chunk force-gen) and only rewrites already-infested columns, so a
+        // dome-sized radius is safe within the loaded area around an active Nexus.
+        int radius = Math.min(effectiveRadius, 256);
         if (radius > 0) {
             com.spege.insanetweaks.util.SrpNativePurifyHelper.killBiome(world, pos, radius);
         }
