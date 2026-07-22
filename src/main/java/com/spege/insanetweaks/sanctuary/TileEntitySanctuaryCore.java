@@ -447,19 +447,51 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
      * is not re-enqueued.
      */
     private void tickBiomeReset() {
-        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.nativeBiomeReset || tier < 1) { return; }
-        if (!com.spege.insanetweaks.util.SrpNativePurifyHelper.isAvailable()) { return; }
-        int interval = com.spege.insanetweaks.config.ModConfig.sanctuary.biomeResetIntervalTicks;
-        if (++biomeResetCounter < interval) { return; }
+        com.spege.insanetweaks.config.categories.SanctuaryCategory cfg =
+                com.spege.insanetweaks.config.ModConfig.sanctuary;
+        if (tier < 1 || !com.spege.insanetweaks.util.SrpNativePurifyHelper.isAvailable()) { return; }
+        if (!cfg.nativeBiomeReset && !cfg.purgeNodesInZone) { return; }
+        if (++biomeResetCounter < cfg.biomeResetIntervalTicks) { return; }
         biomeResetCounter = 0;
-        // Cover the WHOLE dome (capped at 256): on a large dome the parasite biome outside a small
-        // radius keeps spreading and re-infesting faster than the block cleanse can revert it, so
-        // the biome reset must reach the dome edge to stop the spread at its root. killBiome uses
-        // World.getBiome (no chunk force-gen) and only rewrites already-infested columns, so a
-        // dome-sized radius is safe within the loaded area around an active Nexus.
-        int radius = Math.min(effectiveRadius, 256);
-        if (radius > 0) {
-            com.spege.insanetweaks.util.SrpNativePurifyHelper.killBiome(world, pos, radius);
+
+        // PREVENTION FIRST: kill any node/colony heart whose position falls inside the dome, using
+        // SRP's own removal (clears its node bookkeeping) + air the heart block. This stops a source
+        // at the root before it infests, rather than healing after the fact.
+        if (cfg.purgeNodesInZone) {
+            purgeSourcesInZone(com.spege.insanetweaks.util.SrpNativePurifyHelper.getNodePositions(world), false);
+            purgeSourcesInZone(com.spege.insanetweaks.util.SrpNativePurifyHelper.getColonyPositions(world), true);
+        }
+
+        // Then reset parasite BIOMES to natural across the whole dome (capped 256), via SRP's
+        // throttled killBiome — killBiome uses World.getBiome (no chunk force-gen) and only rewrites
+        // already-infested columns, so a dome-sized radius is safe near a loaded, active Nexus.
+        if (cfg.nativeBiomeReset) {
+            int radius = Math.min(effectiveRadius, 256);
+            if (radius > 0) {
+                com.spege.insanetweaks.util.SrpNativePurifyHelper.killBiome(world, pos, radius);
+            }
+        }
+    }
+
+    /** Remove SRP node ({@code colony=false}) or colony ({@code colony=true}) hearts inside the dome. */
+    private void purgeSourcesInZone(java.util.List<int[]> positions, boolean colony) {
+        if (positions.isEmpty()) { return; }
+        double rr = (double) effectiveRadius * effectiveRadius;
+        for (int i = 0; i < positions.size(); i++) {
+            int[] p = positions.get(i);
+            double dx = p[0] - pos.getX();
+            double dz = p[2] - pos.getZ();
+            if (dx * dx + dz * dz > rr) { continue; }
+            net.minecraft.util.math.BlockPos hp = new net.minecraft.util.math.BlockPos(p[0], p[1], p[2]);
+            boolean removed = colony
+                    ? com.spege.insanetweaks.util.SrpNativePurifyHelper.removeColony(world, hp)
+                    : com.spege.insanetweaks.util.SrpNativePurifyHelper.removeHeart(world, hp);
+            world.setBlockToAir(hp); // removeXInWorld clears node data only; drop the heart block too
+            if (com.spege.insanetweaks.config.ModConfig.sanctuary.debugLogging) {
+                com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
+                        "[InsaneTweaks] Sanctuary purged " + (colony ? "colony" : "node") + " heart @ ("
+                        + p[0] + "," + p[1] + "," + p[2] + ") removed=" + removed);
+            }
         }
     }
 

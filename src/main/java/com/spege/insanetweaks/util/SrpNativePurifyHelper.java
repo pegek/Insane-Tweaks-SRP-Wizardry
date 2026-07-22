@@ -1,6 +1,8 @@
 package com.spege.insanetweaks.util;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 
@@ -31,6 +33,8 @@ public final class SrpNativePurifyHelper {
 
     private static final String PURIFY_MAPPINGS = "com.dhanantry.scapeandrunparasites.block.PurifyMappings";
     private static final String BIOME_PURIFIER = "com.dhanantry.scapeandrunparasites.block.BlockBiomePurifier";
+    private static final String SRP_WORLD_DATA = "com.dhanantry.scapeandrunparasites.world.SRPWorldData";
+    private static final String PARASITE_EVENT_WORLD = "com.dhanantry.scapeandrunparasites.util.ParasiteEventWorld";
     private static final String MAPPINGS_FILE = "srparasites_purify_mappings.txt";
 
     private static boolean initialized;
@@ -41,6 +45,13 @@ public final class SrpNativePurifyHelper {
     private static Method isSrpMethod;           // PurifyMappings.isSrp(IBlockState)
     private static Method mapToVanillaMethod;    // PurifyMappings.mapToVanillaState(IBlockState)
     private static Method killBiomeMethod;       // BlockBiomePurifier.killBiome(World, BlockPos, int)
+
+    // Node/colony source enumeration + native removal (SRPWorldData + ParasiteEventWorld).
+    private static Method worldDataGetMethod;    // SRPWorldData.get(World) [static]
+    private static Method getNodesMethod;        // SRPWorldData.getNodes(String) -> ArrayList<Integer>
+    private static Method getColoniesMethod;     // SRPWorldData.getColonies(String)
+    private static Method removeHeartMethod;     // ParasiteEventWorld.removeHeartInWorld(World, BlockPos) [static]
+    private static Method removeColonyMethod;    // ParasiteEventWorld.removeColonyInWorld(World, BlockPos) [static]
 
     private SrpNativePurifyHelper() {
     }
@@ -108,6 +119,62 @@ public final class SrpNativePurifyHelper {
         }
     }
 
+    /** All tracked parasite-node (biomeheart) positions in this world as {x,y,z}, or empty. */
+    public static List<int[]> getNodePositions(World world) {
+        return getSourcePositions(world, getNodesMethod);
+    }
+
+    /** All tracked colony (colonyheart) positions in this world as {x,y,z}, or empty. */
+    public static List<int[]> getColonyPositions(World world) {
+        return getSourcePositions(world, getColoniesMethod);
+    }
+
+    private static List<int[]> getSourcePositions(World world, Method accessor) {
+        List<int[]> out = new ArrayList<int[]>();
+        if (world == null || !isAvailable() || accessor == null || worldDataGetMethod == null) {
+            return out;
+        }
+        try {
+            Object data = worldDataGetMethod.invoke(null, world);
+            if (data == null) { return out; }
+            List<?> xs = (List<?>) accessor.invoke(data, "x");
+            List<?> ys = (List<?>) accessor.invoke(data, "y");
+            List<?> zs = (List<?>) accessor.invoke(data, "z");
+            if (xs == null || ys == null || zs == null) { return out; }
+            int n = Math.min(xs.size(), Math.min(ys.size(), zs.size()));
+            for (int i = 0; i < n; i++) {
+                out.add(new int[] { ((Number) xs.get(i)).intValue(),
+                        ((Number) ys.get(i)).intValue(), ((Number) zs.get(i)).intValue() });
+            }
+        } catch (Exception e) {
+            logFailure("enumerate SRP node/colony positions", e);
+        }
+        return out;
+    }
+
+    /** SRP-native removal of a node heart (data). The block itself must still be aired by the caller. */
+    public static boolean removeHeart(World world, BlockPos pos) {
+        return invokeRemove(removeHeartMethod, world, pos);
+    }
+
+    /** SRP-native removal of a colony heart (data). The block itself must still be aired by the caller. */
+    public static boolean removeColony(World world, BlockPos pos) {
+        return invokeRemove(removeColonyMethod, world, pos);
+    }
+
+    private static boolean invokeRemove(Method m, World world, BlockPos pos) {
+        if (m == null || world == null || world.isRemote || pos == null || !isAvailable()) {
+            return false;
+        }
+        try {
+            Object r = m.invoke(null, world, pos);
+            return r instanceof Boolean && (Boolean) r;
+        } catch (Exception e) {
+            logFailure("remove SRP node/colony source", e);
+            return false;
+        }
+    }
+
     private static void ensureInitialized() {
         if (initialized) {
             return;
@@ -130,6 +197,20 @@ public final class SrpNativePurifyHelper {
         } catch (Throwable t) {
             available = false;
             logFailure("initialize SRP native purify bridge", t);
+        }
+
+        // Node/colony enumeration + removal is optional — resolved separately so a signature drift
+        // here never disables the block-map / biome-reset bridge above.
+        try {
+            Class<?> worldData = Class.forName(SRP_WORLD_DATA);
+            Class<?> events = Class.forName(PARASITE_EVENT_WORLD);
+            worldDataGetMethod = worldData.getMethod("get", World.class);
+            getNodesMethod = worldData.getMethod("getNodes", String.class);
+            getColoniesMethod = worldData.getMethod("getColonies", String.class);
+            removeHeartMethod = events.getMethod("removeHeartInWorld", World.class, BlockPos.class);
+            removeColonyMethod = events.getMethod("removeColonyInWorld", World.class, BlockPos.class);
+        } catch (Throwable t) {
+            logFailure("initialize SRP node-removal bridge", t);
         }
     }
 

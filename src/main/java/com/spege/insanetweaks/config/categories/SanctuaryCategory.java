@@ -85,10 +85,16 @@ public class SanctuaryCategory {
     @Config.Name("Native Biome Reset")
     public boolean nativeBiomeReset = true;
 
-    @Config.Comment("Ticks between native biome-reset passes (100 = 5s). Read live.")
+    @Config.Comment("Ticks between native biome-reset / node-purge passes (100 = 5s). Read live.")
     @Config.Name("Biome Reset Interval Ticks")
     @Config.RangeInt(min = 20, max = 6000)
     public int biomeResetIntervalTicks = 100;
+
+    @Config.Comment({"PREVENTION: kill any SRP parasite node / colony heart whose position falls inside",
+            "the dome, using SRP's own removal + airing the block. Stops a source at the root before it",
+            "infests, instead of only healing after. Runs on the biome-reset cadence. Read live."})
+    @Config.Name("Purge Nodes In Zone")
+    public boolean purgeNodesInZone = true;
 
     @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
     @Config.Name("Render Dome")
