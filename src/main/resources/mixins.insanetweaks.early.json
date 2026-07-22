@@ -4,7 +4,9 @@
   "package": "com.spege.insanetweaks.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "MixinEntityTracker"
+  ],
   "client": [
     "MixinLocale"
   ],
