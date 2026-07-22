@@ -19,14 +19,24 @@ public class SanctuaryDropVetoHandler {
     @SubscribeEvent
     public void onLivingDrops(LivingDropsEvent event) {
         if (vetoAt(event.getEntityLiving())) {
-            event.setCanceled(true);
+            event.setCanceled(true); // SRP's LootHooks/SRPEventHandlerBus add loot via this event
+            logVeto(event.getEntityLiving(), "drops");
         }
     }
 
     @SubscribeEvent
     public void onExperienceDrop(LivingExperienceDropEvent event) {
         if (vetoAt(event.getEntityLiving())) {
-            event.setCanceled(true);
+            event.setCanceled(true); // SRP spawns XP via ForgeEventFactory.getExperienceDrop, which fires this
+            logVeto(event.getEntityLiving(), "xp");
+        }
+    }
+
+    private static void logVeto(EntityLivingBase e, String what) {
+        if (ModConfig.sanctuary.debugLogging) {
+            com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] Sanctuary vetoed parasite " + what + ": " + e.getName()
+                    + " @(" + ((int) Math.floor(e.posX)) + "," + ((int) Math.floor(e.posZ)) + ")");
         }
     }
 
