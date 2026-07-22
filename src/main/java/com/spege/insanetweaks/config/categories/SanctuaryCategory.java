@@ -73,6 +73,30 @@ public class SanctuaryCategory {
     @Config.Name("Cleanse Enabled By Default")
     public boolean cleanseEnabledByDefault = true;
 
+    @Config.Comment({"Use SRP's own authoritative infested->vanilla block map (PurifyMappings) for the",
+            "cleanse instead of our heuristic, when SRP is present. Falls back to the heuristic if a",
+            "block is unmapped or SRP's classes are absent. Read live."})
+    @Config.Name("Native Block Purify")
+    public boolean nativeBlockPurify = true;
+
+    @Config.Comment({"Periodically reset parasite BIOMES to natural inside the dome via SRP's own",
+            "throttled queue (killBiome) - stops biome-driven spread at the root. Blocks are still",
+            "handled by the cleanse. Read live."})
+    @Config.Name("Native Biome Reset")
+    public boolean nativeBiomeReset = true;
+
+    @Config.Comment("Ticks between native biome-reset passes (100 = 5s). Read live.")
+    @Config.Name("Biome Reset Interval Ticks")
+    @Config.RangeInt(min = 20, max = 6000)
+    public int biomeResetIntervalTicks = 100;
+
+    @Config.Comment({"Max radius (blocks) of the native biome reset. Kept modest so it stays within",
+            "loaded chunks near the Nexus (a large radius would probe/generate unloaded chunks).",
+            "Capped further by the dome's own radius. Read live."})
+    @Config.Name("Biome Reset Radius")
+    @Config.RangeInt(min = 8, max = 128)
+    public int biomeResetRadius = 48;
+
     @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
     @Config.Name("Render Dome")
     public boolean renderDome = true;

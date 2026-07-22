@@ -37,6 +37,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
     private boolean sentStarving; // owner-warning latch for the unfueled transition
     private int upkeepCounter;   // ticks toward the next upkeep charge
     private int drainCounter;    // ticks toward the next drain pulse
+    private int biomeResetCounter; // ticks toward the next native biome reset (R1)
     private boolean registered;  // whether this TE is currently in SanctuaryRegistry
 
     /** Life-essence tithe drained from the owner when no wand mana is available inside. */
@@ -364,6 +365,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         }
         syncRegistry();
         tickCost();
+        tickBiomeReset();
         runCleanse();
         syncDisplayIfChanged();
     }
@@ -435,6 +437,25 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             }
         }
         return 0;
+    }
+
+    /**
+     * R1: periodically reset parasite biomes to natural within the dome, via SRP's own throttled
+     * BiomeUpdateQueue (killBiome). This kills the biome-driven spread at the root without the
+     * cleanse tug-of-war. Radius is capped (config) to stay within loaded chunks near the Nexus —
+     * a large radius would probe unloaded chunks. Self-limiting: once a biome is natural again it
+     * is not re-enqueued.
+     */
+    private void tickBiomeReset() {
+        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.nativeBiomeReset || tier < 1) { return; }
+        if (!com.spege.insanetweaks.util.SrpNativePurifyHelper.isAvailable()) { return; }
+        int interval = com.spege.insanetweaks.config.ModConfig.sanctuary.biomeResetIntervalTicks;
+        if (++biomeResetCounter < interval) { return; }
+        biomeResetCounter = 0;
+        int radius = Math.min(effectiveRadius, com.spege.insanetweaks.config.ModConfig.sanctuary.biomeResetRadius);
+        if (radius > 0) {
+            com.spege.insanetweaks.util.SrpNativePurifyHelper.killBiome(world, pos, radius);
+        }
     }
 
     /** Keep this TE's membership in the loaded-active index in sync with its tier. */
@@ -583,7 +604,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
 
     private boolean isInfestedQuick(net.minecraft.util.math.BlockPos p) {
         if (!world.isBlockLoaded(p)) { return false; }
-        return com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(world.getBlockState(p));
+        net.minecraft.block.state.IBlockState st = world.getBlockState(p);
+        if (com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(st)) { return true; }
+        // R2: also treat blocks SRP's own map recognises (broader/more accurate than our heuristic).
+        return com.spege.insanetweaks.config.ModConfig.sanctuary.nativeBlockPurify
+                && com.spege.insanetweaks.util.SrpNativePurifyHelper.isAvailable()
+                && com.spege.insanetweaks.util.SrpNativePurifyHelper.isSrpPurifiable(st);
     }
 
     /** Render the dome even when the core block itself is off-screen / far behind the camera. */
