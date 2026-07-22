@@ -124,6 +124,32 @@ public class ModRecipes {
                             'H', new ItemStack(safeItem("srparasites", "hardened_bone_handle"))));
         }
 
+        // ---------------------------------------------------------------------
+        // Sanctuary Nexus. Ingredients come from SRP + Ancient Spellcraft, so gate on both
+        // (safeItem throws if an ingredient is missing). Output is the sanctuary_core ItemBlock,
+        // which only exists when the Sanctuary module + SRP are on. Registered BEFORE the srpextra
+        // early-return below (this recipe is independent of srpextra; the pack ships srpextra).
+        //   Eye of Beholder    | Beacon      | Eye of Beholder
+        //   Necromancy Runeston | Level Clock | Necromancy Runestone
+        //   Devoritium Block    | False Apple | Devoritium Block
+        // ---------------------------------------------------------------------
+        if (ModBlocks.SANCTUARY_CORE != null
+                && Loader.isModLoaded("srparasites") && Loader.isModLoaded("ancientspellcraft")) {
+            registerFallback(event, "sanctuary_nexus",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "sanctuary_nexus"),
+                            new ItemStack(ModBlocks.SANCTUARY_CORE),
+                            "PBP",
+                            "RCR",
+                            "DFD",
+                            'P', new ItemStack(safeItem("srparasites", "pearl")),
+                            'B', new ItemStack(safeItem("minecraft", "beacon")),
+                            'C', new ItemStack(safeItem("srparasites", "levelclock")),
+                            'D', new ItemStack(safeItem("ancientspellcraft", "devoritium_block")),
+                            'F', new ItemStack(safeItem("srparasites", "false_apple")),
+                            'R', new ItemStack(safeItem("ebwizardry", "runestone"), 1, 4))); // Necromancy Runestone
+        }
+
         // Guard: only register srpextra fallbacks if srpextra is absent
         if (Loader.isModLoaded("srpextra")) {
             return;
@@ -372,6 +398,7 @@ public class ModRecipes {
                             'F', rupter, 'P', hiveScrap, 'B', bladeFrag,
                             'C', new ItemStack(safeItem("srparasites", "living_core")), 'S', new ItemStack(bootsItem, 1, 32767)));
         }
+
     }
 
     /**

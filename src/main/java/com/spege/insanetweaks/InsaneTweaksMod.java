@@ -67,13 +67,19 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
 
     /** GUI ID for the combined Sentinel control + loot screen. */
     public static final int GUI_ID_SENTINEL = 2;
+
+    /** GUI ID for the Sanctuary Core screen. */
+    public static final int GUI_ID_SANCTUARY = 3;
+
+    /** GUI ID for the Creative Sanctuary radius slider. */
+    public static final int GUI_ID_CREATIVE_SANCTUARY = 4;
 
     @Mod.Instance
     public static InsaneTweaksMod INSTANCE;
@@ -116,7 +122,21 @@ public class InsaneTweaksMod implements IGuiHandler {
         logCompatibilityReport();
         com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
+        // Sanctuary Dome is an SRP-compat feature end-to-end (blocks, spawn veto, TE logic
+        // all key off SRParasites). Defensively disable if SRP isn't present so the module
+        // flag can't linger true with a half-registered feature.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary
+                && !Loader.isModLoaded(SRP_MODID)) {
+            com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary = false;
+            LOGGER.warn("[InsaneTweaks] Sanctuary module auto-disabled: SRParasites not present.");
+        }
+
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) {
+                net.minecraftforge.fml.client.registry.ClientRegistry.bindTileEntitySpecialRenderer(
+                        com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,
+                        new com.spege.insanetweaks.client.renderer.tile.RenderSanctuaryDome());
+            }
             RenderingRegistry.registerEntityRenderingHandler(EntitySentinel.class,
                     new IRenderFactory<EntitySentinel>() {
                         @Override
@@ -331,6 +351,18 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
 
+        // Sentient Codex enchantment runtime (boost recompute, owner-binding, anvil lock).
+        // The enchantment itself registers on the MOD bus in ModEnchantments under the same flag.
+        // Drop protection is conferred via the Ashen Legacy property (LegendaryDropHelper +
+        // the always-on IndestructibleDropHandler above); the client tooltip handler surfaces
+        // that property on Sentient Codex-enchanted vanilla items.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.SentientCodexHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
+            }
+        }
+
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             electroblob.wizardry.util.WandHelper.registerSpecialUpgrade(
                     com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE, "adaptation");
@@ -373,6 +405,19 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyasEventHandler());
         }
 
+        // Sanctuary Dome: veto SRP natural spawns inside an active sanctuary. LOWEST-priority
+        // CheckSpawn listener, not a mixin - overrides SRP's own spawn-check result.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary
+                && Loader.isModLoaded(SRP_MODID)) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuarySpawnVetoHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryPurgeFireHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryBlockBreakVetoHandler());
+            // Suppress parasite drops + XP inside the dome (no free AFK farm from the purge).
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryDropVetoHandler());
+            // "Cost of Power": Layer A presence tax (max-HP tithe + regen suppression).
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.sanctuary.SanctuaryCostHandler());
+        }
+
         // Infernal elite kills drop spectral dust — independent of the SRP/EBW bridge.
         if (Loader.isModLoaded("infernalmobs")
                 && com.spege.insanetweaks.config.ModConfig.interactions.enableInfernalDustDrops) {
@@ -391,6 +436,16 @@ public class InsaneTweaksMod implements IGuiHandler {
         // unconditionally — the thrall entity itself registers unconditionally above, so its
         // protection must not depend on the enableSpells module flag.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallTargetProtectionHandler());
+        // Dormant Eye: native foundation for the discreet-waystone underneath-access feature.
+        // Overworld-only worldgen is gated by config (restart-gated registration); the manual
+        // place/break registry hooks register unconditionally so the persistent registry stays
+        // consistent regardless of the worldgen toggle. All logic (teleport, locator, return-anchor
+        // placement in dim 150, tooltip) lives in GroovyScript, which consumes DormantWaystoneRegistry.
+        if (com.spege.insanetweaks.config.ModConfig.worldgen.dormantWaystoneEnabled) {
+            net.minecraftforge.fml.common.registry.GameRegistry.registerWorldGenerator(
+                    new com.spege.insanetweaks.dormant.DormantWaystoneWorldGen(), 0);
+        }
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.dormant.DormantWaystoneEventHandler());
         // One-shot config-reset notice; registered unconditionally - it no-ops unless a migration
         // happened this launch, and must not be suppressible by a setting that itself just got reset.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
@@ -593,6 +648,20 @@ public class InsaneTweaksMod implements IGuiHandler {
                         sentinel.getEntityId());
             }
         }
+        if (id == GUI_ID_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.ContainerSanctuaryCore(
+                        player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te);
+            }
+        }
+        if (id == GUI_ID_CREATIVE_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.ContainerCreativeSanctuary(
+                        (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te);
+            }
+        }
         return null;
     }
 
@@ -621,6 +690,22 @@ public class InsaneTweaksMod implements IGuiHandler {
                                 new com.spege.insanetweaks.entities.inventory.SentinelLootInventory(sentinel),
                                 sentinel.getEntityId()),
                         sentinel.getEntityId());
+            }
+        }
+        if (id == GUI_ID_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.GuiSanctuaryCore(
+                        new com.spege.insanetweaks.sanctuary.gui.ContainerSanctuaryCore(
+                                player.inventory, (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te));
+            }
+        }
+        if (id == GUI_ID_CREATIVE_SANCTUARY) {
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(x, y, z));
+            if (te instanceof com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) {
+                return new com.spege.insanetweaks.sanctuary.gui.GuiCreativeSanctuary(
+                        new com.spege.insanetweaks.sanctuary.gui.ContainerCreativeSanctuary(
+                                (com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore) te));
             }
         }
         return null;

@@ -58,6 +58,15 @@ public class CorruptedSeedItem extends Item {
             return EnumActionResult.FAIL;
         }
 
+        // Gate on SRP evolution: at phase 0 the hive has not begun to evolve, so the seed refuses
+        // to take root (no spawn, no seed consumed) and the player is told why.
+        if (com.spege.insanetweaks.util.SrpPhaseHelper.getEvolutionPhase(world) < 1) {
+            player.sendStatusMessage(
+                    new net.minecraft.util.text.TextComponentTranslation("msg.insanetweaks.sapling.phase_too_low"),
+                    true);
+            return EnumActionResult.FAIL;
+        }
+
         EntityCorruptedSapling sapling = new EntityCorruptedSapling(world);
         sapling.setPosition(above.getX() + 0.5D, above.getY(), above.getZ() + 0.5D);
         sapling.setOwnerId(player.getUniqueID());

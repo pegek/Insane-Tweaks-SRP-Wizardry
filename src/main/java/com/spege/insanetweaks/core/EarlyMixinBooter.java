@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins;
+package com.spege.insanetweaks.core;
 
 import zone.rong.mixinbooter.IEarlyMixinLoader;
 import java.util.Collections;

@@ -55,12 +55,15 @@ public final class SrpPurificationHelper {
         }
 
         String path = registryName.getResourcePath().toLowerCase(Locale.ROOT);
-        if (path.contains("infestation_purifier")) {
-            return false;
+        if (path.contains("purifier")) {
+            return false; // never cleanse the SRP purifier blocks (infestation_purifier, biomepurifier)
         }
 
+        // "heart"/"node" catch the node cores (biomeheart, colonyheart, noderelay) that carry none of
+        // the usual infestation keywords in their name — these are what the cleanse must neutralise.
         return path.contains("inf") || path.contains("infect") || path.contains("parasite")
-                || path.startsWith("gore") || path.contains("remain");
+                || path.startsWith("gore") || path.contains("remain")
+                || path.contains("heart") || path.contains("node");
     }
 
     public static boolean isBeckon(Entity entity) {
@@ -91,6 +94,11 @@ public final class SrpPurificationHelper {
 
         String path = registryName.getResourcePath().toLowerCase(Locale.ROOT);
         if ("infestremain".equals(path) || path.startsWith("gore") || path.contains("remain")) {
+            return Blocks.AIR;
+        }
+        // Node/colony cores and relays have no natural counterpart: removing the heart neutralises
+        // the node. biomeheart, colonyheart, noderelay, node_redstone_lamp -> air.
+        if (path.contains("heart") || path.contains("node") || path.contains("relay")) {
             return Blocks.AIR;
         }
         if (containsAny(path, "glass_pane")) {

@@ -30,6 +30,7 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAILookIdle;
 import net.minecraft.entity.ai.EntityAIOpenDoor;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -585,9 +586,20 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * parasite, and helps any third-party mod that respects team checks. (The reverse
      * direction - other parasites targeting us - is handled by SimWizardFactionHandler
      * cancelling the friendly-fire damage that would set their revenge targets.)
+     *
+     * <p>v4.2 hardening: a sim_wizard must NEVER be a player's ally. We explicitly return
+     * false for any {@link EntityPlayer} before the parasite check, so no scoreboard team, no
+     * EBW Ally Designation System lookup (ADS consults isOnSameTeam), and no player-assimilation
+     * / COTH state can ever flip a sim_wizard onto the player's side. The wizard stays hostile to
+     * players regardless of how deeply the player is integrated into the hive - it is a rogue
+     * parasite-mage, a threat even to a parasitic battlemage. (Player targeting itself is
+     * un-gated by COTH in {@link EntityAISimWizardCombat#isValidSpellTarget}.)
      */
     @Override
     public boolean isOnSameTeam(@Nonnull Entity other) {
+        if (other instanceof EntityPlayer) {
+            return false;
+        }
         if (other instanceof EntityParasiteBase) {
             return true;
         }

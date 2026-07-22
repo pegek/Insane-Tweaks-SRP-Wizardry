@@ -9,7 +9,9 @@
     "MixinSrpPointsDiag",
     "MixinSrpSpawningCapPurge",
     "MixinSrpSaveDataPoints",
-    "MixinSrpMobCapMulti"
+    "MixinSrpMobCapMulti",
+    "MixinBeckonBlockInfestation",
+    "MixinWorldGenParasiteNodeCore"
   ],
   "client": [],
   "server": [],

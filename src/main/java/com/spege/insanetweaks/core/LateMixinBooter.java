@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins;
+package com.spege.insanetweaks.core;
 
 
 import java.util.List;
@@ -26,6 +26,9 @@ public class LateMixinBooter implements ILateMixinLoader {
         }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
             configs.add("mixins.insanetweaks.srp.json");
+        }
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("openterraingenerator")) {
+            configs.add("mixins.insanetweaks.otg.json");
         }
         return configs;
     }

@@ -49,6 +49,8 @@ public class EntityCorruptedSapling extends EntityLiving {
     private UUID ownerId;
     private boolean cachedBlockInfestation;
     private int blockScanCooldown;
+    /** Last max-HP band value applied from the SRP phase; -1 = not yet applied. */
+    private int appliedHpBand = -1;
 
     /** SRP presence, cached on first use. Growth is impossible without SRP (dormant, never crashes). */
     private static Boolean srpLoaded;
@@ -103,8 +105,11 @@ public class EntityCorruptedSapling extends EntityLiving {
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
+        // Base/fallback value only - the real max HP is set from the current SRP phase on the first
+        // server tick (applyPhaseHealth), because SRPSaveData needs a bound world which is not
+        // available here. Using the phase 1-3 value keeps a sane default if the phase read fails.
         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH)
-                .setBaseValue(ModConfig.tweaks.saplingMaxHp);
+                .setBaseValue(ModConfig.tweaks.saplingHpPhase1);
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.0D);
     }
 
@@ -128,6 +133,8 @@ public class EntityCorruptedSapling extends EntityLiving {
             return;
         }
 
+        applyPhaseHealth();
+
         if (conditionsMet()) {
             this.growthTicks += 20;
             int total = Math.max(20, ModConfig.tweaks.saplingGrowthTicks);
@@ -144,6 +151,46 @@ public class EntityCorruptedSapling extends EntityLiving {
                 bearFruit();
             }
         }
+    }
+
+    /**
+     * Keeps the sapling's max HP in step with the CURRENT SRP evolution phase (server-side,
+     * re-evaluated every 20t). Only touches the attribute when the band value actually changes.
+     * When the band rises, an undamaged sapling is topped up to the new max; a damaged one keeps
+     * its current health under the higher cap. Health is always clamped down to a lower cap.
+     */
+    private void applyPhaseHealth() {
+        int target = hpForPhase(com.spege.insanetweaks.util.SrpPhaseHelper.getEvolutionPhase(this.world));
+        if (target == this.appliedHpBand) {
+            return;
+        }
+        net.minecraft.entity.ai.attributes.IAttributeInstance inst =
+                this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH);
+        if (inst == null) {
+            return;
+        }
+        boolean wasFull = this.getHealth() >= (float) inst.getBaseValue();
+        this.appliedHpBand = target;
+        inst.setBaseValue(target);
+        if (this.getHealth() > target) {
+            this.setHealth(target);            // new cap is lower - clamp down
+        } else if (wasFull) {
+            this.setHealth(target);            // undamaged - keep it full at the new cap
+        }
+    }
+
+    /** Max HP for an SRP evolution phase, per the configured bands. Phase 0-3 -> low band. */
+    private static int hpForPhase(int phase) {
+        if (phase >= 9) {
+            return ModConfig.tweaks.saplingHpPhase9;
+        }
+        if (phase >= 6) {
+            return ModConfig.tweaks.saplingHpPhase6;
+        }
+        if (phase >= 4) {
+            return ModConfig.tweaks.saplingHpPhase4;
+        }
+        return ModConfig.tweaks.saplingHpPhase1;
     }
 
     private boolean conditionsMet() {
