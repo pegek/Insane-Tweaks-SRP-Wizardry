@@ -97,4 +97,32 @@ public class SrpCompatCategory {
     })
     @Config.Name("Per-Dimension Mob Cap Multipliers")
     public String[] perDimMobCapMultipliers = new String[] { "111=0.75" };
+
+    @Config.Comment({
+            "Fix C - route evolution-point writes from worker threads onto the server thread.",
+            "EntityThreading ticks entities on worker threads; SRP entity code (e.g. the COTH",
+            "duration refresh) then calls SRPSaveData.setTotalKills concurrently with the server",
+            "thread, corrupting the parallel ArrayLists that hold per-dimension points/phases.",
+            "With this ON, a setTotalKills call arriving off-thread is re-scheduled onto the main",
+            "thread (the caller gets 'false'; the write lands a fraction of a tick later).",
+            "REQUIRED before unlocking parasites in any dimension while EntityThreading is active.",
+            "Requires MC restart (mixin gate). Default OFF."
+    })
+    @Config.Name("Fix: SaveData Thread Safety")
+    @Config.RequiresMcRestart
+    public boolean fixSaveDataThreadSafety = false;
+
+    @Config.Comment({
+            "Perf - reject doomed setTotalKills calls cheaply at method entry.",
+            "SRP computes the 'choice' multiplier and builds debug/CSV log data BEFORE checking",
+            "whether the dimension can actually gain/lose points (gaining off, phase -2). Infestation",
+            "blocks call this on EVERY random tick (~1100/s at node area ~550), so a locked overworld",
+            "burns CPU on calls that are always rejected. With this ON, the exact same rejection",
+            "conditions are evaluated first and such calls return false immediately.",
+            "Only runs on the server thread (the getters mutate on unknown dims). Behavior is",
+            "identical to unmodified SRP - only wasted work is skipped.",
+            "Read live at call time (no restart needed). Default OFF."
+    })
+    @Config.Name("Perf: Early Reject SetTotalKills")
+    public boolean perfEarlyRejectSetTotalKills = false;
 }
