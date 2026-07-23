@@ -1,2 +1,3 @@
 rootProject.name = 'modDev'
 include 'insanetweaks'
+include 'srpwizmixins'
