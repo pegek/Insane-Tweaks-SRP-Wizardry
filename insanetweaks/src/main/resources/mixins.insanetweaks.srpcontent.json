@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.insanetweaks.mixins.srp",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinBeckonBlockInfestation",
+    "MixinWorldGenParasiteNodeCore"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

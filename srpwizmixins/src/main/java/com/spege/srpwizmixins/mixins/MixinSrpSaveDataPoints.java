@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import java.util.ArrayList;
 
@@ -8,8 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.util.ISrpSaveDataDirectPoints;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
+import com.spege.srpwizmixins.util.ISrpSaveDataDirectPoints;
 
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
@@ -54,7 +54,7 @@ public abstract class MixinSrpSaveDataPoints implements ISrpSaveDataDirectPoints
             remap = false)
     private static boolean insanetweaks$applyStartingPoints(SRPSaveData self, int dim, int value,
             boolean canChangePhase, World world, boolean flag, int code) {
-        if (!ModConfig.srpCompat.fixStartingPoints) {
+        if (!SrpWizMixinsConfig.srpCompat.fixStartingPoints) {
             return self.setTotalKills(dim, value, canChangePhase, world, flag, code);
         }
         ((ISrpSaveDataDirectPoints) self).insanetweaks$setDimPointsDirect(dim, value);

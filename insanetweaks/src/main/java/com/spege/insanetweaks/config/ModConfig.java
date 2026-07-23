@@ -10,7 +10,6 @@ import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.OtgCompatCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
-import com.spege.insanetweaks.config.categories.SrpCompatCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.ThreadingCompatCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
@@ -66,11 +65,6 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.client")
     @Config.Comment("Visual toggles and debugging tools.")
     public static final ClientCategory client = new ClientCategory();
-
-    @Config.Name("srpCompat")
-    @Config.LangKey("config.insanetweaks.category.srpCompat")
-    @Config.Comment("Native patch module for Scape and Run: Parasites (SRP 1.10.7). Per-fix toggles, default OFF.")
-    public static final SrpCompatCategory srpCompat = new SrpCompatCategory();
 
     @Config.Name("sanctuary")
     @Config.LangKey("config.insanetweaks.category.sanctuary")

@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -43,7 +43,7 @@ public abstract class MixinSrpDespawnDiag {
 
     @Inject(method = {"setDead", "func_70106_y"}, at = @At("HEAD"), remap = false)
     private void insanetweaks$logBeckonRemoval(CallbackInfo ci) {
-        if (!ModConfig.srpCompat.debugLogging) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging) {
             return;
         }
         Entity self = (Entity) (Object) this;

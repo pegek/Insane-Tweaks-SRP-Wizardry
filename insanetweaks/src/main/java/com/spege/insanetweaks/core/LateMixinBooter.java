@@ -25,7 +25,7 @@ public class LateMixinBooter implements ILateMixinLoader {
             configs.add("mixins.insanetweaks.tombstone.json");
         }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
-            configs.add("mixins.insanetweaks.srp.json");
+            configs.add("mixins.insanetweaks.srpcontent.json");
         }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("openterraingenerator")) {
             configs.add("mixins.insanetweaks.otg.json");

@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.world.World;
 
@@ -45,7 +45,7 @@ public abstract class MixinSrpPointsDiag {
 
     @Inject(method = "addDim(I)V", at = @At("HEAD"), remap = false)
     private static void insanetweaks$logAddDim(int dim, CallbackInfo ci) {
-        if (!ModConfig.srpCompat.debugLogging) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging) {
             return;
         }
         LOGGER.info("[InsaneTweaks] SRP-diag addDim: dim={} seeding defaultPhase={} defaultPoints={}",
@@ -56,7 +56,7 @@ public abstract class MixinSrpPointsDiag {
     @Inject(method = "setTotalKills(IIZLnet/minecraft/world/World;ZI)Z", at = @At("HEAD"), remap = false)
     private void insanetweaks$logSetKills6(int dim, int value, boolean canChangePhase, World world,
             boolean flag, int code, CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.srpCompat.debugLogging || world == null || world.isRemote) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging || world == null || world.isRemote) {
             return;
         }
         LOGGER.info(
@@ -68,7 +68,7 @@ public abstract class MixinSrpPointsDiag {
     @Inject(method = "setTotalKills(IIZLnet/minecraft/world/World;ZZI)Z", at = @At("HEAD"), remap = false)
     private void insanetweaks$logSetKills7(int dim, int value, boolean canChangePhase, World world,
             boolean flag5, boolean flag6, int code, CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.srpCompat.debugLogging || world == null || world.isRemote) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging || world == null || world.isRemote) {
             return;
         }
         LOGGER.info(
@@ -79,7 +79,7 @@ public abstract class MixinSrpPointsDiag {
     @Inject(method = "setTotalKills(IIZLnet/minecraft/world/World;ZZI)Z", at = @At("RETURN"), remap = false)
     private void insanetweaks$logSetKills7Ret(int dim, int value, boolean canChangePhase, World world,
             boolean flag5, boolean flag6, int code, CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.srpCompat.debugLogging || world == null || world.isRemote) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging || world == null || world.isRemote) {
             return;
         }
         LOGGER.info(
