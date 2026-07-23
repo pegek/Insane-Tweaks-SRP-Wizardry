@@ -4,6 +4,7 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
+import com.spege.insanetweaks.config.categories.FutureMcCompatCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.OtgCompatCategory;
@@ -90,6 +91,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.otgCompat")
     @Config.Comment("Compatibility fixes for Open Terrain Generator (OTG).")
     public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
+
+    @Config.Name("futureMcCompat")
+    @Config.LangKey("config.insanetweaks.category.futureMcCompat")
+    @Config.Comment("Compatibility fixes for Future MC (futuremc).")
+    public static final FutureMcCompatCategory futureMcCompat = new FutureMcCompatCategory();
 
     @Config.Name("threadingCompat")
     @Config.LangKey("config.insanetweaks.category.threadingCompat")
