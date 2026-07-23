@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins.otg",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [ "MixinOTGMapGenStructure", "MixinOTGNetherFortressGen", "MixinOTGMineshaftGen" ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

@@ -1,0 +1,10 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [ "MixinEntityTracker" ],
+  "client": [],
+  "injectors": { "defaultRequire": 1 }
+}
