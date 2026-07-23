@@ -12,7 +12,8 @@
     "MixinSrpSaveDataThreadSafety",
     "MixinSrpMobCapMulti",
     "MixinBeckonBlockInfestation",
-    "MixinWorldGenParasiteNodeCore"
+    "MixinWorldGenParasiteNodeCore",
+    "MixinSrpInfestationSpreadThrottle"
   ],
   "client": [],
   "server": [],
