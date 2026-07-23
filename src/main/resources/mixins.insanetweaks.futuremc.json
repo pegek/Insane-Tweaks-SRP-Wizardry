@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.insanetweaks.mixins.futuremc",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinFutureMcBambooWorldgen"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
