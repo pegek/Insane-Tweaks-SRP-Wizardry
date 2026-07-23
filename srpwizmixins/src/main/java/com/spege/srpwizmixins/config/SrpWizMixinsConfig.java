@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import com.spege.srpwizmixins.SrpWizMixins;
 import com.spege.srpwizmixins.config.categories.SrpCompatCategory;
 
-@Config(modid = SrpWizMixins.MODID, name = SrpWizMixins.MODID)
+@Config(modid = SrpWizMixins.MODID, name = SrpWizMixins.MODID, category = "")
 public class SrpWizMixinsConfig {
 
     @Config.Name("srpCompat")
