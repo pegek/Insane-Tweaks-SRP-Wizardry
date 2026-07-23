@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
-import com.spege.insanetweaks.InsaneTweaksMod;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.SrpWizMixins;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
@@ -51,13 +51,13 @@ public abstract class MixinSrpSaveDataThreadSafety {
         final SRPSaveData self = (SRPSaveData) (Object) this;
 
         // --- 1. Thread-guard: off-main write -> re-schedule on the server thread ---
-        if (ModConfig.srpCompat.fixSaveDataThreadSafety && world != null && !world.isRemote) {
+        if (SrpWizMixinsConfig.srpCompat.fixSaveDataThreadSafety && world != null && !world.isRemote) {
             MinecraftServer server = world.getMinecraftServer();
             if (server != null && !server.isCallingFromMinecraftThread()) {
-                if (ModConfig.srpCompat.debugLogging && insanetweaks$bounceLogCount < 20) {
+                if (SrpWizMixinsConfig.srpCompat.debugLogging && insanetweaks$bounceLogCount < 20) {
                     insanetweaks$bounceLogCount++;
-                    InsaneTweaksMod.LOGGER.info(
-                            "[InsaneTweaks] SRP-diag: setTotalKills bounced to main thread "
+                    SrpWizMixins.LOGGER.info(
+                            "[srpwizmixins] SRP-diag: setTotalKills bounced to main thread "
                                     + "(dim={}, value={}, code={}, thread={})",
                             dim, value, code, Thread.currentThread().getName());
                 }
@@ -74,7 +74,7 @@ public abstract class MixinSrpSaveDataThreadSafety {
 
         // --- 2. Early-reject: mirror SRP's own rejection conditions, main thread only ---
         // (getters mutate via addDim on unknown dims -> never call them off-thread)
-        if (ModConfig.srpCompat.perfEarlyRejectSetTotalKills) {
+        if (SrpWizMixinsConfig.srpCompat.perfEarlyRejectSetTotalKills) {
             if (self.getEvolutionPhase(dim) == -2
                     || (value > 0 && canChangePhase && !self.getCanGain(dim))
                     || (value < 0 && canChangePhase && !self.getCanLoss(dim))) {

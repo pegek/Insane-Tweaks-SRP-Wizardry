@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import java.util.Random;
 
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.dhanantry.scapeandrunparasites.block.BlockInfestedRemain;
 import com.dhanantry.scapeandrunparasites.block.BlockParasiteSpreading;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -34,7 +34,7 @@ public abstract class MixinSrpInfestationSpreadThrottle {
             remap = false)
     private void insanetweaks$throttleSpread(World world, BlockPos pos, IBlockState state,
             Random rand, CallbackInfo ci) {
-        int n = ModConfig.srpCompat.spreadThrottleDivisor;
+        int n = SrpWizMixinsConfig.srpCompat.spreadThrottleDivisor;
         if (n > 1 && !world.isRemote && rand.nextInt(n) != 0) {
             ci.cancel();
         }

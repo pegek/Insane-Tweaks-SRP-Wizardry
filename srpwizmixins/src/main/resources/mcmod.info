@@ -1,0 +1,11 @@
+[
+{
+  "modid": "srpwizmixins",
+  "name": "SRP&Wiz mixins",
+  "description": "Native performance and correctness fixes for Scape and Run: Parasites (SRP 1.10.7): cap-purge shield, per-dimension mob cap, dimension starting points, thread-safe SRPSaveData, infestation spread throttle, diagnostics. Each fix independently config-gated. Mixin-only, no content.",
+  "version": "1.0.0",
+  "mcversion": "1.12.2",
+  "authorList": ["Isuthhh"],
+  "dependencies": ["srparasites"]
+}
+]

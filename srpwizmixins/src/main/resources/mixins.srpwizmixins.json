@@ -1,7 +1,7 @@
 {
   "required": false,
   "minVersion": "0.8.2",
-  "package": "com.spege.insanetweaks.mixins.srp",
+  "package": "com.spege.srpwizmixins.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
@@ -11,13 +11,9 @@
     "MixinSrpSaveDataPoints",
     "MixinSrpSaveDataThreadSafety",
     "MixinSrpMobCapMulti",
-    "MixinBeckonBlockInfestation",
-    "MixinWorldGenParasiteNodeCore",
     "MixinSrpInfestationSpreadThrottle"
   ],
   "client": [],
   "server": [],
-  "injectors": {
-    "defaultRequire": 1
-  }
+  "injectors": { "defaultRequire": 1 }
 }

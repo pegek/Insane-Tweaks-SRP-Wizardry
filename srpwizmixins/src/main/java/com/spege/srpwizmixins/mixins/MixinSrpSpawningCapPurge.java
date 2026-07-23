@@ -1,11 +1,11 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
@@ -46,12 +46,12 @@ public abstract class MixinSrpSpawningCapPurge {
                     target = "Lcom/dhanantry/scapeandrunparasites/entity/ai/misc/EntityParasiteBase;func_70106_y()V"),
             remap = false)
     private static void insanetweaks$shieldBeckonsFromCapPurge(EntityParasiteBase parasite) {
-        if (ModConfig.srpCompat.protectNonDespawnableFromCapPurge) {
+        if (SrpWizMixinsConfig.srpCompat.protectNonDespawnableFromCapPurge) {
             // Beckons/nexuses get a wider protection radius than ordinary parasites, but beyond it
             // even they can be culled so they don't accumulate forever far from any player.
             int radius = insanetweaks$isBeckonOrNexus(parasite)
-                    ? ModConfig.srpCompat.beckonCapPurgeRadius
-                    : ModConfig.srpCompat.capPurgeProtectRadius;
+                    ? SrpWizMixinsConfig.srpCompat.beckonCapPurgeRadius
+                    : SrpWizMixinsConfig.srpCompat.capPurgeProtectRadius;
             if (radius > 0 && insanetweaks$nearAnyPlayer(parasite, radius)) {
                 return;
             }

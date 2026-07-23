@@ -1,14 +1,14 @@
-package com.spege.insanetweaks.util;
+package com.spege.srpwizmixins.util;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 /**
  * Parses and caches the per-dimension parasite mob-cap multipliers from
- * {@code ModConfig.srpCompat.perDimMobCapMultipliers} (entries {@code "dim=multiplier"}).
+ * {@code SrpWizMixinsConfig.srpCompat.perDimMobCapMultipliers} (entries {@code "dim=multiplier"}).
  *
  * <p>Used by the SRP-compat cap mixin, whose hook fires very frequently, so the parsed map is
  * cached and only rebuilt when Forge swaps the config array (detected by reference identity on
@@ -24,7 +24,7 @@ public final class SrpMobCapHelper {
 
     /** Multiplier for {@code dim}, or 1.0f if the dimension has no configured entry. */
     public static float getMultiplier(int dim) {
-        String[] source = ModConfig.srpCompat.perDimMobCapMultipliers;
+        String[] source = SrpWizMixinsConfig.srpCompat.perDimMobCapMultipliers;
         if (source != cachedSource) {
             rebuild(source);
         }

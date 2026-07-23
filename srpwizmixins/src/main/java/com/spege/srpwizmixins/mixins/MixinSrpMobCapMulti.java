@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfig;
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.util.SrpMobCapHelper;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
+import com.spege.srpwizmixins.util.SrpMobCapHelper;
 
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
@@ -67,7 +67,7 @@ public abstract class MixinSrpMobCapMulti {
     }
 
     private static int insanetweaks$scale(int base, LivingSpawnEvent.CheckSpawn event) {
-        if (!ModConfig.srpCompat.enablePerDimMobCap || event == null) {
+        if (!SrpWizMixinsConfig.srpCompat.enablePerDimMobCap || event == null) {
             return base;
         }
         World world = event.getWorld();

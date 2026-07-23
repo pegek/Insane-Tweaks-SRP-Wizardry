@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.srp;
+package com.spege.srpwizmixins.mixins;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -36,14 +36,14 @@ import net.minecraft.util.math.BlockPos;
 @Mixin(value = EntityParasiteBase.class, remap = false)
 public abstract class MixinSrpDespawnDiag {
 
-    private static final Logger LOGGER = LogManager.getLogger("insanetweaks");
+    private static final Logger LOGGER = LogManager.getLogger("srpwizmixins");
 
     @Shadow(remap = false)
     public abstract boolean func_70692_ba();
 
     @Inject(method = {"setDead", "func_70106_y"}, at = @At("HEAD"), remap = false)
     private void insanetweaks$logBeckonRemoval(CallbackInfo ci) {
-        if (!ModConfig.srpCompat.debugLogging) {
+        if (!SrpWizMixinsConfig.srpCompat.debugLogging) {
             return;
         }
         Entity self = (Entity) (Object) this;
@@ -56,7 +56,7 @@ public abstract class MixinSrpDespawnDiag {
         ResourceLocation id = EntityList.getKey(self);
         BlockPos pos = self.getPosition();
         LOGGER.info(
-                "[InsaneTweaks] SRP-diag despawn: entity={} dim={} pos=[{},{},{}] age={} canDespawn={} via={}",
+                "[srpwizmixins] SRP-diag despawn: entity={} dim={} pos=[{},{},{}] age={} canDespawn={} via={}",
                 id, self.dimension, pos.getX(), pos.getY(), pos.getZ(), self.ticksExisted,
                 func_70692_ba(), insanetweaks$srpCallers());
     }
