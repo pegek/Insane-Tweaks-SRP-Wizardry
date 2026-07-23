@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.spege.insanetweaks.config.ModConfig;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +26,11 @@ import net.minecraft.world.World;
  * is inside grow() on a re-fetched state, NOT on grow()'s state parameter (generate() proved
  * to always pass a live bamboo state), so guarding the parameter would not help - we wrap the
  * whole call. String-targeted (FutureMC is not a compile dependency); the redirected receiver
- * is typed as the vanilla superinterface {@link IGrowable}. Gated on
+ * is typed as vanilla {@link Block} because Mixin's @Redirect verifier requires the exact
+ * declared receiver type of the target invoke (BlockBamboo extends Block; a plain
+ * {@code IGrowable} receiver was rejected at apply time with "unexpected argument type
+ * net.minecraft.block.IGrowable ... expected ...BlockBamboo" - confirmed live 2026-07-23), so
+ * we cast to {@link IGrowable} only for the {@code grow()} call itself. Gated on
  * {@code futureMcCompat.guardBambooWorldgenRace}.
  */
 @Mixin(targets = "thedarkcolour.futuremc.world.gen.feature.BambooWorldGen", remap = false)
@@ -40,14 +45,15 @@ public abstract class MixinFutureMcBambooWorldgen {
                             + "Lnet/minecraft/util/math/BlockPos;"
                             + "Lnet/minecraft/block/state/IBlockState;)V"),
             remap = false)
-    private void insanetweaks$safeBambooGrow(IGrowable self, World world, Random rand,
+    private void insanetweaks$safeBambooGrow(Block self, World world, Random rand,
             BlockPos pos, IBlockState state) {
+        IGrowable growable = (IGrowable) self;
         if (!ModConfig.futureMcCompat.guardBambooWorldgenRace) {
-            self.grow(world, rand, pos, state);
+            growable.grow(world, rand, pos, state);
             return;
         }
         try {
-            self.grow(world, rand, pos, state);
+            growable.grow(world, rand, pos, state);
         } catch (IllegalArgumentException e) {
             // OTG-populate worldgen race: block above the stalk was air by the time grow()
             // read getValue(MATURE). Skip this one bamboo instead of crashing chunk gen.
