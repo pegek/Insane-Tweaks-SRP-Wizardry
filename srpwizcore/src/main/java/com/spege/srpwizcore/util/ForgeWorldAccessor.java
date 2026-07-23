@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.util;
+package com.spege.srpwizcore.util;
 
 /**
  * Duck-type accessor for the {@code forgeWorld} field in
@@ -14,7 +14,7 @@ package com.spege.insanetweaks.util;
  *
  * <p><b>Important:</b> This interface lives in {@code util/}, not in the mixin package —
  * duck-type accessor interfaces referenced from mixin code must be outside
- * {@code com.spege.insanetweaks.mixins.*} to avoid {@code IllegalClassLoadError}.
+ * {@code com.spege.srpwizcore.mixins.*} to avoid {@code IllegalClassLoadError}.
  */
 public interface ForgeWorldAccessor {
 

@@ -1,0 +1,11 @@
+[
+{
+  "modid": "srpwizcore",
+  "name": "SRP&WIZ Core",
+  "description": "Private pack-glue for SRP&Wizardry (DEv 1.2): EntityTracker concurrency fix, OpenTerrainGenerator structure-gen null-biome guards, FutureMC bamboo worldgen race guard. Mixin-only, no content.",
+  "version": "1.0.0",
+  "mcversion": "1.12.2",
+  "authorList": ["Isuthhh"],
+  "dependencies": []
+}
+]

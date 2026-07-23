@@ -1,10 +1,10 @@
-package com.spege.insanetweaks.mixins.otg;
+package com.spege.srpwizcore.mixins.otg;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import com.pg85.otg.forge.world.ForgeWorld;
-import com.spege.insanetweaks.util.ForgeWorldAccessor;
+import com.spege.srpwizcore.util.ForgeWorldAccessor;
 
 /**
  * Accessor mixin on {@code OTGMapGenStructure} — the abstract superclass of all OTG structure

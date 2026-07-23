@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.mixins.otg;
+package com.spege.srpwizcore.mixins.otg;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pg85.otg.common.LocalBiome;
 import com.pg85.otg.forge.world.ForgeWorld;
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.util.ForgeWorldAccessor;
+import com.spege.srpwizcore.config.SrpWizCoreConfig;
+import com.spege.srpwizcore.util.ForgeWorldAccessor;
 
 /**
  * Null-biome guard for {@code OTGMineshaftGen.func_75047_a} (canSpawnStructureAtCoords).
@@ -31,7 +31,7 @@ public abstract class MixinOTGMineshaftGen {
     @Inject(method = "func_75047_a(II)Z", at = @At("HEAD"), cancellable = true, remap = false)
     private void insanetweaks$nullGuardBiome(int chunkX, int chunkZ,
             CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.otgCompat.fixStructureGenNullBiome) {
+        if (!SrpWizCoreConfig.otgCompat.fixStructureGenNullBiome) {
             return;
         }
         // Obtain ForgeWorld via the accessor mixin on OTGMapGenStructure (where the field lives).

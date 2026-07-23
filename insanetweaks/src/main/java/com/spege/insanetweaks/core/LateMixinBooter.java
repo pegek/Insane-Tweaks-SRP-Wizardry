@@ -27,12 +27,6 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
             configs.add("mixins.insanetweaks.srpcontent.json");
         }
-        if (net.minecraftforge.fml.common.Loader.isModLoaded("openterraingenerator")) {
-            configs.add("mixins.insanetweaks.otg.json");
-        }
-        if (net.minecraftforge.fml.common.Loader.isModLoaded("futuremc")) {
-            configs.add("mixins.insanetweaks.futuremc.json");
-        }
         return configs;
     }
 

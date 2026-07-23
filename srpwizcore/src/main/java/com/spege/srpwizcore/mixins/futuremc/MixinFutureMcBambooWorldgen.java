@@ -1,10 +1,10 @@
-package com.spege.insanetweaks.mixins.futuremc;
+package com.spege.srpwizcore.mixins.futuremc;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizcore.config.SrpWizCoreConfig;
 
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
@@ -45,7 +45,7 @@ public abstract class MixinFutureMcBambooWorldgen {
                             + "Ljava/lang/Comparable;"),
             remap = false)
     private Comparable insanetweaks$safeMature(IBlockState state, IProperty property) {
-        if (ModConfig.futureMcCompat.guardBambooWorldgenRace
+        if (SrpWizCoreConfig.futureMcCompat.guardBambooWorldgenRace
                 && !state.getPropertyKeys().contains(property)) {
             // OTG-populate race: the block above the stalk was replaced with air, whose state has
             // no MATURE property. Return TRUE so grow() treats the stalk as mature and returns,
