@@ -1,0 +1,19 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizmixins.mixins",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinSrpDespawnDiag",
+    "MixinSrpPointsDiag",
+    "MixinSrpSpawningCapPurge",
+    "MixinSrpSaveDataPoints",
+    "MixinSrpSaveDataThreadSafety",
+    "MixinSrpMobCapMulti",
+    "MixinSrpInfestationSpreadThrottle"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}
