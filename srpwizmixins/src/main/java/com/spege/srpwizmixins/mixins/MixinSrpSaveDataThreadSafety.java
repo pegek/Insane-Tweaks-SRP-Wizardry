@@ -57,7 +57,7 @@ public abstract class MixinSrpSaveDataThreadSafety {
                 if (SrpWizMixinsConfig.srpCompat.debugLogging && insanetweaks$bounceLogCount < 20) {
                     insanetweaks$bounceLogCount++;
                     SrpWizMixins.LOGGER.info(
-                            "[InsaneTweaks] SRP-diag: setTotalKills bounced to main thread "
+                            "[srpwizmixins] SRP-diag: setTotalKills bounced to main thread "
                                     + "(dim={}, value={}, code={}, thread={})",
                             dim, value, code, Thread.currentThread().getName());
                 }

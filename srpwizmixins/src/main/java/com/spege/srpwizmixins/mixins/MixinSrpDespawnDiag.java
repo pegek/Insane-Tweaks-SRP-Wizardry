@@ -36,7 +36,7 @@ import net.minecraft.util.math.BlockPos;
 @Mixin(value = EntityParasiteBase.class, remap = false)
 public abstract class MixinSrpDespawnDiag {
 
-    private static final Logger LOGGER = LogManager.getLogger("insanetweaks");
+    private static final Logger LOGGER = LogManager.getLogger("srpwizmixins");
 
     @Shadow(remap = false)
     public abstract boolean func_70692_ba();
@@ -56,7 +56,7 @@ public abstract class MixinSrpDespawnDiag {
         ResourceLocation id = EntityList.getKey(self);
         BlockPos pos = self.getPosition();
         LOGGER.info(
-                "[InsaneTweaks] SRP-diag despawn: entity={} dim={} pos=[{},{},{}] age={} canDespawn={} via={}",
+                "[srpwizmixins] SRP-diag despawn: entity={} dim={} pos=[{},{},{}] age={} canDespawn={} via={}",
                 id, self.dimension, pos.getX(), pos.getY(), pos.getZ(), self.ticksExisted,
                 func_70692_ba(), insanetweaks$srpCallers());
     }

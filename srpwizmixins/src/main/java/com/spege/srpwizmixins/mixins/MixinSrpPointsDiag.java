@@ -32,7 +32,7 @@ import net.minecraft.world.World;
 @Mixin(value = SRPSaveData.class, remap = false)
 public abstract class MixinSrpPointsDiag {
 
-    private static final Logger LOGGER = LogManager.getLogger("insanetweaks");
+    private static final Logger LOGGER = LogManager.getLogger("srpwizmixins");
 
     @Shadow(remap = false)
     public abstract int getTotalKills(int dim);
@@ -48,7 +48,7 @@ public abstract class MixinSrpPointsDiag {
         if (!SrpWizMixinsConfig.srpCompat.debugLogging) {
             return;
         }
-        LOGGER.info("[InsaneTweaks] SRP-diag addDim: dim={} seeding defaultPhase={} defaultPoints={}",
+        LOGGER.info("[srpwizmixins] SRP-diag addDim: dim={} seeding defaultPhase={} defaultPoints={}",
                 dim, SRPConfigSystems.defaultEvoPhase, SRPConfigSystems.defaultEvoPoints);
     }
 
@@ -60,7 +60,7 @@ public abstract class MixinSrpPointsDiag {
             return;
         }
         LOGGER.info(
-                "[InsaneTweaks] SRP-diag setTotalKills(6) IN: dim={} value={} canChangePhase={} code={} choice={} phaseNow={} pointsBefore={}",
+                "[srpwizmixins] SRP-diag setTotalKills(6) IN: dim={} value={} canChangePhase={} code={} choice={} phaseNow={} pointsBefore={}",
                 dim, value, canChangePhase, code, getChoice(), getEvolutionPhase(dim), getTotalKills(dim));
     }
 
@@ -72,7 +72,7 @@ public abstract class MixinSrpPointsDiag {
             return;
         }
         LOGGER.info(
-                "[InsaneTweaks] SRP-diag setTotalKills(7) IN: dim={} value={} code={} choice={} pointsBefore={}",
+                "[srpwizmixins] SRP-diag setTotalKills(7) IN: dim={} value={} code={} choice={} pointsBefore={}",
                 dim, value, code, getChoice(), getTotalKills(dim));
     }
 
@@ -83,7 +83,7 @@ public abstract class MixinSrpPointsDiag {
             return;
         }
         LOGGER.info(
-                "[InsaneTweaks] SRP-diag setTotalKills(7) RESULT: dim={} accepted={} pointsAfter={} phaseAfter={}",
+                "[srpwizmixins] SRP-diag setTotalKills(7) RESULT: dim={} accepted={} pointsAfter={} phaseAfter={}",
                 dim, cir.getReturnValue(), getTotalKills(dim), getEvolutionPhase(dim));
     }
 }
