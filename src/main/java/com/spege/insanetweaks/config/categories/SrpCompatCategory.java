@@ -125,4 +125,16 @@ public class SrpCompatCategory {
     })
     @Config.Name("Perf: Early Reject SetTotalKills")
     public boolean perfEarlyRejectSetTotalKills = false;
+
+    @Config.Comment({
+            "Perf - infestation spread throttle divisor. SRP's infestation blocks",
+            "(BlockParasiteSpreading/BlockInfestedRemain) do their full spread + evolution-point",
+            "work on every update tick (~1100/s at node area ~550). With divisor N, only ~1/N of",
+            "those ticks run; the rest are skipped at method entry. Visual spread continues at 1/N",
+            "pace - throttle, don't disable (the creep IS the atmosphere). 1 = off (vanilla SRP).",
+            "Read live at call time (no restart). Default 1."
+    })
+    @Config.Name("Perf: Infestation Spread Throttle Divisor")
+    @Config.RangeInt(min = 1, max = 64)
+    public int spreadThrottleDivisor = 1;
 }
