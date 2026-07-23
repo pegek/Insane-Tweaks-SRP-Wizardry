@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.config.categories;
+package com.spege.srpwizcore.config.categories;
 
 import net.minecraftforge.common.config.Config;
 

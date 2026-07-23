@@ -4,14 +4,11 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
-import com.spege.insanetweaks.config.categories.FutureMcCompatCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
-import com.spege.insanetweaks.config.categories.OtgCompatCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
-import com.spege.insanetweaks.config.categories.ThreadingCompatCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
@@ -80,21 +77,6 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.enchantments")
     @Config.Comment("Tunables for the mod's custom enchantments (currently Sentient Codex).")
     public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
-
-    @Config.Name("otgCompat")
-    @Config.LangKey("config.insanetweaks.category.otgCompat")
-    @Config.Comment("Compatibility fixes for Open Terrain Generator (OTG).")
-    public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
-
-    @Config.Name("futureMcCompat")
-    @Config.LangKey("config.insanetweaks.category.futureMcCompat")
-    @Config.Comment("Compatibility fixes for Future MC (futuremc).")
-    public static final FutureMcCompatCategory futureMcCompat = new FutureMcCompatCategory();
-
-    @Config.Name("threadingCompat")
-    @Config.LangKey("config.insanetweaks.category.threadingCompat")
-    @Config.Comment("Thread-safety patches for multithreaded entity ticking (EntityThreading).")
-    public static final ThreadingCompatCategory threadingCompat = new ThreadingCompatCategory();
 
     @Config.Name("worldgen")
     @Config.LangKey("config.insanetweaks.category.worldgen")

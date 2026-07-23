@@ -1,7 +1,7 @@
-package com.spege.insanetweaks.mixins;
+package com.spege.srpwizcore.mixins;
 
-import com.spege.insanetweaks.InsaneTweaksMod;
-import com.spege.insanetweaks.config.ModConfig;
+import com.spege.srpwizcore.SrpWizCore;
+import com.spege.srpwizcore.config.SrpWizCoreConfig;
 import net.minecraft.entity.EntityTracker;
 import net.minecraft.entity.EntityTrackerEntry;
 import net.minecraft.world.WorldServer;
@@ -36,14 +36,14 @@ public class MixinEntityTracker {
 
     @Inject(method = "<init>", at = @At("RETURN"), remap = false)
     private void insanetweaks_installConcurrentEntries(WorldServer world, CallbackInfo ci) {
-        if (!ModConfig.threadingCompat.fixEntityTrackerConcurrent) {
+        if (!SrpWizCoreConfig.threadingCompat.fixEntityTrackerConcurrent) {
             return;
         }
         Set<EntityTrackerEntry> concurrent = ConcurrentHashMap.newKeySet();
         concurrent.addAll(this.entries);
         this.entries = concurrent;
-        InsaneTweaksMod.LOGGER.info(
-                "[InsaneTweaks] EntityTracker entries swapped to concurrent set for dim {}",
+        SrpWizCore.LOGGER.info(
+                "[srpwizcore] EntityTracker entries swapped to concurrent set for dim {}",
                 world.provider.getDimension());
     }
 }
