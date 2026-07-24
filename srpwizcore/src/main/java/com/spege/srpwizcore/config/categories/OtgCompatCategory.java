@@ -27,4 +27,15 @@ public class OtgCompatCategory {
     @Config.Name("Fix: OTG Structure Gen Null Biome")
     @Config.RequiresMcRestart
     public boolean fixStructureGenNullBiome = true;
+
+    @Config.Comment({
+            "Hide OpenTerrainGenerator's 'OTG' world type from the vanilla Create-World",
+            "world-type selector button. Since B1 the Underneath (dim 150) is auto-injected",
+            "into the vanilla Default overworld, so the standalone 'OTG' world type is",
+            "redundant and picking it would bypass the intended generation. Existing OTG-type",
+            "saves still load normally (parseWorldType ignores this flag). Toggles live.",
+            "No-op when OTG is not installed. Default ON."
+    })
+    @Config.Name("Hide: OTG World Type In Create Menu")
+    public boolean hideOtgWorldType = true;
 }
