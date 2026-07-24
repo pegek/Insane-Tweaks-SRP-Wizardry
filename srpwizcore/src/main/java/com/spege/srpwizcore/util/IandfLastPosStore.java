@@ -17,9 +17,10 @@ import net.minecraft.util.math.BlockPos;
  * dimension 0 then suppresses the next mausoleum in dimension 150 (the coordinates are compared
  * across worlds as if they were in the same one).
  *
- * <p>{@code MixinIandfStructureGenerator} swaps the values of those fields in at the start of
- * {@code generate} and back out at every return, keyed by dimension, which makes the spacing rule
- * behave per dimension without touching Ice&amp;Fire's placement logic.
+ * <p>{@code MixinIandfStructureGenerator} redirects every read and write of those fields inside
+ * {@code generate} to this store, keyed by dimension, which makes the spacing rule behave per
+ * dimension without touching Ice&amp;Fire's placement logic. The map is concurrent because this
+ * pack runs chunk generation off the server thread, so two dimensions can generate at once.
  *
  * <p>Lives in {@code util/}, outside the mixin package, per the project rule on helper types
  * referenced from mixin code.

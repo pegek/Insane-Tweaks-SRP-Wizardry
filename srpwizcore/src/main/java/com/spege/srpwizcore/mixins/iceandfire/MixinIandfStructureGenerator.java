@@ -6,11 +6,10 @@ import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.github.alexthe666.iceandfire.IceAndFireConfig;
+import com.github.alexthe666.iceandfire.event.StructureGenerator;
 import com.spege.srpwizcore.config.SrpWizCoreConfig;
 import com.spege.srpwizcore.util.IandfLastPosStore;
 import com.spege.srpwizcore.util.IandfWorldgenOverrides;
@@ -41,9 +40,10 @@ import net.minecraft.world.gen.IChunkGenerator;
  * boolean is read once per chunk right before the ore's placement loop. So a configured number is
  * applied as a per-chunk veto: {@code 0=true:6} lets the pass run in roughly one chunk out of six.
  *
- * <p><b>Spacing.</b> See {@link IandfLastPosStore} — the anti-clustering positions are swapped in
- * and out per dimension around the call, otherwise structures in one dimension suppress the same
- * structure in another.
+ * <p><b>Spacing.</b> See {@link IandfLastPosStore} — every read and write of the ten shared
+ * anti-clustering positions is redirected to a per-dimension ConcurrentHashMap, otherwise a
+ * structure placed in one dimension suppresses the same structure in another (and the map guards
+ * against corruption under this pack's off-thread worldgen).
  *
  * <p><b>Known limitation.</b> For dragon roosts and dens, Ice&amp;Fire consults the per-biome
  * chance maps ({@code Generate Dragon Roosts/Dens Biome Name Chance} in {@code iceandfire.cfg})
@@ -344,12 +344,28 @@ public abstract class MixinIandfStructureGenerator {
     }
 
     // ---------------------------------------------------------------------------------------
-    // Per-dimension anti-clustering positions
+    // Per-dimension anti-clustering positions (plan Task 5, PRIMARY approach).
     //
-    // Chosen over redirecting all ten fields (two reads + one write each = thirty injection
-    // sites) as the plan allows: two injections and ten @Shadow references are far easier to
-    // verify, and they leave Ice&Fire's distance check byte-for-byte intact.
+    // Each last* field is read (twice) and written (once) inside generate to enforce Ice&Fire's
+    // minimum spacing between structures of the same kind. Those fields belong to the single
+    // registered StructureGenerator instance, so they are shared by every dimension: once worldgen
+    // runs in two dimensions the stored position from one bleeds into the distance check of the
+    // other. We redirect every read and write of all ten fields to IandfLastPosStore, keyed by
+    // dimension. The backing map is a ConcurrentHashMap, so concurrent worldgen across dimensions
+    // (this pack runs chunk gen off the server thread) neither leaks positions between dimensions
+    // nor corrupts the map. Ice&Fire's distance arithmetic is untouched — only the storage moves.
+    //
+    // When the fix is off, each handler falls straight through to the real field (via @Shadow),
+    // so behaviour is byte-for-byte native Ice&Fire, including its own within-dimension race.
+    //
+    // Redirect-handler shapes (sponge-mixin 0.8.7):
+    //   GETFIELD -> (owner, <generate args...>) : BlockPos
+    //   PUTFIELD -> (owner, BlockPos value, <generate args...>) : void
+    // The trailing generate args are captured so the handler can read world.provider.getDimension().
     // ---------------------------------------------------------------------------------------
+
+    private static final String SG = "Lcom/github/alexthe666/iceandfire/event/StructureGenerator;";
+    private static final String BP = ":Lnet/minecraft/util/math/BlockPos;";
 
     @Shadow private BlockPos lastMausoleum;
     @Shadow private BlockPos lastDragonRoost;
@@ -367,41 +383,221 @@ public abstract class MixinIandfStructureGenerator {
                 && SrpWizCoreConfig.iandfWorldgen.fixCrossDimStructureSpacing;
     }
 
-    @Inject(method = GENERATE, at = @At("HEAD"), remap = false)
-    private void srpwizcore$swapInLastPositions(Random rand, int chunkX, int chunkZ, World world,
-            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, CallbackInfo ci) {
+    /** Shared read path: native field value when off, per-dimension stored value when on. */
+    private static BlockPos srpwizcore$readLast(BlockPos nativeValue, String key, World world) {
         if (!srpwizcore$perDimSpacing()) {
-            return;
+            return nativeValue;
         }
-        int dim = world.provider.getDimension();
-        this.lastMausoleum = IandfLastPosStore.get(dim, IandfLastPosStore.MAUSOLEUM);
-        this.lastDragonRoost = IandfLastPosStore.get(dim, IandfLastPosStore.DRAGON_ROOST);
-        this.lastDragonCave = IandfLastPosStore.get(dim, IandfLastPosStore.DRAGON_CAVE);
-        this.lastCyclopsCave = IandfLastPosStore.get(dim, IandfLastPosStore.CYCLOPS_CAVE);
-        this.lastMyrmexHive = IandfLastPosStore.get(dim, IandfLastPosStore.MYRMEX_HIVE);
-        this.lastSnowVillage = IandfLastPosStore.get(dim, IandfLastPosStore.SNOW_VILLAGE);
-        this.lastPixieVillage = IandfLastPosStore.get(dim, IandfLastPosStore.PIXIE_VILLAGE);
-        this.lastHydraCave = IandfLastPosStore.get(dim, IandfLastPosStore.HYDRA_CAVE);
-        this.lastSirenIsland = IandfLastPosStore.get(dim, IandfLastPosStore.SIREN_ISLAND);
-        this.lastGorgonTemple = IandfLastPosStore.get(dim, IandfLastPosStore.GORGON_TEMPLE);
+        return IandfLastPosStore.get(world.provider.getDimension(), key);
     }
 
-    @Inject(method = GENERATE, at = @At("RETURN"), remap = false)
-    private void srpwizcore$swapOutLastPositions(Random rand, int chunkX, int chunkZ, World world,
-            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider, CallbackInfo ci) {
-        if (!srpwizcore$perDimSpacing()) {
-            return;
+    // ---- lastMausoleum ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastMausoleum" + BP))
+    private BlockPos srpwizcore$getLastMausoleum(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastMausoleum, IandfLastPosStore.MAUSOLEUM, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastMausoleum" + BP))
+    private void srpwizcore$putLastMausoleum(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.MAUSOLEUM, value);
+        } else {
+            this.lastMausoleum = value;
         }
-        int dim = world.provider.getDimension();
-        IandfLastPosStore.put(dim, IandfLastPosStore.MAUSOLEUM, this.lastMausoleum);
-        IandfLastPosStore.put(dim, IandfLastPosStore.DRAGON_ROOST, this.lastDragonRoost);
-        IandfLastPosStore.put(dim, IandfLastPosStore.DRAGON_CAVE, this.lastDragonCave);
-        IandfLastPosStore.put(dim, IandfLastPosStore.CYCLOPS_CAVE, this.lastCyclopsCave);
-        IandfLastPosStore.put(dim, IandfLastPosStore.MYRMEX_HIVE, this.lastMyrmexHive);
-        IandfLastPosStore.put(dim, IandfLastPosStore.SNOW_VILLAGE, this.lastSnowVillage);
-        IandfLastPosStore.put(dim, IandfLastPosStore.PIXIE_VILLAGE, this.lastPixieVillage);
-        IandfLastPosStore.put(dim, IandfLastPosStore.HYDRA_CAVE, this.lastHydraCave);
-        IandfLastPosStore.put(dim, IandfLastPosStore.SIREN_ISLAND, this.lastSirenIsland);
-        IandfLastPosStore.put(dim, IandfLastPosStore.GORGON_TEMPLE, this.lastGorgonTemple);
+    }
+
+    // ---- lastDragonRoost ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastDragonRoost" + BP))
+    private BlockPos srpwizcore$getLastDragonRoost(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastDragonRoost, IandfLastPosStore.DRAGON_ROOST, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastDragonRoost" + BP))
+    private void srpwizcore$putLastDragonRoost(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.DRAGON_ROOST, value);
+        } else {
+            this.lastDragonRoost = value;
+        }
+    }
+
+    // ---- lastDragonCave ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastDragonCave" + BP))
+    private BlockPos srpwizcore$getLastDragonCave(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastDragonCave, IandfLastPosStore.DRAGON_CAVE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastDragonCave" + BP))
+    private void srpwizcore$putLastDragonCave(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.DRAGON_CAVE, value);
+        } else {
+            this.lastDragonCave = value;
+        }
+    }
+
+    // ---- lastCyclopsCave ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastCyclopsCave" + BP))
+    private BlockPos srpwizcore$getLastCyclopsCave(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastCyclopsCave, IandfLastPosStore.CYCLOPS_CAVE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastCyclopsCave" + BP))
+    private void srpwizcore$putLastCyclopsCave(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.CYCLOPS_CAVE, value);
+        } else {
+            this.lastCyclopsCave = value;
+        }
+    }
+
+    // ---- lastMyrmexHive ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastMyrmexHive" + BP))
+    private BlockPos srpwizcore$getLastMyrmexHive(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastMyrmexHive, IandfLastPosStore.MYRMEX_HIVE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastMyrmexHive" + BP))
+    private void srpwizcore$putLastMyrmexHive(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.MYRMEX_HIVE, value);
+        } else {
+            this.lastMyrmexHive = value;
+        }
+    }
+
+    // ---- lastSnowVillage ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastSnowVillage" + BP))
+    private BlockPos srpwizcore$getLastSnowVillage(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastSnowVillage, IandfLastPosStore.SNOW_VILLAGE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastSnowVillage" + BP))
+    private void srpwizcore$putLastSnowVillage(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.SNOW_VILLAGE, value);
+        } else {
+            this.lastSnowVillage = value;
+        }
+    }
+
+    // ---- lastPixieVillage ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastPixieVillage" + BP))
+    private BlockPos srpwizcore$getLastPixieVillage(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastPixieVillage, IandfLastPosStore.PIXIE_VILLAGE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastPixieVillage" + BP))
+    private void srpwizcore$putLastPixieVillage(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.PIXIE_VILLAGE, value);
+        } else {
+            this.lastPixieVillage = value;
+        }
+    }
+
+    // ---- lastHydraCave ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastHydraCave" + BP))
+    private BlockPos srpwizcore$getLastHydraCave(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastHydraCave, IandfLastPosStore.HYDRA_CAVE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastHydraCave" + BP))
+    private void srpwizcore$putLastHydraCave(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.HYDRA_CAVE, value);
+        } else {
+            this.lastHydraCave = value;
+        }
+    }
+
+    // ---- lastSirenIsland ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastSirenIsland" + BP))
+    private BlockPos srpwizcore$getLastSirenIsland(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastSirenIsland, IandfLastPosStore.SIREN_ISLAND, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastSirenIsland" + BP))
+    private void srpwizcore$putLastSirenIsland(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.SIREN_ISLAND, value);
+        } else {
+            this.lastSirenIsland = value;
+        }
+    }
+
+    // ---- lastGorgonTemple ----
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = SG + "lastGorgonTemple" + BP))
+    private BlockPos srpwizcore$getLastGorgonTemple(StructureGenerator owner,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        return srpwizcore$readLast(this.lastGorgonTemple, IandfLastPosStore.GORGON_TEMPLE, world);
+    }
+
+    @Redirect(method = GENERATE, remap = false,
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = SG + "lastGorgonTemple" + BP))
+    private void srpwizcore$putLastGorgonTemple(StructureGenerator owner, BlockPos value,
+            Random rand, int chunkX, int chunkZ, World world,
+            IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
+        if (srpwizcore$perDimSpacing()) {
+            IandfLastPosStore.put(world.provider.getDimension(), IandfLastPosStore.GORGON_TEMPLE, value);
+        } else {
+            this.lastGorgonTemple = value;
+        }
     }
 }
