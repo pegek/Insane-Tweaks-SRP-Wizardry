@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins.iceandfire",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [ "MixinIandfStructureGenerator" ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.0.0'
+version = '1.1.0'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 
@@ -27,6 +27,9 @@ dependencies {
     // OTG compile-only (deobf) — the 3 OTG mixins reference com.pg85.otg.* classes.
     // FutureMC needs NO jar (string target + vanilla redirect); EntityTracker is vanilla.
     implementation fg.deobf(files(rootProject.file('libs/OpenTerrainGenerator-1.12.2-v9.7.jar')))
+    // Ice&Fire compile-only (deobf) — MixinIandfStructureGenerator redirects reads of
+    // IceAndFireConfig$WorldGenConfig fields, so the handler signatures need that type.
+    implementation fg.deobf(files(rootProject.file('libs/IceAndFire-1.12.2-2.2.9.jar')))
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
@@ -35,7 +38,7 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.0.0",
+            "Specification-Version": "1.1.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

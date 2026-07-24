@@ -19,6 +19,12 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         if (Loader.isModLoaded("futuremc")) {
             configs.add("mixins.srpwizcore.futuremc.json");
         }
+        if (Loader.isModLoaded("iceandfire")) {
+            // Applied whenever Ice&Fire is present; the master switch lives in the config and is
+            // enforced by the override table, which hands back Ice&Fire's own values when off.
+            // Gating the queue on a config value would mean reading it before Forge has injected it.
+            configs.add("mixins.srpwizcore.iceandfire.json");
+        }
         return configs;
     }
 
