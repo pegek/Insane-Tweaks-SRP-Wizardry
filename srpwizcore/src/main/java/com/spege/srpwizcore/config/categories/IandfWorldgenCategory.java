@@ -52,14 +52,21 @@ public class IandfWorldgenCategory {
     private static final String SYNTAX_5 = "A dimension NOT listed here keeps Ice&Fire's native behaviour (fall-through).";
     private static final String SYNTAX_6 = "chance uses Ice&Fire's '1 in N' meaning: bigger number = rarer. Values are";
     private static final String SYNTAX_7 = "directly portable from iceandfire.cfg.";
+    // The 'DEFAULT' line on each field is Ice&Fire's STOCK value (from the mod jar). The value
+    // actually used for an unlisted dimension is the LIVE iceandfire.cfg field, which a pack may
+    // have retuned (in this pack: Mausoleums chance is set to 100, not the stock 1000).
+    private static final String DEFNOTE = "DEFAULT below = Ice&Fire's stock value; fall-through uses the live iceandfire.cfg value.";
 
     // Ore note, repeated on the five ore fields so nobody has to hunt for it.
     private static final String ORE_1 = "ORES ARE DIFFERENT: Ice&Fire has no chance field for ores, only on/off.";
     private static final String ORE_2 = "Here the number is OUR per-chunk veto divider: \"0=true:6\" means the ore's";
     private static final String ORE_3 = "whole generation pass runs in roughly 1 chunk out of 6 in dimension 0.";
     private static final String ORE_4 = "Same syntax as above, different source of meaning.";
+    private static final String ORE_DEF = "DEFAULT: Ice&Fire generates this ore in every whitelisted dimension (on/off only).";
 
     @Config.Comment({ "Dragon dens (underground dragon caves, all three types).",
+            "DEFAULT: Ice&Fire generates dens in every whitelisted dimension, chance 1 in 180 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7,
             "NOTE: per-biome chances from iceandfire.cfg ('Generate Dragon Dens Biome Name Chance')",
             "take priority over the chance here, exactly as they do over Ice&Fire's own value." })
@@ -67,6 +74,8 @@ public class IandfWorldgenCategory {
     public String[] dragonDens = new String[0];
 
     @Config.Comment({ "Dragon roosts (surface dragon nests, all three types).",
+            "DEFAULT: Ice&Fire generates roosts in every whitelisted dimension, chance 1 in 360 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7,
             "NOTE: per-biome chances from iceandfire.cfg ('Generate Dragon Roosts Biome Name Chance')",
             "take priority over the chance here, exactly as they do over Ice&Fire's own value." })
@@ -74,74 +83,94 @@ public class IandfWorldgenCategory {
     public String[] dragonRoosts = new String[0];
 
     @Config.Comment({ "Dead dragon skeletons.",
+            "DEFAULT: Ice&Fire generates skeletons in every whitelisted dimension, chance 1 in 300 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Dragon Skeletons")
     public String[] dragonSkeletons = new String[0];
 
     @Config.Comment({ "Dread mausoleums.",
+            "DEFAULT: Ice&Fire generates mausoleums in every whitelisted dimension, stock chance 1 in 1000",
+            "per chunk (this pack retunes it to 1 in 100 in iceandfire.cfg).",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Mausoleums")
     public String[] mausoleums = new String[0];
 
     @Config.Comment({ "Gorgon temples.",
+            "DEFAULT: Ice&Fire generates gorgon temples in every whitelisted dimension, chance 1 in 75 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Gorgon Temples")
     public String[] gorgonTemple = new String[0];
 
     @Config.Comment({ "Cyclops caves.",
+            "DEFAULT: Ice&Fire generates cyclops caves in every whitelisted dimension, chance 1 in 170 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Cyclops Caves")
     public String[] cyclopsCaves = new String[0];
 
     @Config.Comment({ "Wandering cyclopes (the surface variant, separate from cyclops caves).",
+            "DEFAULT: Ice&Fire generates wandering cyclopes in every whitelisted dimension, chance 1 in 900 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Wandering Cyclops")
     public String[] wanderingCyclops = new String[0];
 
     @Config.Comment({ "Myrmex colonies (jungle and desert hives).",
+            "DEFAULT: Ice&Fire generates myrmex colonies in every whitelisted dimension, chance 1 in 150 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Myrmex Colonies")
     public String[] myrmexColonies = new String[0];
 
     @Config.Comment({ "Pixie villages.",
+            "DEFAULT: Ice&Fire generates pixie villages in every whitelisted dimension, chance 1 in 60 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Pixie Villages")
     public String[] pixieVillages = new String[0];
 
     @Config.Comment({ "Siren islands.",
+            "DEFAULT: Ice&Fire generates siren islands in every whitelisted dimension, chance 1 in 300 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Siren Islands")
     public String[] sirenIslands = new String[0];
 
     @Config.Comment({ "Hydra caves.",
+            "DEFAULT: Ice&Fire generates hydra caves in every whitelisted dimension, chance 1 in 200 per chunk.",
+            DEFNOTE,
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5, SYNTAX_6, SYNTAX_7 })
     @Config.Name("Hydra Caves")
     public String[] hydraCaves = new String[0];
 
     @Config.Comment({ "Snow villages.",
+            "DEFAULT: Ice&Fire generates snow villages in every whitelisted dimension (stock chance 1 in 100,",
+            "but the chance is read inside MapGenSnowVillage, not here, so only on/off is controllable).",
             SYNTAX_1, SYNTAX_2, SYNTAX_3, SYNTAX_4, SYNTAX_5,
-            "NOTE: on/off only. Ice&Fire reads the snow village chance inside MapGenSnowVillage,",
-            "not in the generator method this module hooks, so a ':<chance>' part is ignored here." })
+            "NOTE: on/off only. A ':<chance>' part is ignored here." })
     @Config.Name("Snow Villages")
     public String[] snowVillages = new String[0];
 
-    @Config.Comment({ "Copper ore.", ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
+    @Config.Comment({ "Copper ore.", ORE_DEF, ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
     @Config.Name("Ore: Copper")
     public String[] oreCopper = new String[0];
 
-    @Config.Comment({ "Silver ore.", ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
+    @Config.Comment({ "Silver ore.", ORE_DEF, ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
     @Config.Name("Ore: Silver")
     public String[] oreSilver = new String[0];
 
-    @Config.Comment({ "Amethyst ore.", ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
+    @Config.Comment({ "Amethyst ore.", ORE_DEF, ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
     @Config.Name("Ore: Amethyst")
     public String[] oreAmethyst = new String[0];
 
-    @Config.Comment({ "Ruby ore.", ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
+    @Config.Comment({ "Ruby ore.", ORE_DEF, ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
     @Config.Name("Ore: Ruby")
     public String[] oreRuby = new String[0];
 
-    @Config.Comment({ "Sapphire ore.", ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
+    @Config.Comment({ "Sapphire ore.", ORE_DEF, ORE_1, ORE_2, ORE_3, ORE_4, SYNTAX_5 })
     @Config.Name("Ore: Sapphire")
     public String[] oreSapphire = new String[0];
 }
