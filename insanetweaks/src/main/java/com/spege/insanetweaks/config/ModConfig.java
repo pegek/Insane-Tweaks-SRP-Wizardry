@@ -12,7 +12,6 @@ import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
-import com.spege.insanetweaks.config.categories.WorldgenCategory;
 
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -77,11 +76,6 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.enchantments")
     @Config.Comment("Tunables for the mod's custom enchantments (currently Sentient Codex).")
     public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
-
-    @Config.Name("worldgen")
-    @Config.LangKey("config.insanetweaks.category.worldgen")
-    @Config.Comment("World generation tunables (dormant waystone rarity for the Dormant Eye feature).")
-    public static final WorldgenCategory worldgen = new WorldgenCategory();
 
     @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
     private static class EventHandler {

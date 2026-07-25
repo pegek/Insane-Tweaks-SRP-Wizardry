@@ -1,10 +1,9 @@
-package com.spege.insanetweaks.dormant;
+package com.spege.srpwizcore.dormant;
 
 import java.util.Random;
 
-import com.spege.insanetweaks.api.DormantWaystoneRegistry;
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.init.ModBlocks;
+import com.spege.srpwizcore.api.DormantWaystoneRegistry;
+import com.spege.srpwizcore.config.SrpWizCoreConfig;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -14,26 +13,26 @@ import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
 /**
- * Discreet Overworld-only surface generation for the dormant waystone.
+ * Discreet surface-dimension generation for the dormant waystone.
  *
- * <p>Runs only in dimension 0, gated at registration by {@code worldgen.dormantWaystoneEnabled}.
- * Rarity is {@code worldgen.dormantWaystoneChancePerChunk} (read live each chunk). Placement is
+ * <p>Runs only in {@code SrpWizCoreConfig.dormantWaystones.dimSurface}, gated at registration by
+ * {@code dormantWaystones.worldgenEnabled}. Rarity is
+ * {@code dormantWaystones.worldgenChancePerChunk} (read live each chunk). Placement is
  * deliberately cheap — a single {@link World#getTopSolidOrLiquidBlock(BlockPos)} surface probe,
  * no volumetric scans — then {@link DormantWaystoneRegistry#registerWaystone(World, BlockPos)}.
- * Not an OTG CustomObject/BO3 (that path is broken in this pack).
  */
 public class DormantWaystoneWorldGen implements IWorldGenerator {
 
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world,
             IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
-        if (world.provider.getDimension() != 0) {
+        if (world.provider.getDimension() != SrpWizCoreConfig.dormantWaystones.dimSurface) {
             return;
         }
-        if (ModBlocks.DORMANT_WAYSTONE == null) {
+        if (DormantBlocks.DORMANT_WAYSTONE == null) {
             return;
         }
-        if (random.nextFloat() >= ModConfig.worldgen.dormantWaystoneChancePerChunk) {
+        if (random.nextFloat() >= SrpWizCoreConfig.dormantWaystones.worldgenChancePerChunk) {
             return;
         }
 
@@ -56,7 +55,7 @@ public class DormantWaystoneWorldGen implements IWorldGenerator {
             return; // don't overwrite existing structure/tree blocks
         }
 
-        world.setBlockState(surface, ModBlocks.DORMANT_WAYSTONE.getDefaultState(), 2);
+        world.setBlockState(surface, DormantBlocks.DORMANT_WAYSTONE.getDefaultState(), 2);
         DormantWaystoneRegistry.registerWaystone(world, surface);
     }
 }

@@ -1,7 +1,6 @@
-package com.spege.insanetweaks.dormant;
+package com.spege.srpwizcore.dormant;
 
-import com.spege.insanetweaks.api.DormantWaystoneRegistry;
-import com.spege.insanetweaks.init.ModBlocks;
+import com.spege.srpwizcore.api.DormantWaystoneRegistry;
 
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
@@ -14,9 +13,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * its pair (so {@code getReturnPos}/{@code getOverworldPos} never dangle). Registered
  * unconditionally — registry consistency must not depend on the worldgen config flag.
  *
- * <p>Note: GroovyScript places the dim-150 return anchor via {@code world.setBlockState}, which does
- * NOT fire {@link BlockEvent.PlaceEvent}; GS registers that anchor itself through the API. This
- * handler only covers hand-placement by a player.
+ * <p>Note: the target-dim return anchor is placed natively by {@link DormantTeleportHandler} via
+ * {@code world.setBlockState}, which does NOT fire {@link BlockEvent.PlaceEvent}; that handler
+ * registers the anchor itself through the API. This handler only covers hand-placement by a
+ * player.
  */
 public class DormantWaystoneEventHandler {
 
@@ -26,7 +26,7 @@ public class DormantWaystoneEventHandler {
         if (world.isRemote) {
             return;
         }
-        if (event.getPlacedBlock().getBlock() == ModBlocks.DORMANT_WAYSTONE) {
+        if (event.getPlacedBlock().getBlock() == DormantBlocks.DORMANT_WAYSTONE) {
             DormantWaystoneRegistry.registerWaystone(world, event.getPos());
         }
     }
@@ -37,7 +37,7 @@ public class DormantWaystoneEventHandler {
         if (world.isRemote) {
             return;
         }
-        if (event.getState().getBlock() == ModBlocks.DORMANT_WAYSTONE) {
+        if (event.getState().getBlock() == DormantBlocks.DORMANT_WAYSTONE) {
             DormantWaystoneRegistry.unregisterWaystone(world, event.getPos());
         }
     }

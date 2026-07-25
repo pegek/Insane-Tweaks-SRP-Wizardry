@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import com.spege.srpwizcore.SrpWizCore;
+import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
 import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
@@ -31,6 +32,10 @@ public class SrpWizCoreConfig {
     @Config.Name("iandfWorldgen")
     @Config.Comment("Per-dimension control over Ice&Fire worldgen (empty = native Ice&Fire).")
     public static final IandfWorldgenCategory iandfWorldgen = new IandfWorldgenCategory();
+
+    @Config.Name("dormantWaystones")
+    @Config.Comment("Dormant-waystone travel system (configurable key item + dimension pair).")
+    public static final DormantWaystonesCategory dormantWaystones = new DormantWaystonesCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {

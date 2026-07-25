@@ -1,4 +1,4 @@
-package com.spege.insanetweaks.dormant;
+package com.spege.srpwizcore.dormant;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,27 +14,28 @@ import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.DimensionManager;
 
 /**
- * Persistent registry backing {@link com.spege.insanetweaks.api.DormantWaystoneRegistry}.
+ * Persistent registry backing {@link com.spege.srpwizcore.api.DormantWaystoneRegistry}.
  *
- * <p>Unlike {@link com.spege.insanetweaks.sanctuary.SanctuaryWorldData} (per-world storage),
- * this data lives in the <b>Overworld's global {@code MapStorage}</b> so the cross-dimensional
- * pair table (Overworld waystone &lt;-&gt; dim 150 return anchor) is held in a single save file.
- * Waystone positions themselves are still tracked per-dimension (the {@code byDim} map) so the
- * nearest-lookup can filter by the caller's dimension cheaply, without scanning the world.
+ * <p>This data lives in the <b>Overworld's global {@code MapStorage}</b> so the cross-dimensional
+ * pair table (surface waystone &lt;-&gt; target-dim return anchor) is held in a single save file,
+ * independent of the configured {@code dimSurface}/{@code dimTarget}. Waystone positions
+ * themselves are still tracked per-dimension (the {@code byDim} map) so the nearest-lookup can
+ * filter by the caller's dimension cheaply, without scanning the world.
  *
- * <p>Everything here runs server-side (worldgen, block events, GroovyScript calls). {@link #get()}
+ * <p>Everything here runs server-side (worldgen, block events, teleport handlers). {@link #get()}
  * returns {@code null} when the Overworld is not loaded (e.g. called client-side or before the
  * server has started); callers must treat {@code null} as "unavailable" and no-op.
  */
 public class DormantWaystoneWorldData extends WorldSavedData {
 
+    // legacy name kept on purpose — pre-1.2.0 saves (do NOT "fix")
     private static final String NAME = "insanetweaks_dormant_waystones";
 
     /** dim id -> set of BlockPos.toLong() for every registered waystone in that dimension. */
     private final Map<Integer, Set<Long>> byDim = new HashMap<Integer, Set<Long>>();
-    /** Overworld waystone pos -> dim-150 return anchor pos (BlockPos.toLong() keys). */
+    /** surface waystone pos -> target-dim return anchor pos (BlockPos.toLong() keys). */
     private final Map<Long, Long> owToReturn = new HashMap<Long, Long>();
-    /** dim-150 return anchor pos -> Overworld waystone pos (reverse of owToReturn). */
+    /** target-dim return anchor pos -> surface waystone pos (reverse of owToReturn). */
     private final Map<Long, Long> returnToOw = new HashMap<Long, Long>();
 
     public DormantWaystoneWorldData() { super(NAME); }
@@ -97,7 +98,7 @@ public class DormantWaystoneWorldData extends WorldSavedData {
         }
     }
 
-    /** Removes any pair whose Overworld end OR return end is {@code key}. Returns true if changed. */
+    /** Removes any pair whose surface end OR return end is {@code key}. Returns true if changed. */
     private boolean clearPairFor(long key) {
         boolean changed = false;
         Long ret = owToReturn.remove(Long.valueOf(key));
