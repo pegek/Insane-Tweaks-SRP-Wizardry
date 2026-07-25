@@ -5,6 +5,6 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [ "MixinEntityTracker", "MixinWorldType" ],
-  "client": [],
+  "client": [ "MixinSoundManagerBounce" ],
   "injectors": { "defaultRequire": 1 }
 }

@@ -3,7 +3,7 @@
   "modid": "srpwizcore",
   "name": "SRP&WIZ Core",
   "description": "Private pack-glue for SRP&Wizardry (DEv 1.2): EntityTracker concurrency fix, OpenTerrainGenerator structure-gen null-biome guards, FutureMC bamboo worldgen race guard, per-dimension Ice&Fire worldgen control, plus a native configurable dormant-waystone travel system (block/worldgen/channelled teleport).",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "dependencies": []
