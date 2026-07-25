@@ -3,6 +3,26 @@
     "category": "spells",
     "sounds": ["ebwizardry:heal"]
   },
+  "spell.dispatcher_grasp.start": {
+    "category": "spells",
+    "sounds": [
+      "srparasites:mob/dig/emerge_alt1",
+      "srparasites:mob/dig/emerge_alt2",
+      "srparasites:mob/dig/emerge_alt3"
+    ]
+  },
+  "spell.dispatcher_grasp.loop": {
+    "category": "spells",
+    "sounds": [
+      "srparasites:mob/dig/digging1",
+      "srparasites:mob/dig/digging2",
+      "srparasites:mob/dig/digging3"
+    ]
+  },
+  "spell.dispatcher_grasp.end": {
+    "category": "spells",
+    "sounds": ["srparasites:item/whoosh"]
+  },
   "thrall.spawn": {
     "category": "neutral",
     "sounds": ["insanetweaks:thrall/minionspawn"]

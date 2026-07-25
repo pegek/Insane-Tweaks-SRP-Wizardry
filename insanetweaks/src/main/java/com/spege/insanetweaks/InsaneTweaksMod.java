@@ -31,6 +31,10 @@ import com.spege.insanetweaks.entities.EntityBeckonSivMinion;
 import com.spege.insanetweaks.client.renderer.entity.RenderBeckonSivMinion;
 import com.spege.insanetweaks.client.renderer.entity.RenderSimWizard;
 import com.spege.insanetweaks.entities.EntityFerCowMinion;
+import com.spege.insanetweaks.entities.EntityLightBomberMinion;
+import com.spege.insanetweaks.entities.projectile.EntityBomberBomb;
+import com.spege.insanetweaks.client.renderer.entity.RenderBomberBomb;
+import com.spege.insanetweaks.client.renderer.entity.RenderLightBomberMinion;
 import com.spege.insanetweaks.entities.EntitySentinel;
 import com.spege.insanetweaks.entities.EntitySimWizard;
 import com.spege.insanetweaks.entities.EntityThrallMinion;
@@ -67,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.7";
+    public static final String VERSION = "1.4.8";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -223,6 +227,29 @@ public class InsaneTweaksMod implements IGuiHandler {
                             return new RenderBeckonSivMinion(manager);
                         }
                     });
+            RenderingRegistry.registerEntityRenderingHandler(EntityLightBomberMinion.class,
+                    new IRenderFactory<EntityLightBomberMinion>() {
+                        @Override
+                        public Render<? super EntityLightBomberMinion> createRenderFor(RenderManager manager) {
+                            return new RenderLightBomberMinion(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(EntityBomberBomb.class,
+                    new IRenderFactory<EntityBomberBomb>() {
+                        @Override
+                        public Render<? super EntityBomberBomb> createRenderFor(RenderManager manager) {
+                            return new RenderBomberBomb(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(
+                    com.spege.insanetweaks.entities.EntityDispatcherClaw.class,
+                    new IRenderFactory<com.spege.insanetweaks.entities.EntityDispatcherClaw>() {
+                        @Override
+                        public Render<? super com.spege.insanetweaks.entities.EntityDispatcherClaw> createRenderFor(
+                                RenderManager manager) {
+                            return new com.spege.insanetweaks.client.renderer.entity.RenderDispatcherClaw(manager);
+                        }
+                    });
             RenderingRegistry.registerEntityRenderingHandler(EntityThrallMinion.class,
                     new IRenderFactory<EntityThrallMinion>() {
                         @Override
@@ -316,9 +343,16 @@ public class InsaneTweaksMod implements IGuiHandler {
                 EntityBeckonSivMinion.class, "beckon_siv_minion", 110, this, 64, 3, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "thrall_minion"),
                 EntityThrallMinion.class, "thrall_minion", 114, this, 64, 3, true);
-        // ID 116 — next free (100-115 used). Never reuse/reorder network-stable IDs.
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "corrupted_sapling"),
                 com.spege.insanetweaks.entities.EntityCorruptedSapling.class, "corrupted_sapling", 116, this, 64, 3, false);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "light_bomber_minion"),
+                EntityLightBomberMinion.class, "light_bomber_minion", 117, this, 64, 3, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "bomber_bomb"),
+                EntityBomberBomb.class, "bomber_bomb", 118, this, 64, 10, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "dispatcher_claw"),
+                com.spege.insanetweaks.entities.EntityDispatcherClaw.class, "dispatcher_claw", 119, this, 64, 3, true);
+        // IDs 100-119 used; next free 120.
+        // Never reuse/reorder network-stable IDs.
 
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
@@ -431,6 +465,7 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellRestrictionEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteShroudEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImmuneBondHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.DispatcherGraspRootHandler());
         }
         // Invariant B: make every mob ignore the immortal thrall (see spec 2.1). Registered
         // unconditionally — the thrall entity itself registers unconditionally above, so its
@@ -446,6 +481,7 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.YelloweyeChargeHandler());
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.DispatcherGraspInputHandler());
             }
         }
 
