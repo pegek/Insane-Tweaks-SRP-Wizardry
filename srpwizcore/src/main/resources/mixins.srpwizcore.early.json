@@ -4,7 +4,7 @@
   "package": "com.spege.srpwizcore.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinEntityTracker" ],
+  "mixins": [ "MixinEntityTracker", "MixinWorldType" ],
   "client": [],
   "injectors": { "defaultRequire": 1 }
 }
