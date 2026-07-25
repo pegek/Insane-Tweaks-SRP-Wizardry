@@ -14,27 +14,29 @@ import java.util.Map;
 @Mixin(Locale.class)
 public class MixinLocale {
 
-    @Shadow(aliases = "field_135032_a", remap = false)
-    Map<String, String> properties;
+    // Shadow po nazwie SRG bezpośrednio (remap=false, zero aliasów) — Mixin 0.8.7 / CleanMix 0.6.6+
+    // zabrania aliasowania pól non-private, a Locale.properties (field_135032_a) jest package-private.
+    @Shadow(remap = false)
+    Map<String, String> field_135032_a;
 
     @Inject(method = { "loadLocaleDataFiles", "func_135022_a" }, at = @At("RETURN"), remap = false)
     private void insanetweaks_overwriteGoldenOsmosis(IResourceManager resourceManager, List<String> languageList, CallbackInfo ci) {
-        if (this.properties != null) {
+        if (this.field_135032_a != null) {
             String[] nativeSkillsToOverwrite = new String[] {
                 "golden_osmosis",
                 "safe_port"
             };
 
             for (String skill : nativeSkillsToOverwrite) {
-                String newName = this.properties.get("reskillable.unlock.compatskills." + skill);
-                String newDesc = this.properties.get("reskillable.unlock.compatskills." + skill + ".desc");
+                String newName = this.field_135032_a.get("reskillable.unlock.compatskills." + skill);
+                String newDesc = this.field_135032_a.get("reskillable.unlock.compatskills." + skill + ".desc");
 
                 // Hard overwrite natywnych wpisów Reskillable w słowniku gry
                 if (newName != null) {
-                    this.properties.put("reskillable.unlock.reskillable." + skill, newName);
+                    this.field_135032_a.put("reskillable.unlock.reskillable." + skill, newName);
                 }
                 if (newDesc != null) {
-                    this.properties.put("reskillable.unlock.reskillable." + skill + ".desc", newDesc);
+                    this.field_135032_a.put("reskillable.unlock.reskillable." + skill + ".desc", newDesc);
                 }
             }
         }
