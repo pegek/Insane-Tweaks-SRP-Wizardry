@@ -61,7 +61,7 @@ import java.util.Objects;
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
         dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
-        "after:srpextra;after:baubles;after:potioncore;before:reskillable")
+        "after:srpextra;after:baubles;after:potioncore;after:locks;before:reskillable")
 public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
     /**
@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.8";
+    public static final String VERSION = "1.4.11";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -395,6 +395,18 @@ public class InsaneTweaksMod implements IGuiHandler {
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
             }
+        }
+
+        // Auto Lock Picker: the item and its enchantment register unconditionally on the MOD bus,
+        // and all the picking logic lives in the item's own use methods (no mixin, no tick handler
+        // - Locks vetoes interaction with setUseBlock(DENY), which still lets Item#onItemUse run).
+        // The only thing to hook up here is the client-side channel progress bar.
+        // Registered without consulting modules.enableAutoLockPicker on purpose: that flag has no
+        // @Config.RequiresMcRestart, and the handler re-reads it live on every frame. Gating the
+        // registration too would make turning the module back on need a restart after all.
+        if (com.spege.insanetweaks.util.LocksCompat.isLoaded()
+                && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.AutoLockPickerHudHandler());
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {

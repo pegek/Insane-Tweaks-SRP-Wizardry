@@ -41,6 +41,16 @@ public class ModulesCategory {
     public boolean enableSentientCodex = true;
 
     @Config.Comment({
+            "Enables the Auto Lock Picker: an item that opens a Locks lock by holding right-click on it,",
+            "instead of playing Locks' pin minigame. Channel time and durability cost scale with the",
+            "lock's pin count; the lock's Complexity, Sturdy and Shocking enchantments all still apply.",
+            "Requires the Locks mod - does nothing without it. Tunables live in the 'autoLockPicker'",
+            "category, the Swift Picking enchantment in 'enchantments'. Read live: the item and the",
+            "enchantment stay registered either way, so turning this off never breaks an existing world." })
+    @Config.Name("Enable Auto Lock Picker")
+    public boolean enableAutoLockPicker = true;
+
+    @Config.Comment({
             "Enables the Sanctuary Dome: a pyramid-based core block that blocks SRParasites spawning",
             "and terrain infestation in a cylindrical region, and slowly reverts existing infestation",
             "(fuel-powered cleanse). Requires SRParasites; auto-disabled if absent." })

@@ -20,29 +20,40 @@ import net.minecraft.world.storage.WorldSavedData;
  *
  * <p>Only ritual Nexuses register here (they get an owner on placement); the Creative Sanctuary
  * never sets an owner, so it never counts against the limit.
+ *
+ * <p>THREAD SAFETY — same reasoning as {@link SanctuaryWorldData}: {@code MapStorage} does no
+ * locking of its own, so an unsynchronized check-then-create in {@code get} lets two threads both
+ * create and register an instance, the second replacing the first and taking every recorded
+ * ownership with it. Unlike {@code SanctuaryWorldData} every path here is cold (a player placing
+ * or breaking a sanctuary core), so there is no hot read to keep lock-free: the simplest airtight
+ * option wins and every method that touches {@link #owned} is {@code synchronized}.
  */
 public class SanctuaryOwnerData extends WorldSavedData {
 
     private static final String NAME = "insanetweaks_sanctuary_owners";
 
-    /** owner UUID -> list of {dim, x, y, z}. */
+    private static final Object CREATE_LOCK = new Object();
+
+    /** owner UUID -> list of {dim, x, y, z}. Guarded by this instance's monitor. */
     private final Map<UUID, List<int[]>> owned = new HashMap<UUID, List<int[]>>();
 
     public SanctuaryOwnerData() { super(NAME); }
     public SanctuaryOwnerData(String name) { super(name); }
 
     public static SanctuaryOwnerData get(World world) {
-        MapStorage storage = world.getMapStorage(); // GLOBAL storage, shared across dimensions
-        SanctuaryOwnerData data = (SanctuaryOwnerData) storage.getOrLoadData(SanctuaryOwnerData.class, NAME);
-        if (data == null) {
-            data = new SanctuaryOwnerData();
-            storage.setData(NAME, data);
+        synchronized (CREATE_LOCK) {
+            MapStorage storage = world.getMapStorage(); // GLOBAL storage, shared across dimensions
+            SanctuaryOwnerData data = (SanctuaryOwnerData) storage.getOrLoadData(SanctuaryOwnerData.class, NAME);
+            if (data == null) {
+                data = new SanctuaryOwnerData();
+                storage.setData(NAME, data);
+            }
+            return data;
         }
-        return data;
     }
 
     /** How many sanctuaries this owner has: world-wide when everyDimension, else only in {@code dim}. */
-    public int count(UUID owner, int dim, boolean everyDimension) {
+    public synchronized int count(UUID owner, int dim, boolean everyDimension) {
         List<int[]> list = owned.get(owner);
         if (list == null) {
             return 0;
@@ -58,7 +69,7 @@ public class SanctuaryOwnerData extends WorldSavedData {
     }
 
     /** Register a sanctuary for an owner. Idempotent: a duplicate (dim,pos) is not added twice. */
-    public void add(UUID owner, int dim, BlockPos pos) {
+    public synchronized void add(UUID owner, int dim, BlockPos pos) {
         if (owner == null) {
             return;
         }
@@ -77,7 +88,7 @@ public class SanctuaryOwnerData extends WorldSavedData {
     }
 
     /** Remove a sanctuary registration for an owner (on break). */
-    public void remove(UUID owner, int dim, BlockPos pos) {
+    public synchronized void remove(UUID owner, int dim, BlockPos pos) {
         if (owner == null) {
             return;
         }
@@ -97,7 +108,7 @@ public class SanctuaryOwnerData extends WorldSavedData {
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound c) {
+    public synchronized void readFromNBT(NBTTagCompound c) {
         owned.clear();
         NBTTagList list = c.getTagList("owners", 10);
         for (int i = 0; i < list.tagCount(); i++) {
@@ -116,7 +127,7 @@ public class SanctuaryOwnerData extends WorldSavedData {
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound c) {
+    public synchronized NBTTagCompound writeToNBT(NBTTagCompound c) {
         NBTTagList list = new NBTTagList();
         for (Map.Entry<UUID, List<int[]>> en : owned.entrySet()) {
             for (int[] e : en.getValue()) {

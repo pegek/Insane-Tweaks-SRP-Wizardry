@@ -56,6 +56,12 @@ public class ModItems {
     public static final Item ADAPTATION_UPGRADE = new AdaptationUpgradeItem();
     public static final Item ARCANE_ADAPTED_FRUIT = new ArcaneAdaptedFruitItem();
 
+    // Auto Lock Picker (Locks integration). Registered UNCONDITIONALLY - unlike the modules above,
+    // this one is not gated on its config flag, because gating a registry object means turning the
+    // flag off later deletes the entry from existing worlds. modules.enableAutoLockPicker and
+    // Loader.isModLoaded("locks") gate the item's BEHAVIOUR instead, inside AutoLockPickerItem.
+    public static final Item AUTO_LOCK_PICKER = new com.spege.insanetweaks.items.AutoLockPickerItem();
+
     // Sentient Warlock Armor (originally Battlemage)
     public static final Item SENTIENT_WARLOCK_HELMET = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.HEAD);
@@ -134,6 +140,9 @@ public class ModItems {
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
+        // Always registered - see the field comment for why this one is not config-gated.
+        event.getRegistry().register(AUTO_LOCK_PICKER);
+
         // Items gated by Golden Book module
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
@@ -176,6 +185,8 @@ public class ModItems {
 
     @SubscribeEvent
     public static void registerModels(net.minecraftforge.client.event.ModelRegistryEvent event) {
+        registerModel(AUTO_LOCK_PICKER);
+
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             registerModel(GOLDEN_BOOK);
             registerModel(RUPTER_SOLIED);

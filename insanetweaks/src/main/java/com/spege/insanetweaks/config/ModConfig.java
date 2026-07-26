@@ -1,6 +1,7 @@
 package com.spege.insanetweaks.config;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.config.categories.AutoLockPickerCategory;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
@@ -74,8 +75,13 @@ public class ModConfig {
 
     @Config.Name("enchantments")
     @Config.LangKey("config.insanetweaks.category.enchantments")
-    @Config.Comment("Tunables for the mod's custom enchantments (currently Sentient Codex).")
+    @Config.Comment("Tunables for the mod's custom enchantments (Sentient Codex, Swift Picking).")
     public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
+
+    @Config.Name("autoLockPicker")
+    @Config.LangKey("config.insanetweaks.category.autoLockPicker")
+    @Config.Comment("Auto Lock Picker (Locks integration): channel time, durability cost, Complexity/Sturdy/Shocking handling. Master toggle is modules.enableAutoLockPicker.")
+    public static final AutoLockPickerCategory autoLockPicker = new AutoLockPickerCategory();
 
     @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
     private static class EventHandler {

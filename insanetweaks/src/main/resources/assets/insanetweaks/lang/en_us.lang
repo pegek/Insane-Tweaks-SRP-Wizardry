@@ -301,3 +301,15 @@ config.insanetweaks.category.entities.assimilated_wizard=Assimilated Wizard
 config.insanetweaks.category.entities.assimilated_wizard.spawning=Spawning & Stats
 config.insanetweaks.category.entities.assimilated_wizard.combat=Combat
 config.insanetweaks.category.entities.assimilated_wizard.spells=Spells
+
+# --- Auto Lock Picker (Locks integration) ---
+item.auto_lock_picker.name=Auto Lock Picker
+enchantment.swiftpicking=Swift Picking
+enchantment.swiftpicking.desc=Shortens the Auto Lock Picker's channel time. Only works on the picker.
+enchantment.insanetweaks.swift_picking.desc=Practised hands find the pin faster. Each level shaves time off the Auto Lock Picker's channel, so a lock that would hold you for seconds gives way in a heartbeat. Worthless on anything but the picker itself.
+config.insanetweaks.category.autoLockPicker=Auto Lock Picker
+tooltip.insanetweaks.auto_lock_picker.usage=Hold right-click on a lock to pick it open.
+tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Complexity)
+tooltip.insanetweaks.auto_lock_picker.timing=Wood lock %ss - Diamond lock %ss
+tooltip.insanetweaks.auto_lock_picker.no_locks=Requires the Locks mod.
+tooltip.insanetweaks.auto_lock_picker.disabled=Disabled in the config (modules.enableAutoLockPicker).

@@ -4,7 +4,11 @@
   "package": "com.spege.insanetweaks.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "enchant.MixinEnchantRandomly",
+    "enchant.MixinEnchantmentHelperNaturalDiscovery",
+    "enchant.MixinVillagerEnchantedBookTrade"
+  ],
   "client": [
     "MixinLocale"
   ],

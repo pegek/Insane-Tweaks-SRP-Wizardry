@@ -23,8 +23,12 @@ import net.minecraft.util.text.translation.I18n;
  *
  * <p>Tunables come from {@link ModConfig#sentientCodex}; the master toggle is
  * {@code ModConfig.modules.enableSentientCodex}.
+ *
+ * <p>Reward-only, and quest-gated in the modpack: {@link EnchantmentInsaneTweaksBase} supplies the
+ * treasure flag and the enchanting-table refusal that used to be overridden here, and the
+ * {@code mixins/enchant/} trio closes chest loot and librarian trades.
  */
-public class EnchantmentSentientCodex extends Enchantment {
+public class EnchantmentSentientCodex extends EnchantmentInsaneTweaksBase {
 
     /** String UUID of the bound owner (owner-binding). */
     public static final String OWNER_TAG = "sentientcodex_owner";
@@ -61,10 +65,7 @@ public class EnchantmentSentientCodex extends Enchantment {
         return 200;
     }
 
-    @Override
-    public boolean isTreasureEnchantment() {
-        return true;
-    }
+    // isTreasureEnchantment() -> true comes from EnchantmentInsaneTweaksBase.
 
     @Override
     public boolean isCurse() {
@@ -83,11 +84,7 @@ public class EnchantmentSentientCodex extends Enchantment {
         return true;
     }
 
-    // reward-only: never obtainable at the enchanting table
-    @Override
-    public boolean canApplyAtEnchantingTable(ItemStack stack) {
-        return false;
-    }
+    // canApplyAtEnchantingTable() -> false comes from EnchantmentInsaneTweaksBase.
 
     @Override
     public boolean canApply(ItemStack stack) {

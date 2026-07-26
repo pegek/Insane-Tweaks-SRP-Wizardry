@@ -3,6 +3,7 @@ package com.spege.insanetweaks.init;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.enchant.EnchantmentSentientCodex;
+import com.spege.insanetweaks.enchant.EnchantmentSwiftPicking;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraftforge.event.RegistryEvent;
@@ -22,9 +23,16 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class ModEnchantments {
 
     public static EnchantmentSentientCodex SENTIENT_CODEX;
+    public static EnchantmentSwiftPicking SWIFT_PICKING;
 
     @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
+        // Swift Picking is registered UNCONDITIONALLY, unlike Sentient Codex below: gating a
+        // registry object on a config flag means turning the flag off deletes the entry from an
+        // existing world. modules.enableAutoLockPicker gates the picker's behaviour instead.
+        SWIFT_PICKING = new EnchantmentSwiftPicking();
+        event.getRegistry().register(SWIFT_PICKING);
+
         if (!ModConfig.modules.enableSentientCodex) {
             return;
         }
