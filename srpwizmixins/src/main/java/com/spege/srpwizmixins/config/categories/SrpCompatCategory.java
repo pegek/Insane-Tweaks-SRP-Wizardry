@@ -9,10 +9,21 @@ import net.minecraftforge.common.config.Config;
  * SRParasites 1.10.7 (community) build as InsaneTweaks mixins. Every fix is gated
  * behind its own toggle and defaults to OFF so the module is inert until opted in.
  *
- * <p>All the SRP-targeting mixins live in {@code mixins.insanetweaks.srp.json}, which
- * {@code LateMixinBooter} only queues when {@code srparasites} is present. Individual
- * mixin handlers additionally self-gate on the flags below at HEAD, so toggling a fix
- * off makes it behave exactly like unmodified SRP.
+ * <p>All the SRP-targeting mixins live in {@code mixins.srpwizmixins.json}, which
+ * {@code SrpWizMixinsLateBooter} only queues when {@code srparasites} is present.
+ *
+ * <p>IMPORTANT — the flags below are NOT mixin gates. {@code mixins.srpwizmixins.json} declares no
+ * {@code plugin}, so all eight mixins are applied unconditionally once SRP is present; every flag
+ * here is an early-return at the top of the injected handler. Two consequences:
+ * <ul>
+ *   <li>Toggling a flag takes effect immediately — none of them need a restart.</li>
+ *   <li>Anything that can go wrong at mixin <em>application</em> time (a {@code VerifyError} from a
+ *       bad merged {@code <clinit>}, a missing injection point) happens whether the flag is on or
+ *       off. A crash is never excused by "but that fix was disabled".</li>
+ * </ul>
+ * Turning a fix off still makes the patched method behave exactly like unmodified SRP. Making these
+ * real application gates would need an {@code IMixinConfigPlugin}; see the note in
+ * {@code com.spege.srpwizmixins.util.SrpLocks} for why the current arrangement is the safer one.
  */
 public class SrpCompatCategory {
 
@@ -35,10 +46,10 @@ public class SrpCompatCategory {
             "nexus), and additionally skips ANY parasite within 'Cap Purge Protect Radius' of a player",
             "(see below). Parasites far from every player are still culled, so the mob cap is still",
             "enforced where the player can't see it.",
-            "Requires MC restart (mixin gate). Default OFF."
+            "Read live (no restart): the mixin is always applied and this flag is an",
+            "early-return at method entry. Default OFF."
     })
     @Config.Name("Fix: Protect Non-Despawnable From Cap Purge")
-    @Config.RequiresMcRestart
     public boolean protectNonDespawnableFromCapPurge = false;
 
     @Config.Comment({
@@ -71,10 +82,10 @@ public class SrpCompatCategory {
             "ended up -300, then degraded a phase on the first point tick). Phase -2 dimensions",
             "are rejected outright. With this ON, the starting-list points are written directly",
             "at world-data creation so each dimension starts with exactly the configured value.",
-            "Requires MC restart (mixin gate). Default OFF."
+            "Read live (no restart): the mixin is always applied and this flag is an",
+            "early-return at method entry. Default OFF."
     })
     @Config.Name("Fix: Apply Starting Points")
-    @Config.RequiresMcRestart
     public boolean fixStartingPoints = false;
 
     @Config.Comment({
@@ -83,10 +94,10 @@ public class SrpCompatCategory {
             "spawning cap. Scales SRPConfig.worldSpawningMobCap (the population the 'SOO MANY",
             "PARASITES' cull trims down to) for dimensions listed in 'Per-Dimension Mob Cap",
             "Multipliers' below. Dimensions without an entry are unaffected.",
-            "Requires MC restart (mixin gate). Default OFF."
+            "Read live (no restart): the mixin is always applied and this flag is an",
+            "early-return at method entry. Default OFF."
     })
     @Config.Name("Enable Per-Dimension Mob Cap")
-    @Config.RequiresMcRestart
     public boolean enablePerDimMobCap = false;
 
     @Config.Comment({
@@ -106,11 +117,29 @@ public class SrpCompatCategory {
             "With this ON, a setTotalKills call arriving off-thread is re-scheduled onto the main",
             "thread (the caller gets 'false'; the write lands a fraction of a tick later).",
             "REQUIRED before unlocking parasites in any dimension while EntityThreading is active.",
-            "Requires MC restart (mixin gate). Default OFF."
+            "Read live (no restart): the mixin is always applied and this flag is an",
+            "early-return at method entry. Default OFF."
     })
     @Config.Name("Fix: SaveData Thread Safety")
-    @Config.RequiresMcRestart
     public boolean fixSaveDataThreadSafety = false;
+
+    @Config.Comment({
+            "Fix D - serialize the creation path of SRPSaveData.get, which is static and",
+            "unsynchronized. On the server it does getOrLoadData and, when that returns null,",
+            "creates the instance and registers it in the world's MapStorage. Entity AI and block",
+            "code call it constantly, so with EntityThreading it runs on worker threads. Two races",
+            "follow: (1) MapStorage appends to a plain ArrayList, and a torn concurrent add leaves a",
+            "null hole that later TRUNCATES the world save (crash 2026-07-26 00:36); (2) two threads",
+            "can both see null and both create an instance - one is orphaned and the points written",
+            "into it are lost. With this ON the whole check-then-create runs under a lock; behavior",
+            "is otherwise identical to SRP (the client path is untouched).",
+            "NOTE: the mixin takes over the server-side body of get() - re-verify it after an SRP",
+            "version bump. Pairs with 'Fix: SaveData Thread Safety' above.",
+            "Read live (no restart): the mixin is always applied and this flag is an",
+            "early-return at method entry. Default OFF."
+    })
+    @Config.Name("Fix: SaveData Get Race")
+    public boolean fixSaveDataGetRace = false;
 
     @Config.Comment({
             "Perf - reject doomed setTotalKills calls cheaply at method entry.",
