@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.2.2'
+version = '1.4.0'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 
@@ -38,12 +38,12 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.2.2",
+            "Specification-Version": "1.4.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "mixins.srpwizcore.early.json"
+            "MixinConfigs": "mixins.srpwizcore.early.json,mixins.srpwizcore.intcache.json"
         ])
     }
 }

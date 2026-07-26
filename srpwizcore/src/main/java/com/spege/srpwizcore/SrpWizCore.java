@@ -7,8 +7,9 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * SRP&WIZ Core — private pack-glue for the SRP&Wizardry pack (DEv 1.2). Mixins:
- * EntityTracker concurrency fix (early), OpenTerrainGenerator structure-gen null-biome
- * guards, FutureMC bamboo worldgen race guard, per-dimension Ice&amp;Fire worldgen control.
+ * EntityTracker, MapStorage and IntCache concurrency fixes (early), OpenTerrainGenerator
+ * structure-gen null-biome guards, FutureMC bamboo worldgen race guard, per-dimension
+ * Ice&amp;Fire worldgen control.
  * Also owns a small native registry system: the configurable dormant-waystone travel
  * system (block/worldgen/teleport, see {@code com.spege.srpwizcore.dormant}). Each fix
  * config-gated in {@link com.spege.srpwizcore.config.SrpWizCoreConfig}.
@@ -21,7 +22,7 @@ import net.minecraftforge.fml.common.Mod;
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.2.2";
+    public static final String VERSION = "1.4.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 

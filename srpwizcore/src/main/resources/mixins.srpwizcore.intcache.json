@@ -4,7 +4,7 @@
   "package": "com.spege.srpwizcore.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinEntityTracker", "MixinWorldType", "MixinMapStorage" ],
-  "client": [ "MixinSoundManagerBounce" ],
+  "plugin": "com.spege.srpwizcore.core.IntCacheMixinPlugin",
+  "mixins": [ "MixinIntCache" ],
   "injectors": { "defaultRequire": 1 }
 }

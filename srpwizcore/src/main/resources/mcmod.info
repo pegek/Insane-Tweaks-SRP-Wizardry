@@ -2,8 +2,8 @@
 {
   "modid": "srpwizcore",
   "name": "SRP&WIZ Core",
-  "description": "Pack-glue and worldgen control for heavy 1.12.2 packs: EntityTracker concurrency fix, OpenTerrainGenerator structure-gen null-biome guards, FutureMC bamboo worldgen race guard, per-dimension Ice&Fire worldgen control, plus a native configurable dormant-waystone travel system (block/worldgen/channelled teleport). Every feature independently config-gated.",
-  "version": "1.2.2",
+  "description": "Pack-glue and worldgen control for heavy 1.12.2 packs: EntityTracker, MapStorage and IntCache concurrency fixes (MapStorage stops a torn world-data list from silently truncating the world save; IntCache gives every thread its own GenLayer array pools so concurrent chunk generation cannot corrupt biome data), OpenTerrainGenerator structure-gen null-biome guards, FutureMC bamboo worldgen race guard, per-dimension Ice&Fire worldgen control, plus a native configurable dormant-waystone travel system (block/worldgen/channelled teleport). Every feature independently config-gated.",
+  "version": "1.4.0",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "url": "https://www.curseforge.com/minecraft/mc-mods/srpwiz-core",

@@ -26,7 +26,7 @@ public class SrpWizCoreConfig {
     public static final FutureMcCompatCategory futureMcCompat = new FutureMcCompatCategory();
 
     @Config.Name("threadingCompat")
-    @Config.Comment("EntityThreading concurrency patches (EntityTracker).")
+    @Config.Comment("Concurrency patches for threading coremods (EntityTracker, MapStorage, IntCache).")
     public static final ThreadingCompatCategory threadingCompat = new ThreadingCompatCategory();
 
     @Config.Name("iandfWorldgen")
