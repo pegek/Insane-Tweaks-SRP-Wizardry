@@ -34,6 +34,9 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         if (Loader.isModLoaded("raids")) {
             configs.add("mixins.srpwizcore.raids.json");
         }
+        if (Loader.isModLoaded("defiledlands")) {
+            configs.add("mixins.srpwizcore.defiledlands.json");
+        }
         return configs;
     }
 

@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins.defiledlands",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [ "MixinDefiledCorruptionSpread" ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

@@ -20,6 +20,9 @@ public final class PerfGlueState {
     /** Set once the Raids per-world-storage redirect has logged, so it logs only on first use. */
     public static boolean raidsStorageFixLogged;
 
+    /** Corruption-spread calls cancelled by {@code MixinDefiledCorruptionSpread}. */
+    public static long corruptionSpreadSkips;
+
     private PerfGlueState() {
     }
 }

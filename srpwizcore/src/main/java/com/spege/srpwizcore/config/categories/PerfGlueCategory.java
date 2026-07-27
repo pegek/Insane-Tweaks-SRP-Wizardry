@@ -34,6 +34,18 @@ public class PerfGlueCategory {
     public boolean cqrStructureScanGuard = true;
 
     @Config.Comment({
+            "DefiledLands: percentage of CorruptionHelper.spread calls allowed through the",
+            "HEAD gate. The mod has NO config for the block-corruption pace (conversionRate is",
+            "unrelated), and spread was 13.5% of dim-150 spike time in the 2026-07-27 re-profile.",
+            "Cuts the corruption speed and the tick cost by the same factor: 50 = half pace,",
+            "100 = untouched vanilla behaviour, 0 = corruption spread fully frozen.",
+            "Read live at call time (no restart). Default 50."
+    })
+    @Config.Name("DefiledLands: Corruption Spread Percent")
+    @Config.RangeInt(min = 0, max = 100)
+    public int defiledCorruptionSpreadPct = 50;
+
+    @Config.Comment({
             "Raids-Backport: register WorldDataRaids in the per-world storage it is actually",
             "read from, instead of the global one. Fixes a per-world-tick disk stat() (384 ms",
             "in the 2026-07-25 overworld profile), a per-tick allocation, and a cross-dimension",
