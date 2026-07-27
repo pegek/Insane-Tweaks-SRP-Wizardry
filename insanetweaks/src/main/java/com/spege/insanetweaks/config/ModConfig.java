@@ -2,12 +2,15 @@ package com.spege.insanetweaks.config;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.AutoLockPickerCategory;
+import com.spege.insanetweaks.config.categories.BaubleFruitsCategory;
+import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
+import com.spege.insanetweaks.config.categories.ScarredFleshCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
 import com.spege.insanetweaks.config.categories.TombstoneCategory;
@@ -32,6 +35,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.tweaks")
     @Config.Comment("Specific bugfixes and mechanic alterations.")
     public static final TweaksCategory tweaks = new TweaksCategory();
+
+    @Config.Name("baubleFruits")
+    @Config.LangKey("config.insanetweaks.category.baubleFruits")
+    @Config.Comment("Bauble Fruits: consumption cap, tooltip counter, and the corrupted seed/sapling/fruit loop.")
+    public static final BaubleFruitsCategory baubleFruits = new BaubleFruitsCategory();
 
     @Config.Name("interactions")
     @Config.LangKey("config.insanetweaks.category.interactions")
@@ -78,6 +86,16 @@ public class ModConfig {
     @Config.Comment("Tunables for the mod's custom enchantments (Sentient Codex, Swift Picking, Mmmm).")
     public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
 
+    @Config.Name("chargeJump")
+    @Config.LangKey("config.insanetweaks.category.chargeJump")
+    @Config.Comment("Coiled Spring trait: charge time, leap power and fall-damage waiver.")
+    public static final ChargeJumpCategory chargeJump = new ChargeJumpCategory();
+
+    @Config.Name("scarredFlesh")
+    @Config.LangKey("config.insanetweaks.category.scarredFlesh")
+    @Config.Comment("Scarred Flesh trait: the escalating parasite-affliction resistance ladder.")
+    public static final ScarredFleshCategory scarredFlesh = new ScarredFleshCategory();
+
     @Config.Name("autoLockPicker")
     @Config.LangKey("config.insanetweaks.category.autoLockPicker")
     @Config.Comment("Auto Lock Picker (Locks integration): channel time, durability cost, Complexity/Sturdy/Shocking handling. Master toggle is modules.enableAutoLockPicker.")
@@ -89,6 +107,10 @@ public class ModConfig {
         public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
             if (event.getModID().equals(InsaneTweaksMod.MODID)) {
                 ConfigManager.sync(InsaneTweaksMod.MODID, Config.Type.INSTANCE);
+                // The sim_wizard spell-role map is derived once per spell and cached; drop it so
+                // edits to entities.assimilated_wizard.spells.spellRoles apply without a restart.
+                com.spege.insanetweaks.entities.ai.SpellRoleResolver.invalidateCache();
+                com.spege.insanetweaks.util.SrpWizardryAssimilationHelper.invalidateCache();
             }
         }
     }

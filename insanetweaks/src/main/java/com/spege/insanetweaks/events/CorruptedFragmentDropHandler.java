@@ -42,7 +42,7 @@ public class CorruptedFragmentDropHandler {
 
         sendOneTimeHint(killer);
 
-        if (killed.world.rand.nextDouble() >= ModConfig.tweaks.fragmentDropChance) return;
+        if (killed.world.rand.nextDouble() >= ModConfig.baubleFruits.fragmentDropChance) return;
 
         event.getDrops().add(new EntityItem(killed.world,
                 killed.posX, killed.posY + 0.3D, killed.posZ,
@@ -50,7 +50,7 @@ public class CorruptedFragmentDropHandler {
     }
 
     private static boolean isHighTier(String registryName) {
-        for (String prefix : ModConfig.tweaks.fragmentDropEntities) {
+        for (String prefix : ModConfig.baubleFruits.fragmentDropEntities) {
             if (prefix != null && !prefix.isEmpty() && registryName.startsWith(prefix)) {
                 return true;
             }

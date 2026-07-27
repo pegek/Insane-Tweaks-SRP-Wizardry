@@ -18,8 +18,4 @@ public class RingFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.RING; }
-    @Override protected String       getSlotDescription() { return "+1 Ring slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A mysterious fruit pulsing with ring-shaped arcane energy.";
-    }
 }

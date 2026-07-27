@@ -64,11 +64,24 @@ public class LayerSimWizardFloatingFocus implements LayerRenderer<EntitySimWizar
         float orbitAngle = (ageInTicks * ORBIT_SPEED) % 360.0F;
         float selfSpin = (ageInTicks * SELF_SPIN_SPEED) % 360.0F;
         float radius = RADIUS_IDLE - intensity * RADIUS_CAST_PULL;
+        float lift = CENTER_Y + bob - intensity * CAST_LIFT;
 
+        renderFocus(entity, stack, orbitAngle, radius, lift, selfSpin);
+
+        // A MASTER carries a second focus opposite the first - the cheapest possible "this one is
+        // dangerous" tell, one extra draw call and no new assets.
+        if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals
+                && entity.getTier() == com.spege.insanetweaks.entities.SimWizardTier.MASTER) {
+            renderFocus(entity, stack, (orbitAngle + 180.0F) % 360.0F, radius, lift, -selfSpin);
+        }
+    }
+
+    private static void renderFocus(EntitySimWizard entity, ItemStack stack, float orbitAngle,
+            float radius, float lift, float selfSpin) {
         GlStateManager.pushMatrix();
         try {
             // Orbit centre at the torso (+Y is down in this space).
-            GlStateManager.translate(0.0F, CENTER_Y + bob - intensity * CAST_LIFT, 0.0F);
+            GlStateManager.translate(0.0F, lift, 0.0F);
             // Swing around the vertical axis, then step out to the orbit ring.
             GlStateManager.rotate(orbitAngle, 0.0F, 1.0F, 0.0F);
             GlStateManager.translate(radius, 0.0F, 0.0F);

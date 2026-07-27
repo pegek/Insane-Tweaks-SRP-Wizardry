@@ -65,6 +65,47 @@ item.bauble_fruit_elytra.name=§dBauble Fruit - Elytra
 item.bauble_fruit_totem.name=§dBauble Fruit - Totem
 item.bauble_fruit_trinket.name=§dBauble Fruit - Trinket
 
+# Bauble Fruit tooltips — flavour + slot description, one pair per fruit.
+# Key stem is the registry name, so a new fruit needs no Java strings at all.
+tooltip.insanetweaks.bauble_fruit_ring.flavor=A mysterious fruit pulsing with ring-shaped arcane energy.
+tooltip.insanetweaks.bauble_fruit_ring.slot=+1 Ring slot
+tooltip.insanetweaks.bauble_fruit_amulet.flavor=A radiant fruit glowing with a soft, guiding light.
+tooltip.insanetweaks.bauble_fruit_amulet.slot=+1 Amulet slot
+tooltip.insanetweaks.bauble_fruit_body.flavor=A dense fruit wrapped in a faintly armored husk.
+tooltip.insanetweaks.bauble_fruit_body.slot=+1 Body slot
+tooltip.insanetweaks.bauble_fruit_head.flavor=A peculiar fruit that seems to elevate your thoughts.
+tooltip.insanetweaks.bauble_fruit_head.slot=+1 Head slot
+tooltip.insanetweaks.bauble_fruit_charm.flavor=A glimmering fruit with a mysterious, elusive aura.
+tooltip.insanetweaks.bauble_fruit_charm.slot=+1 Charm slot
+tooltip.insanetweaks.bauble_fruit_belt.flavor=A resilient fruit with a warm, grounding energy.
+tooltip.insanetweaks.bauble_fruit_belt.slot=+1 Belt slot
+tooltip.insanetweaks.bauble_fruit_elytra.flavor=A weightless fruit echoing with gusts of wind.
+tooltip.insanetweaks.bauble_fruit_elytra.slot=+1 Elytra slot
+tooltip.insanetweaks.bauble_fruit_totem.flavor=An immortal fruit gleaming with undying vitality.
+tooltip.insanetweaks.bauble_fruit_totem.slot=+1 Totem slot
+tooltip.insanetweaks.bauble_fruit_trinket.flavor=A shiny fruit glimmering with miscellaneous possibilities.
+tooltip.insanetweaks.bauble_fruit_trinket.slot=+1 Trinket slot
+
+# Bauble Fruit tooltips — shared lines
+tooltip.insanetweaks.bauble_fruit.perception=It feels like it could expand your perception of space.
+tooltip.insanetweaks.bauble_fruit.grants=§d§oPermanently grants §b%s§d§o.
+tooltip.insanetweaks.bauble_fruit.legacy=§d§oPermanently grants §a+1 Luck§d§o §8(Legacy Baubles mode)§d§o.
+tooltip.insanetweaks.bauble_fruit.one_time=One-time effect per player.
+tooltip.insanetweaks.bauble_fruit.slot_missing=WARNING, such slot was not detected!
+tooltip.insanetweaks.bauble_fruit.slot_missing_hint=You can add this slot type in Baubles config!
+tooltip.insanetweaks.bauble_fruit.counter=§8Fruits consumed: §f%s
+tooltip.insanetweaks.bauble_fruit.counter_capped=§8Fruits consumed: §f%s§8/§f%s
+tooltip.insanetweaks.bauble_fruit.counter_full=§cFruits consumed: %s/%s — limit reached
+tooltip.insanetweaks.bauble_fruit.already_eaten=You have already consumed this one.
+
+# Bauble Fruit messages
+msg.insanetweaks.fruit.already_eaten=§7This fruit's gift is already yours. Eating it again would waste it.
+msg.insanetweaks.fruit.cap_reached=§cYour body will accept no more of these.
+msg.insanetweaks.fruit.slot_disabled=§c[!] §7The ancient fruit slips from your grasp... its corresponding slot is disabled in this world's physics.
+msg.insanetweaks.fruit.debug_baublesex=§d[DEBUG-BaubleFruit] %s granted (BaublesEX). Modifier: %s
+msg.insanetweaks.fruit.debug_legacy=§d[DEBUG-BaubleFruit] Legacy bonus granted for %s (Luck+1 applied).
+msg.insanetweaks.corrupted_fruit.nothing_to_give=§5The hive finds nothing left to give. The bargain is refused.
+
 # Corrupted fruit loop
 item.corrupted_seed_fragment.name=Corrupted Seed Fragment
 item.corrupted_seed.name=Corrupted Seed
@@ -72,6 +113,16 @@ item.corrupted_fruit.name=Corrupted Fruit
 msg.insanetweaks.corrupted_hint=§5Your ring pulses hungrily... High-tier parasites slain while wearing the Blessed Ring or the Ring of the Seven Curses may yield Corrupted Seed Fragments.
 entity.insanetweaks.corrupted_sapling.name=Corrupted Sapling
 entity.corrupted_sapling.name=Corrupted Sapling
+
+# Custom Corail Tombstone perks.
+# The key prefix MUST be tombstone.perk.* — Perk.getTranslationKey() is final and builds it
+# from the perk name. Lang keys are a global namespace, so shipping them here works fine.
+tombstone.perk.assimilated_knowledge=Assimilated Knowledge
+tombstone.perk.assimilated_knowledge.desc=You have cut open enough of the hive to start reading it. Slaying a high-tier parasite may teach you something about death itself, granting knowledge.
+tombstone.perk.assimilated_knowledge.bonus=chance of knowledge per high-tier parasite slain
+tombstone.perk.relief_for_the_damned=Relief for the Damned
+tombstone.perk.relief_for_the_damned.desc=The Ring of the Seven Curses still takes its due, but no longer all of it. Every one of the ring's penalties — the damage you suffer, the armour it unmakes, the harm it withholds from your blows — is eased by a share of its own weight.
+tombstone.perk.relief_for_the_damned.bonus=of every Cursed Ring penalty waived
 
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse
@@ -86,6 +137,8 @@ reskillable.unlock.compatskills.assimilated_warfare=§cAssimilated Warfare
 reskillable.unlock.compatskills.assimilated_warfare.desc=Parasites you kill drop fallback XP even when SRP evolution would suppress it. From SRP stage 5 onward, each parasite kill also removes 1 evolution point.
 reskillable.unlock.compatskills.spiders_grace=§fSpider's Grace
 reskillable.unlock.compatskills.spiders_grace.desc=Move almost freely through cobwebs.
+reskillable.unlock.compatskills.scarred_flesh=§2Scarred Flesh
+reskillable.unlock.compatskills.scarred_flesh.desc=Flesh colonised often enough stops reacting cleanly. Your resistance to parasitic afflictions grows with how many are already stacked on you. The first two land untouched. The third cannot exceed level V. The fourth is capped at level IV and lasts 15%% less; the fifth at level III and 25%% less; the sixth at level II and 35%% less; the seventh at level I and 45%% less. You can never carry more than seven at once, and any further affliction simply fails to take hold. Effects that help you, such as The Sign, are never affected.
 reskillable.unlock.compatskills.iron_stomach=§6Iron Stomach
 reskillable.unlock.compatskills.iron_stomach.desc=Food is eaten 15%% faster and grants bonus saturation based on its saturation value.
 reskillable.unlock.compatskills.double_loot=§eDouble Hooks
@@ -102,6 +155,8 @@ reskillable.unlock.compatskills.supreme_enchanter=§dSupreme Enchanter
 reskillable.unlock.compatskills.supreme_enchanter.desc=Grants +5 enchanting power at the enchanting table and +10 item enchantability.
 reskillable.unlock.compatskills.bob_the_builder=§eBob the Builder
 reskillable.unlock.compatskills.bob_the_builder.desc=Gain +2 block reach distance while holding any block in your main hand.
+reskillable.unlock.compatskills.coiled_spring=§aCoiled Spring
+reskillable.unlock.compatskills.coiled_spring.desc=Hold Sneak and Jump together while standing on the ground to coil. A meter above the hotbar fills over about a second and a half; releasing Sneak launches you upward, reaching roughly 10 blocks at full charge. Fall damage from the landing is waived in proportion to the charge you spent, so a fully charged leap costs you nothing. Partial charges give a smaller hop and a smaller waiver.
 reskillable.unlock.compatskills.meditation=§aMeditation
 reskillable.unlock.compatskills.meditation.desc=Recharges mana in worn wizard armor and offhand casting gear while standing still.
 reskillable.unlock.compatskills.arcane_mastery=§bArcane Mastery
@@ -154,6 +209,8 @@ entity.insanetweaks.wizard_minion.name=Wizard Minion
 entity.wizard_minion.name=Wizard Minion
 entity.insanetweaks.sim_wizard.name=Assimilated Wizard
 entity.sim_wizard.name=Assimilated Wizard
+entity.insanetweaks.sim_battlemage.name=Assimilated Battlemage
+entity.sim_battlemage.name=Assimilated Battlemage
 entity.insanetweaks.primitive_summoner_minion.name=Primitive Summoner Minion
 entity.primitive_summoner_minion.name=Primitive Summoner Minion
 entity.insanetweaks.rupter_minion.name=Rupter Minion
@@ -252,9 +309,14 @@ gui.insanetweaks.thrall.tooltip.dismiss=Removes the thrall and drops its items. 
 
 config.insanetweaks.category.modules=Modules & Integrations
 config.insanetweaks.category.tweaks=Tweaks & Fixes
+config.insanetweaks.category.baubleFruits=Bauble Fruits
+config.insanetweaks.category.chargeJump=Coiled Spring (Charge Jump)
+config.insanetweaks.category.scarredFlesh=Scarred Flesh
 config.insanetweaks.category.interactions=Cross-Mod Interactions
 config.insanetweaks.category.traits=Skill Traits
 config.insanetweaks.category.tombstone=Tombstone Tweaks
+config.insanetweaks.category.tombstone.assimilatedKnowledge=Custom Perk: Assimilated Knowledge
+config.insanetweaks.category.tombstone.reliefForTheDamned=Custom Perk: Relief for the Damned
 config.insanetweaks.category.thrall=Thrall
 config.insanetweaks.category.entities=Entities
 config.insanetweaks.category.client=Client & Debug
@@ -323,3 +385,6 @@ tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Co
 tooltip.insanetweaks.auto_lock_picker.timing=Wood lock %ss - Diamond lock %ss
 tooltip.insanetweaks.auto_lock_picker.no_locks=Requires the Locks mod.
 tooltip.insanetweaks.auto_lock_picker.disabled=Disabled in the config (modules.enableAutoLockPicker).
+
+# Inventory tab that opens Corail Tombstone's perk tree (KnowledgeTabHandler).
+insanetweaks.tab.knowledge=Knowledge of Death

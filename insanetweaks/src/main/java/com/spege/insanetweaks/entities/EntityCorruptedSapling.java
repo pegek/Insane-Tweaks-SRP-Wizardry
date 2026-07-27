@@ -109,7 +109,7 @@ public class EntityCorruptedSapling extends EntityLiving {
         // server tick (applyPhaseHealth), because SRPSaveData needs a bound world which is not
         // available here. Using the phase 1-3 value keeps a sane default if the phase read fails.
         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH)
-                .setBaseValue(ModConfig.tweaks.saplingHpPhase1);
+                .setBaseValue(ModConfig.baubleFruits.saplingHpPhase1);
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.0D);
     }
 
@@ -137,7 +137,7 @@ public class EntityCorruptedSapling extends EntityLiving {
 
         if (conditionsMet()) {
             this.growthTicks += 20;
-            int total = Math.max(20, ModConfig.tweaks.saplingGrowthTicks);
+            int total = Math.max(20, ModConfig.baubleFruits.saplingGrowthTicks);
             int stage = Math.min(MAX_STAGE, (this.growthTicks * MAX_STAGE) / total);
             this.dataManager.set(STAGE, stage);
 
@@ -182,15 +182,15 @@ public class EntityCorruptedSapling extends EntityLiving {
     /** Max HP for an SRP evolution phase, per the configured bands. Phase 0-3 -> low band. */
     private static int hpForPhase(int phase) {
         if (phase >= 9) {
-            return ModConfig.tweaks.saplingHpPhase9;
+            return ModConfig.baubleFruits.saplingHpPhase9;
         }
         if (phase >= 6) {
-            return ModConfig.tweaks.saplingHpPhase6;
+            return ModConfig.baubleFruits.saplingHpPhase6;
         }
         if (phase >= 4) {
-            return ModConfig.tweaks.saplingHpPhase4;
+            return ModConfig.baubleFruits.saplingHpPhase4;
         }
-        return ModConfig.tweaks.saplingHpPhase1;
+        return ModConfig.baubleFruits.saplingHpPhase1;
     }
 
     private boolean conditionsMet() {
@@ -199,7 +199,7 @@ public class EntityCorruptedSapling extends EntityLiving {
             return false;
         }
         EntityPlayer owner = this.world.getPlayerEntityByUUID(this.ownerId);
-        double radius = ModConfig.tweaks.saplingConditionRadius;
+        double radius = ModConfig.baubleFruits.saplingConditionRadius;
         if (owner == null || owner.getDistanceSq(this) > radius * radius) {
             return false;
         }
@@ -215,7 +215,7 @@ public class EntityCorruptedSapling extends EntityLiving {
         }
         AxisAlignedBB box = this.getEntityBoundingBox().grow(radius);
         int alive = ParasiteScan.countLivingParasites(this.world, box);
-        if (alive >= ModConfig.tweaks.saplingMinParasites) {
+        if (alive >= ModConfig.baubleFruits.saplingMinParasites) {
             return true;
         }
 
@@ -266,7 +266,7 @@ public class EntityCorruptedSapling extends EntityLiving {
         if (compound.hasUniqueId("SaplingOwner")) {
             this.ownerId = compound.getUniqueId("SaplingOwner");
         }
-        int total = Math.max(20, ModConfig.tweaks.saplingGrowthTicks);
+        int total = Math.max(20, ModConfig.baubleFruits.saplingGrowthTicks);
         this.dataManager.set(STAGE, Math.min(MAX_STAGE, (this.growthTicks * MAX_STAGE) / total));
     }
 

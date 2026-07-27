@@ -18,8 +18,4 @@ public class AmuletFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.AMULET; }
-    @Override protected String       getSlotDescription() { return "+1 Amulet slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A radiant fruit glowing with a soft, guiding light.";
-    }
 }

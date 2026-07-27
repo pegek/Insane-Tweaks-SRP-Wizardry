@@ -63,6 +63,13 @@ import net.minecraft.world.World;
 @SuppressWarnings({"null", "deprecation"})
 public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
 
+    /** Per-tier particle accent, indexed by {@link SimWizardTier} ordinal. */
+    private static final float[][] TIER_ACCENT = {
+            { 0.35F, 0.10F, 0.60F },
+            { 0.45F, 0.08F, 0.55F },
+            { 0.72F, 0.05F, 0.62F }
+    };
+
     private static final byte STATUS_CAST_BURST = 61;
     private static final byte STATUS_HEAL_BURST = 62;
     private static final byte STATUS_CAST_TELEGRAPH = 63;
@@ -73,15 +80,78 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             DataSerializers.VARINT);
     private static final DataParameter<Integer> CAST_ANIMATION_TICKS = EntityDataManager.createKey(
             EntitySimWizard.class, DataSerializers.VARINT);
+    /**
+     * Length of the animation window that {@link #CAST_ANIMATION_TICKS} is counting down from.
+     * Used purely to normalise {@link #getCastFlashIntensity(float)} without the renderer having
+     * to know the AI's window length. Previously that divisor was a hardcoded {@code 14.0F} that
+     * silently had to stay in sync with EntityAISimWizardCombat.
+     *
+     * <p>🚨 DataParameter ids are assigned in registration order. APPEND new parameters at the END
+     * of {@link #entityInit()} only - inserting one before an existing registration shifts every
+     * later id and desyncs clients running an older build.
+     */
+    private static final DataParameter<Integer> CAST_ANIMATION_MAX = EntityDataManager.createKey(
+            EntitySimWizard.class, DataSerializers.VARINT);
+    /** Power tier ordinal; synced because the renderer tints glow, focus and particles by it. */
+    private static final DataParameter<Integer> TIER = EntityDataManager.createKey(
+            EntitySimWizard.class, DataSerializers.VARINT);
 
     private final List<Spell> spells = new ArrayList<Spell>(8);
     private int selfHealCooldown = 50;
-    /** Phase scaling factor applied on spawn. 1.0 = no bonus. Used by getModifiers(). */
+
+    /**
+     * Shared cast gate. Lives on the ENTITY rather than in one AI task because more than one task
+     * can now want to cast (combat and ally support): the gate is what guarantees they never both
+     * fire in the same tick, since their mutex bits deliberately do not overlap.
+     *
+     * <p>An absolute {@code getTotalWorldTime()} timestamp, never a countdown - a counter ticked
+     * from {@code shouldExecute} would run at the AI poll rate rather than the tick rate, which is
+     * the v3.1 "every cooldown was silently tripled" bug. Not persisted: a stale absolute world
+     * time means nothing after a reload, and a surviving cast cooldown has no value.
+     */
+    private long nextCastReadyTime;
+
+    /** True while a telegraph or channel is in flight, so no other task may start a cast. */
+    private boolean castCommitted;
+    /** Phase scaling factor computed on spawn. 1.0 = no bonus. Feeds health/armor only. */
     private float cachedPhaseBonus = 1.0F;
+    /** SRP evolution phase seen at spawn, clamped to the configured maximum. Feeds the tier roll. */
+    private int cachedSrpPhase;
+    /** Attribute base values before any scaling, so re-scaling never compounds. Negative = unset. */
+    private double pristineMaxHealth = -1.0D;
+    private double pristineArmor = -1.0D;
+
+    /** Per-tier loot tables. Registered in {@code InsaneTweaksMod.preInit}. */
+    public static final net.minecraft.util.ResourceLocation LOOT_NOVICE =
+            new net.minecraft.util.ResourceLocation(InsaneTweaksMod.MODID, "entities/sim_wizard");
+    public static final net.minecraft.util.ResourceLocation LOOT_ADEPT =
+            new net.minecraft.util.ResourceLocation(InsaneTweaksMod.MODID, "entities/sim_wizard_adept");
+    public static final net.minecraft.util.ResourceLocation LOOT_MASTER =
+            new net.minecraft.util.ResourceLocation(InsaneTweaksMod.MODID, "entities/sim_wizard_master");
 
     public EntitySimWizard(World worldIn) {
         super(worldIn);
-        this.experienceValue = 0;
+        this.experienceValue = ModConfig.entities.assimilatedWizard.spawning.experienceValue;
+    }
+
+    /**
+     * Per-tier loot. {@code getLootTable} is an instance method consulted at death, when the tier
+     * is already known, so no drop-loop code and no NBT loot condition is needed - 1.12.2 loot
+     * tables cannot read entity NBT anyway.
+     */
+    @Override
+    protected net.minecraft.util.ResourceLocation getLootTable() {
+        if (!ModConfig.entities.assimilatedWizard.spawning.enableLootTable) {
+            return super.getLootTable();
+        }
+        switch (this.getTier()) {
+            case MASTER:
+                return LOOT_MASTER;
+            case ADEPT:
+                return LOOT_ADEPT;
+            default:
+                return LOOT_NOVICE;
+        }
     }
 
     @Override
@@ -90,6 +160,9 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.dataManager.register(CONTINUOUS_SPELL, "ebwizardry:none");
         this.dataManager.register(SPELL_COUNTER, 0);
         this.dataManager.register(CAST_ANIMATION_TICKS, 0);
+        // APPEND-ONLY below this line - see the CAST_ANIMATION_MAX javadoc.
+        this.dataManager.register(CAST_ANIMATION_MAX, 0);
+        this.dataManager.register(TIER, SimWizardTier.NOVICE.ordinal());
     }
 
     /**
@@ -104,6 +177,12 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * Tasks layout (matches {@link EntityInfHuman} but replaces the melee primary with
      * the dedicated cast task and widens the CircleGroup predicate to include sim_wizard
      * itself, so a sim_wizard treats other parasites as group-mates and forms with them).
+     *
+     * <p>Those inherited SRP target tasks are deliberately LEFT IN PLACE rather than stripped.
+     * Removing them would mean reflectively walking {@code targetTasks.taskEntries} and
+     * class-matching SRP internals - fragile across SRP versions and liable to remove our own
+     * task by accident. They only ever SET an attack target, never clear one, so at worst they
+     * are inert; the un-gated task at priority 2 below is what actually drives acquisition.
      */
     @Override
     protected void initEntityAI() {
@@ -135,6 +214,12 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         // v4: single combat task owns movement AND casting (mutex 3). No melee — the
         // wizard is a pure caster; banish handles close quarters (spec 2026-07-10).
         this.tasks.addTask(3, new EntityAISimWizardCombat(this));
+
+        // Ally support at priority 5 with mutex 0 - see EntityAISimWizardSupport for why nothing
+        // that moves or looks can live at priority 4/5 alongside the combat task. Registered
+        // unconditionally and gated inside shouldExecute, matching how InsaneTweaksMod.init
+        // registers handlers, so the toggle needs no world restart.
+        this.tasks.addTask(5, new com.spege.insanetweaks.entities.ai.EntityAISimWizardSupport(this));
 
         this.tasks.addTask(6, new EntityAICircleGroup((EntityCreature) this, 1.15D, 8, 4.0D, 10.0D, 16,
                 e -> e instanceof EntityParasiteBase));
@@ -180,11 +265,97 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     @Override
     public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, IEntityLivingData livingdata) {
         IEntityLivingData data = super.onInitialSpawn(difficulty, livingdata);
+        // Order matters: the SRP phase feeds the tier roll, the tier filters the spell pool, and
+        // both the tier and the phase feed the attribute scaling.
+        this.readSrpPhase();
+        this.rollTier();
         this.ensureSpellPool();
         this.equipVisualWand();
-        this.applyPhaseScaling();
+        this.applyScaling();
         this.selfHealCooldown = 50;
         return data;
+    }
+
+    // ------------------------------------------------------------------------
+    // Tier
+    // ------------------------------------------------------------------------
+
+    public SimWizardTier getTier() {
+        return SimWizardTier.fromId(this.dataManager.get(TIER));
+    }
+
+    public void setTier(SimWizardTier tier) {
+        this.dataManager.set(TIER, (tier == null ? SimWizardTier.NOVICE : tier).ordinal());
+    }
+
+    /**
+     * Raises the tier to at least {@code floor}, never lowers it. Called by the assimilation
+     * bridge AFTER {@code onInitialSpawn}, so it re-applies the attribute scaling.
+     */
+    public void setTierFloor(SimWizardTier floor) {
+        if (floor == null || this.world == null || this.world.isRemote) {
+            return;
+        }
+        if (floor.ordinal() <= this.getTier().ordinal()) {
+            return;
+        }
+        this.setTier(floor);
+        // The pool may be tier-filtered, so rebuild it before re-scaling.
+        this.spells.clear();
+        this.ensureSpellPool();
+        this.equipVisualWand();
+        this.applyScaling();
+    }
+
+    /**
+     * Weighted roll, repeated once per {@code phase / tierPhaseRollDivisor} extra rolls, keeping
+     * the best result. The evolution phase therefore decides how LIKELY a strong wizard is, not
+     * how strong each tier is - which is what keeps phase and tier from multiplying into a
+     * runaway (the v2.1 "way too strong" lesson).
+     */
+    private void rollTier() {
+        if (this.world == null || this.world.isRemote) {
+            return;
+        }
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Tiers cfg =
+                ModConfig.entities.assimilatedWizard.tiers;
+        int rolls = 1 + this.cachedSrpPhase / Math.max(1, cfg.tierPhaseRollDivisor);
+
+        SimWizardTier best = SimWizardTier.NOVICE;
+        for (int i = 0; i < rolls; i++) {
+            SimWizardTier rolled = weightedTierRoll(cfg.tierWeights);
+            if (rolled.ordinal() > best.ordinal()) {
+                best = rolled;
+            }
+        }
+        this.setTier(best);
+    }
+
+    private SimWizardTier weightedTierRoll(int[] weights) {
+        SimWizardTier[] tiers = SimWizardTier.values();
+        int total = 0;
+        for (int i = 0; i < tiers.length; i++) {
+            total += Math.max(0, arrayAt(weights, i, 0));
+        }
+        if (total <= 0) {
+            return SimWizardTier.NOVICE;
+        }
+        int roll = this.rand.nextInt(total);
+        for (int i = 0; i < tiers.length; i++) {
+            roll -= Math.max(0, arrayAt(weights, i, 0));
+            if (roll < 0) {
+                return tiers[i];
+            }
+        }
+        return SimWizardTier.NOVICE;
+    }
+
+    private static int arrayAt(int[] array, int index, int fallback) {
+        return array != null && index >= 0 && index < array.length ? array[index] : fallback;
+    }
+
+    private static double arrayAt(double[] array, int index, double fallback) {
+        return array != null && index >= 0 && index < array.length ? array[index] : fallback;
     }
 
     /**
@@ -197,8 +368,10 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * sim_wizards feel meaningfully heavier than early-game ones without needing a full
      * tier system.
      */
-    private void applyPhaseScaling() {
+    private void readSrpPhase() {
         com.spege.insanetweaks.config.categories.EntitiesCategory.Spawning cfg = ModConfig.entities.assimilatedWizard.spawning;
+        this.cachedSrpPhase = 0;
+        this.cachedPhaseBonus = 1.0F;
         if (!cfg.enablePhaseScaling || this.world == null || this.world.isRemote) {
             return;
         }
@@ -209,19 +382,52 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
                 return;
             }
             int rawPhase = data.getEvolutionPhase(cfg.srpSaveDataId) & 0xFF;
-            int clampedPhase = Math.min(rawPhase, cfg.phaseScalingMaxPhase);
-            if (clampedPhase <= 0) {
-                return;
-            }
-            double bonus = 1.0D + clampedPhase * cfg.phaseScalingPerPhase;
-            this.multiplyBaseAttribute(SharedMonsterAttributes.MAX_HEALTH, bonus);
-            this.multiplyBaseAttribute(SharedMonsterAttributes.ARMOR, bonus);
-            this.setHealth(this.getMaxHealth()); // top up so the new max is visible immediately
-            this.cachedPhaseBonus = (float) bonus;
+            this.cachedSrpPhase = Math.max(0, Math.min(rawPhase, cfg.phaseScalingMaxPhase));
+            this.cachedPhaseBonus = (float) (1.0D + this.cachedSrpPhase * cfg.phaseScalingPerPhase);
         } catch (Exception ex) {
             InsaneTweaksMod.LOGGER.warn(
-                    "[InsaneTweaks][SimWizard] Phase scaling failed: {}", ex.getMessage());
+                    "[InsaneTweaks][SimWizard] Phase lookup failed: {}", ex.getMessage());
         }
+    }
+
+    /**
+     * Applies the combined tier and SRP-phase scaling to health and armor.
+     *
+     * <p>Idempotent by construction: the pristine base values are captured on the first call and
+     * every later call recomputes from them, so {@link #setTierFloor(SimWizardTier)} can re-run
+     * this without compounding.
+     *
+     * <p>Health is the ONE stat where tier and phase deliberately multiply - it is a
+     * time-to-kill knob rather than a burst knob - and it is therefore the one with a hard
+     * ceiling. Spell potency deliberately does NOT compound; see {@link #getModifiers()}.
+     */
+    private void applyScaling() {
+        if (this.world == null || this.world.isRemote) {
+            return;
+        }
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Tiers cfg =
+                ModConfig.entities.assimilatedWizard.tiers;
+        int tier = this.getTier().ordinal();
+
+        IAttributeInstance health = this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH);
+        IAttributeInstance armor = this.getEntityAttribute(SharedMonsterAttributes.ARMOR);
+
+        if (health != null) {
+            if (this.pristineMaxHealth < 0.0D) {
+                this.pristineMaxHealth = health.getBaseValue();
+            }
+            double factor = Math.min(this.cachedPhaseBonus * arrayAt(cfg.tierHealthMultipliers, tier, 1.0D),
+                    cfg.maxCombinedHealthMultiplier);
+            health.setBaseValue(this.pristineMaxHealth * factor);
+        }
+        if (armor != null) {
+            if (this.pristineArmor < 0.0D) {
+                this.pristineArmor = armor.getBaseValue();
+            }
+            armor.setBaseValue(this.pristineArmor
+                    * this.cachedPhaseBonus * arrayAt(cfg.tierArmorMultipliers, tier, 1.0D));
+        }
+        this.setHealth(this.getMaxHealth()); // top up so the new max is visible immediately
     }
 
     @Override
@@ -290,6 +496,8 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             }
         }
 
+        this.applyTierSpellFilter();
+
         if (this.spells.isEmpty()) {
             // Config produced nothing usable - built-in fallback keeps the wizard functional.
             this.spells.add(Spells.magic_missile);
@@ -300,14 +508,67 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
 
         if (ModConfig.client.enableSimWizardDebugLogs) {
+            // Log the RESOLVED ROLES, not just the ids. If role resolution ever degrades - e.g.
+            // EBW spell properties were not loaded yet - every situational branch in pickSpell
+            // silently collapses to a random pick with no error anywhere. A line reading
+            // "magic_missile -> [UNKNOWN]" makes that failure obvious at a glance.
             StringBuilder sb = new StringBuilder();
             for (Spell s : this.spells) {
                 if (sb.length() > 0) sb.append(", ");
-                sb.append(s.getRegistryName());
+                sb.append(s.getRegistryName()).append(' ')
+                        .append(com.spege.insanetweaks.entities.ai.SpellRoleResolver.describe(s));
             }
             InsaneTweaksMod.LOGGER.info("[InsaneTweaks][SimWizard#{}] spell pool built ({}): [{}]",
                     this.getEntityId(), this.spells.size(), sb);
         }
+    }
+
+    /**
+     * Narrows the pool to this tier's whitelist, when one is configured. An empty filter (the
+     * default for all three tiers) means no restriction, so the feature costs nothing until a
+     * pack opts in. A filter that would empty the pool entirely is ignored - the built-in fallback
+     * below is for a broken config, not for a deliberately narrow tier.
+     */
+    private void applyTierSpellFilter() {
+        com.spege.insanetweaks.config.categories.EntitiesCategory.Tiers cfg =
+                ModConfig.entities.assimilatedWizard.tiers;
+        String[] filter;
+        switch (this.getTier()) {
+            case ADEPT:
+                filter = cfg.adeptSpellFilter;
+                break;
+            case MASTER:
+                filter = cfg.masterSpellFilter;
+                break;
+            default:
+                filter = cfg.noviceSpellFilter;
+                break;
+        }
+        if (filter == null || filter.length == 0 || this.spells.isEmpty()) {
+            return;
+        }
+
+        List<Spell> allowed = new ArrayList<Spell>(this.spells.size());
+        for (Spell spell : this.spells) {
+            if (spell.getRegistryName() == null) {
+                continue;
+            }
+            String id = spell.getRegistryName().toString();
+            for (String entry : filter) {
+                if (entry != null && id.equals(entry.trim())) {
+                    allowed.add(spell);
+                    break;
+                }
+            }
+        }
+        if (allowed.isEmpty()) {
+            InsaneTweaksMod.LOGGER.warn(
+                    "[InsaneTweaks][SimWizard] Tier {} spell filter matched nothing in the pool - ignoring it.",
+                    this.getTier());
+            return;
+        }
+        this.spells.clear();
+        this.spells.addAll(allowed);
     }
 
     /**
@@ -324,18 +585,40 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * Drop chance is forced to 0 so killing a sim_wizard does not flood the world with
      * master wands. Mana is intentionally not filled - NPC casts do not consume wand mana.
      */
+    /**
+     * The focus item this wizard should be holding, by tier. Purely cosmetic - the orbiting focus
+     * layer renders whatever is in the main hand, so this is a free tier tell.
+     *
+     * <p>All three are NECROMANCY wands: the dark palette matches the violet parasite-mage
+     * identity, and being an {@code ItemWand} its {@code calculateModifiers} is player-only, so it
+     * can never leak a bonus into the NPC cast pipeline (the v2.1 double-buff lesson).
+     */
+    private net.minecraft.item.Item tierWandItem() {
+        if (!ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals) {
+            return WizardryItems.master_necromancy_wand;
+        }
+        switch (this.getTier()) {
+            case NOVICE:
+                return WizardryItems.novice_necromancy_wand;
+            case ADEPT:
+                return WizardryItems.apprentice_necromancy_wand;
+            default:
+                return WizardryItems.master_necromancy_wand;
+        }
+    }
+
     private void ensureVisualWand() {
+        // 🚨 Compare against the TIER'S wand, not a fixed one. Comparing against a single item
+        // while equipping a different one would re-equip every tick - 20 equipment-sync packets a
+        // second, per wizard.
         ItemStack mainHand = this.getHeldItemMainhand();
-        if (mainHand.isEmpty() || mainHand.getItem() != WizardryItems.master_necromancy_wand) {
+        if (mainHand.isEmpty() || mainHand.getItem() != this.tierWandItem()) {
             this.equipVisualWand();
         }
     }
 
     private void equipVisualWand() {
-        // v3.2: master NECROMANCY wand - its dark palette matches the violet parasite-mage
-        // identity better than the plain master wand. Still purely visual (player-only
-        // calculateModifiers is never invoked by the NPC cast pipeline).
-        ItemStack wand = new ItemStack(WizardryItems.master_necromancy_wand);
+        ItemStack wand = new ItemStack(this.tierWandItem());
         // Stamp the visible spell list so wand tooltip / JEI inspection matches the AI pool.
         ArrayList<Spell> visibleSpells = new ArrayList<Spell>(this.spells);
         if (!visibleSpells.isEmpty()) {
@@ -345,9 +628,36 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.setDropChance(EntityEquipmentSlot.MAINHAND, 0.0F);
     }
 
+    // ------------------------------------------------------------------------
+    // Shared cast gate (see the nextCastReadyTime javadoc)
+    // ------------------------------------------------------------------------
+
+    public boolean isCastGateReady() {
+        return this.world.getTotalWorldTime() >= this.nextCastReadyTime;
+    }
+
+    /**
+     * Pushes the gate out by {@code ticks}. NEVER shortens an existing gate - a task that failed
+     * and wants a quick retry must not be able to cancel the long cooldown another cast just paid.
+     */
+    public void setCastGate(int ticks) {
+        long candidate = this.world.getTotalWorldTime() + Math.max(0, ticks);
+        if (candidate > this.nextCastReadyTime) {
+            this.nextCastReadyTime = candidate;
+        }
+    }
+
+    public boolean isCastCommitted() {
+        return this.castCommitted;
+    }
+
+    public void setCastCommitted(boolean committed) {
+        this.castCommitted = committed;
+    }
+
     /** Server-side hook called by {@link EntityAISimWizardCombat} after a successful cast. */
     public void signalCastBurst(int animationTicks) {
-        this.setCastAnimationTicks(animationTicks);
+        this.startCastAnimation(animationTicks);
         this.world.setEntityState(this, STATUS_CAST_BURST);
     }
 
@@ -357,7 +667,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * and a brief halo particle burst so the player has a tell to dodge.
      */
     public void signalCastTelegraph(int animationTicks) {
-        this.setCastAnimationTicks(animationTicks);
+        this.startCastAnimation(animationTicks);
         this.world.setEntityState(this, STATUS_CAST_TELEGRAPH);
         // Server-side sound so attentive players hear the wind-up regardless of particles.
         this.playSound(net.minecraft.init.SoundEvents.EVOCATION_ILLAGER_PREPARE_SUMMON,
@@ -392,11 +702,14 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
 
         // v2.4: Abomination palette - alternating blood-red and parasite-purple instead of
         // the flat blue. Reads as "infected mage" rather than vanilla EBW wizard.
+        // The purple half shifts with the tier; the blood-red half is the constant that keeps all
+        // tiers recognisably the same creature.
+        float[] accent = this.tierAccent();
         for (int i = 0; i < 2; i++) {
             boolean purple = (this.ticksExisted + i) % 2 == 0;
-            float r = purple ? 0.45F : 0.78F;
-            float g = purple ? 0.08F : 0.05F;
-            float b = purple ? 0.55F : 0.10F;
+            float r = purple ? accent[0] : 0.78F;
+            float g = purple ? accent[1] : 0.05F;
+            float b = purple ? accent[2] : 0.10F;
             ParticleBuilder.create(ParticleBuilder.Type.DARK_MAGIC)
                     .pos(this.posX + (this.rand.nextDouble() - 0.5D) * 0.7D,
                             this.posY + 1.1D + this.rand.nextDouble() * 0.7D,
@@ -404,6 +717,17 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
                     .clr(r, g, b)
                     .spawn(this.world);
         }
+    }
+
+    /**
+     * Per-tier accent colour, indexed NOVICE / ADEPT / MASTER. Client-safe: the tier arrives via
+     * DataManager sync. Indexed defensively so adding a tier can never crash the render thread.
+     */
+    private float[] tierAccent() {
+        if (!ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals) {
+            return TIER_ACCENT[SimWizardTier.ADEPT.ordinal()];
+        }
+        return TIER_ACCENT[Math.max(0, Math.min(this.getTier().ordinal(), TIER_ACCENT.length - 1))];
     }
 
     private void spawnBurstParticles(float red, float green, float blue, int count) {
@@ -443,7 +767,9 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             // tickServerCastAnimation) and the value reaches the client via DataManager
             // sync. The old double-write caused the intensity to stutter as sync packets
             // kept overwriting the client-local value.
-            this.spawnBurstParticles(0.78F, 0.06F, 0.32F, 12);
+            float[] accent = this.tierAccent();
+            this.spawnBurstParticles(
+                    (0.78F + accent[0]) * 0.5F, (0.06F + accent[1]) * 0.5F, (0.32F + accent[2]) * 0.5F, 12);
             return;
         }
 
@@ -465,6 +791,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     public void writeEntityToNBT(NBTTagCompound compound) {
         super.writeEntityToNBT(compound);
         compound.setInteger("WizardSelfHealCooldown", this.selfHealCooldown);
+        compound.setInteger("WizardTier", this.getTier().ordinal());
         // v3.3: the spell pool is intentionally NOT persisted anymore. ModConfig.spellPool is
         // the single source of truth, so config edits apply to already-saved wizards after a
         // world reload. The legacy "WizardSpells" NBT tag on old entities is simply ignored.
@@ -476,6 +803,14 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.selfHealCooldown = compound.hasKey("WizardSelfHealCooldown")
                 ? compound.getInteger("WizardSelfHealCooldown")
                 : 50;
+
+        // 🚨 The tier MUST be restored before the pool is rebuilt: ensureSpellPool filters by tier,
+        // so reading this afterwards would give every loaded wizard the NOVICE filter regardless of
+        // what was saved. A save from before tiers existed has no key and correctly loads as NOVICE
+        // - which is why the NOVICE multipliers are all exactly 1.0.
+        if (compound.hasKey("WizardTier")) {
+            this.setTier(SimWizardTier.fromId(compound.getInteger("WizardTier")));
+        }
 
         this.spells.clear();
         this.ensureSpellPool();
@@ -492,8 +827,14 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     @Nonnull
     public SpellModifiers getModifiers() {
         SpellModifiers modifiers = new SpellModifiers();
-        // Phase bonus also folds into spell potency so late-game sim_wizards hit harder.
-        float potency = (float) ModConfig.entities.assimilatedWizard.combat.potencyMultiplier * this.cachedPhaseBonus;
+        // Potency scales with the TIER only, never with the SRP phase as well. The phase already
+        // makes high tiers likelier (see rollTier), so folding it in here too gave a phase-4 MASTER
+        // 1.175 x 1.4 x 1.5 = 2.47x potency - v2.1 was reverted for far less. One factor caps at
+        // 1.76x. cachedPhaseBonus is still used for health/armor, where the compounding is wanted
+        // and clamped.
+        float potency = (float) (ModConfig.entities.assimilatedWizard.combat.potencyMultiplier
+                * arrayAt(ModConfig.entities.assimilatedWizard.tiers.tierPotencyMultipliers,
+                        this.getTier().ordinal(), 1.0D));
         modifiers.set(SpellModifiers.POTENCY, potency, true);
         modifiers.set("range", (float) ModConfig.entities.assimilatedWizard.combat.rangeMultiplier, true);
         return modifiers;
@@ -554,6 +895,17 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     }
 
     /**
+     * Opens a cast-animation window: sets the countdown AND records its length so the renderer
+     * can normalise without knowing the AI's constant. Server-only - the client is a pure reader
+     * of both parameters (v3.0 desync rule).
+     */
+    private void startCastAnimation(int animationTicks) {
+        int clamped = Math.max(0, animationTicks);
+        this.dataManager.set(CAST_ANIMATION_TICKS, clamped);
+        this.dataManager.set(CAST_ANIMATION_MAX, clamped);
+    }
+
+    /**
      * Cast intensity 0.0-1.0 used by {@code RenderSimWizard} for the cast pulse.
      * Replaces the legacy {@code getSelfeFlashIntensity} usage in the renderer (that one
      * tracks SRP infected melt progress, not casting).
@@ -563,8 +915,9 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         if (ticks <= 0) {
             return 0.0F;
         }
-        // 14 is the value passed in by EntityAISimWizardCombat.
-        float normalized = ticks / 14.0F;
+        // Normalised against the window length recorded when the animation started, so the
+        // renderer no longer duplicates the AI's constant.
+        float normalized = ticks / (float) Math.max(1, this.dataManager.get(CAST_ANIMATION_MAX));
         if (normalized > 1.0F) {
             normalized = 1.0F;
         }
@@ -572,11 +925,6 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             normalized = 0.0F;
         }
         return normalized;
-    }
-
-    @Override
-    public boolean attackEntityAsMob(@Nonnull Entity entityIn) {
-        return super.attackEntityAsMob(entityIn);
     }
 
     /**

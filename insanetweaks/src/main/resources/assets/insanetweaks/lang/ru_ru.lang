@@ -45,6 +45,46 @@ item.bauble_fruit_elytra.name=§dПлод-бабл — Элитры
 item.bauble_fruit_totem.name=§dПлод-бабл — Тотемы
 item.bauble_fruit_trinket.name=§dПлод-бабл — Безделушка
 
+# Подсказки плодов-баблов — описание и слот, по паре на каждый плод.
+tooltip.insanetweaks.bauble_fruit_ring.flavor=Загадочный плод, пульсирующий чародейской энергией в форме кольца.
+tooltip.insanetweaks.bauble_fruit_ring.slot=+1 слот кольца
+tooltip.insanetweaks.bauble_fruit_amulet.flavor=Сияющий плод, испускающий мягкий, направляющий свет.
+tooltip.insanetweaks.bauble_fruit_amulet.slot=+1 слот амулета
+tooltip.insanetweaks.bauble_fruit_body.flavor=Плотный плод в едва заметной броневой кожуре.
+tooltip.insanetweaks.bauble_fruit_body.slot=+1 слот нагрудника
+tooltip.insanetweaks.bauble_fruit_head.flavor=Необычный плод, словно возвышающий ваши мысли.
+tooltip.insanetweaks.bauble_fruit_head.slot=+1 слот шлема
+tooltip.insanetweaks.bauble_fruit_charm.flavor=Мерцающий плод с таинственной, ускользающей аурой.
+tooltip.insanetweaks.bauble_fruit_charm.slot=+1 слот оберега
+tooltip.insanetweaks.bauble_fruit_belt.flavor=Стойкий плод с тёплой, заземляющей энергией.
+tooltip.insanetweaks.bauble_fruit_belt.slot=+1 слот пояса
+tooltip.insanetweaks.bauble_fruit_elytra.flavor=Невесомый плод, отзывающийся порывами ветра.
+tooltip.insanetweaks.bauble_fruit_elytra.slot=+1 слот элитр
+tooltip.insanetweaks.bauble_fruit_totem.flavor=Бессмертный плод, сияющий неувядающей жизненной силой.
+tooltip.insanetweaks.bauble_fruit_totem.slot=+1 слот тотема
+tooltip.insanetweaks.bauble_fruit_trinket.flavor=Блестящий плод, мерцающий самыми разными возможностями.
+tooltip.insanetweaks.bauble_fruit_trinket.slot=+1 слот безделушки
+
+# Подсказки плодов-баблов — общие строки
+tooltip.insanetweaks.bauble_fruit.perception=Кажется, он способен расширить ваше восприятие пространства.
+tooltip.insanetweaks.bauble_fruit.grants=§d§oНавсегда даёт §b%s§d§o.
+tooltip.insanetweaks.bauble_fruit.legacy=§d§oНавсегда даёт §a+1 удачи§d§o §8(режим старого Baubles)§d§o.
+tooltip.insanetweaks.bauble_fruit.one_time=Действует один раз на игрока.
+tooltip.insanetweaks.bauble_fruit.slot_missing=ВНИМАНИЕ: такой слот не обнаружен!
+tooltip.insanetweaks.bauble_fruit.slot_missing_hint=Этот тип слота можно добавить в конфиге Baubles!
+tooltip.insanetweaks.bauble_fruit.counter=§8Съедено плодов: §f%s
+tooltip.insanetweaks.bauble_fruit.counter_capped=§8Съедено плодов: §f%s§8/§f%s
+tooltip.insanetweaks.bauble_fruit.counter_full=§cСъедено плодов: %s/%s — достигнут предел
+tooltip.insanetweaks.bauble_fruit.already_eaten=Этот плод вы уже съели.
+
+# Сообщения плодов-баблов
+msg.insanetweaks.fruit.already_eaten=§7Дар этого плода уже ваш. Съесть его снова — потратить впустую.
+msg.insanetweaks.fruit.cap_reached=§cВаше тело больше их не примет.
+msg.insanetweaks.fruit.slot_disabled=§c[!] §7Древний плод выскальзывает из рук... соответствующий слот отключён в физике этого мира.
+msg.insanetweaks.fruit.debug_baublesex=§d[DEBUG-BaubleFruit] %s выдан (BaublesEX). Модификатор: %s
+msg.insanetweaks.fruit.debug_legacy=§d[DEBUG-BaubleFruit] Выдан бонус старого режима за %s (применена +1 удача).
+msg.insanetweaks.corrupted_fruit.nothing_to_give=§5Улью больше нечего дать. Сделка отвергнута.
+
 # Corrupted fruit loop
 item.corrupted_seed_fragment.name=Фрагмент осквернённого семени
 item.corrupted_seed.name=Осквернённое семя

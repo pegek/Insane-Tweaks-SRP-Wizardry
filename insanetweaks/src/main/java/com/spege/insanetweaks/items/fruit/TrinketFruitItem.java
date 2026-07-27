@@ -9,6 +9,4 @@ public class TrinketFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType() { return TypeData.Preset.TRINKET; }
-    @Override protected String getSlotDescription() { return "+1 Trinket slot"; }
-    @Override protected String getFlavorText() { return "A shiny fruit glimmering with miscellaneous possibilities."; }
 }

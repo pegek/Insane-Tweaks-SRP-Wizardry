@@ -31,7 +31,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * EntityCorruptedSapling that parasites will attack. Tooltip doubles as the
  * growing manual, in the Living/Sentient gear flavor style.
  */
-public class CorruptedSeedItem extends Item {
+public class CorruptedSeedItem extends Item
+        implements com.spege.insanetweaks.api.ITweaksPropertyHolder {
 
     public CorruptedSeedItem() {
         this.setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "corrupted_seed"));
@@ -86,6 +87,15 @@ public class CorruptedSeedItem extends Item {
     @Nonnull
     public net.minecraftforge.common.IRarity getForgeRarity(@Nonnull ItemStack stack) {
         return EnumRarity.EPIC;
+    }
+
+    /**
+     * Four fragments went into this seed and a sapling has to survive twenty minutes after it.
+     * Same lava protection as the fruits it eventually becomes.
+     */
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        return java.util.Arrays.asList(com.spege.insanetweaks.api.AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
     @Override

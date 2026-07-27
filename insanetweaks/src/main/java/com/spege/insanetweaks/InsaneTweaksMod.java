@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.16";
+    public static final String VERSION = "1.4.19";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -126,6 +126,23 @@ public class InsaneTweaksMod implements IGuiHandler {
         logCompatibilityReport();
         com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
+        // 🚨 A loot table that is never registered here silently resolves to EMPTY in 1.12.2 -
+        // no error, no warning, just no drops. All three sim_wizard tiers must be registered.
+        net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_NOVICE);
+        net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_ADEPT);
+        net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_MASTER);
+
+        // Custom Corail Tombstone perks. Registration is deliberately NOT behind a module flag:
+        // Tombstone persists perks by numeric registry ID, so a perk that vanishes when a flag
+        // is flipped would drop out of existing worlds. The config greys perks out instead.
+        // Gated only on Tombstone's presence, which keeps TombstonePerks — and the Perk type in
+        // its method signature — off the classloader in packs without it. RegistryEvent.Register
+        // fires on the Forge bus after preInit in 1.12.2, so registering the listener here is
+        // early enough.
+        if (Loader.isModLoaded("tombstone")) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.tombstone.TombstonePerks());
+        }
+
         // Sanctuary Dome is an SRP-compat feature end-to-end (blocks, spawn veto, TE logic
         // all key off SRParasites). Defensively disable if SRP isn't present so the module
         // flag can't linger true with a half-registered feature.
@@ -160,6 +177,15 @@ public class InsaneTweaksMod implements IGuiHandler {
                         @Override
                         public Render<? super EntitySimWizard> createRenderFor(RenderManager manager) {
                             return new RenderSimWizard(manager);
+                        }
+                    });
+            RenderingRegistry.registerEntityRenderingHandler(
+                    com.spege.insanetweaks.entities.EntitySimBattlemage.class,
+                    new IRenderFactory<com.spege.insanetweaks.entities.EntitySimBattlemage>() {
+                        @Override
+                        public Render<? super com.spege.insanetweaks.entities.EntitySimBattlemage> createRenderFor(
+                                RenderManager manager) {
+                            return new com.spege.insanetweaks.client.renderer.entity.RenderSimBattlemage(manager);
                         }
                     });
             RenderingRegistry.registerEntityRenderingHandler(EntityFerCowMinion.class,
@@ -318,7 +344,10 @@ public class InsaneTweaksMod implements IGuiHandler {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sentinel"),
                 EntitySentinel.class, "sentinel", 113, this, 64, 3, true, 0x8F0C12, 0x2D2D2D);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sim_wizard"),
-                EntitySimWizard.class, "sim_wizard", 115, this, 64, 3, true, 0x5A6C72, 0x20353E);
+                // Egg colours match the violet parasite-mage identity (texture, glow, particles).
+                // Safe to change: egg colours are looked up from EntityRegistry at render time,
+                // never stored in the save.
+                EntitySimWizard.class, "sim_wizard", 115, this, 64, 3, true, 0x2A1033, 0x9B30D9);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_yelloweye_minion"),
                 EntityPrimitiveYelloweyeMinion.class, "primitive_yelloweye_minion", 101, this, 64, 3, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "primitive_summoner_minion"),
@@ -351,7 +380,13 @@ public class InsaneTweaksMod implements IGuiHandler {
                 EntityBomberBomb.class, "bomber_bomb", 118, this, 64, 10, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "dispatcher_claw"),
                 com.spege.insanetweaks.entities.EntityDispatcherClaw.class, "dispatcher_claw", 119, this, 64, 3, true);
-        // IDs 100-119 used; next free 120.
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sim_battlemage"),
+                com.spege.insanetweaks.entities.EntitySimBattlemage.class, "sim_battlemage", 120, this, 64, 3, true,
+                0x1A0A2E, 0xC94FD9);
+        // IDs 100-120 used; next free 121.
+        // 🚨 Tracking IDs are network- and save-stable: APPEND only, never reuse or reorder.
+        // registerModEntity must never be gated on a config flag either - a registry object that
+        // disappears from an existing world corrupts the save. Gate handlers, not registrations.
         // Never reuse/reorder network-stable IDs.
 
 
@@ -383,6 +418,23 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneDropEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneBooksHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GraveDecayHandler());
+
+            // Runtime for the Assimilated Knowledge perk. The perk itself is registered in
+            // preInit regardless of these flags — only its effect is gated here.
+            if (Loader.isModLoaded("tombstone")) {
+                MinecraftForge.EVENT_BUS.register(
+                        new com.spege.insanetweaks.tombstone.AssimilatedKnowledgeHandler());
+            }
+
+            // Knowledge of Death tab in the inventory. Client only, and both mods must be present:
+            // the handler names Reskillable AND Tombstone types in its signatures, so the branch
+            // must not be taken otherwise — the JVM would resolve them on class load.
+            if (com.spege.insanetweaks.config.ModConfig.tombstone.enableKnowledgeTab
+                    && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT
+                    && Loader.isModLoaded("tombstone")
+                    && Loader.isModLoaded("reskillable")) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.KnowledgeTabHandler());
+            }
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
@@ -441,8 +493,17 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact.class);
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GlobalPropertyTooltipHandler());
             }
+        }
+
+        // The advanced-property tooltip ("Ashen Legacy" and friends) is generic over
+        // ITweaksPropertyHolder, so it must not sit inside the SRP-EBWizardry bridge block:
+        // Bauble Fruits are lava-proof property holders whether or not the bridge is enabled,
+        // and with the bridge off they were silently missing the line that says so.
+        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT
+                && (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge
+                        || com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits)) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GlobalPropertyTooltipHandler());
         }
 
         // Sim_wizard SRP faction integration: cancels parasite<->sim_wizard friendly fire so
@@ -606,7 +667,14 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.EventHandlerSkills());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.AdaptedVegetationSkill());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.StoneFistsHandler());
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ChargeJumpHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
+            if (Loader.isModLoaded(SRP_MODID)) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ScarredFleshHandler());
+            }
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.ChargeJumpClientHandler());
+            }
             LOGGER.info("[InsaneTweaks] Reskillable traits module enabled.");
         }
 

@@ -25,11 +25,21 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class LayerSimWizardGlow implements LayerRenderer<EntitySimWizard> {
 
-    /** Glow tint (violet/magenta, matches the recolored texture + particle palette). */
-    private static final float GLOW_R = 0.58F;
-    private static final float GLOW_G = 0.18F;
-    private static final float GLOW_B = 0.90F;
-    private static final float ALPHA_IDLE = 0.10F;
+    /**
+     * Glow tint per tier ordinal (NOVICE, ADEPT, MASTER): dim indigo, the established violet, hot
+     * magenta. Recolouring this shell is the cheapest possible tier tell - no new texture, no new
+     * geometry, and therefore none of the UV-garbage that every previous attempt at visual
+     * distinction produced on the SRP 64x55 atlas (the v3.0 "stop fighting the SRP model" lesson).
+     */
+    private static final float[][] GLOW_RGB = {
+            { 0.42F, 0.22F, 0.72F },
+            { 0.58F, 0.18F, 0.90F },
+            { 0.85F, 0.10F, 0.55F }
+    };
+    private static final float[] ALPHA_IDLE_BY_TIER = { 0.06F, 0.10F, 0.16F };
+    /** Fallback tint when tier visuals are switched off - the pre-tier appearance. */
+    private static final float[] GLOW_DEFAULT = { 0.58F, 0.18F, 0.90F };
+    private static final float ALPHA_IDLE_DEFAULT = 0.10F;
     private static final float ALPHA_CAST_BONUS = 0.30F;
     /** Shell inflation so the overlay does not z-fight the base model. */
     private static final float SHELL_SCALE = 1.02F;
@@ -46,7 +56,13 @@ public class LayerSimWizardGlow implements LayerRenderer<EntitySimWizard> {
     public void doRenderLayer(@Nonnull EntitySimWizard entity, float limbSwing, float limbSwingAmount,
             float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
 
-        float alpha = ALPHA_IDLE + ALPHA_CAST_BONUS * entity.getCastFlashIntensity(partialTicks);
+        // Index defensively: a future fourth tier would otherwise crash the render thread here.
+        boolean tiered = com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals;
+        int tier = Math.max(0, Math.min(entity.getTier().ordinal(), GLOW_RGB.length - 1));
+        float[] rgb = tiered ? GLOW_RGB[tier] : GLOW_DEFAULT;
+        float idleAlpha = tiered ? ALPHA_IDLE_BY_TIER[tier] : ALPHA_IDLE_DEFAULT;
+
+        float alpha = idleAlpha + ALPHA_CAST_BONUS * entity.getCastFlashIntensity(partialTicks);
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(this.texture);
 
@@ -59,7 +75,7 @@ public class LayerSimWizardGlow implements LayerRenderer<EntitySimWizard> {
             GlStateManager.depthMask(false);
             // Fullbright lightmap so the glow ignores world darkness.
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-            GlStateManager.color(GLOW_R, GLOW_G, GLOW_B, alpha);
+            GlStateManager.color(rgb[0], rgb[1], rgb[2], alpha);
 
             GlStateManager.scale(SHELL_SCALE, SHELL_SCALE, SHELL_SCALE);
             this.model.render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);

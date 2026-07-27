@@ -54,6 +54,14 @@ public class TraitsCategory {
     public TraitConfig meditation = new TraitConfig(6, "agility",
             new String[] { "reskillable:agility|18", "reskillable:magic|10" });
 
+    @Config.Name("Coiled Spring")
+    public TraitConfig coiledSpring = new TraitConfig(8, "agility",
+            new String[] { "reskillable:agility|25" });
+
+    @Config.Name("Scarred Flesh")
+    public TraitConfig scarredFlesh = new TraitConfig(15, "defense",
+            new String[] { "reskillable:defense|40" });
+
     @Config.Name("Arcane Mastery")
     public TraitConfig arcaneMastery = new TraitConfig(5, "magic", new String[] { "reskillable:magic|18" });
 

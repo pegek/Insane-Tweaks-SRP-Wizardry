@@ -6,6 +6,8 @@ import com.dhanantry.scapeandrunparasites.util.config.SRPConfig;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.entities.EntitySimWizard;
+import com.spege.insanetweaks.entities.SimWizardTier;
 import com.spege.insanetweaks.util.SrpOriginSnapshotHelper.OriginalSnapshot;
 
 import net.minecraft.entity.Entity;
@@ -26,21 +28,41 @@ import net.minecraft.world.World;
  * applied here - sim_wizard is meant to be aggressive against everything non-parasite
  * and to participate in the SRP collective normally.
  *
- * Ancient Spellcraft class wizards still use the temporary sim_human fallback
- * until sim_battlemage exists. The sim_wizard target itself can be disabled at
- * runtime via {@code ModConfig.entities.assimilatedWizard.spawning.enabled};
- * in that case the bridge falls back to sim_human for both EBW wizard variants.
+ * <p>Which source entity becomes what is driven entirely by the config list
+ * {@code entities.assimilated_wizard.spawning.assimilationMap}, so a pack can retarget or extend
+ * the mapping - Ancient Spellcraft class wizards included - without a rebuild. Each entry may name
+ * a minimum {@link SimWizardTier}, which is how an evil or class wizard produces a stronger
+ * parasite than a plain one.
+ *
+ * <p>The sim_wizard target can still be disabled wholesale via
+ * {@code ModConfig.entities.assimilatedWizard.spawning.enabled}; in that case EVERY mapped source
+ * falls back to sim_human, exactly as before.
  */
 public final class SrpWizardryAssimilationHelper {
 
-    private static final ResourceLocation WIZARD_ID = new ResourceLocation("ebwizardry", "wizard");
-    private static final ResourceLocation EVIL_WIZARD_ID = new ResourceLocation("ebwizardry", "evil_wizard");
-    private static final ResourceLocation CLASS_WIZARD_ID = new ResourceLocation("ancientspellcraft", "class_wizard");
-    private static final ResourceLocation EVIL_CLASS_WIZARD_ID = new ResourceLocation("ancientspellcraft", "evil_class_wizard");
     private static final ResourceLocation SIM_WIZARD_ID = new ResourceLocation(InsaneTweaksMod.MODID, "sim_wizard");
     private static final ResourceLocation TEST_SIM_HUMAN_ID = new ResourceLocation("srparasites", "sim_human");
 
+    /** Parsed form of the config map; rebuilt on demand, replaced atomically. */
+    private static volatile java.util.Map<String, Mapping> mappings;
+
+    /** One parsed row of the assimilation map. */
+    private static final class Mapping {
+        final ResourceLocation target;
+        final SimWizardTier tierFloor;
+
+        Mapping(ResourceLocation target, SimWizardTier tierFloor) {
+            this.target = target;
+            this.tierFloor = tierFloor;
+        }
+    }
+
     private SrpWizardryAssimilationHelper() {
+    }
+
+    /** Drops the parsed map so config edits apply without a restart. */
+    public static void invalidateCache() {
+        mappings = null;
     }
 
     public static boolean tryConvertSupportedWizard(EntityLivingBase original, NBTTagCompound tags) {
@@ -54,10 +76,11 @@ public final class SrpWizardryAssimilationHelper {
         }
 
         ResourceLocation originalId = EntityList.getKey(original);
-        ResourceLocation targetId = resolveConversionTarget(originalId);
-        if (targetId == null) {
+        Mapping mapping = resolveMapping(originalId);
+        if (mapping == null) {
             return false;
         }
+        ResourceLocation targetId = mapping.target;
 
         Entity convertedEntity = EntityList.createEntityByIDFromName(targetId, world);
         if (!(convertedEntity instanceof EntityLiving)) {
@@ -74,6 +97,13 @@ public final class SrpWizardryAssimilationHelper {
             original.posX, original.posY, original.posZ,
             original.rotationYaw, original.rotationPitch);
         converted.onInitialSpawn(world.getDifficultyForLocation(new BlockPos(converted)), null);
+
+        // Tier floor from the mapping. Applied AFTER onInitialSpawn (which rolls the tier) so an
+        // evil or class wizard can never come back weaker than its origin implies; setTierFloor
+        // only ever raises, and re-applies the attribute scaling from pristine base values.
+        if (mapping.tierFloor != null && converted instanceof EntitySimWizard) {
+            ((EntitySimWizard) converted).setTierFloor(mapping.tierFloor);
+        }
 
         if (original.hasCustomName()) {
             converted.setCustomNameTag(original.getCustomNameTag());
@@ -114,18 +144,70 @@ public final class SrpWizardryAssimilationHelper {
         return true;
     }
 
-    private static ResourceLocation resolveConversionTarget(ResourceLocation originalId) {
-        if (WIZARD_ID.equals(originalId) || EVIL_WIZARD_ID.equals(originalId)) {
-            // ModConfig.entities.assimilatedWizard.spawning.enabled is a master switch. When disabled,
-            // fall back to sim_human so the bridge keeps working without spawning the custom entity.
-            return ModConfig.entities.assimilatedWizard.spawning.enabled ? SIM_WIZARD_ID : TEST_SIM_HUMAN_ID;
+    private static Mapping resolveMapping(ResourceLocation originalId) {
+        if (originalId == null) {
+            return null;
         }
-
-        if (CLASS_WIZARD_ID.equals(originalId) || EVIL_CLASS_WIZARD_ID.equals(originalId)) {
-            return TEST_SIM_HUMAN_ID;
+        java.util.Map<String, Mapping> map = mappings;
+        if (map == null) {
+            map = parseMappings();
+            mappings = map;
         }
+        Mapping mapping = map.get(originalId.toString());
+        if (mapping == null) {
+            return null;
+        }
+        // Master switch: when the custom entity is off, every mapped source becomes a plain
+        // assimilated human instead, and the tier floor is meaningless.
+        if (!ModConfig.entities.assimilatedWizard.spawning.enabled
+                && SIM_WIZARD_ID.toString().equals(mapping.target.toString())) {
+            return new Mapping(TEST_SIM_HUMAN_ID, null);
+        }
+        return mapping;
+    }
 
-        return null;
+    /** Parses {@code "<source id>=<target id>[:<TIER>]"} rows; bad rows are logged and skipped. */
+    private static java.util.Map<String, Mapping> parseMappings() {
+        java.util.Map<String, Mapping> map = new java.util.HashMap<String, Mapping>();
+        String[] entries = ModConfig.entities.assimilatedWizard.spawning.assimilationMap;
+        if (entries == null) {
+            return java.util.Collections.unmodifiableMap(map);
+        }
+        for (String entry : entries) {
+            if (entry == null || entry.trim().isEmpty()) {
+                continue;
+            }
+            int split = entry.indexOf('=');
+            if (split <= 0 || split == entry.length() - 1) {
+                InsaneTweaksMod.LOGGER.warn(
+                        "[IT][AssimilationBridge] Malformed assimilationMap entry '{}' - expected"
+                                + " '<source id>=<target id>[:<TIER>]'. Skipped.", entry);
+                continue;
+            }
+            String source = entry.substring(0, split).trim();
+            String rest = entry.substring(split + 1).trim();
+
+            SimWizardTier floor = null;
+            int tierSplit = rest.indexOf(':', rest.indexOf(':') + 1); // skip the namespace colon
+            if (tierSplit > 0) {
+                String tierName = rest.substring(tierSplit + 1).trim();
+                floor = SimWizardTier.byName(tierName);
+                if (floor == null) {
+                    InsaneTweaksMod.LOGGER.warn(
+                            "[IT][AssimilationBridge] Unknown tier '{}' in '{}' - mapping kept without a floor.",
+                            tierName, entry);
+                }
+                rest = rest.substring(0, tierSplit).trim();
+            }
+
+            if (rest.isEmpty()) {
+                InsaneTweaksMod.LOGGER.warn(
+                        "[IT][AssimilationBridge] Entry '{}' has no target id. Skipped.", entry);
+                continue;
+            }
+            map.put(source, new Mapping(new ResourceLocation(rest), floor));
+        }
+        return java.util.Collections.unmodifiableMap(map);
     }
 
     private static OriginalSnapshot captureSnapshot(EntityLivingBase entity, ResourceLocation originalId) {

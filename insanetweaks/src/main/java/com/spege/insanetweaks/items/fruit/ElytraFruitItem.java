@@ -9,6 +9,4 @@ public class ElytraFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType() { return TypeData.Preset.ELYTRA; }
-    @Override protected String getSlotDescription() { return "+1 Elytra slot"; }
-    @Override protected String getFlavorText() { return "A weightless fruit echoing with gusts of wind."; }
 }

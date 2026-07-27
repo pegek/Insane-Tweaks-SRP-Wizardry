@@ -18,8 +18,4 @@ public class BeltFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.BELT; }
-    @Override protected String       getSlotDescription() { return "+1 Belt slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A resilient fruit with a warm, grounding energy.";
-    }
 }

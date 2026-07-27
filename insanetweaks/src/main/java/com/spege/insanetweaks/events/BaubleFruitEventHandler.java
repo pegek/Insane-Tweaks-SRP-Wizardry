@@ -46,16 +46,25 @@ public class BaubleFruitEventHandler {
 
     // =========================================================================
 
+    /**
+     * One-shot marker for the legacy-mode advisory below. Without it the warning fired on every
+     * single login, which is noise: the information does not change between sessions.
+     * Same pattern as CorruptedFragmentDropHandler's corrupted-hint flag.
+     */
+    private static final String LEGACY_HINT_SHOWN_TAG = "InsaneTweaksBaubleLegacyHintShown";
+
     @SubscribeEvent
+    @SuppressWarnings("null")
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        // Chat warning when running with original Baubles instead of BaublesEX
-        if (!ModItems.isBaublesExPresent()) {
+        // Chat warning when running with original Baubles instead of BaublesEX — once per player.
+        if (!ModItems.isBaublesExPresent() && !hasSeenLegacyHint(event.player)) {
             event.player.sendMessage(new TextComponentString(
                     "\u00a7e[InsaneTweaks] \u00a77Bauble Fruits: \u00a7cOriginal Baubles detected. "
                     + "\u00a7bBaublesEX \u00a77is recommended for full slot expansion. "
                     + "Currently in \u00a7eLegacy Mode \u00a77(\u00a7a+1 Luck\u00a77 per fruit)."));
         }
         applyLegacyBonuses(event.player);
+        syncProgress(event.player);
     }
 
     @SubscribeEvent
@@ -63,6 +72,28 @@ public class BaubleFruitEventHandler {
         // Attributes reset on death — reapply from NBT
         if (!event.isEndConquered()) {
             applyLegacyBonuses(event.player);
+        }
+        syncProgress(event.player);
+    }
+
+    /** Reads and sets the one-shot advisory marker in one go. True when it was already shown. */
+    @SuppressWarnings("null")
+    private static boolean hasSeenLegacyHint(EntityPlayer player) {
+        NBTTagCompound persistent = player.getEntityData()
+                .getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        if (persistent.getBoolean(LEGACY_HINT_SHOWN_TAG)) {
+            return true;
+        }
+        persistent.setBoolean(LEGACY_HINT_SHOWN_TAG, true);
+        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persistent);
+        return false;
+    }
+
+    /** Pushes the fruit-consumption mirror to the client; the tooltip counter reads it. */
+    private static void syncProgress(EntityPlayer player) {
+        if (player instanceof net.minecraft.entity.player.EntityPlayerMP) {
+            com.spege.insanetweaks.util.BaubleFruitProgress
+                    .sync((net.minecraft.entity.player.EntityPlayerMP) player);
         }
     }
 

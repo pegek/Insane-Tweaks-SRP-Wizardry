@@ -51,6 +51,282 @@ public class EntitiesCategory {
         @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.spells")
         @Config.Comment("Spell pool contents.")
         public final Spells spells = new Spells();
+
+        @Config.Name("tiers")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.tiers")
+        @Config.Comment("Power tiers: how often each one appears and how much stronger it is.")
+        public final Tiers tiers = new Tiers();
+
+        @Config.Name("tuning")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.tuning")
+        @Config.Comment({
+                "Fine-grained combat tuning that used to be hardcoded in EntityAISimWizardCombat.",
+                "Every value here is read live on use - no restart, no world reload."
+        })
+        public final Tuning tuning = new Tuning();
+    }
+
+    /**
+     * All arrays here are indexed by tier ordinal: [0] = NOVICE, [1] = ADEPT, [2] = MASTER.
+     * Missing entries fall back to 1.0, so a short array degrades instead of crashing.
+     *
+     * <p>NOVICE values must stay at exactly 1.0 unless you intend to change every existing
+     * wizard in the world: a wizard saved before tiers existed loads as NOVICE.
+     */
+    public static class Tiers {
+
+        @Config.Comment({
+                "Relative chance of each tier, indexed NOVICE, ADEPT, MASTER.",
+                "Read live - applies to newly created wizards."
+        })
+        @Config.Name("Tier Weights")
+        public int[] tierWeights = { 60, 30, 10 };
+
+        @Config.Comment({
+                "SRP evolution phase divided by this gives EXTRA tier rolls; the best roll wins.",
+                "With the default 2, phase 4 grants 2 extra rolls, so late-game wizards skew toward",
+                "MASTER. This is how the evolution phase influences power - it decides WHICH tier",
+                "appears, deliberately NOT how large each tier's bonus is, so the two never multiply",
+                "into a runaway. Higher value = weaker phase influence. Read live."
+        })
+        @Config.Name("Tier Phase Roll Divisor")
+        @Config.RangeInt(min = 1, max = 10)
+        public int tierPhaseRollDivisor = 2;
+
+        @Config.Comment({
+                "Spell potency multiplier per tier, on top of Combat > Spell Potency Multiplier.",
+                "This is the ONLY power term the evolution phase does not also multiply. Read live."
+        })
+        @Config.Name("Tier Potency Multipliers")
+        public double[] tierPotencyMultipliers = { 1.0D, 1.2D, 1.5D };
+
+        @Config.Comment("Max health multiplier per tier. Applied once at spawn.")
+        @Config.Name("Tier Health Multipliers")
+        @Config.RequiresWorldRestart
+        public double[] tierHealthMultipliers = { 1.0D, 1.25D, 1.6D };
+
+        @Config.Comment("Armor multiplier per tier. Applied once at spawn.")
+        @Config.Name("Tier Armor Multipliers")
+        @Config.RequiresWorldRestart
+        public double[] tierArmorMultipliers = { 1.0D, 1.15D, 1.35D };
+
+        @Config.Comment({
+                "Hard ceiling on tier multiplier x SRP phase bonus for health. Health is the one",
+                "stat where the two deliberately compound (it is a time-to-kill knob, not a burst",
+                "knob), so it needs an upper bound."
+        })
+        @Config.Name("Max Combined Health Multiplier")
+        @Config.RangeDouble(min = 1.0, max = 10.0)
+        @Config.RequiresWorldRestart
+        public double maxCombinedHealthMultiplier = 2.5D;
+
+        @Config.Comment({
+                "Optional whitelist of spell registry names a NOVICE wizard may use, filtered out of",
+                "the main Spell Pool. EMPTY = no restriction (the default)."
+        })
+        @Config.Name("Novice Spell Filter")
+        @Config.RequiresWorldRestart
+        public String[] noviceSpellFilter = {};
+
+        @Config.Comment("As above, for ADEPT. EMPTY = no restriction.")
+        @Config.Name("Adept Spell Filter")
+        @Config.RequiresWorldRestart
+        public String[] adeptSpellFilter = {};
+
+        @Config.Comment("As above, for MASTER. EMPTY = no restriction.")
+        @Config.Name("Master Spell Filter")
+        @Config.RequiresWorldRestart
+        public String[] masterSpellFilter = {};
+
+        @Config.Comment({
+                "Give each tier its own glow colour, particle palette and focus item so the player",
+                "can read a wizard's danger at a glance. Read live."
+        })
+        @Config.Name("Enable Tier Visuals")
+        public boolean enableTierVisuals = true;
+    }
+
+    /**
+     * Values read on every use inside the running combat task. None of them is cached in the
+     * task's constructor, which is what makes the "read live" promise real - contrast
+     * Combat.decisionRange / rangeMultiplier, which ARE cached there and therefore correctly
+     * carry @Config.RequiresWorldRestart.
+     */
+    public static class Tuning {
+
+        @Config.Comment("Maximum distance (blocks) at which a DISPLACE spell (banish) is chosen as the close-quarters answer.")
+        @Config.Name("Displace Max Distance")
+        @Config.RangeDouble(min = 1.0, max = 16.0)
+        public double banishMaxDistance = 4.5D;
+
+        @Config.Comment("Upper distance bound (blocks) for choosing a DRAIN spell (life_drain). Keep inside the ray's own range.")
+        @Config.Name("Drain Max Distance")
+        @Config.RangeDouble(min = 1.0, max = 32.0)
+        public double lifeDrainMaxDistance = 9.0D;
+
+        @Config.Comment("How long a continuous spell is channelled, in ticks. 20 ticks = 1 second.")
+        @Config.Name("Channel Duration (ticks)")
+        @Config.RangeInt(min = 5, max = 200)
+        public int channelDurationTicks = 40;
+
+        @Config.Comment("Closer than this (blocks), the wizard backs away instead of holding position.")
+        @Config.Name("Retreat Distance")
+        @Config.RangeDouble(min = 0.0, max = 32.0)
+        public double retreatDistance = 7.0D;
+
+        @Config.Comment({
+                "Further than this (blocks), the wizard closes in. Between the two distances it",
+                "holds still and lets the cast cooldown run. Clamped to be above Retreat Distance."
+        })
+        @Config.Name("Approach Distance")
+        @Config.RangeDouble(min = 4.0, max = 64.0)
+        public double approachDistance = 18.0D;
+
+        @Config.Comment("Ticks between navigation updates while manoeuvring. Lower = twitchier and more path recalculation.")
+        @Config.Name("Repath Interval (ticks)")
+        @Config.RangeInt(min = 1, max = 60)
+        public int repathIntervalTicks = 10;
+
+        @Config.Comment("Movement speed multiplier when closing in on a target.")
+        @Config.Name("Approach Speed")
+        @Config.RangeDouble(min = 0.1, max = 3.0)
+        public double moveSpeed = 1.0D;
+
+        @Config.Comment("Movement speed multiplier when backing away from a target.")
+        @Config.Name("Retreat Speed")
+        @Config.RangeDouble(min = 0.1, max = 3.0)
+        public double retreatSpeed = 1.25D;
+
+        @Config.Comment("Radius (blocks) of the forward cone searched for clustered enemies before choosing an AoE spell.")
+        @Config.Name("AoE Cone Radius")
+        @Config.RangeDouble(min = 2.0, max = 32.0)
+        public double clusterConeRadius = 8.0D;
+
+        @Config.Comment("Half-angle of that cone, in DEGREES. 60 means a 120-degree forward arc.")
+        @Config.Name("AoE Cone Half-Angle (degrees)")
+        @Config.RangeInt(min = 5, max = 180)
+        public int clusterConeAngleDegrees = 60;
+
+        @Config.Comment("How many valid targets must stand in the cone before an AoE spell is preferred.")
+        @Config.Name("AoE Minimum Targets")
+        @Config.RangeInt(min = 2, max = 10)
+        public int clusterMinTargets = 2;
+
+        @Config.Comment("A target above this health percentage and within the distance below is met with a KNOCKBACK opener.")
+        @Config.Name("Knockback Opener Health (%)")
+        @Config.RangeInt(min = 0, max = 100)
+        public int knockbackTargetHealthPercent = 85;
+
+        @Config.Comment("Maximum distance (blocks) for that knockback opener.")
+        @Config.Name("Knockback Opener Max Distance")
+        @Config.RangeDouble(min = 1.0, max = 32.0)
+        public double knockbackMaxDistance = 6.0D;
+
+        @Config.Comment("Upper bound (blocks) of the close-range spell band.")
+        @Config.Name("Short Band Distance")
+        @Config.RangeDouble(min = 1.0, max = 32.0)
+        public double shortBandDistance = 6.0D;
+
+        @Config.Comment("Upper bound (blocks) of the mid-range spell band. Beyond it the long-range band applies.")
+        @Config.Name("Medium Band Distance")
+        @Config.RangeDouble(min = 2.0, max = 64.0)
+        public double mediumBandDistance = 14.0D;
+
+        @Config.Comment("Length of the cast animation / glow flare window, in ticks.")
+        @Config.Name("Cast Animation (ticks)")
+        @Config.RangeInt(min = 1, max = 80)
+        public int castAnimationTicks = 14;
+
+        @Config.Comment("Slowness applied to the wizard after a cast, in ticks. 0 disables the rooting entirely.")
+        @Config.Name("Post-Cast Slowness (ticks)")
+        @Config.RangeInt(min = 0, max = 200)
+        public int postCastSlownessTicks = 20;
+
+        @Config.Comment("Amplifier of that slowness. 0 = Slowness I, 1 = Slowness II.")
+        @Config.Name("Post-Cast Slowness Level")
+        @Config.RangeInt(min = 0, max = 4)
+        public int postCastSlownessAmplifier = 1;
+
+        @Config.Comment("Cooldown after a cast that failed outright (spell refused, target gone during telegraph).")
+        @Config.Name("Failed Cast Cooldown (ticks)")
+        @Config.RangeInt(min = 1, max = 200)
+        public int failedCastCooldownTicks = 10;
+
+        @Config.Comment("Cooldown after a cast that another mod vetoed through SpellCastEvent and the arbiter upheld.")
+        @Config.Name("Vetoed Cast Cooldown (ticks)")
+        @Config.RangeInt(min = 1, max = 400)
+        public int eventBlockCooldownTicks = 20;
+
+        @Config.Comment({
+                "Floor applied when the combat task stops, and when a cast is postponed for lack of",
+                "line of sight. Kept short on purpose so cover does not act as a cast-rate nerf."
+        })
+        @Config.Name("Minimum Retry Cooldown (ticks)")
+        @Config.RangeInt(min = 1, max = 100)
+        public int minRetryCooldownTicks = 5;
+
+        // ---------------- Panic reaction ----------------
+
+        @Config.Comment({
+                "React when cornered or badly hurt: abort whatever is being cast and answer with an",
+                "ESCAPE spell, or a DISPLACE spell (banish) when no escape is in the pool.",
+                "The wizard stays a pure caster - it never swings back."
+        })
+        @Config.Name("Enable Panic Reaction")
+        public boolean enablePanicReaction = true;
+
+        @Config.Comment("A target this close (blocks) counts as cornering the wizard.")
+        @Config.Name("Panic Distance")
+        @Config.RangeDouble(min = 0.0, max = 8.0)
+        public double panicDistance = 2.5D;
+
+        @Config.Comment("Fraction of MAX health that must be lost in one hit to count as a heavy blow. 0.20 = 20%.")
+        @Config.Name("Panic Damage Fraction")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double panicDamageFraction = 0.20D;
+
+        @Config.Comment("How long (ticks) a heavy blow keeps the panic reaction armed.")
+        @Config.Name("Panic Damage Window (ticks)")
+        @Config.RangeInt(min = 5, max = 100)
+        public int panicWindowTicks = 20;
+
+        @Config.Comment({
+                "Cooldown (ticks) between panic reactions. Deliberately long - a short value lets the",
+                "wizard chain escapes and become untouchable."
+        })
+        @Config.Name("Panic Cooldown (ticks)")
+        @Config.RangeInt(min = 20, max = 600)
+        public int panicCooldownTicks = 120;
+
+        // ---------------- Ally support ----------------
+
+        @Config.Comment({
+                "Let the wizard heal wounded parasite allies with an ALLY_HEAL spell (group_heal).",
+                "Requires such a spell in the Spell Pool - plain 'heal' will NOT work, because EBW's",
+                "SpellBuff applies to the caster and ignores everyone else."
+        })
+        @Config.Name("Enable Ally Support")
+        public boolean enableAllySupport = true;
+
+        @Config.Comment("Radius (blocks) searched for wounded parasite allies.")
+        @Config.Name("Ally Support Radius")
+        @Config.RangeDouble(min = 2.0, max = 32.0)
+        public double supportRadius = 8.0D;
+
+        @Config.Comment("How many wounded allies must be in range before the wizard spends a cast on them.")
+        @Config.Name("Ally Support Minimum Wounded")
+        @Config.RangeInt(min = 1, max = 16)
+        public int supportMinWoundedAllies = 2;
+
+        @Config.Comment("An ally at or below this health percentage counts as wounded.")
+        @Config.Name("Ally Support Health Threshold (%)")
+        @Config.RangeInt(min = 1, max = 99)
+        public int supportAllyHealthPercent = 60;
+
+        @Config.Comment("Cooldown (ticks) between ally-support casts, independent of the combat cast cooldown.")
+        @Config.Name("Ally Support Cooldown (ticks)")
+        @Config.RangeInt(min = 20, max = 1200)
+        public int supportCooldownTicks = 200;
     }
 
     public static class Spawning {
@@ -116,6 +392,41 @@ public class EntitiesCategory {
         @Config.Name("SRP Save Data ID")
         @Config.RangeInt(min = 0, max = 1000)
         public int srpSaveDataId = 104;
+
+        @Config.Comment({
+                "Which entities SRP assimilation turns into what, one entry per line:",
+                "  '<source id>=<target id>[:<TIER>]'",
+                "The optional TIER (NOVICE, ADEPT, MASTER) is a MINIMUM - the wizard still rolls its",
+                "own tier and only gets raised to this floor, so an evil or class wizard is never",
+                "weaker than its origin implies.",
+                "",
+                "Setting 'Enable Sim Wizard' to false makes every insanetweaks:sim_wizard target fall",
+                "back to srparasites:sim_human, tier floors included.",
+                "Unknown ids are logged and skipped. Read live."
+        })
+        @Config.Name("Assimilation Map")
+        public String[] assimilationMap = {
+                "ebwizardry:wizard=insanetweaks:sim_wizard",
+                "ebwizardry:evil_wizard=insanetweaks:sim_wizard:ADEPT",
+                "ancientspellcraft:class_wizard=insanetweaks:sim_battlemage",
+                "ancientspellcraft:evil_class_wizard=insanetweaks:sim_battlemage:MASTER"
+        };
+
+        @Config.Comment({
+                "Experience dropped when a sim_wizard is killed. Vanilla evoker drops 10.",
+                "The mod's other entities drop 0 because they are all summons - this is the only",
+                "genuinely hostile one. 0 disables XP. Read live."
+        })
+        @Config.Name("Experience Value")
+        @Config.RangeInt(min = 0, max = 100)
+        public int experienceValue = 12;
+
+        @Config.Comment({
+                "Drop loot from the mod's own per-tier loot tables on death.",
+                "Turn off to fall back to whatever EntityInfHuman drops. Read live."
+        })
+        @Config.Name("Enable Loot Table")
+        public boolean enableLootTable = true;
     }
 
     public static class Combat {
@@ -196,6 +507,25 @@ public class EntitiesCategory {
         @Config.Name("Cast Telegraph Ticks")
         @Config.RangeInt(min = 0, max = 80)
         public int castTelegraphTicks = 10;
+
+        @Config.Comment({
+                "Require an unobstructed line of sight before casting a target-dependent spell.",
+                "When the target is behind cover the wizard closes in instead of firing through walls.",
+                "Self-targeted spells (heal and other buffs) and summons are exempt.",
+                "Set to false to restore the old behaviour of casting through terrain.",
+                "Read live - no restart needed."
+        })
+        @Config.Name("Require Line Of Sight")
+        public boolean requireLineOfSight = true;
+
+        @Config.Comment({
+                "Ticks of remembered line of sight. A cast is still allowed this long after the",
+                "target was last visible, so a fence post or a sapling does not waste the whole",
+                "charge-up. 0 = require sight on the exact firing tick. Read live."
+        })
+        @Config.Name("Line Of Sight Grace (ticks)")
+        @Config.RangeInt(min = 0, max = 60)
+        public int lineOfSightGraceTicks = 10;
     }
 
     public static class Spells {
@@ -224,8 +554,38 @@ public class EntitiesCategory {
                 "ebwizardry:heal",
                 "ebwizardry:life_drain",
                 "ebwizardry:banish",
+                "ebwizardry:group_heal",
                 "insanetweaks:summon_fer_cow",
                 "insanetweaks:summon_primitive_yelloweye"
+        };
+
+        @Config.Comment({
+                "Tactical role overrides, one entry per line: '<registry_name>=ROLE[,ROLE]'.",
+                "Roles drive WHICH spell the AI picks in a given situation, so the tactics keep",
+                "working after you edit the Spell Pool above. Roles are normally DERIVED from the",
+                "spell's own metadata (class, type, tier, properties) - list a spell here only to",
+                "correct or extend that guess.",
+                "",
+                "Valid roles: PROJECTILE_SHORT, PROJECTILE_LONG, AOE, KNOCKBACK, SLOW, DRAIN,",
+                "DISPLACE, ESCAPE, SELF_HEAL, SELF_BUFF, ALLY_HEAL, SUMMON.",
+                "",
+                "The defaults below only spell out what cannot be derived: SLOW (ice_shard's",
+                "slowness lives in its projectile entity, not in any property) and ESCAPE (blink is",
+                "a bare Spell with a single range property). The rest are listed for documentation",
+                "and match what derivation produces anyway.",
+                "Unknown ids or role names are logged and skipped. Read live - no restart needed."
+        })
+        @Config.Name("Spell Roles")
+        public String[] spellRoles = {
+                "ebwizardry:ice_shard=SLOW,PROJECTILE_LONG",
+                "ebwizardry:magic_missile=PROJECTILE_LONG",
+                "ebwizardry:spark_bomb=AOE,PROJECTILE_SHORT",
+                "ebwizardry:force_orb=KNOCKBACK,PROJECTILE_SHORT",
+                "ebwizardry:banish=DISPLACE",
+                "ebwizardry:life_drain=DRAIN",
+                "ebwizardry:heal=SELF_HEAL",
+                "ebwizardry:group_heal=ALLY_HEAL",
+                "ebwizardry:blink=ESCAPE"
         };
     }
 }

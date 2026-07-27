@@ -12,7 +12,4 @@ public class TotemFruitItem extends BaseBaubleFruitItem {
     @Override protected BaubleTypeEx getBaublesExType() {
         return TypeData.getTypeByName("totem");
     }
-    
-    @Override protected String getSlotDescription() { return "+1 Totem slot"; }
-    @Override protected String getFlavorText() { return "An immortal fruit gleaming with undying vitality."; }
 }

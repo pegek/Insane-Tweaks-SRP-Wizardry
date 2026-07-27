@@ -18,8 +18,4 @@ public class CharmFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.CHARM; }
-    @Override protected String       getSlotDescription() { return "+1 Charm slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A glimmering fruit with a mysterious, elusive aura.";
-    }
 }

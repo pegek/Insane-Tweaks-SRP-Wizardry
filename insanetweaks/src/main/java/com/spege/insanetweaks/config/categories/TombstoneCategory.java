@@ -22,6 +22,15 @@ public class TombstoneCategory {
     @Config.RequiresMcRestart
     public boolean disableEnchantKeyRecipe = true;
 
+    @Config.Comment({
+            "Adds a Knowledge of Death tab under Reskillable's inventory tabs, opening Tombstone's",
+            "perk tree without the keybind. Needs both Reskillable and Tombstone; also follows",
+            "Reskillable's own \"Enable Reskillable Tabs\" switch."
+    })
+    @Config.Name("Enable Knowledge Inventory Tab")
+    @Config.RequiresMcRestart
+    public boolean enableKnowledgeTab = true;
+
     // ----------------------------------------------------------------
     // GRAVE ITEM DECAY
     // ----------------------------------------------------------------
@@ -116,6 +125,26 @@ public class TombstoneCategory {
     @Config.Comment("Controls the Witch Doctor perk (voodoo poppet efficiency). Native max level: 5")
     public PerkConfig witchDoctor = new PerkConfig(true, 5);
 
+    // ----------------------------------------------------------------
+    // CUSTOM PERKS ADDED BY THIS MOD
+    // Registered into Tombstone's own tombstone:perks Forge registry, so they appear in the
+    // Knowledge of Death GUI, are purchased, persisted and synced by Tombstone itself.
+    // Tombstone never runs their effect — that lives in our own handlers.
+    //
+    // Note the perks are ALWAYS registered when Tombstone is present, regardless of these
+    // flags. A registry object hidden behind a config flag vanishes from an existing world;
+    // 'Enabled' greys the perk out via isDisabled instead.
+    // ----------------------------------------------------------------
+    @Config.Name("Custom Perk: Assimilated Knowledge")
+    @Config.Comment({"Killing high-tier parasites teaches you something about death itself.",
+            "Each level adds a flat chance for a qualifying parasite kill to grant knowledge."})
+    public AssimilatedKnowledgeConfig assimilatedKnowledge = new AssimilatedKnowledgeConfig();
+
+    @Config.Name("Custom Perk: Relief for the Damned")
+    @Config.Comment({"Softens every penalty of Enigmatic Legacy's Ring of the Seven Curses.",
+            "Requires Enigmatic Legacy; the perk greys itself out when the mod is absent."})
+    public ReliefForTheDamnedConfig reliefForTheDamned = new ReliefForTheDamnedConfig();
+
     // ========================================================================
     // PERK CONFIG HELPER
     // ========================================================================
@@ -133,5 +162,101 @@ public class TombstoneCategory {
             this.enabled = enabled;
             this.maxLevel = maxLevel;
         }
+    }
+
+    // ========================================================================
+    // CUSTOM PERK CONFIGS
+    // ========================================================================
+
+    /**
+     * Assimilated Knowledge: qualifying parasite kills feed Tombstone's knowledge economy.
+     *
+     * <p>Scale matters here. Tombstone derives perk points as {@code floor(sqrt(knowledge - 1))},
+     * so knowledge 101 is only 10 points — a flat point per parasite would break the economy
+     * within an hour. Hence a low per-level chance, restricted to high-tier parasites.
+     */
+    public static class AssimilatedKnowledgeConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment("If false the perk is greyed out in the Knowledge of Death GUI and grants nothing.")
+        public boolean enabled = true;
+
+        @Config.Name("Max Level")
+        @Config.Comment("Maximum level of this perk. 0 effectively disables it.")
+        @Config.RangeInt(min = 0, max = 5)
+        public int maxLevel = 3;
+
+        @Config.Name("Point Cost Per Level")
+        @Config.Comment({"Perk points charged for each level of this perk.",
+                "Matches the flat 1 point per level every native Tombstone perk uses. Raising it",
+                "is the cheapest balance lever available, since no native perk overrides getCost."})
+        @Config.RangeInt(min = 1, max = 10)
+        public int pointCostPerLevel = 1;
+
+        @Config.Name("Chance Per Level")
+        @Config.Comment({"Chance, per perk level, that a qualifying parasite kill grants knowledge.",
+                "0.02 at level 3 means a 6% chance per kill."})
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double chancePerLevel = 0.02;
+
+        @Config.Name("Knowledge Per Proc")
+        @Config.Comment("Knowledge granted when the roll succeeds.")
+        @Config.RangeInt(min = 1, max = 100)
+        public int knowledgePerProc = 1;
+
+        @Config.Name("Alignment Per Proc")
+        @Config.Comment({"Alignment granted alongside the knowledge. 0 leaves alignment untouched.",
+                "Negative values are allowed if you consider hive-learning a dark art."})
+        @Config.RangeInt(min = -10, max = 10)
+        public int alignmentPerProc = 0;
+
+        @Config.Name("Qualifying Entities")
+        @Config.Comment({"Registry-name prefixes of parasites whose death can grant knowledge.",
+                "Exact names work too (a full name is its own prefix). Low-tier chaff is left out",
+                "on purpose — it dies in the hundreds and would trivialise the knowledge economy."})
+        public String[] qualifyingEntityPrefixes = {
+                "srparasites:ada_", "srparasites:anc_",
+                "srparasites:overseer", "srparasites:vigilante", "srparasites:warden",
+                "srparasites:marauder", "srparasites:monarch",
+                "srparasites:architect", "srparasites:succor", "srparasites:carrier_colony",
+                "srparasites:wraith", "srparasites:haunter", "srparasites:seeker" };
+
+        @Config.Name("Debug Logging")
+        @Config.Comment("Log every qualifying kill and every successful roll to the server log.")
+        public boolean debugLogging = false;
+    }
+
+    /**
+     * Relief for the Damned: reduces each Cursed Ring penalty by a share of its own value.
+     *
+     * <p>Enigmatic Legacy exposes no API for this, so the reduction is applied by redirecting
+     * the three {@code EnigmaticConfigs} constants at the exact instruction where the mod reads
+     * them — after all of its own guards, before it computes anything.
+     */
+    public static class ReliefForTheDamnedConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment("If false the perk is greyed out and the Cursed Ring behaves natively.")
+        public boolean enabled = true;
+
+        @Config.Name("Max Level")
+        @Config.Comment("Maximum level of this perk. 0 effectively disables it.")
+        @Config.RangeInt(min = 0, max = 5)
+        public int maxLevel = 3;
+
+        @Config.Name("Point Cost Per Level")
+        @Config.Comment({"Perk points charged for each level of this perk.",
+                "Matches the flat 1 point per level every native Tombstone perk uses."})
+        @Config.RangeInt(min = 1, max = 10)
+        public int pointCostPerLevel = 1;
+
+        @Config.Name("Reduction Per Level")
+        @Config.Comment({"Share of each penalty waived per perk level.",
+                "0.12 at level 3 waives 36% of every penalty: the ring's default 50% monster",
+                "damage reduction becomes 32%, its 200% incoming damage becomes 164%, and its",
+                "30% armour debuff becomes 19.2%.",
+                "Applies to all three penalties equally."})
+        @Config.RangeDouble(min = 0.0, max = 0.5)
+        public double reductionPerLevel = 0.12;
     }
 }

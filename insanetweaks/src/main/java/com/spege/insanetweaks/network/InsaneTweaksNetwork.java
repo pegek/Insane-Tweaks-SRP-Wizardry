@@ -26,5 +26,8 @@ public final class InsaneTweaksNetwork {
         // id 3 (PacketOpenSentinelLoot) retired 2026-07-10 — the sentinel loot view is a
         // real Container now. Id left unused; client+server always ship the same jar.
         CHANNEL.registerMessage(PacketSrpParticle.Handler.class, PacketSrpParticle.class, 4, Side.CLIENT);
+        CHANNEL.registerMessage(PacketChargeJump.Handler.class, PacketChargeJump.class, 5, Side.SERVER);
+        CHANNEL.registerMessage(PacketBaubleFruitProgress.Handler.class, PacketBaubleFruitProgress.class, 6,
+                Side.CLIENT);
     }
 }

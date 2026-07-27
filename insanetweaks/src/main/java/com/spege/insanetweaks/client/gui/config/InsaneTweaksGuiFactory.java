@@ -26,7 +26,7 @@ public class InsaneTweaksGuiFactory implements IModGuiFactory {
 
     /** Internal category keys (@Config.Name values on the ModConfig root fields), in display order. */
     private static final List<String> CATEGORY_ORDER = Arrays.asList(
-            "modules", "tweaks", "traits", "tombstone", "thrall", "entities", "client");
+            "modules", "tweaks", "baubleFruits", "traits", "tombstone", "thrall", "entities", "client");
 
     @Override
     public void initialize(Minecraft minecraftInstance) {

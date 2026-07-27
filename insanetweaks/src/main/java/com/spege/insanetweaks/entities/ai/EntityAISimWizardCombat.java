@@ -10,6 +10,8 @@ import com.spege.insanetweaks.entities.EntitySimWizard;
 import electroblob.wizardry.event.SpellCastEvent;
 import electroblob.wizardry.registry.Spells;
 import electroblob.wizardry.spell.Spell;
+import electroblob.wizardry.spell.SpellBuff;
+import electroblob.wizardry.spell.SpellMinion;
 import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
@@ -33,39 +35,21 @@ import net.minecraftforge.common.MinecraftForge;
  *   CHANNEL   channelTicksLeft > 0   -> tickChannel(), stationary
  *   TELEGRAPH telegraphTicksLeft > 0 -> countdown, stationary, then fireCommittedCast()
  *   READY     cooldown elapsed       -> pickSpell + start telegraph (or fire instantly)
- *   HOLD      cooldown pending       -> kite movement: retreat <7, approach >18, else stand
+ *   HOLD      cooldown pending       -> kite movement: retreat / approach / stand, and close in
+ *                                       unconditionally while line of sight is broken
+ *
+ * <p>Spell choice goes through {@link SpellRole} / {@link SpellRoleResolver} rather than registry
+ * names, and every distance, cooldown and threshold below comes from
+ * {@code ModConfig.entities.assimilatedWizard.tuning}, read live on use.
  *
  * Diagnostics: with {@code client.enableSimWizardDebugLogs} on, every gate rejection
  * (throttled), spell pick and cast result is logged — see spec E1.
  */
 public class EntityAISimWizardCombat extends EntityAIBase {
 
-    private static final int MIN_RETRY_COOLDOWN = 5;
-    private static final int FAILED_CAST_COOLDOWN = 10;
-    private static final int EVENT_BLOCK_COOLDOWN = 20;
-    private static final int CAST_ANIMATION_TICKS = 14;
-    private static final int POST_CAST_SLOWNESS_TICKS = 20;
-    private static final int POST_CAST_SLOWNESS_AMPLIFIER = 1;
-    /** How long a continuous spell (life_drain) is channeled, in ticks. */
-    private static final int CHANNEL_DURATION_TICKS = 40;
-    /** Max distance for the banish special (close-quarters "get off me"). */
-    private static final double BANISH_MAX_DISTANCE = 4.5D;
-    /** life_drain special window upper bound - stays inside the ray's ~10 block base range. */
-    private static final double LIFE_DRAIN_MAX_DISTANCE = 9.0D;
-
-    // Movement band (from the retired EntityAISimWizardKite)
-    private static final double RETREAT_DISTANCE = 7.0D;
-    private static final double APPROACH_DISTANCE = 18.0D;
-    private static final int REPATH_INTERVAL = 10;
-    private static final double MOVE_SPEED = 1.0D;
-    private static final double RETREAT_SPEED = 1.25D;
-
     private final EntitySimWizard wizard;
     private final double decisionRange;
     private final double decisionRangeSq;
-
-    /** Absolute world time (getTotalWorldTime) before which no new cast may start. */
-    private long nextCastReadyTime;
 
     /** Telegraph countdown. > 0 = charging up, 0 = ready to fire. */
     private int telegraphTicksLeft;
@@ -83,6 +67,22 @@ public class EntityAISimWizardCombat extends EntityAIBase {
 
     private int repathTimer;
 
+    /**
+     * Absolute world time at which the target was last actually visible. Deliberately a
+     * TIMESTAMP, not a countdown: {@code shouldExecute} is polled on the AI tick rate (every 3
+     * ticks), so any counter decremented outside {@code updateTask} runs at the wrong speed -
+     * the v3.1 "cooldowns were silently tripled" bug. Seeded far in the past so the grace window
+     * cannot spuriously pass before the target has ever been seen.
+     */
+    private long lastSeenTime = Long.MIN_VALUE / 2;
+
+    /** Health sampled last tick; negative until the first sample. Drives the panic trigger. */
+    private float lastHealth = -1.0F;
+    /** World time of the last blow large enough to count as heavy. */
+    private long lastHeavyDamageTime = Long.MIN_VALUE / 2;
+    /** World time before which no further panic reaction may fire. */
+    private long nextPanicReadyTime;
+
     // E1 diagnostics
     private long lastRejectLogTime;
     private long lastSuccessfulCastTime;
@@ -95,18 +95,80 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         this.setMutexBits(3);
     }
 
+    /**
+     * Live view of the tuning values. Deliberately NOT cached in a field: caching would silently
+     * break the "read live, no restart" promise made by every comment in that config category.
+     */
+    private static com.spege.insanetweaks.config.categories.EntitiesCategory.Tuning tuning() {
+        return ModConfig.entities.assimilatedWizard.tuning;
+    }
+
+    /**
+     * Approach distance, clamped to stay above the retreat distance. Forge's {@code @Config} has
+     * no cross-field validation, so a user who sets approach below retreat would otherwise create
+     * a band where the wizard is told to advance and withdraw on alternating repaths.
+     */
+    private static double approachDistance() {
+        return Math.max(tuning().approachDistance, tuning().retreatDistance + 1.0D);
+    }
+
+    // The cast gate lives on the ENTITY, not here: the ally-support task deliberately runs on a
+    // non-overlapping mutex, so this shared gate is the only thing stopping the two from casting
+    // in the same tick.
+
     private boolean isOffCooldown() {
-        return this.wizard.world.getTotalWorldTime() >= this.nextCastReadyTime;
+        return this.wizard.isCastGateReady();
     }
 
     private void setCooldown(int ticks) {
-        this.nextCastReadyTime = this.wizard.world.getTotalWorldTime() + Math.max(0, ticks);
+        this.wizard.setCastGate(ticks);
     }
 
     private void logDiag(String message) {
         if (!ModConfig.client.enableSimWizardDebugLogs) return;
         com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
                 "[InsaneTweaks][SimWizard#{}] {}", this.wizard.getEntityId(), message);
+    }
+
+    // ------------------------------------------------------------------
+    // Line of sight
+    // ------------------------------------------------------------------
+
+    /**
+     * Whether this spell is aimed at something other than the caster and therefore needs a clear
+     * shot. Buffs apply to the caster and minions are spawned beside it, so neither cares about
+     * terrain between wizard and target.
+     */
+    private static boolean requiresLineOfSight(Spell spell) {
+        return !(spell instanceof SpellBuff) && !(spell instanceof SpellMinion);
+    }
+
+    /**
+     * Refreshes the line-of-sight memory and reports current visibility. Uses
+     * {@code EntitySenses.canSee}, which caches its ray trace for the rest of the tick - calling
+     * this several times per tick is cheap, a raw {@code world.rayTraceBlocks} would not be.
+     */
+    private boolean canSeeNow(EntityLivingBase target) {
+        if (target == null) {
+            return false;
+        }
+        if (this.wizard.getEntitySenses().canSee(target)) {
+            this.lastSeenTime = this.wizard.world.getTotalWorldTime();
+            return true;
+        }
+        return false;
+    }
+
+    /** True when the target is visible now, or was within the configured grace window. */
+    private boolean hasRecentLineOfSight(EntityLivingBase target) {
+        if (!ModConfig.entities.assimilatedWizard.combat.requireLineOfSight) {
+            return true;
+        }
+        if (canSeeNow(target)) {
+            return true;
+        }
+        long grace = Math.max(0, ModConfig.entities.assimilatedWizard.combat.lineOfSightGraceTicks);
+        return this.wizard.world.getTotalWorldTime() - this.lastSeenTime <= grace;
     }
 
     private void logRejectThrottled(String reason) {
@@ -150,18 +212,23 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         this.pendingSpell = null;
         this.pendingTarget = null;
         this.repathTimer = 0;
+        // Sight memory is per-engagement - carrying it into a fight with a NEW target would hand
+        // out a free grace window against someone never actually seen.
+        this.lastSeenTime = Long.MIN_VALUE / 2;
     }
 
     @Override
     public void resetTask() {
-        // Never SHORTEN an already-set cooldown, only guarantee a small floor.
-        long floor = this.wizard.world.getTotalWorldTime() + MIN_RETRY_COOLDOWN;
-        if (this.nextCastReadyTime < floor) {
-            this.nextCastReadyTime = floor;
-        }
+        // setCastGate never shortens, so this only guarantees a small floor.
+        setCooldown(tuning().minRetryCooldownTicks);
         this.telegraphTicksLeft = 0;
         this.pendingSpell = null;
         this.pendingTarget = null;
+        this.lastSeenTime = Long.MIN_VALUE / 2;
+        // CRITICAL: clear the commitment flag. An interrupted telegraph that leaves it set would
+        // block the ally-support task forever - the same shape as the v3.3 bug where an
+        // interrupted channel left the continuous-spell visual looping.
+        this.wizard.setCastCommitted(false);
         this.wizard.getNavigator().clearPath();
         // CRITICAL: always end an in-flight channel here, or the continuous-spell visual
         // (getContinuousSpell drives isCastingSpellVisual) loops forever after interruption.
@@ -172,6 +239,17 @@ public class EntityAISimWizardCombat extends EntityAIBase {
 
     @Override
     public void updateTask() {
+        this.trackHealthDrop();
+
+        // EMERGENCY: highest-priority reaction, ahead of everything else so it can abort an
+        // in-flight telegraph or channel. Deliberately a STATE here rather than its own AI task:
+        // a task at priority 4 or 5 sharing this one's mutex bits could never preempt it, because
+        // in 1.12.2 only a LOWER-numbered task interrupts a running one - it would be dead code.
+        if (this.shouldPanic()) {
+            this.firePanic();
+            return;
+        }
+
         // CHANNEL: continuous spell in progress (life_drain) - cast every tick.
         if (this.channelTicksLeft > 0) {
             this.tickChannel();
@@ -200,49 +278,174 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         double distance = this.wizard.getDistance(target);
 
         // READY: begin a cast if the cooldown elapsed and the target is in decision range.
-        if (isOffCooldown() && distance * distance <= this.decisionRangeSq) {
-            this.beginCast(target, distance);
+        if (isOffCooldown() && distance * distance <= this.decisionRangeSq && this.beginCast(target, distance)) {
             return;
         }
 
-        // HOLD: kite movement while waiting for cooldown / closing distance.
+        // HOLD: kite movement while waiting for cooldown / closing distance. Also reached when
+        // beginCast refused for lack of line of sight, so the wizard repositions instead of
+        // standing behind cover doing nothing.
         this.tickMovement(target, distance);
     }
 
-    private void beginCast(EntityLivingBase target, double distance) {
-        this.wizard.getNavigator().clearPath();
+    // ------------------------------------------------------------------
+    // EMERGENCY reaction
+    // ------------------------------------------------------------------
 
+    /** Whichever target the wizard is currently committed to, or its plain attack target. */
+    private EntityLivingBase currentTarget() {
+        if (this.channelTicksLeft > 0 && this.channelTarget != null) {
+            return this.channelTarget;
+        }
+        if (this.telegraphTicksLeft > 0 && this.pendingTarget != null) {
+            return this.pendingTarget;
+        }
+        return this.wizard.getAttackTarget();
+    }
+
+    /**
+     * Samples health once per tick and remembers when a heavy blow landed. A timestamp, not a
+     * countdown, for the same reason as {@link #lastSeenTime}.
+     */
+    private void trackHealthDrop() {
+        float health = this.wizard.getHealth();
+        if (this.lastHealth < 0.0F) {
+            this.lastHealth = health;
+            return;
+        }
+        float drop = this.lastHealth - health;
+        this.lastHealth = health;
+
+        float max = this.wizard.getMaxHealth();
+        if (max > 0.0F && drop >= max * tuning().panicDamageFraction) {
+            this.lastHeavyDamageTime = this.wizard.world.getTotalWorldTime();
+        }
+    }
+
+    private boolean shouldPanic() {
+        if (!tuning().enablePanicReaction) {
+            return false;
+        }
+        long now = this.wizard.world.getTotalWorldTime();
+        if (now < this.nextPanicReadyTime) {
+            return false;
+        }
+        if (now - this.lastHeavyDamageTime <= tuning().panicWindowTicks) {
+            return true;
+        }
+        EntityLivingBase target = this.currentTarget();
+        return target != null && isValidSpellTarget(target, this.wizard)
+                && this.wizard.getDistance(target) <= tuning().panicDistance;
+    }
+
+    /**
+     * Aborts whatever was in flight and answers with an ESCAPE spell, or a DISPLACE spell when the
+     * pool has no escape. Cast WITHOUT a telegraph - a reaction that telegraphs is not a reaction.
+     *
+     * <p>Even when the pool offers neither, the in-flight telegraph is still cancelled: being
+     * interrupted has to cost the wind-up, otherwise a heavy hit would be free.
+     */
+    private void firePanic() {
+        EntityLivingBase target = this.currentTarget();
+
+        if (this.channelTicksLeft > 0 || this.channelSpell != null) {
+            this.endChannel(true);
+        }
+        this.telegraphTicksLeft = 0;
+        this.pendingSpell = null;
+        this.pendingTarget = null;
+        this.wizard.setCastCommitted(false);
+
+        // Arm the panic cooldown unconditionally so a wizard with no answer cannot spend every
+        // tick cancelling its own casts.
+        this.nextPanicReadyTime = this.wizard.world.getTotalWorldTime() + tuning().panicCooldownTicks;
+
+        List<Spell> pool = this.wizard.getSpells();
+        Spell escape = pickByRoles(pool, SpellRole.ESCAPE);
+        boolean selfMove = escape != null;
+        if (escape == null) {
+            escape = pickByRoles(pool, SpellRole.DISPLACE);
+        }
+        if (escape == null) {
+            logDiag("panic: nothing to answer with, telegraph aborted");
+            setCooldown(tuning().failedCastCooldownTicks);
+            return;
+        }
+
+        // ESCAPE moves the caster, DISPLACE shoves the target - so they aim at different entities.
+        EntityLivingBase castTarget = selfMove ? this.wizard : target;
+        if (castTarget == null) {
+            setCooldown(tuning().failedCastCooldownTicks);
+            return;
+        }
+
+        logDiag("panic -> " + escape.getRegistryName());
+        SimWizardCastPipeline.Outcome outcome =
+                SimWizardCastPipeline.fire(this.wizard, escape, castTarget, this.wizard.getModifiers());
+        if (outcome != SimWizardCastPipeline.Outcome.CAST) {
+            setCooldown(tuning().failedCastCooldownTicks);
+            return;
+        }
+        this.wizard.signalCastBurst(tuning().castAnimationTicks);
+        applySpellCooldown(escape);
+    }
+
+    /**
+     * @return true when a cast (or its telegraph) was actually started. False means the caller
+     *         should fall through to movement this tick.
+     */
+    private boolean beginCast(EntityLivingBase target, double distance) {
         Spell spell = pickSpell(target);
         logDiag("pickSpell -> " + (spell == null ? "null" : String.valueOf(spell.getRegistryName()))
                 + " (dist " + String.format("%.1f", distance) + ")");
         if (spell == null || spell == Spells.none) {
-            setCooldown(FAILED_CAST_COOLDOWN);
-            return;
+            setCooldown(tuning().failedCastCooldownTicks);
+            return false;
         }
+
+        if (requiresLineOfSight(spell) && !hasRecentLineOfSight(target)) {
+            // Short retry, NOT the full failure cooldown - the moment the wizard walks around the
+            // obstacle it should fire, otherwise cover would function as a cast-rate nerf.
+            logRejectThrottled("no line of sight for " + spell.getRegistryName());
+            setCooldown(tuning().minRetryCooldownTicks);
+            return false;
+        }
+
+        this.wizard.getNavigator().clearPath();
 
         int telegraph = Math.max(0, ModConfig.entities.assimilatedWizard.combat.castTelegraphTicks);
         this.pendingSpell = spell;
         this.pendingTarget = target;
         if (telegraph == 0) {
             this.fireCommittedCast();
-            return;
+            return true;
         }
         this.telegraphTicksLeft = telegraph;
+        this.wizard.setCastCommitted(true);
         this.wizard.signalCastTelegraph(telegraph);
+        return true;
     }
 
     private void tickMovement(EntityLivingBase target, double distance) {
         if (--this.repathTimer > 0) return;
-        this.repathTimer = REPATH_INTERVAL;
+        this.repathTimer = tuning().repathIntervalTicks;
 
-        if (distance < RETREAT_DISTANCE) {
+        // No line of sight: close in regardless of the hold band. Sitting in the sweet spot behind
+        // a wall reads as a broken turret; moving to regain the shot reads as intent - and it costs
+        // nothing, because the senses ray trace for this tick is already cached.
+        if (ModConfig.entities.assimilatedWizard.combat.requireLineOfSight && !canSeeNow(target)) {
+            this.wizard.getNavigator().tryMoveToEntityLiving(target, tuning().moveSpeed);
+            return;
+        }
+
+        if (distance < tuning().retreatDistance) {
             Vec3d away = RandomPositionGenerator.findRandomTargetBlockAwayFrom(
                     this.wizard, 8, 5, new Vec3d(target.posX, target.posY, target.posZ));
             if (away != null) {
-                this.wizard.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, RETREAT_SPEED);
+                this.wizard.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, tuning().retreatSpeed);
             }
-        } else if (distance > APPROACH_DISTANCE) {
-            this.wizard.getNavigator().tryMoveToEntityLiving(target, MOVE_SPEED);
+        } else if (distance > approachDistance()) {
+            this.wizard.getNavigator().tryMoveToEntityLiving(target, tuning().moveSpeed);
         } else {
             this.wizard.getNavigator().clearPath();
         }
@@ -260,73 +463,76 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         this.pendingTarget = null;
 
         if (spell == null || spell == Spells.none) {
-            setCooldown(FAILED_CAST_COOLDOWN);
+            this.wizard.setCastCommitted(false);
+            setCooldown(tuning().failedCastCooldownTicks);
             return;
         }
 
-        // self-heal special case - target is the wizard itself
-        boolean isSelfHeal = isHealSpell(spell);
-        EntityLivingBase castTarget = isSelfHeal ? this.wizard : target;
+        // Self-targeted spells. SpellBuff's NPC overload calls applyEffects(caster, modifiers) and
+        // DISCARDS the target argument entirely, so every SpellBuff is self-only - heal today,
+        // ironflesh/oakflesh/etc. the moment someone adds one to the pool. Gating those on a
+        // target's validity and range would reject casts that never needed a target.
+        boolean isSelfTargeted = spell instanceof SpellBuff;
+        EntityLivingBase castTarget = isSelfTargeted ? this.wizard : target;
 
-        if (!isSelfHeal) {
+        if (!isSelfTargeted) {
             if (!isValidSpellTarget(castTarget, this.wizard)
                     || this.wizard.getDistanceSq(castTarget) > this.decisionRangeSq) {
                 // Telegraph "wasted" - the target left during wind-up. Short cooldown only.
                 logDiag("fire dropped: target left during telegraph (" + spell.getRegistryName() + ")");
-                setCooldown(FAILED_CAST_COOLDOWN);
+                this.wizard.setCastCommitted(false);
+                setCooldown(tuning().failedCastCooldownTicks);
+                return;
+            }
+            if (requiresLineOfSight(spell) && !hasRecentLineOfSight(castTarget)) {
+                logDiag("fire dropped: lost line of sight during telegraph (" + spell.getRegistryName() + ")");
+                this.wizard.setCastCommitted(false);
+                setCooldown(tuning().failedCastCooldownTicks);
                 return;
             }
         }
 
         SpellModifiers modifiers = this.wizard.getModifiers();
 
-        if (MinecraftForge.EVENT_BUS.post(
-                new SpellCastEvent.Pre(SpellCastEvent.Source.NPC, spell, this.wizard, modifiers))) {
-            // Some OTHER mod's listener vetoed this NPC cast. Second-opinion arbiter: if no
-            // KNOWN legitimate veto condition applies to us, this is AM2's burnout false
-            // positive — cast anyway. Otherwise honor the veto (log which spell so real pack
-            // conflicts like tier gates or suppression artefacts stay visible).
-            if (!com.spege.insanetweaks.util.NpcCastVetoArbiter.shouldOverrideVeto(this.wizard, spell)) {
-                logDiag("fire dropped: SpellCastEvent.Pre CANCELLED, second opinion UPHELD (" + spell.getRegistryName() + ")");
-                setCooldown(EVENT_BLOCK_COOLDOWN);
-                return;
-            }
-            logDiag("fire: SpellCastEvent.Pre cancelled but second opinion OVERRODE it — casting anyway (" + spell.getRegistryName() + ")");
-        }
+        SimWizardCastPipeline.Outcome outcome =
+                SimWizardCastPipeline.fire(this.wizard, spell, castTarget, modifiers);
 
-        boolean cast = spell.cast(this.wizard.world, this.wizard, EnumHand.MAIN_HAND, 0, castTarget, modifiers);
         if (ModConfig.client.enableSimWizardDebugLogs) {
             long now = this.wizard.world.getTotalWorldTime();
-            logDiag("cast " + spell.getRegistryName() + " -> " + cast
+            boolean cast = outcome == SimWizardCastPipeline.Outcome.CAST;
+            logDiag("cast " + spell.getRegistryName() + " -> " + outcome
                     + (cast && this.lastSuccessfulCastTime > 0
                             ? " (" + (now - this.lastSuccessfulCastTime) + "t since previous)" : ""));
             if (cast) this.lastSuccessfulCastTime = now;
         }
-        if (!cast) {
-            setCooldown(FAILED_CAST_COOLDOWN);
+
+        if (outcome == SimWizardCastPipeline.Outcome.VETOED) {
+            this.wizard.setCastCommitted(false);
+            setCooldown(tuning().eventBlockCooldownTicks);
+            return;
+        }
+        if (outcome != SimWizardCastPipeline.Outcome.CAST) {
+            this.wizard.setCastCommitted(false);
+            setCooldown(tuning().failedCastCooldownTicks);
             return;
         }
 
-        MinecraftForge.EVENT_BUS.post(
-                new SpellCastEvent.Post(SpellCastEvent.Source.NPC, spell, this.wizard, modifiers));
-
-        this.wizard.swingArm(EnumHand.MAIN_HAND);
-
-        // Continuous spells (life_drain) are channeled - the first cast tick above
-        // succeeded, now keep casting every tick for CHANNEL_DURATION_TICKS. The continuous
-        // spell is published via ISpellCaster so the glow/aura visuals loop for the duration.
+        // Continuous spells (life_drain) are channelled - the first cast tick above succeeded, and
+        // the pipeline has already published the continuous spell and told the client. Stay
+        // committed for the duration.
         if (spell.isContinuous) {
             this.channelSpell = spell;
             this.channelTarget = castTarget;
             this.channelCounter = 0;
-            this.channelTicksLeft = CHANNEL_DURATION_TICKS;
-            this.wizard.setContinuousSpell(spell);
+            this.channelTicksLeft = tuning().channelDurationTicks;
+            this.wizard.setCastCommitted(true);
             return; // cooldown + burst are applied when the channel ends
         }
 
-        this.wizard.signalCastBurst(CAST_ANIMATION_TICKS);
+        this.wizard.setCastCommitted(false);
+        this.wizard.signalCastBurst(tuning().castAnimationTicks);
         this.wizard.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS,
-                POST_CAST_SLOWNESS_TICKS, POST_CAST_SLOWNESS_AMPLIFIER, false, false));
+                tuning().postCastSlownessTicks, tuning().postCastSlownessAmplifier, false, false));
 
         applySpellCooldown(spell);
     }
@@ -343,9 +549,12 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         Spell spell = this.channelSpell;
         EntityLivingBase target = this.channelTarget;
 
-        // Break the channel if the spell state is gone or the target became invalid/escaped.
+        // Break the channel if the spell state is gone, the target became invalid/escaped, or the
+        // target broke sight - a drain beam should not keep working through a wall the player
+        // deliberately put between themselves and the caster.
         if (spell == null || !isValidSpellTarget(target, this.wizard)
-                || this.wizard.getDistanceSq(target) > this.decisionRangeSq) {
+                || this.wizard.getDistanceSq(target) > this.decisionRangeSq
+                || (requiresLineOfSight(spell) && !hasRecentLineOfSight(target))) {
             this.endChannel(true);
             return;
         }
@@ -354,8 +563,25 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         this.wizard.getNavigator().clearPath();
 
         this.channelCounter++;
+
+        SpellModifiers modifiers = this.wizard.getModifiers();
+
+        // EBW's own continuous loop posts Tick every channel tick and stops the channel when it
+        // is cancelled. Ours used to bypass the event entirely, so arcane_jammer and any pack
+        // suppression effect were powerless against an in-flight drain. The veto goes through the
+        // SAME second-opinion arbiter as Pre - otherwise AM2's burnout false positive would cut
+        // every channel after a single tick (v4.2 semantics).
+        if (MinecraftForge.EVENT_BUS.post(new SpellCastEvent.Tick(SpellCastEvent.Source.NPC,
+                spell, this.wizard, modifiers, this.channelCounter))
+                && !com.spege.insanetweaks.util.NpcCastVetoArbiter.shouldOverrideVeto(this.wizard, spell)) {
+            logDiag("channel broken: SpellCastEvent.Tick CANCELLED, second opinion UPHELD ("
+                    + spell.getRegistryName() + ")");
+            this.endChannel(true);
+            return;
+        }
+
         boolean stillGoing = spell.cast(this.wizard.world, this.wizard, EnumHand.MAIN_HAND,
-                this.channelCounter, target, this.wizard.getModifiers());
+                this.channelCounter, target, modifiers);
 
         this.channelTicksLeft--;
         if (!stillGoing || this.channelTicksLeft <= 0) {
@@ -370,14 +596,17 @@ public class EntityAISimWizardCombat extends EntityAIBase {
      */
     private void endChannel(boolean applyCooldown) {
         Spell spell = this.channelSpell;
+        EntityLivingBase lastTarget = this.channelTarget;
         this.channelSpell = null;
         this.channelTarget = null;
         this.channelTicksLeft = 0;
         this.channelCounter = 0;
-        this.wizard.setContinuousSpell(Spells.none);
+        this.wizard.setCastCommitted(false);
+        SimWizardCastPipeline.setContinuousSpellAndNotify(
+                this.wizard, Spells.none, lastTarget, new SpellModifiers());
 
         if (spell != null) {
-            this.wizard.signalCastBurst(CAST_ANIMATION_TICKS);
+            this.wizard.signalCastBurst(tuning().castAnimationTicks);
             if (applyCooldown) {
                 applySpellCooldown(spell);
             }
@@ -385,9 +614,12 @@ public class EntityAISimWizardCombat extends EntityAIBase {
     }
 
     /**
-     * Spell selection: situational overrides first, then a RANDOM pick among the
-     * distance-band candidates (strict priority previously made long-range fights
-     * 100% magic_missile).
+     * Spell selection. Every branch asks for a tactical ROLE and picks uniformly among the pooled
+     * spells carrying it - never by registry name. That is what lets a pack edit
+     * {@code spells.spellPool} without silently losing the whole tactical layer.
+     *
+     * <p>Uniform-random within each branch is deliberate and must stay: a strict priority order
+     * once made every long-range fight 100% magic_missile (fixed in v3.1).
      */
     private Spell pickSpell(EntityLivingBase target) {
         List<Spell> pool = this.wizard.getSpells();
@@ -398,34 +630,29 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         float hpPct = this.wizard.getHealth() / this.wizard.getMaxHealth();
         boolean lowHp = hpPct * 100.0F <= ModConfig.entities.assimilatedWizard.combat.retreatHealthPercent;
 
-        // ---- LOW HP: random among heal + summons, so the summons actually get used ----
+        // ---- LOW HP: patch yourself up or call in bodies ----
         if (lowHp) {
-            List<Spell> selfCare = new ArrayList<Spell>(3);
-            Spell heal = findByName(pool, "heal");
-            if (heal != null) {
-                selfCare.add(heal);
-            }
-            collectSummons(pool, selfCare);
-            if (!selfCare.isEmpty()) {
-                return selfCare.get(this.wizard.getRNG().nextInt(selfCare.size()));
+            Spell selfCare = pickByRoles(pool, SpellRole.SELF_HEAL, SpellRole.SUMMON);
+            if (selfCare != null) {
+                return selfCare;
             }
         }
 
         double distance = this.wizard.getDistance(target);
 
-        // ---- SPECIAL SPELLS: life_drain / banish, gated by a configurable roll ----
+        // ---- SPECIALS, gated by a configurable roll ----
         // Deliberately rare (default 20%) so they read as signature moves, not spam:
-        //  - banish inside 4.5 blocks: hurl the attacker away instead of melee-scrambling
-        //  - life_drain at 4.5-9 blocks: channeled parasitic drain (heals the wizard)
+        //  - DISPLACE up close: hurl the attacker away instead of melee-scrambling
+        //  - DRAIN at mid range: channelled parasitic drain that heals the wizard
         if (ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent > 0
                 && this.wizard.getRNG().nextInt(100) < ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent) {
-            if (distance <= BANISH_MAX_DISTANCE) {
-                Spell banish = findByName(pool, "banish");
-                if (banish != null) {
-                    return banish;
+            if (distance <= tuning().banishMaxDistance) {
+                Spell displace = pickByRoles(pool, SpellRole.DISPLACE);
+                if (displace != null) {
+                    return displace;
                 }
-            } else if (distance <= LIFE_DRAIN_MAX_DISTANCE) {
-                Spell drain = findByName(pool, "life_drain");
+            } else if (distance <= tuning().lifeDrainMaxDistance) {
+                Spell drain = pickByRoles(pool, SpellRole.DRAIN);
                 if (drain != null) {
                     return drain;
                 }
@@ -433,46 +660,45 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         }
 
         // ---- SITUATIONAL OVERRIDES ----
-        // 2+ enemies grouped in front cone -> AoE
-        int clusterCount = countTargetsInFrontCone(8.0D, Math.PI / 3.0D);
-        if (clusterCount >= 2) {
-            Spell aoe = findByName(pool, "spark_bomb");
+        // Enemies bunched in the forward cone -> hit them all at once
+        if (countTargetsInFrontCone(tuning().clusterConeRadius,
+                Math.toRadians(tuning().clusterConeAngleDegrees)) >= tuning().clusterMinTargets) {
+            Spell aoe = pickByRoles(pool, SpellRole.AOE);
             if (aoe != null) {
                 return aoe;
             }
         }
 
-        // Target sprinting or has speed buff -> slow it
+        // Target sprinting or hasted -> impair it
         if (isTargetFastMoving(target)) {
-            Spell ice = findByName(pool, "ice_shard");
-            if (ice != null) {
-                return ice;
+            Spell slow = pickByRoles(pool, SpellRole.SLOW);
+            if (slow != null) {
+                return slow;
             }
         }
 
-        // Target full HP + close -> open with force_orb (knockback)
-        if (target.getHealth() / target.getMaxHealth() > 0.85F && distance <= 6.0D) {
-            Spell force = findByName(pool, "force_orb");
-            if (force != null) {
-                return force;
+        // Healthy target already in our face -> open by shoving it back out
+        if (target.getHealth() / target.getMaxHealth() > tuning().knockbackTargetHealthPercent / 100.0F
+                && distance <= tuning().knockbackMaxDistance) {
+            Spell knockback = pickByRoles(pool, SpellRole.KNOCKBACK);
+            if (knockback != null) {
+                return knockback;
             }
         }
 
-        // ---- DISTANCE-BAND CANDIDATES (random pick) ----
-        List<Spell> band = new ArrayList<Spell>(3);
-        if (distance <= 6.0D) {
-            addIfPresent(pool, band, "force_orb");
-            addIfPresent(pool, band, "spark_bomb");
-        } else if (distance <= 14.0D) {
-            addIfPresent(pool, band, "ice_shard");
-            addIfPresent(pool, band, "magic_missile");
-            addIfPresent(pool, band, "spark_bomb");
+        // ---- DISTANCE BANDS ----
+        // Role sets chosen to reproduce the previous hardcoded bands exactly for the default pool,
+        // while still catching equivalent spells from any other mod.
+        Spell band;
+        if (distance <= tuning().shortBandDistance) {
+            band = pickByRoles(pool, SpellRole.KNOCKBACK, SpellRole.AOE, SpellRole.PROJECTILE_SHORT);
+        } else if (distance <= tuning().mediumBandDistance) {
+            band = pickByRoles(pool, SpellRole.SLOW, SpellRole.PROJECTILE_LONG, SpellRole.AOE);
         } else {
-            addIfPresent(pool, band, "magic_missile");
-            addIfPresent(pool, band, "ice_shard");
+            band = pickByRoles(pool, SpellRole.PROJECTILE_LONG, SpellRole.SLOW);
         }
-        if (!band.isEmpty()) {
-            return band.get(this.wizard.getRNG().nextInt(band.size()));
+        if (band != null) {
+            return band;
         }
 
         return pool.get(this.wizard.getRNG().nextInt(pool.size()));
@@ -515,44 +741,37 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         return (dx * dx + dz * dz) > 0.04D; // ~0.2 blocks/tick lateral
     }
 
-    private static boolean isHealSpell(Spell spell) {
-        return spell != null && spell.getRegistryName() != null
-                && "heal".equalsIgnoreCase(spell.getRegistryName().getResourcePath());
-    }
-
-    private static Spell findByName(List<Spell> pool, String name) {
-        for (Spell s : pool) {
-            if (s == null || s.getRegistryName() == null) {
-                continue;
-            }
-            if (s.getRegistryName().getResourcePath().equalsIgnoreCase(name)) {
-                return s;
-            }
+    /**
+     * Uniform pick among every pooled spell carrying ANY of the given roles.
+     *
+     * <p>A spell matching several of the roles is offered ONCE, not once per role - otherwise
+     * force_orb ({@code KNOCKBACK} and {@code PROJECTILE_SHORT}) would come up twice as often as
+     * its neighbours in the close band. {@code SpellRoleResolver.collect} enforces that.
+     *
+     * @return null when the pool contains nothing with any of these roles, so the caller can fall
+     *         through to the next branch.
+     */
+    private Spell pickByRoles(List<Spell> pool, SpellRole... roles) {
+        List<Spell> candidates = new ArrayList<Spell>(pool.size());
+        for (SpellRole role : roles) {
+            SpellRoleResolver.collect(pool, role, candidates);
         }
-        return null;
-    }
-
-    private static void addIfPresent(List<Spell> pool, List<Spell> out, String name) {
-        Spell s = findByName(pool, name);
-        if (s != null && !out.contains(s)) {
-            out.add(s);
+        if (candidates.isEmpty()) {
+            return null;
         }
-    }
-
-    private static void collectSummons(List<Spell> pool, List<Spell> out) {
-        for (Spell s : pool) {
-            if (s == null || s.getRegistryName() == null) {
-                continue;
-            }
-            if (s.getRegistryName().getResourcePath().startsWith("summon_") && !out.contains(s)) {
-                out.add(s);
-            }
-        }
+        return candidates.get(this.wizard.getRNG().nextInt(candidates.size()));
     }
 
     /**
-     * Re-used target validity check (mirrors EntitySimWizard.isValidSpellTarget).
-     * Sim_wizard is a full SRP parasite, so {@link EntityParasiteBase} relatives are excluded.
+     * The single target-validity check for this entity, shared by the combat task and by the
+     * proactive {@code EntityAINearestAttackableTarget} filter in
+     * {@code EntitySimWizard.initEntityAI}. Sim_wizard is a full SRP parasite, so
+     * {@link EntityParasiteBase} relatives are excluded.
+     *
+     * <p>Deliberately contains NO line-of-sight check: this same predicate decides whether an
+     * attack target may be ACQUIRED and KEPT, so failing it behind cover would make the wizard
+     * drop its target every time the player steps behind a tree - the v4.1 "rarely fights"
+     * regression. LOS belongs on the cast gates, not here.
      */
     public static boolean isValidSpellTarget(EntityLivingBase target, EntitySimWizard self) {
         if (target == null || target == self || target.isDead || !target.isEntityAlive()

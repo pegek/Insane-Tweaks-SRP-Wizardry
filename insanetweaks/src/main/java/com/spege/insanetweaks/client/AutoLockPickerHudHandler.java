@@ -27,15 +27,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class AutoLockPickerHudHandler extends Gui {
 
-    private static final int BAR_WIDTH = 80;
-    private static final int BAR_HEIGHT = 6;
-    /** Distance above the bottom of the screen — clears the hotbar and its item-name popup. */
-    private static final int BAR_BOTTOM_OFFSET = 62;
-
-    private static final int COLOR_BORDER = 0xFF000000;
-    private static final int COLOR_TRACK = 0xFF3A3A3A;
-    private static final int COLOR_FILL = 0xFFE0B84A;
-
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL
@@ -68,11 +59,10 @@ public class AutoLockPickerHudHandler extends Gui {
         }
 
         ScaledResolution res = new ScaledResolution(mc);
-        int left = (res.getScaledWidth() - BAR_WIDTH) / 2;
-        int top = res.getScaledHeight() - BAR_BOTTOM_OFFSET;
-
-        drawRect(left - 1, top - 1, left + BAR_WIDTH + 1, top + BAR_HEIGHT + 1, COLOR_BORDER);
-        drawRect(left, top, left + BAR_WIDTH, top + BAR_HEIGHT, COLOR_TRACK);
-        drawRect(left, top, left + (int) (BAR_WIDTH * progress), top + BAR_HEIGHT, COLOR_FILL);
+        ChargeBarRenderer.draw(
+                ChargeBarRenderer.centeredLeft(res.getScaledWidth()),
+                res.getScaledHeight() - ChargeBarRenderer.BAR_BOTTOM_OFFSET,
+                progress,
+                ChargeBarRenderer.COLOR_FILL_LOCKPICK);
     }
 }

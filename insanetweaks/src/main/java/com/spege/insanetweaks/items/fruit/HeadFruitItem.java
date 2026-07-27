@@ -18,8 +18,4 @@ public class HeadFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.HEAD; }
-    @Override protected String       getSlotDescription() { return "+1 Head slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A peculiar fruit that seems to elevate your thoughts.";
-    }
 }

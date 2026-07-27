@@ -18,8 +18,4 @@ public class BodyFruitItem extends BaseBaubleFruitItem {
     }
 
     @Override protected BaubleTypeEx getBaublesExType()   { return TypeData.Preset.BODY; }
-    @Override protected String       getSlotDescription() { return "+1 Body slot"; }
-    @Override protected String       getFlavorText()      {
-        return "A dense fruit wrapped in a faintly armored husk.";
-    }
 }

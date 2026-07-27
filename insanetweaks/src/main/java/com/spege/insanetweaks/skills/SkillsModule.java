@@ -26,6 +26,7 @@ public class SkillsModule {
         // Defense Tree
         new TraitSpidersGrace();
         new TraitIronStomach();
+        new TraitScarredFlesh();
 
         // Gathering Tree
         new TraitDoubleLoot();
@@ -45,6 +46,7 @@ public class SkillsModule {
 
         // Agility Tree
         new TraitMeditation();
+        new TraitCoiledSpring();
 
         // Magic Tree
         new TraitArcaneMastery();
