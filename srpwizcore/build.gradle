@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.4.0'
+version = '1.5.0'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 
@@ -30,6 +30,10 @@ dependencies {
     // Ice&Fire compile-only (deobf) — MixinIandfStructureGenerator redirects reads of
     // IceAndFireConfig$WorldGenConfig fields, so the handler signatures need that type.
     implementation fg.deobf(files(rootProject.file('libs/IceAndFire-1.12.2-2.2.9.jar')))
+    // Doomlike Dungeons: compileOnly, NOT deobf — the referenced signatures
+    // (MapMatrix.buildInChunk(Dungeon,int,int), field Dungeon.map) contain no MC types, so
+    // nothing on them needs remapping. CQR and Raids need no jar at all (string targets).
+    compileOnly files(rootProject.file('libs/dldungeonsjbg-1.14.17-MC1.12.2.jar'))
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
@@ -38,7 +42,7 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.4.0",
+            "Specification-Version": "1.5.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

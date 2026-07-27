@@ -1,10 +1,10 @@
 {
   "required": false,
   "minVersion": "0.8.2",
-  "package": "com.spege.srpwizcore.mixins.otg",
+  "package": "com.spege.srpwizcore.mixins.raids",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinOTGMapGenStructure", "MixinOTGNetherFortressGen", "MixinOTGMineshaftGen", "MixinOTGChunkGeneratorForgeWorld" ],
+  "mixins": [ "MixinRaidsWorldData" ],
   "client": [],
   "server": [],
   "injectors": { "defaultRequire": 1 }

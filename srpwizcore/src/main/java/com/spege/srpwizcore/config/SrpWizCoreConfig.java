@@ -11,6 +11,7 @@ import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
 import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
+import com.spege.srpwizcore.config.categories.PerfGlueCategory;
 import com.spege.srpwizcore.config.categories.ThreadingCompatCategory;
 import com.spege.srpwizcore.util.IandfWorldgenOverrides;
 
@@ -28,6 +29,10 @@ public class SrpWizCoreConfig {
     @Config.Name("threadingCompat")
     @Config.Comment("Concurrency patches for threading coremods (EntityTracker, MapStorage, IntCache).")
     public static final ThreadingCompatCategory threadingCompat = new ThreadingCompatCategory();
+
+    @Config.Name("perfGlue")
+    @Config.Comment("Performance/correctness guards for third-party pack mods (Doomlike, CQR, Raids).")
+    public static final PerfGlueCategory perfGlue = new PerfGlueCategory();
 
     @Config.Name("iandfWorldgen")
     @Config.Comment("Per-dimension control over Ice&Fire worldgen (empty = native Ice&Fire).")

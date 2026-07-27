@@ -25,6 +25,15 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
             // Gating the queue on a config value would mean reading it before Forge has injected it.
             configs.add("mixins.srpwizcore.iceandfire.json");
         }
+        if (Loader.isModLoaded("dldungeonsjbg")) {
+            configs.add("mixins.srpwizcore.doomlike.json");
+        }
+        if (Loader.isModLoaded("cqrepoured")) {
+            configs.add("mixins.srpwizcore.cqr.json");
+        }
+        if (Loader.isModLoaded("raids")) {
+            configs.add("mixins.srpwizcore.raids.json");
+        }
         return configs;
     }
 
