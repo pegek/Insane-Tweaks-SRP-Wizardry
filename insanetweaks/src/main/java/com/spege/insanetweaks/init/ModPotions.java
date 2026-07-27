@@ -4,6 +4,7 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.potions.PotionCleanse;
 import com.spege.insanetweaks.potions.PotionGildedStasis;
 import com.spege.insanetweaks.potions.PotionImmuneBond;
+import com.spege.insanetweaks.potions.PotionNourished;
 
 import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
@@ -30,6 +31,12 @@ public class ModPotions {
     public static PotionImmuneBond IMMUNE_BOND;
     public static PotionGildedStasis GILDED_STASIS;
 
+    /**
+     * Nourished — applied by the Mmmm enchantment when a player eats enchanted food.
+     * Keeps saturation pinned so hunger stops draining for the effect's duration.
+     */
+    public static PotionNourished NOURISHED;
+
     @SubscribeEvent
     public static void registerPotions(RegistryEvent.Register<Potion> event) {
         CLEANSE = (PotionCleanse) new PotionCleanse()
@@ -43,5 +50,9 @@ public class ModPotions {
         GILDED_STASIS = (PotionGildedStasis) new PotionGildedStasis()
                 .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "gilded_stasis"));
         event.getRegistry().register(GILDED_STASIS);
+
+        NOURISHED = (PotionNourished) new PotionNourished()
+                .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "nourished"));
+        event.getRegistry().register(NOURISHED);
     }
 }

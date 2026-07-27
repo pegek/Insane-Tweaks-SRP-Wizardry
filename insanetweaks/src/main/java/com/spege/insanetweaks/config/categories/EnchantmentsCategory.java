@@ -22,6 +22,12 @@ public class EnchantmentsCategory {
             + "Picker's channel; the per-level reduction itself lives in autoLockPicker.swiftReductionPerLevel.")
     public final SwiftPickingCategory swiftPicking = new SwiftPickingCategory();
 
+    @Config.Name("mmmm")
+    @Config.Comment("Mmmm enchantment (native port of UniqueEnchantments' Ambrosia): food only. Eating an "
+            + "enchanted stack fills hunger and grants Nourished, whose duration scales with XP level. "
+            + "Master toggle is modules.enableMmmm.")
+    public final MmmmCategory mmmm = new MmmmCategory();
+
     @Config.Comment({
             "Keep EVERY enchantment registered by this mod out of all natural/random sources:",
             "generated chest loot (dungeons, mineshafts, fishing treasure...), librarian enchanted-book",

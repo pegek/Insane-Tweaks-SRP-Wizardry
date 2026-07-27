@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.14";
+    public static final String VERSION = "1.4.15";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -401,6 +401,12 @@ public class InsaneTweaksMod implements IGuiHandler {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
             }
         }
+
+        // Mmmm enchantment runtime (fill hunger + Nourished on finishing enchanted food).
+        // Registered unconditionally: the handler early-returns on modules.enableMmmm, which keeps
+        // that flag live-toggleable. The enchantment and the Nourished effect register on the MOD
+        // bus unconditionally too, so no registry entry ever disappears from an existing world.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.MmmmHandler());
 
         // Auto Lock Picker: the item and its enchantment register unconditionally on the MOD bus,
         // and all the picking logic lives in the item's own use methods (no mixin, no tick handler

@@ -75,7 +75,7 @@ public class ModConfig {
 
     @Config.Name("enchantments")
     @Config.LangKey("config.insanetweaks.category.enchantments")
-    @Config.Comment("Tunables for the mod's custom enchantments (Sentient Codex, Swift Picking).")
+    @Config.Comment("Tunables for the mod's custom enchantments (Sentient Codex, Swift Picking, Mmmm).")
     public static final EnchantmentsCategory enchantments = new EnchantmentsCategory();
 
     @Config.Name("autoLockPicker")

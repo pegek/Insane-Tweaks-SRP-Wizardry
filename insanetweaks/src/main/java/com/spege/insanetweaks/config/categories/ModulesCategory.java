@@ -41,6 +41,15 @@ public class ModulesCategory {
     public boolean enableSentientCodex = true;
 
     @Config.Comment({
+            "Enables the Mmmm enchantment's runtime (native port of UniqueEnchantments' Ambrosia). Food only:",
+            "eating an enchanted stack fills the hunger bar and grants Nourished, which keeps saturation pinned",
+            "for a duration that scales with the eater's XP level. Tunables live in the 'enchantments.mmmm'",
+            "category. Read live: the enchantment and the Nourished effect stay registered either way, so",
+            "turning this off never breaks an existing world - it only stops the effect from being applied." })
+    @Config.Name("Enable Mmmm Enchantment")
+    public boolean enableMmmm = true;
+
+    @Config.Comment({
             "Enables the Auto Lock Picker: an item that opens a Locks lock by holding right-click on it,",
             "instead of playing Locks' pin minigame. Channel time and durability cost scale with the",
             "lock's pin count; the lock's Complexity, Sturdy and Shocking enchantments all still apply.",

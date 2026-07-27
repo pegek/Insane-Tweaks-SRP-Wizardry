@@ -2,6 +2,7 @@ package com.spege.insanetweaks.init;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.enchant.EnchantmentMmmm;
 import com.spege.insanetweaks.enchant.EnchantmentSentientCodex;
 import com.spege.insanetweaks.enchant.EnchantmentSwiftPicking;
 
@@ -24,6 +25,7 @@ public class ModEnchantments {
 
     public static EnchantmentSentientCodex SENTIENT_CODEX;
     public static EnchantmentSwiftPicking SWIFT_PICKING;
+    public static EnchantmentMmmm MMMM;
 
     @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
@@ -32,6 +34,11 @@ public class ModEnchantments {
         // existing world. modules.enableAutoLockPicker gates the picker's behaviour instead.
         SWIFT_PICKING = new EnchantmentSwiftPicking();
         event.getRegistry().register(SWIFT_PICKING);
+
+        // Same reasoning as Swift Picking: unconditional. modules.enableMmmm gates MmmmHandler's
+        // behaviour instead, so flipping it never removes an entry an existing world refers to.
+        MMMM = new EnchantmentMmmm();
+        event.getRegistry().register(MMMM);
 
         if (!ModConfig.modules.enableSentientCodex) {
             return;

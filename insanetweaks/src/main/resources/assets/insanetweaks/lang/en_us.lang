@@ -76,6 +76,7 @@ entity.corrupted_sapling.name=Corrupted Sapling
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse
 potion.insanetweaks.gilded_stasis=§6Gilded Stasis
+potion.insanetweaks.nourished=§aNourished
 
 # CompatSkills / Reskillable Custom Traits
 # Format: reskillable.unlock.<modid>.<traitid> (name), reskillable.unlock.<modid>.<traitid>.desc (desc)
@@ -309,6 +310,11 @@ tooltip.insanetweaks.enchant.not_granted.hint=§8Only a copy granted by a quest 
 enchantment.swiftpicking=Swift Picking
 enchantment.swiftpicking.desc=Shortens the Auto Lock Picker's channel time. Only works on the picker.
 enchantment.insanetweaks.swift_picking.desc=Practised hands find the pin faster. Each level shaves time off the Auto Lock Picker's channel, so a lock that would hold you for seconds gives way in a heartbeat. Worthless on anything but the picker itself.
+
+# --- Mmmm (food enchantment) ---
+enchantment.mmmm=Mmmm
+enchantment.mmmm.desc=Enchanted food fills you completely and keeps hunger away for a long while.
+enchantment.insanetweaks.mmmm.desc=The first bite is the best thing you have ever tasted, and the taste refuses to fade. Your belly fills at once and simply stops asking for more - the longer you have lived and learned, the longer the contentment lasts. Only food will take the enchantment.
 config.insanetweaks.category.autoLockPicker=Auto Lock Picker
 tooltip.insanetweaks.auto_lock_picker.usage=Hold right-click on a lock to pick it open.
 tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Complexity)
