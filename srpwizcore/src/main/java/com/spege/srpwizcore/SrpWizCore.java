@@ -24,22 +24,31 @@ import net.minecraftforge.fml.common.Mod;
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.5.0";
+    public static final String VERSION = "1.6.2";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     /**
-     * Parses the Ice&amp;Fire per-dimension worldgen lists once at startup. Later edits are picked
-     * up by the {@code OnConfigChangedEvent} handler in
+     * Parses the Ice&amp;Fire per-dimension worldgen lists and the SpawnEngine budget tables once
+     * at startup. Later edits are picked up by the {@code OnConfigChangedEvent} handler in
      * {@link com.spege.srpwizcore.config.SrpWizCoreConfig}.
      */
     @Mod.EventHandler
     public void preInit(net.minecraftforge.fml.common.event.FMLPreInitializationEvent event) {
         com.spege.srpwizcore.util.IandfWorldgenOverrides.rebuild();
+        com.spege.srpwizcore.spawnengine.SpawnEngine.reload();
     }
 
     @Mod.EventHandler
     public void init(net.minecraftforge.fml.common.event.FMLInitializationEvent event) {
+        // Registered unconditionally: the srparasites strip and the F0 diagnostics must work
+        // with the engine master switch off, and every SpawnEngine flag is read live inside the
+        // handlers anyway.
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                new com.spege.srpwizcore.spawnengine.SpawnEngineTickHandler());
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                new com.spege.srpwizcore.spawnengine.SpawnListFilterHandler());
+
         if (com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.enabled) {
             if (com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.worldgenEnabled) {
                 net.minecraftforge.fml.common.registry.GameRegistry.registerWorldGenerator(

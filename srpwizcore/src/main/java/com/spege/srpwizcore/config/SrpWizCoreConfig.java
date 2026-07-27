@@ -12,6 +12,7 @@ import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
 import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
 import com.spege.srpwizcore.config.categories.PerfGlueCategory;
+import com.spege.srpwizcore.config.categories.SpawnEngineCategory;
 import com.spege.srpwizcore.config.categories.ThreadingCompatCategory;
 import com.spege.srpwizcore.util.IandfWorldgenOverrides;
 
@@ -34,6 +35,10 @@ public class SrpWizCoreConfig {
     @Config.Comment("Performance/correctness guards for third-party pack mods (Doomlike, CQR, Raids).")
     public static final PerfGlueCategory perfGlue = new PerfGlueCategory();
 
+    @Config.Name("spawnEngine")
+    @Config.Comment("SpawnEngine v1 - native per-dimension spawn control (budgets, candidate-list filtering, refill rate limiting).")
+    public static final SpawnEngineCategory spawnEngine = new SpawnEngineCategory();
+
     @Config.Name("iandfWorldgen")
     @Config.Comment("Per-dimension control over Ice&Fire worldgen (empty = native Ice&Fire).")
     public static final IandfWorldgenCategory iandfWorldgen = new IandfWorldgenCategory();
@@ -51,6 +56,7 @@ public class SrpWizCoreConfig {
                 // Re-parse the string lists so edits apply without a restart (the mixin gate
                 // itself still needs one).
                 IandfWorldgenOverrides.rebuild();
+                com.spege.srpwizcore.spawnengine.SpawnEngine.reload();
             }
         }
     }
