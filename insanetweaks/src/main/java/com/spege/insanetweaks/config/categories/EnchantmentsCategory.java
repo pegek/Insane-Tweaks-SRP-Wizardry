@@ -58,4 +58,30 @@ public class EnchantmentsCategory {
     })
     @Config.Name("Log Natural Discovery Blocks")
     public boolean logNaturalDiscoveryBlocks = false;
+
+    @Config.Comment({
+            "OPT-IN, OFF by default. Restricts APPLICATION rather than acquisition: with this on, a",
+            "quest-gated enchantment can only be applied from an item stamped with the NBT tag",
+            "'insanetweaks_granted:1b', enforced on the anvil. Mint one with:",
+            "  /itweaks grantbook <enchantment> [level] [player]   (usable as an FTB Quests command reward)",
+            "",
+            "It is OFF because the design goal is to limit how these enchantments are OBTAINED while",
+            "leaving them applied normally on an anvil - and this flag breaks that: it also refuses a",
+            "book taken from JEI/creative, since Forge's AnvilUpdateEvent carries no player reference in",
+            "1.12.2 and therefore admits no creative bypass. Acquisition is handled instead by",
+            "'Block Natural Discovery' plus the per-mod source mixins, which do not touch the anvil.",
+            "",
+            "Turn it on only if you want a hard belt-and-braces guarantee and accept that every legit",
+            "book must come from the command or carry the tag. Read live."
+    })
+    @Config.Name("Require Grant Marker")
+    public boolean requireGrantMarker = false;
+
+    @Config.Comment({
+            "Add a tooltip line to an unmarked quest-gated item explaining that it cannot be applied,",
+            "so a player who finds one is told why rather than left with a silently dead anvil.",
+            "Only has any effect while 'Require Grant Marker' is on. Read live."
+    })
+    @Config.Name("Grant Marker Tooltip")
+    public boolean grantMarkerTooltip = true;
 }

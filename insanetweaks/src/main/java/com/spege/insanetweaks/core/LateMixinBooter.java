@@ -27,6 +27,21 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
             configs.add("mixins.insanetweaks.srpcontent.json");
         }
+        // Enchant quest-gate, third-party sources: mods that roll an enchantment straight out of
+        // Enchantment.REGISTRY instead of going through any vanilla choke point, so the three early
+        // mixins never see them. One config per mod so an absent mod costs nothing at prepare time.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("gottschcore")) {
+            configs.add("mixins.insanetweaks.treasure2.json");
+        }
+        // NOTE: lowercase. Infernal Mobs' mcmod.info says "InfernalMobs", but the @Mod annotation —
+        // which is what Loader registers — says "infernalmobs". Same trap as SRP's srparasites.
+        // Verified in the 1.4.13 log: the capitalised form silently never queued this config.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("infernalmobs")) {
+            configs.add("mixins.insanetweaks.infernalmobs.json");
+        }
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("chancecubes")) {
+            configs.add("mixins.insanetweaks.chancecubes.json");
+        }
         return configs;
     }
 

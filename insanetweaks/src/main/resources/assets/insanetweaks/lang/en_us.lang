@@ -304,6 +304,8 @@ config.insanetweaks.category.entities.assimilated_wizard.spells=Spells
 
 # --- Auto Lock Picker (Locks integration) ---
 item.auto_lock_picker.name=Auto Lock Picker
+tooltip.insanetweaks.enchant.not_granted=§cUnbound§7 - this enchantment cannot be applied.
+tooltip.insanetweaks.enchant.not_granted.hint=§8Only a copy granted by a quest will bind to an item.
 enchantment.swiftpicking=Swift Picking
 enchantment.swiftpicking.desc=Shortens the Auto Lock Picker's channel time. Only works on the picker.
 enchantment.insanetweaks.swift_picking.desc=Practised hands find the pin faster. Each level shaves time off the Auto Lock Picker's channel, so a lock that would hold you for seconds gives way in a heartbeat. Worthless on anything but the picker itself.

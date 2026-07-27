@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.11";
+    public static final String VERSION = "1.4.14";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -358,6 +358,11 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
+
+        // Quest-gate for the mod's own enchantments: the anvil refuses an unmarked gated book.
+        // Registered unconditionally - both the veto and the tooltip early-return on their own live
+        // config flags, and this must stay registered so turning the flag on needs no restart.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantAnvilHandler());
 
         if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableZhonya) {
             // Defensive future-proofing only: EB consults the enabled flag in

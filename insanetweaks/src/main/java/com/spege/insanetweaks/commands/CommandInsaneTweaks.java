@@ -1,15 +1,19 @@
 package com.spege.insanetweaks.commands;
 
 import com.spege.insanetweaks.util.ArcaneAdaptedFruitHelper;
+import com.spege.insanetweaks.util.EnchantGrantMarker;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 
@@ -56,6 +60,9 @@ public class CommandInsaneTweaks extends CommandBase {
             case "restore":
                 handleRestore(server, sender, args);
                 break;
+            case "grantbook":
+                handleGrantBook(server, sender, args);
+                break;
             case "help":
             default:
                 sendHelp(sender);
@@ -69,7 +76,52 @@ public class CommandInsaneTweaks extends CommandBase {
         if (sender.canUseCommand(2, "itweaks")) { // If they have OP permissions
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks restore cursed <player> [latest|list|timestamp]\u00A77 - Restore saved cursed items"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks restore decay <player> [latest|list|timestamp]\u00A77 - Restore items decayed from graves"));
+            sender.sendMessage(new TextComponentString("\u00A7e/itweaks grantbook <enchantment> [level] [player]\u00A77 - Give a quest-granted enchanted book"));
         }
+    }
+
+    /**
+     * Mints an enchanted book stamped with the grant marker, so it actually works on an anvil (see
+     * {@link com.spege.insanetweaks.util.EnchantGrantMarker}). This is the intended way for an FTB
+     * Quests reward to hand out a quest-gated enchantment: a command reward calling this needs no
+     * hand-written NBT.
+     *
+     * <p>The enchantment argument accepts a full registry name or a bare path, in which case the
+     * mod's own namespace is assumed \u2014 {@code /itweaks grantbook swift_picking 3} is enough.
+     */
+    private void handleGrantBook(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (!sender.canUseCommand(2, "itweaks")) {
+            sender.sendMessage(new TextComponentString("\u00A7cYou do not have permission to use this command."));
+            return;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(new TextComponentString("\u00A7cUsage: /itweaks grantbook <enchantment> [level] [player]"));
+            return;
+        }
+
+        String id = args[1];
+        ResourceLocation key = id.indexOf(':') >= 0 ? new ResourceLocation(id)
+                : new ResourceLocation(com.spege.insanetweaks.InsaneTweaksMod.MODID, id);
+        Enchantment enchantment = Enchantment.REGISTRY.getObject(key);
+        if (enchantment == null) {
+            sender.sendMessage(new TextComponentString("\u00A7cUnknown enchantment: " + key));
+            return;
+        }
+
+        int level = enchantment.getMinLevel();
+        if (args.length >= 3) {
+            // Clamped rather than rejected: a quest reward asking for a level the config has since
+            // lowered should still hand out the best legal book, not fail silently at runtime.
+            level = MathHelper.clamp(parseInt(args[2]), enchantment.getMinLevel(), enchantment.getMaxLevel());
+        }
+
+        EntityPlayer target = args.length >= 4 ? getPlayer(server, sender, args[3]) : getCommandSenderAsPlayer(sender);
+        ItemStack book = EnchantGrantMarker.createGrantedBook(enchantment, level);
+        if (!target.inventory.addItemStackToInventory(book)) {
+            target.dropItem(book, false);
+        }
+        sender.sendMessage(new TextComponentString("\u00A7aGranted \u00A7e" + key + " " + level
+                + "\u00A7a to \u00A7e" + target.getName()));
     }
 
     private void handleClaimFruit(ICommandSender sender) throws CommandException {

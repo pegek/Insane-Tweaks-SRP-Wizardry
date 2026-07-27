@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.insanetweaks.mixins.enchantsources",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinChanceCubesEnchantReward"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

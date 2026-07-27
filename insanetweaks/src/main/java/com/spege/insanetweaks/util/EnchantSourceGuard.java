@@ -1,5 +1,6 @@
 package com.spege.insanetweaks.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -88,6 +89,34 @@ public final class EnchantSourceGuard {
             }
         }
         return true;
+    }
+
+    /**
+     * A registry iterator with the quest-gated enchantments removed. This is the shared workhorse for
+     * every "enumerate {@code Enchantment.REGISTRY}, then index it with my own RNG" roller — the
+     * idiom vanilla's {@code EnchantRandomly} uses and that Treasure2 and Infernal Mobs copied.
+     * Redirecting the {@code iterator()} call is what lets one helper serve all of them.
+     *
+     * <p>Takes {@link Iterable} rather than the registry type so the util package stays free of
+     * registry imports; the mixins pass the concrete receiver straight in. Returns the registry's own
+     * iterator untouched when the guard is off, so the disabled path allocates nothing.
+     */
+    public static Iterator<?> filteredIterator(Iterable<?> registry, String source) {
+        if (registry == null) {
+            return Collections.<Object>emptyList().iterator();
+        }
+        if (!isActive()) {
+            return registry.iterator();
+        }
+        List<Object> allowed = new ArrayList<Object>();
+        for (Object entry : registry) {
+            if (entry instanceof Enchantment && isNaturallyBlocked((Enchantment) entry)) {
+                logOnce((Enchantment) entry, source);
+                continue;
+            }
+            allowed.add(entry);
+        }
+        return allowed.iterator();
     }
 
     /**
