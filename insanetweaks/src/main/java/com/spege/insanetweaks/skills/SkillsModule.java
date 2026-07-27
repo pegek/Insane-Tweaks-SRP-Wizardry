@@ -33,6 +33,7 @@ public class SkillsModule {
 
         // Mining Tree
         new TraitAstralProspector();
+        new TraitStoneFists();
 
         // Farming Tree
         new TraitAngryFarmer();

@@ -30,6 +30,10 @@ public class TraitsCategory {
     public TraitConfig astralProspector = new TraitConfig(7, "mining",
             new String[] { "reskillable:mining|30" });
 
+    @Config.Name("Stone Fists")
+    public TraitConfig stoneFists = new TraitConfig(14, "mining",
+            new String[] { "reskillable:mining|30", "reskillable:gathering|20", "reskillable:building|20" });
+
     @Config.Name("Supreme Enchanter")
     public TraitConfig supremeEnchanter = new TraitConfig(8, "building",
             new String[] { "reskillable:building|30" });
