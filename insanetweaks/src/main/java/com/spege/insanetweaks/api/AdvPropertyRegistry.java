@@ -95,8 +95,12 @@ public class AdvPropertyRegistry {
         // rather than letting a stack of dirt become indestructible.
         register(new Property(ASHEN_LEGACY, "Ashen Legacy", TextFormatting.GOLD,
                 true, com.spege.insanetweaks.util.PropertyApplicability.GEAR));
-        // Grip is the property face of the existing Fleshbound mechanic - see FleshboundEventHandler.
-        register(new Property(GRIP, "Grip", TextFormatting.DARK_RED,
+        // Deliberately displayed as "Fleshbound", in DARK_RED, with Fleshbound's own description:
+        // this IS that mechanic, granted per stack instead of earned by a Sentient Spellblade, and
+        // showing it under a second name would read as a second, different effect. The registry id
+        // stays "grip" because it is written into stack NBT and into quest commands - renaming it
+        // would orphan every book and every grant already in a world.
+        register(new Property(GRIP, "Fleshbound", TextFormatting.DARK_RED,
                 true, com.spege.insanetweaks.util.PropertyApplicability.WEAPON));
 
         // Display-only: these are granted by the armour classes themselves and have no book.

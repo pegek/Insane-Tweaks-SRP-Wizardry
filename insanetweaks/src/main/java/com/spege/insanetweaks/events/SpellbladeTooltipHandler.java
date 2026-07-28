@@ -255,13 +255,16 @@ public class SpellbladeTooltipHandler {
         if ("insanetweaks:sentient_spellblade".equals(regName)) {
             net.minecraft.world.World world = event.getEntityPlayer() != null ? event.getEntityPlayer().world : net.minecraft.client.Minecraft.getMinecraft().world;
             if (world != null) {
-                if (com.spege.insanetweaks.events.FleshboundEventHandler.isFleshbound(stack, world)) {
-                    myLines.add(TextFormatting.DARK_RED + "- Fleshbound");
-                    if (isShiftPressed) {
-                        myLines.add(TextFormatting.GRAY + "" + TextFormatting.ITALIC
-                                + "  Grafted to the wielder's flesh. Prevents drops and disarm.");
-                    }
-                } else if (com.spege.insanetweaks.events.FleshboundEventHandler.isMechanicUnlocked(stack) && stack.hasTagCompound() && stack.getTagCompound().hasKey("FleshboundRegrowTime")) {
+                // The "- Fleshbound" line and its SHIFT description are no longer printed here.
+                // GlobalPropertyTooltipHandler renders them from the GRIP advanced property, which
+                // this blade declares once it passes 1900 kills, so emitting them here as well
+                // would show the same property twice under the same name.
+                //
+                // The regrowth countdown stays: it is a status ("severed, back in Xm"), not a
+                // property, and the property block has nothing to say about it.
+                if (!com.spege.insanetweaks.events.FleshboundEventHandler.isFleshbound(stack, world)
+                        && com.spege.insanetweaks.events.FleshboundEventHandler.isMechanicUnlocked(stack)
+                        && stack.hasTagCompound() && stack.getTagCompound().hasKey("FleshboundRegrowTime")) {
                     NBTTagCompound tag = stack.getTagCompound();
                     long remainingTicks = tag.getLong("FleshboundRegrowTime") - world.getTotalWorldTime();
                     int remainingMinutes = Math.max(0, (int) Math.ceil((double) remainingTicks / 1200.0));

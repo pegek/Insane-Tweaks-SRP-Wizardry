@@ -51,8 +51,10 @@ public class PropertyDescriptions {
                 "Shrouds the bearer in stabilized ether, granting a flat -1.0% resistance against all incoming damage.");
         DESCRIPTIONS.put("ethereal_shell_awakened",
                 "The stasis veil awakens and thickens, granting a flat -1.5% resistance against all incoming damage.");
+        // Word-for-word the line SpellbladeTooltipHandler already showed for Fleshbound, so the
+        // book-granted property and the earned one read identically.
         DESCRIPTIONS.put("grip",
-                "Grafted to the wielder's flesh. It cannot be dropped, dragged away, or struck from your hands - only death severs the graft, and even then it regrows.");
+                "Grafted to the wielder's flesh. Prevents drops and disarm.");
         }
 
         public static String getDescription(String type) {

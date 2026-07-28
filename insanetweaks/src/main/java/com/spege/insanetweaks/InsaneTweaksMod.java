@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.20";
+    public static final String VERSION = "1.4.21";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -453,6 +453,14 @@ public class InsaneTweaksMod implements IGuiHandler {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.SentientCodexHandler());
         }
+
+        // One-shot per-player migration for the 1.4.21 Ashen Legacy / Sentient Codex split.
+        // Registered unconditionally and independently of enableSentientCodex: an existing world
+        // can hold Codex items that were lava-proof while the module was on, and turning the module
+        // off must not be what decides whether they silently lose that. The handler self-gates on
+        // both config flags and on a persistent per-player marker, so it is inert once it has run.
+        MinecraftForge.EVENT_BUS.register(
+                new com.spege.insanetweaks.events.SentientCodexAshenMigrationHandler());
 
         // Mmmm enchantment runtime (fill hunger + Nourished on finishing enchanted food).
         // Registered unconditionally: the handler early-returns on modules.enableMmmm, which keeps

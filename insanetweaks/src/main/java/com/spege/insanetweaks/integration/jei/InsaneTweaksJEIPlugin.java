@@ -4,6 +4,7 @@ import com.spege.insanetweaks.init.ModItems;
 import electroblob.wizardry.integration.jei.ImbuementAltarRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
+import mezz.jei.api.ISubtypeRegistry;
 import mezz.jei.api.JEIPlugin;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,6 +24,34 @@ import java.util.Objects;
  */
 @JEIPlugin
 public class InsaneTweaksJEIPlugin implements IModPlugin {
+
+    /**
+     * Tells JEI that Property Books differ by the property written in their NBT.
+     *
+     * <p>Without this only ONE Property Book appears in the item list, no matter how many
+     * {@code getSubItems} hands over. JEI identifies a stack by registry name plus metadata and
+     * nothing else unless a subtype interpreter is registered, and every Property Book shares both -
+     * the variant lives purely in NBT, exactly as it does for vanilla enchanted books and potions
+     * (which JEI ships interpreters for). The duplicates collapse into a single entry and the rest
+     * silently vanish from the list, from search, and from recipe lookups.
+     *
+     * <p>Returning {@link ISubtypeRegistry.ISubtypeInterpreter#NONE} for a blank or stale book keeps
+     * all of those collapsed together, which is right: they are interchangeable and inert.
+     */
+    @Override
+    public void registerItemSubtypes(@Nonnull ISubtypeRegistry subtypeRegistry) {
+        Item propertyBook = ModItems.PROPERTY_BOOK;
+        if (propertyBook == null) {
+            return;
+        }
+        subtypeRegistry.registerSubtypeInterpreter(propertyBook, new ISubtypeRegistry.ISubtypeInterpreter() {
+            @Override
+            public String apply(@Nonnull ItemStack stack) {
+                String id = com.spege.insanetweaks.items.PropertyBookItem.getPropertyId(stack);
+                return id == null ? ISubtypeRegistry.ISubtypeInterpreter.NONE : id;
+            }
+        });
+    }
 
     @Override
     @SuppressWarnings("null")
