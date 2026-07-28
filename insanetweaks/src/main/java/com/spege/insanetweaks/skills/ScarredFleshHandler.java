@@ -18,22 +18,26 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 /**
  * Scarred Flesh ({@code compatskills:scarred_flesh}) — Defense tree.
  *
- * <p>Flesh that has been colonised often enough stops reacting cleanly. The more parasite
- * afflictions are stacked on the player at once, the harder each further one struggles to
- * take hold: its amplifier is capped and its duration cut, and past a hard ceiling it
- * simply fails to land.
+ * <p>Flesh that has been colonised often enough runs out of room to react. The player carries a
+ * fixed <b>total affliction budget</b>: every hostile parasite effect costs its displayed level,
+ * and the sum may never exceed {@code scarredFlesh.totalLevelBudget}. An incoming affliction is
+ * admitted at whatever level still fits, and refused once nothing does.
  *
- * <p>"Slot" is the position the incoming affliction would occupy. With the default ladder:
+ * <p>At the default budget of 15, with Viral VII + Fear IV + Coth III already on the player
+ * (7 + 4 + 3 = 14):
  *
  * <pre>
- *   slot 1-2  untouched
- *   slot 3    amplifier capped at V,   full duration
- *   slot 4    amplifier capped at IV,  85% duration
- *   slot 5    amplifier capped at III, 75% duration
- *   slot 6    amplifier capped at II,  65% duration
- *   slot 7    amplifier capped at I,   55% duration
- *   slot 8+   refused outright
+ *   incoming Needler III   1 of 15 left  -&gt; lands as Needler I
+ *   incoming Nexus         0 of 15 left  -&gt; refused outright
  * </pre>
+ *
+ * <p>Cost is the <b>displayed</b> level ({@code amplifier + 1}), not the raw amplifier: it is the
+ * number on the player's status bar, so the ceiling is one they can count for themselves. Duration
+ * is left alone entirely — the budget is about how much affliction fits, not how long it lingers.
+ *
+ * <p>Refreshing an affliction the player already carries is measured against the <i>other</i>
+ * effects only. Counting it against itself would throttle every refresh of a long-running effect
+ * down to nothing, which is the opposite of what a budget is for.
  *
  * <p>Implemented on {@link PotionEvent.PotionApplicableEvent}, which is {@code @HasResult} and
  * is posted from {@code EntityLivingBase.isPotionApplicable} — the gate
@@ -46,6 +50,14 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  *
  * <p>Only effects hostile to the host count — see {@link SrpEffectRegistry}, which
  * deliberately excludes the parasite effects that <i>benefit</i> the player.
+ *
+ * <h3>Legacy behaviour (pre-2026-07-28)</h3>
+ * The trait previously worked per-slot: the first two afflictions landed untouched, slots 3 to 7
+ * had their amplifier capped along a ladder (V, IV, III, II, I) and their duration cut (100%, 85%,
+ * 75%, 65%, 55%), and slot 8 onwards was refused. See {@code ScarredFleshCategory} for the full
+ * record — kept because the shape may return in another form. It counted afflictions rather than
+ * weighing them, so seven level-I effects hit the ceiling exactly as hard as seven level-VII ones;
+ * the budget replaces that with a measure of how much affliction is actually present.
  */
 public class ScarredFleshHandler {
 
@@ -91,53 +103,43 @@ public class ScarredFleshHandler {
             return;
         }
 
-        // Slot the incoming affliction would occupy. Refreshing an effect the player already
-        // has does not consume a new slot, so it is evaluated at the current count.
-        int active = SrpEffectRegistry.countActive(player, hostile);
-        int slot = player.isPotionActive(potion) ? active : active + 1;
+        // The incoming effect's own contribution is excluded, so a refresh is weighed against the
+        // other afflictions rather than against itself.
+        int spentByOthers = SrpEffectRegistry.sumActiveLevels(player, hostile, potion);
+        int remaining = cfg.totalLevelBudget - spentByOthers;
+        int incomingLevel = incoming.getAmplifier() + 1;
 
-        if (slot <= cfg.freeDebuffs) {
-            return;
-        }
-
-        if (slot > cfg.maxDebuffs) {
+        if (remaining <= 0) {
             event.setResult(Event.Result.DENY);
             if (cfg.debugLogging) {
                 InsaneTweaksMod.LOGGER.info(
-                        "[InsaneTweaks] Scarred Flesh refused {} on {} (slot {} > max {}).",
-                        potion.getRegistryName(), player.getName(), Integer.valueOf(slot),
-                        Integer.valueOf(cfg.maxDebuffs));
+                        "[InsaneTweaks] Scarred Flesh refused {} {} on {}: budget {} already spent by other afflictions.",
+                        potion.getRegistryName(), Integer.valueOf(incomingLevel), player.getName(),
+                        Integer.valueOf(cfg.totalLevelBudget));
             }
             return;
         }
 
-        int ladderIndex = slot - cfg.freeDebuffs - 1;
-        int cappedAmplifier = Math.min(incoming.getAmplifier(), amplifierCapFor(cfg, ladderIndex));
-        int scaledDuration = (int) Math.round(incoming.getDuration() * durationMultiplierFor(cfg, ladderIndex));
-        if (scaledDuration < 1) {
-            scaledDuration = 1;
-        }
-
-        if (cappedAmplifier == incoming.getAmplifier() && scaledDuration == incoming.getDuration()) {
-            return; // Ladder happens to be a no-op at this slot.
+        if (incomingLevel <= remaining) {
+            return; // Fits as-is.
         }
 
         event.setResult(Event.Result.DENY);
-        applyWeakened(player, potion, scaledDuration, cappedAmplifier, incoming);
+        applyWeakened(player, potion, incoming.getDuration(), remaining - 1, incoming);
 
         if (cfg.debugLogging) {
             InsaneTweaksMod.LOGGER.info(
-                    "[InsaneTweaks] Scarred Flesh weakened {} on {} at slot {}: amp {}->{}, duration {}->{}.",
-                    potion.getRegistryName(), player.getName(), Integer.valueOf(slot),
-                    Integer.valueOf(incoming.getAmplifier()), Integer.valueOf(cappedAmplifier),
-                    Integer.valueOf(incoming.getDuration()), Integer.valueOf(scaledDuration));
+                    "[InsaneTweaks] Scarred Flesh reduced {} on {}: level {}->{} ({} of budget {} spent by others).",
+                    potion.getRegistryName(), player.getName(), Integer.valueOf(incomingLevel),
+                    Integer.valueOf(remaining), Integer.valueOf(spentByOthers),
+                    Integer.valueOf(cfg.totalLevelBudget));
         }
     }
 
     /**
-     * Re-applies the affliction in its weakened form. The reentrancy flag is cleared in a
-     * finally block so a throwing effect cannot wedge the handler off for the rest of the
-     * session.
+     * Re-applies the affliction at the level that still fits, keeping its duration. The reentrancy
+     * flag is cleared in a finally block so a throwing effect cannot wedge the handler off for the
+     * rest of the session.
      */
     private static void applyWeakened(EntityPlayer player, Potion potion, int duration, int amplifier,
             PotionEffect source) {
@@ -150,20 +152,4 @@ public class ScarredFleshHandler {
         }
     }
 
-    /** Ladder lookup that reuses the last entry once the configured list runs out. */
-    private static int amplifierCapFor(ScarredFleshCategory cfg, int index) {
-        int[] caps = cfg.amplifierCaps;
-        if (caps == null || caps.length == 0) {
-            return Integer.MAX_VALUE;
-        }
-        return caps[Math.min(index, caps.length - 1)];
-    }
-
-    private static double durationMultiplierFor(ScarredFleshCategory cfg, int index) {
-        double[] multipliers = cfg.durationMultipliers;
-        if (multipliers == null || multipliers.length == 0) {
-            return 1.0D;
-        }
-        return multipliers[Math.min(index, multipliers.length - 1)];
-    }
 }

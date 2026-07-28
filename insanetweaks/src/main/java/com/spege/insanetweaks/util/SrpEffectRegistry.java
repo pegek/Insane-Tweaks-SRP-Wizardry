@@ -8,6 +8,7 @@ import java.util.Set;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
@@ -113,6 +114,34 @@ public final class SrpEffectRegistry {
             }
         }
         return count;
+    }
+
+    /**
+     * Total <b>displayed level</b> of the hostile parasite effects currently on this entity —
+     * that is, the sum of {@code amplifier + 1}, so Viral VII counts as 7 rather than 6. This is
+     * the unit Scarred Flesh budgets in, chosen because it is the number the player actually sees
+     * on their status bar.
+     *
+     * @param exclude effect to leave out of the sum, or {@code null} for none. Callers evaluating
+     *        an incoming effect pass its own potion here: refreshing an affliction that is already
+     *        active must be measured against the <i>others</i>, otherwise the effect competes with
+     *        itself and every refresh gets throttled.
+     */
+    public static int sumActiveLevels(EntityLivingBase entity, Set<Potion> hostile, Potion exclude) {
+        if (hostile.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (Potion potion : hostile) {
+            if (potion == exclude) {
+                continue;
+            }
+            PotionEffect active = entity.getActivePotionEffect(potion);
+            if (active != null) {
+                total += active.getAmplifier() + 1;
+            }
+        }
+        return total;
     }
 
     /** Read-only view of the built-in ids, for diagnostics and the {@code /itweaks} command. */

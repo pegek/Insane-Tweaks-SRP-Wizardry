@@ -93,7 +93,7 @@ public class ModConfig {
 
     @Config.Name("scarredFlesh")
     @Config.LangKey("config.insanetweaks.category.scarredFlesh")
-    @Config.Comment("Scarred Flesh trait: the escalating parasite-affliction resistance ladder.")
+    @Config.Comment("Scarred Flesh trait: the total parasite-affliction level budget.")
     public static final ScarredFleshCategory scarredFlesh = new ScarredFleshCategory();
 
     @Config.Name("autoLockPicker")

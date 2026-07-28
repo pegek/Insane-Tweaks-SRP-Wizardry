@@ -5,13 +5,29 @@ import net.minecraftforge.common.config.Config;
 /**
  * Tunables for the Scarred Flesh trait ({@code compatskills:scarred_flesh}).
  *
- * <p>The trait gets <b>stronger the more parasite afflictions are already stacked on you</b>.
- * "Slot" below means the position of the incoming effect once it lands — an incoming effect
- * that would be your third simultaneous parasite debuff occupies slot 3.
+ * <p>The trait gives the player a <b>total affliction budget</b>. Every hostile parasite effect
+ * costs its displayed level — Viral VII costs 7, Fear IV costs 4 — and the sum across all of them
+ * may never exceed {@link #totalLevelBudget}. An incoming affliction is admitted at whatever level
+ * still fits, and refused outright once nothing does.
  *
- * <p>Default ladder:
+ * <p>Worked example at the default budget of 15, with Viral VII + Fear IV + Coth III already on
+ * the player (7 + 4 + 3 = 14):
  * <pre>
- *   slot 1-2  no interference
+ *   incoming Needler III   1 of 15 left  -&gt; lands as Needler I
+ *   incoming Nexus         0 of 15 left  -&gt; refused outright
+ * </pre>
+ *
+ * <p>Budgeting in displayed levels rather than raw amplifiers is deliberate: it is the number on
+ * the player's status bar, so the ceiling is something they can count for themselves.
+ *
+ * <h3>Legacy behaviour (pre-2026-07-28)</h3>
+ * The trait used to work per-slot instead of per-level: the first N afflictions passed untouched,
+ * each further one had its amplifier capped and duration cut along a configurable ladder, and past
+ * a hard slot ceiling it was refused. The knobs were {@code freeDebuffs} (2), {@code maxDebuffs}
+ * (7), {@code amplifierCaps} ({@code 4,3,2,1,0}) and {@code durationMultipliers}
+ * ({@code 1.0,0.85,0.75,0.65,0.55}), producing:
+ * <pre>
+ *   slot 1-2  untouched
  *   slot 3    amplifier capped at V,   full duration
  *   slot 4    amplifier capped at IV,  85% duration
  *   slot 5    amplifier capped at III, 75% duration
@@ -19,34 +35,23 @@ import net.minecraftforge.common.config.Config;
  *   slot 7    amplifier capped at I,   55% duration
  *   slot 8+   refused outright
  * </pre>
+ * Kept on record because the shape may return in another form. Its weakness was that it counted
+ * afflictions rather than weighing them: seven level-I effects hit the ceiling exactly as hard as
+ * seven level-VII ones.
  *
- * All values are read live inside the handler — no restart needed.
+ * <p>All values are read live inside the handler — no restart needed.
  */
 public class ScarredFleshCategory {
 
-    @Config.Name("Free Debuff Slots")
-    @Config.Comment("Number of simultaneous parasite afflictions that pass through completely untouched.")
-    @Config.RangeInt(min = 0, max = 20)
-    public int freeDebuffs = 2;
-
-    @Config.Name("Max Debuff Slots")
-    @Config.Comment("Hard ceiling on simultaneous parasite afflictions. Anything beyond this is refused outright.")
-    @Config.RangeInt(min = 1, max = 30)
-    public int maxDebuffs = 7;
-
-    @Config.Name("Amplifier Caps")
+    @Config.Name("Total Level Budget")
     @Config.Comment({
-            "Maximum amplifier allowed at each slot past the free ones, in order.",
-            "These are raw amplifiers: 4 displays as level V, 0 as level I.",
-            "First entry applies to slot (Free Debuff Slots + 1). If the ladder is shorter than",
-            "the slot range, the last entry is reused for every remaining slot." })
-    public int[] amplifierCaps = { 4, 3, 2, 1, 0 };
-
-    @Config.Name("Duration Multipliers")
-    @Config.Comment({
-            "Duration scaling at each slot past the free ones, in order, matching Amplifier Caps.",
-            "1.0 keeps full duration, 0.85 cuts 15%. Shorter lists reuse the last entry." })
-    public double[] durationMultipliers = { 1.0D, 0.85D, 0.75D, 0.65D, 0.55D };
+            "Combined displayed level of all hostile parasite afflictions the player may carry.",
+            "Displayed level, not amplifier: Viral VII costs 7. An incoming affliction is admitted",
+            "at whatever level still fits under this ceiling, and refused once nothing does.",
+            "Refreshing an affliction already active is measured against the others only, so a",
+            "refresh never competes with itself." })
+    @Config.RangeInt(min = 1, max = 200)
+    public int totalLevelBudget = 15;
 
     @Config.Name("Additional Hostile Effects")
     @Config.Comment({
@@ -57,6 +62,6 @@ public class ScarredFleshCategory {
     public String[] additionalHostileEffects = {};
 
     @Config.Name("Debug Logging")
-    @Config.Comment("Log every capped, shortened or refused affliction to the server log.")
+    @Config.Comment("Log every reduced or refused affliction, with the budget arithmetic, to the server log.")
     public boolean debugLogging = false;
 }
