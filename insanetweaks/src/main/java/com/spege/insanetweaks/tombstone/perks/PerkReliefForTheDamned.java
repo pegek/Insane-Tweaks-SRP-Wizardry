@@ -29,15 +29,22 @@ import net.minecraftforge.fml.common.Loader;
  * zombie for 7 lands 3.5 with the ring, and 4.76 with the ring and a maxed perk.
  *
  * <p>Enigmatic Legacy offers no API for any of this, so the work is done by mixins that
- * redirect the three {@code EnigmaticConfigs} constants where the mod reads them. The icon
- * points straight at the ring's own texture rather than copying it into our assets — safe,
- * because the perk is disabled whenever Enigmatic Legacy is missing.
+ * redirect the three {@code EnigmaticConfigs} constants where the mod reads them.
+ *
+ * <p>The icon references one of Enigmatic Legacy's own textures rather than copying it into our
+ * assets — safe, because the perk is disabled whenever Enigmatic Legacy is missing. It points at
+ * the <b>Blessed</b> Ring, not the Cursed one, for a mechanical reason as much as a thematic one:
+ * {@code cursed_ring.png} is a 16x80 five-frame animation strip, and Tombstone blits perk icons
+ * with {@code drawScaledCustomSizeModalRect(x, y, 0, 0, 64, 64, 16, 16, 64f, 64f)}, which samples
+ * the entire file regardless of its real dimensions. A non-square texture therefore renders as the
+ * whole strip crushed into one 16x16 cell. Any icon used here must be square. That the blessed
+ * ring is the cursed one's counterpart, and this perk is mercy from the curse, is a bonus.
  */
 public class PerkReliefForTheDamned extends PerkInsaneTweaksBase {
 
     public PerkReliefForTheDamned() {
         super("relief_for_the_damned",
-                new ResourceLocation("enigmaticlegacy", "textures/items/cursed_ring.png"));
+                new ResourceLocation("enigmaticlegacy", "textures/items/bless_ring.png"));
     }
 
     private static ReliefForTheDamnedConfig cfg() {
@@ -71,7 +78,7 @@ public class PerkReliefForTheDamned extends PerkInsaneTweaksBase {
         String amount = formatPercent(
                 com.spege.insanetweaks.util.CurseReliefHelper.reductionAtLevel(level));
         return Collections.<ITextComponent>singletonList(
-                new TextComponentString("-" + amount + "% ")
+                new TextComponentString("-" + amount + PERCENT + " ")
                         .appendSibling(new TextComponentTranslation(getTranslationKey() + ".bonus")));
     }
 }

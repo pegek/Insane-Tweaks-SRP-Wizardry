@@ -73,4 +73,20 @@ public abstract class PerkInsaneTweaksBase extends Perk {
         String text = String.format(java.util.Locale.ROOT, "%.1f", Double.valueOf(percent));
         return text.endsWith(".0") ? text.substring(0, text.length() - 2) : text;
     }
+
+    /**
+     * The literal percent sign to put in a bonus line: {@code "%%"}, not {@code "%"}.
+     *
+     * <p>{@code ScreenKnowledge} does not render a bonus component directly. It resolves it with
+     * {@code getFormattedText()} and then feeds the resulting <i>text</i> back into
+     * {@code I18n.format} as though it were a translation key
+     * ({@code LangKey.createText(ITextComponent, Object...)}). The lookup misses and returns the
+     * string unchanged, but {@code String.format} still runs over it — so a lone {@code %} is read
+     * as a format specifier and the whole line comes out as "Format error: ...".
+     *
+     * <p>Tombstone's own perks work around this the same way; see {@code PerkAlchemist} and
+     * {@code PerkTreasureSeeker}, which both build their bonus with {@code "%%"}. Following the
+     * house idiom rather than inventing another is what keeps our lines rendering like theirs.
+     */
+    protected static final String PERCENT = "%%";
 }

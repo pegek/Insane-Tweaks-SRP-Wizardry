@@ -183,8 +183,8 @@ public class TombstoneCategory {
 
         @Config.Name("Max Level")
         @Config.Comment("Maximum level of this perk. 0 effectively disables it.")
-        @Config.RangeInt(min = 0, max = 5)
-        public int maxLevel = 3;
+        @Config.RangeInt(min = 0, max = 10)
+        public int maxLevel = 5;
 
         @Config.Name("Point Cost Per Level")
         @Config.Comment({"Perk points charged for each level of this perk.",
@@ -195,12 +195,10 @@ public class TombstoneCategory {
 
         @Config.Name("Chance Per Level")
         @Config.Comment({"Chance, per perk level, that a qualifying parasite kill grants knowledge.",
-                "0.30 at level 3 means a 90% chance per kill.",
-                "TEMPORARY TEST VALUE - deliberately loud so the perk can be confirmed to fire at all.",
-                "The intended shipping value is around 0.02 (6% at level 3); this drops back down",
-                "during the perk rebalance pass."})
+                "0.07 across the 5 levels means a 35% chance per kill at maximum.",
+                "Still under playtest - expect this to move during the perk rebalance pass."})
         @Config.RangeDouble(min = 0.0, max = 1.0)
-        public double chancePerLevel = 0.30;
+        public double chancePerLevel = 0.07;
 
         @Config.Name("Knowledge Per Proc")
         @Config.Comment("Knowledge granted when the roll succeeds.")
@@ -216,13 +214,25 @@ public class TombstoneCategory {
         @Config.Name("Qualifying Entities")
         @Config.Comment({"Registry-name prefixes of parasites whose death can grant knowledge.",
                 "Exact names work too (a full name is its own prefix). Low-tier chaff is left out",
-                "on purpose — it dies in the hundreds and would trivialise the knowledge economy."})
+                "on purpose — it dies in the hundreds and would trivialise the knowledge economy;",
+                "that is why the Primitive line (srparasites:pri_) is absent. Roster picked against",
+                "the Base Health / Base Damage figures SRP prints in SRParasitesMobs.cfg rather",
+                "than by feel, so every entry here is a genuinely dangerous kill."})
         public String[] qualifyingEntityPrefixes = {
+                // Adapted and Ancient lines
                 "srparasites:ada_", "srparasites:anc_",
+                // Named heavies
                 "srparasites:overseer", "srparasites:vigilante", "srparasites:warden",
-                "srparasites:marauder", "srparasites:monarch",
-                "srparasites:architect", "srparasites:succor", "srparasites:carrier_colony",
-                "srparasites:wraith", "srparasites:haunter", "srparasites:seeker" };
+                "srparasites:marauder", "srparasites:monarch", "srparasites:architect",
+                "srparasites:succor", "srparasites:carrier_colony",
+                "srparasites:wraith", "srparasites:haunter", "srparasites:seeker",
+                // Apex: 525/410/420 hp respectively
+                "srparasites:draconite", "srparasites:kirin", "srparasites:bomber_heavy",
+                "srparasites:sim_dragone", "srparasites:hi_golem", "srparasites:herd",
+                // Nexus structures and their defenders - stationary, but a real fight to clear
+                "srparasites:rooter_", "srparasites:beckon_", "srparasites:dispatcher_",
+                // Assimilated Marauder-line hosts, plus two mid-tier stragglers
+                "srparasites:mar_", "srparasites:cruxa", "srparasites:devourer" };
 
         @Config.Name("Debug Logging")
         @Config.Comment("Log every qualifying kill and every successful roll to the server log.")

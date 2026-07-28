@@ -56,7 +56,7 @@ public class TraitsCategory {
 
     @Config.Name("Coiled Spring")
     public TraitConfig coiledSpring = new TraitConfig(8, "agility",
-            new String[] { "reskillable:agility|25" });
+            new String[] { "reskillable:agility|40" });
 
     @Config.Name("Scarred Flesh")
     public TraitConfig scarredFlesh = new TraitConfig(15, "defense",

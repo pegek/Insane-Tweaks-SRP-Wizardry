@@ -20,10 +20,11 @@ import net.minecraft.util.text.TextComponentTranslation;
  *
  * <p>The effect lives in {@code AssimilatedKnowledgeHandler}; Tombstone never calls a perk.
  *
- * <p>The icon reuses the existing Corrupted Fruit texture. Tombstone blits perk icons with
- * {@code drawScaledCustomSizeModalRect(x, y, 0, 0, 64, 64, 16, 16, 64f, 64f)} — the sampled
- * region is the whole texture (64/64 = 1.0) whatever the PNG's real size, so a 16x16 item
- * texture renders correctly and no new asset is needed.
+ * <p>The icon reuses the existing 32x32 Corrupted Fruit texture. Tombstone blits perk icons with
+ * {@code drawScaledCustomSizeModalRect(x, y, 0, 0, 64, 64, 16, 16, 64f, 64f)}, which samples the
+ * whole file whatever its real dimensions — so any size works and no new asset is needed, but the
+ * texture <b>must be square</b> or it renders stretched. See {@link PerkReliefForTheDamned}, where
+ * that constraint ruled out an animation strip.
  */
 public class PerkAssimilatedKnowledge extends PerkInsaneTweaksBase {
 
@@ -62,7 +63,7 @@ public class PerkAssimilatedKnowledge extends PerkInsaneTweaksBase {
             return Collections.emptyList();
         }
         return Collections.<ITextComponent>singletonList(
-                new TextComponentString(formatPercent(chanceAtLevel(level)) + "% ")
+                new TextComponentString(formatPercent(chanceAtLevel(level)) + PERCENT + " ")
                         .appendSibling(new TextComponentTranslation(getTranslationKey() + ".bonus")));
     }
 }
