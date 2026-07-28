@@ -28,6 +28,17 @@ import net.minecraftforge.common.config.Config;
  * through — the world save is silently truncated (crash 2026-07-26 00:36, see
  * {@code notes/crash_mapstorage_null_2026-07-26.md}). {@code MixinMapStorage} hardens the list,
  * skips a null on save, and can name the off-thread caller.
+ *
+ * <p>Fourth fix, and the one that addresses the cause rather than the symptoms: EntityThreading's
+ * own guard layer never applies. Its {@code MixinWorld} dies in {@code prepareInjections} on one
+ * handler and takes all 17 of them down with it — on every boot since the mod was enabled
+ * (2026-07-21 22:21). Only its raw-ASM {@code World.updateEntities} rewrite survives, so workers
+ * tick entities with nothing stopping them from triggering a full chunk generation: a projectile
+ * raytracing into ungenerated terrain was enough (crash 2026-07-28 10:28, {@code null} in
+ * {@code BiomeCache.cache} — the same torn-{@code ArrayList} signature as the MapStorage crash,
+ * see {@code notes/crash_biomecache_race_2026-07-28.md}).
+ * {@code MixinChunkProviderServerThreadGuard} closes the choke point:
+ * off-thread, ungenerated terrain reads as air instead of being generated.
  */
 public class ThreadingCompatCategory {
 
@@ -108,4 +119,46 @@ public class ThreadingCompatCategory {
     @Config.Name("Fix: IntCache Thread Local")
     @Config.RequiresMcRestart
     public boolean fixIntCacheThreadLocal = true;
+
+    @Config.Comment({
+            "Never generate a chunk on a thread other than the server thread. Off-thread callers",
+            "get the already-loaded chunk if there is one, and an empty (all air) chunk if there",
+            "is not - instead of pulling a full generation with population and structures onto a",
+            "worker thread, which tears the vanilla ArrayLists underneath (BiomeCache crash",
+            "2026-07-28 10:28, MapStorage crash 2026-07-26 00:36 that truncated the world save).",
+            "This stands in for EntityThreading's own guard, whose MixinWorld has failed to apply",
+            "on every boot since 2026-07-21 - see notes/crash_biomecache_race_2026-07-28.md.",
+            "Cost: an entity ticked on a worker sees ungenerated terrain as air, so a projectile",
+            "flies on through and a mob finds no path there. Cosmetic next to a corrupted save.",
+            "Logs one WARN with a stack per distinct offending thread name (capped at 40 a run) -",
+            "anything other than EntityThreading-Worker-* is a caller that was not predicted.",
+            "Read live (no restart): with this OFF the guard only reports, it cancels nothing.",
+            "Default ON."
+    })
+    @Config.Name("Fix: Block Off-Thread Chunk Generation")
+    public boolean blockOffThreadChunkGen = true;
+
+    @Config.Comment({
+            "While blocking, look the chunk up in ChunkProviderServer's loaded-chunk map and",
+            "return the real chunk when it is already loaded, so only genuinely ungenerated",
+            "terrain reads as air. The lookup is guarded twice (a coordinate check and a catch)",
+            "because that map is an open-addressing fastutil map whose rehash publishes its new",
+            "mask before its new key array - an off-thread read landing in that window can index",
+            "out of bounds or return a chunk from a different position.",
+            "Turn OFF for the ultra-conservative mode: never touch the map, always hand back an",
+            "empty chunk. Read live (no restart). Default ON."
+    })
+    @Config.Name("Fix: Read Loaded Chunk Off-Thread")
+    public boolean readLoadedChunkOffThread = true;
+
+    @Config.Comment({
+            "Thread-name prefixes exempt from the guard above - a thread listed here may generate",
+            "chunks. Empty by default: an audit of this pack found no legitimate off-thread caller",
+            "(Chunk-Pregenerator generates on the server thread, JourneyMap reads the client-side",
+            "provider, and Forge's async chunk I/O never reaches provideChunk). This exists so a",
+            "future pregen or async-worldgen mod can be let through without a rebuild - take the",
+            "prefix from the WARN the guard logs. Read live (no restart)."
+    })
+    @Config.Name("Diag: Off-Thread Chunk Gen Allowed Threads")
+    public String[] offThreadChunkGenAllowedThreads = new String[0];
 }

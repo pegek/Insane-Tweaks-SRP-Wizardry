@@ -37,6 +37,12 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         if (Loader.isModLoaded("defiledlands")) {
             configs.add("mixins.srpwizcore.defiledlands.json");
         }
+        // SetBonus reloads its server data from ANY mod's PostConfigChangedEvent, on the client
+        // thread, while the server thread iterates the same set — CME in ServerBonus.updateBonuses.
+        // See MixinSetBonusConfigReload. Client-only inside the config: the event needs a GUI.
+        if (Loader.isModLoaded("setbonus")) {
+            configs.add("mixins.srpwizcore.setbonus.json");
+        }
         return configs;
     }
 

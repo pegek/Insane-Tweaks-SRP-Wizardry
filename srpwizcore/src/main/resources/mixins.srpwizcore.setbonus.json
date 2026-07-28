@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins.setbonus",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [ "MixinSetBonusConfigReload" ],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

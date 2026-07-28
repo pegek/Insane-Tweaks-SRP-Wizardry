@@ -4,7 +4,8 @@
   "package": "com.spege.srpwizcore.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinEntityTracker", "MixinWorldType", "MixinMapStorage", "MixinWorldEntitySpawner" ],
+  "mixins": [ "MixinEntityTracker", "MixinWorldType", "MixinMapStorage", "MixinWorldEntitySpawner",
+              "MixinChunkProviderServerThreadGuard" ],
   "client": [ "MixinSoundManagerBounce" ],
   "injectors": { "defaultRequire": 1 }
 }
