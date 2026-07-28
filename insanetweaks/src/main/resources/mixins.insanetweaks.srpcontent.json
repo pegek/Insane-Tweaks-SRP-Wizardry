@@ -6,7 +6,8 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinBeckonBlockInfestation",
-    "MixinWorldGenParasiteNodeCore"
+    "MixinWorldGenParasiteNodeCore",
+    "MixinParasiteFoodContamination"
   ],
   "client": [],
   "server": [],

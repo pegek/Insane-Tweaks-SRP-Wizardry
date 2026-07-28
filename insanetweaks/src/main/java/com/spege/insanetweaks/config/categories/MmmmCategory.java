@@ -66,4 +66,14 @@ public class MmmmCategory {
     })
     @Config.Name("Fill Hunger Bar")
     public boolean fillHungerBar = true;
+
+    @Config.Comment({
+            "Make Mmmm-enchanted food immune to Scape and Run: Parasites' food contamination - the",
+            "hit that eats part of a food stack and drops Infected Flesh on the ground in its place.",
+            "Enchanted stacks become invisible to that scan, so the parasite simply moves on to the",
+            "next food stack in the inventory; it does not stop the contamination outright. Requires",
+            "SRParasites, and does nothing while modules.enableMmmm is off. Read live."
+    })
+    @Config.Name("Protect Food From Parasite Contamination")
+    public boolean protectFromParasiteContamination = true;
 }

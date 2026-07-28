@@ -195,9 +195,12 @@ public class TombstoneCategory {
 
         @Config.Name("Chance Per Level")
         @Config.Comment({"Chance, per perk level, that a qualifying parasite kill grants knowledge.",
-                "0.02 at level 3 means a 6% chance per kill."})
+                "0.30 at level 3 means a 90% chance per kill.",
+                "TEMPORARY TEST VALUE - deliberately loud so the perk can be confirmed to fire at all.",
+                "The intended shipping value is around 0.02 (6% at level 3); this drops back down",
+                "during the perk rebalance pass."})
         @Config.RangeDouble(min = 0.0, max = 1.0)
-        public double chancePerLevel = 0.02;
+        public double chancePerLevel = 0.30;
 
         @Config.Name("Knowledge Per Proc")
         @Config.Comment("Knowledge granted when the roll succeeds.")

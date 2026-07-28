@@ -41,11 +41,34 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * and the Nourished effect also register unconditionally - gating a registry object on a config
  * flag means turning the flag off deletes the entry from an existing world.
  *
- * <p>PLANNED: this enchantment will also be the hook for protecting a player's food against the
- * pack's still-unidentified "food rots or vanishes from the inventory" interaction. Nothing here
- * implements that yet - it needs the culprit identified first.
+ * <p>The enchantment is also the hook for protecting food against the pack's "food rots or vanishes
+ * from the inventory" interaction, whose culprit turned out to be
+ * {@code EntityParasiteBase.attackEntityAsMobFood}. See
+ * {@link #protectsAgainstParasiteContamination} and the mixin that consults it.
  */
 public class MmmmHandler {
+
+    /**
+     * Whether this stack is currently shielded from Scape and Run: Parasites' food contamination.
+     *
+     * <p>Kept here rather than on {@link EnchantmentMmmm} on purpose: this is runtime policy, read
+     * from config on every call so both toggles stay live, while the enchantment itself is a
+     * registry object that should not depend on config at all.
+     *
+     * <p>Deliberately does <i>not</i> re-check {@link ItemFood} - the caller has already
+     * established that, and a non-food stack cannot carry the enchantment through any supported
+     * route anyway.
+     */
+    public static boolean protectsAgainstParasiteContamination(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (!ModConfig.modules.enableMmmm
+                || !ModConfig.enchantments.mmmm.protectFromParasiteContamination) {
+            return false;
+        }
+        return EnchantmentMmmm.getLevel(stack) > 0;
+    }
 
     /** {@code ln(5)}, the closed form of upstream's power-of-five table. */
     private static final double LN_5 = Math.log(5.0D);
