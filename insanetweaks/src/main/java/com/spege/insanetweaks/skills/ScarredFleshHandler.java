@@ -48,6 +48,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * so the original is denied and a modified copy re-applied. {@link #reentrant} suppresses the
  * handler for that inner call, otherwise the copy would be re-evaluated forever.
  *
+ * <p><b>Server side only.</b> {@code PotionApplicableEvent} fires on both, and without the guard
+ * the client ran the whole budget a second time over its own synced copy of the effects — so the
+ * server would admit Viral at level 10, the client would see that as spent budget, cut it again to
+ * 9, and write the result into its own potion map. The player then read a number the server did not
+ * hold. Denying on the client would be just as wrong: the server has already decided, and the
+ * client's job is to display that decision.
+ *
  * <p>Only effects hostile to the host count — see {@link SrpEffectRegistry}, which
  * deliberately excludes the parasite effects that <i>benefit</i> the player.
  *
@@ -86,6 +93,9 @@ public class ScarredFleshHandler {
             return;
         }
         EntityPlayer player = (EntityPlayer) living;
+        if (player.world == null || player.world.isRemote) {
+            return;
+        }
 
         PotionEffect incoming = event.getPotionEffect();
         if (incoming == null) {
