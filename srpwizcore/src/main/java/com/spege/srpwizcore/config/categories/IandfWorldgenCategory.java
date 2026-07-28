@@ -97,6 +97,18 @@ public class IandfWorldgenCategory {
     @Config.Name("Mausoleums")
     public String[] mausoleums = new String[0];
 
+    @Config.Comment({
+            "Dread Mausoleum foundation tolerance, in blocks. Ice&Fire's own check demands an",
+            "opaque block at EXACTLY origin-Y-1 under all four footprint edge midpoints, which",
+            "fails on any slope (measured: 0 mausoleums in 20k+ chunks). N>0 accepts an edge",
+            "whose ground lies up to N blocks below origin level - the structure pours its own",
+            "3-deep foundation, so the leniency is safe. 0 = Ice&Fire's original check.",
+            "Read live at generation time (no restart)."
+    })
+    @Config.Name("Mausoleum Foundation Tolerance")
+    @Config.RangeInt(min = 0, max = 8)
+    public int mausoleumFoundationTolerance = 3;
+
     @Config.Comment({ "Gorgon temples.",
             "DEFAULT: Ice&Fire generates gorgon temples in every whitelisted dimension, chance 1 in 75 per chunk.",
             DEFNOTE,
