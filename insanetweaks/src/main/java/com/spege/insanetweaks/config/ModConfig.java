@@ -7,6 +7,7 @@ import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
+import com.spege.insanetweaks.config.categories.PropertyBooksCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
@@ -95,6 +96,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.scarredFlesh")
     @Config.Comment("Scarred Flesh trait: the total parasite-affliction level budget.")
     public static final ScarredFleshCategory scarredFlesh = new ScarredFleshCategory();
+
+    @Config.Name("propertyBooks")
+    @Config.LangKey("config.insanetweaks.category.propertyBooks")
+    @Config.Comment("Property Books: anvil cost and the Grip recovery fallback. Master toggle is modules.enablePropertyBooks.")
+    public static final PropertyBooksCategory propertyBooks = new PropertyBooksCategory();
 
     @Config.Name("autoLockPicker")
     @Config.LangKey("config.insanetweaks.category.autoLockPicker")

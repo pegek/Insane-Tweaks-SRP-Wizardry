@@ -32,7 +32,26 @@ item.insanetweaks.zhonyas_hourglass.name=§eЧасы Жони
 item.insanetweaks:zhonyas_hourglass.desc=ПКМ погружает вас в золотой стазис: кратковременная неуязвимая заморозка, полное исцеление и очищение, враги забывают о вас. Тратит ВСЮ текущую ману; долгая перезарядка.
 item.insanetweaks.zhonyas_hourglass.disabled=Отключено в конфиге (tweaks -> Enable Zhonya's Hourglass)
 item.insanetweaks.restoration_hourglass.name=§eПесочные часы восстановления
-item.insanetweaks:restoration_hourglass.desc=Восстанавливает исходную форму существ, заражённых SRP, при использовании заклинания «Очищающий импульс». В творческом режиме ПКМ по существу восстанавливает его напрямую.
+item.insanetweaks:restoration_hourglass.desc=Восстанавливает исходную форму существ, заражённых SRP, при использовании заклинания «Очищающий импульс» или по ПКМ.
+tooltip.insanetweaks.restoration_hourglass.flavor=Мгновение прошлого, заключённое в стекло и возвращённое.
+tooltip.insanetweaks.restoration_hourglass.title=Восстановление существ
+tooltip.insanetweaks.restoration_hourglass.passive=«Очищающий импульс» восстанавливает заражённых поблизости.
+tooltip.insanetweaks.restoration_hourglass.preserves=Имя, приручение и владелец сохраняются при возвращении.
+tooltip.insanetweaks.restoration_hourglass.incomplete=Неполные формы возвращаются тем, чем были на самом деле.
+tooltip.insanetweaks.restoration_hourglass.immunity=Восстановленные получают §630 с §eиммунитета к повторному заражению.
+tooltip.insanetweaks.restoration_hourglass.active=ПКМ: мгновенное восстановление. [перезарядка %s ч]
+
+msg.insanetweaks.restoration.no_target=[Восстановление] В поле зрения нет заражённых существ.
+msg.insanetweaks.restoration.restored=[Восстановление] Восстановлено: %s
+msg.insanetweaks.restoration.no_origin=[Восстановление] Нет данных об исходной форме — восстановить нельзя.
+
+# Property Books
+item.insanetweaks.property_book.name=Книга свойства
+item.insanetweaks.property_book.blank=Пустая книга свойства
+item.insanetweaks.property_book.named=Книга свойства: %s
+tooltip.insanetweaks.property_book.blank=Не содержит свойства. Применить её не к чему.
+tooltip.insanetweaks.property_book.grants=Даёт:
+tooltip.insanetweaks.property_book.anvil=Объедините с инструментом на наковальне, чтобы применить.
 
 # Bauble Fruits
 item.bauble_fruit_ring.name=§dПлод-бабл — Кольцо

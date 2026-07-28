@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.19";
+    public static final String VERSION = "1.4.20";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -445,13 +445,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Sentient Codex enchantment runtime (boost recompute, owner-binding, anvil lock).
         // The enchantment itself registers on the MOD bus in ModEnchantments under the same flag.
         // Drop protection is conferred via the Ashen Legacy property (LegendaryDropHelper +
-        // the always-on IndestructibleDropHandler above); the client tooltip handler surfaces
-        // that property on Sentient Codex-enchanted vanilla items.
+        // the always-on IndestructibleDropHandler above). There used to be a dedicated client
+        // tooltip handler here to surface that property on enchanted vanilla items, because the
+        // generic one was gated on ITweaksPropertyHolder and could not see it; GlobalPropertyTooltip-
+        // Handler now goes through AdvPropertyResolver, which covers the enchant case, so the
+        // duplicate was deleted.
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.SentientCodexHandler());
-            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
-            }
         }
 
         // Mmmm enchantment runtime (fill hunger + Nourished on finishing enchanted food).
@@ -496,14 +496,30 @@ public class InsaneTweaksMod implements IGuiHandler {
             }
         }
 
-        // The advanced-property tooltip ("Ashen Legacy" and friends) is generic over
-        // ITweaksPropertyHolder, so it must not sit inside the SRP-EBWizardry bridge block:
-        // Bauble Fruits are lava-proof property holders whether or not the bridge is enabled,
-        // and with the bridge off they were silently missing the line that says so.
+        // The advanced-property tooltip ("Ashen Legacy" and friends) is generic, so it must not sit
+        // inside the SRP-EBWizardry bridge block: Bauble Fruits are lava-proof property holders
+        // whether or not the bridge is enabled, and with the bridge off they were silently missing
+        // the line that says so. Sentient Codex and Property Books are listed for the same reason -
+        // each can put a property on a stack with none of the other modules on.
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT
                 && (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge
-                        || com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits)) {
+                        || com.spege.insanetweaks.config.ModConfig.modules.enableBaubleFruits
+                        || com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex
+                        || com.spege.insanetweaks.config.ModConfig.modules.enablePropertyBooks)) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GlobalPropertyTooltipHandler());
+        }
+
+        // Property Books: the anvil recipe that grants a property to one particular item.
+        // The book ITEM registers unconditionally in ModItems (a registry object behind a config
+        // flag vanishes from existing worlds); this flag gates the recipe handler only.
+        if (com.spege.insanetweaks.config.ModConfig.modules.enablePropertyBooks) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.PropertyBookAnvilHandler());
+            // Grip is enforced by the Fleshbound handler. That is normally registered under the
+            // SRP-EBWizardry bridge (its other route in is an evolved Sentient Spellblade), so
+            // without this a Grip book would grant a property that nothing acts on.
+            if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.FleshboundEventHandler());
+            }
         }
 
         // Sim_wizard SRP faction integration: cancels parasite<->sim_wizard friendly fire so

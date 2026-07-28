@@ -63,6 +63,9 @@ public class CommandInsaneTweaks extends CommandBase {
             case "grantbook":
                 handleGrantBook(server, sender, args);
                 break;
+            case "propertybook":
+                handlePropertyBook(server, sender, args);
+                break;
             case "help":
             default:
                 sendHelp(sender);
@@ -77,7 +80,62 @@ public class CommandInsaneTweaks extends CommandBase {
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks restore cursed <player> [latest|list|timestamp]\u00A77 - Restore saved cursed items"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks restore decay <player> [latest|list|timestamp]\u00A77 - Restore items decayed from graves"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks grantbook <enchantment> [level] [player]\u00A77 - Give a quest-granted enchanted book"));
+            sender.sendMessage(new TextComponentString("\u00A7e/itweaks propertybook <property> [player]\u00A77 - Give a Property Book (anvil onto a tool)"));
         }
+    }
+
+    /**
+     * Mints a Property Book for one advanced property, the intended way for an FTB Quests reward to
+     * hand one out without hand-authored NBT. Same shape as {@link #handleGrantBook}.
+     *
+     * <p>Only book-grantable properties are accepted; the failure message lists what is valid, since
+     * the ids are internal and not otherwise discoverable in-game.
+     */
+    private void handlePropertyBook(MinecraftServer server, ICommandSender sender, String[] args)
+            throws CommandException {
+        if (!sender.canUseCommand(2, "itweaks")) {
+            sender.sendMessage(new TextComponentString("\u00A7cYou do not have permission to use this command."));
+            return;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(new TextComponentString("\u00A7cUsage: /itweaks propertybook <property> [player]"));
+            sendGrantableProperties(sender);
+            return;
+        }
+
+        String id = args[1].toLowerCase(java.util.Locale.ROOT);
+        com.spege.insanetweaks.api.AdvPropertyRegistry.Property property =
+                com.spege.insanetweaks.api.AdvPropertyRegistry.getProperty(id);
+        if (property == null || !property.bookGrantable) {
+            sender.sendMessage(new TextComponentString("\u00A7cUnknown or non-grantable property: " + id));
+            sendGrantableProperties(sender);
+            return;
+        }
+
+        EntityPlayer target = args.length >= 3 ? getPlayer(server, sender, args[2])
+                : getCommandSenderAsPlayer(sender);
+        ItemStack book = com.spege.insanetweaks.items.PropertyBookItem.create(
+                com.spege.insanetweaks.init.ModItems.PROPERTY_BOOK, property.id);
+        if (!target.inventory.addItemStackToInventory(book)) {
+            target.dropItem(book, false);
+        }
+        sender.sendMessage(new TextComponentString("\u00A7aGranted Property Book \u00A7e" + property.id
+                + "\u00A7a to \u00A7e" + target.getName()));
+    }
+
+    private static void sendGrantableProperties(ICommandSender sender) {
+        StringBuilder sb = new StringBuilder();
+        for (com.spege.insanetweaks.api.AdvPropertyRegistry.Property p
+                : com.spege.insanetweaks.api.AdvPropertyRegistry.getAll()) {
+            if (p.bookGrantable) {
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                }
+                sb.append(p.id);
+            }
+        }
+        sender.sendMessage(new TextComponentString("\u00A77Available: \u00A7e"
+                + (sb.length() == 0 ? "(none)" : sb.toString())));
     }
 
     /**

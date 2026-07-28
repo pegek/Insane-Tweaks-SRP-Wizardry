@@ -155,6 +155,14 @@ public class SentientCodexHandler {
         if (!ModConfig.enchantments.sentientCodex.blockAnvil) {
             return;
         }
+        // A Property Book is not a modification of the item's enchantments - it grants an advanced
+        // property, which is exactly the kind of thing a Codex-bound item should still be able to
+        // receive. Without this exemption the cancel below would kill PropertyBookAnvilHandler's
+        // output (cancelling AnvilUpdateEvent is terminal), and the recipe would look broken on
+        // precisely the gear most likely to want it.
+        if (e.getRight().getItem() instanceof com.spege.insanetweaks.items.PropertyBookItem) {
+            return;
+        }
         if (EnchantmentSentientCodex.hasSentientCodex(e.getLeft())) {
             e.setCanceled(true); // left = target; already SentientCodex'd -> locked
         }

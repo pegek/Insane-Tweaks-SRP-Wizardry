@@ -1,10 +1,13 @@
 package com.spege.insanetweaks.items.spellblade;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Multimap;
 import javax.annotation.Nonnull;
+
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -62,6 +65,26 @@ public class SentientSpellblade extends BridgeSpellblade {
     @Nonnull
     public String getItemStackDisplayName(@Nonnull ItemStack stack) {
         return "\u00a7e" + super.getItemStackDisplayName(stack);
+    }
+
+    /**
+     * Adds {@code grip} once this blade has earned Fleshbound, on top of the Ashen Legacy every
+     * spellblade carries.
+     *
+     * <p>Reads the stack rather than returning a constant - the same NBT-driven pattern
+     * {@code SentientWarlockArmorItem} uses for its Veil of Stasis tier. The mechanic itself is not
+     * new here and is not implemented twice: {@code FleshboundEventHandler.isMechanicUnlocked}
+     * already unlocks at this exact kill count independently. What this adds is that the blade now
+     * <i>says</i> so under "Properties:", the same way a Grip book would, instead of the mechanic
+     * being invisible until a player tried to throw the sword away.
+     */
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        NBTTagCompound tag = stack.getTagCompound();
+        if (tag != null && tag.getInteger("SentientKills") >= 1900) {
+            return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY, AdvPropertyRegistry.GRIP);
+        }
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
     @Override

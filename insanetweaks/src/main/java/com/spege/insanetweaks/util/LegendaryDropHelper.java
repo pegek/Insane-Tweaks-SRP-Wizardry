@@ -2,12 +2,8 @@ package com.spege.insanetweaks.util;
 
 import com.spege.insanetweaks.entities.EntityItemIndestructible;
 import com.spege.insanetweaks.api.AdvPropertyRegistry;
-import com.spege.insanetweaks.api.ITweaksPropertyHolder;
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.enchant.EnchantmentSentientCodex;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 
 /**
@@ -27,16 +23,14 @@ public final class LegendaryDropHelper {
     private LegendaryDropHelper() {
     }
 
+    /**
+     * Ashen Legacy from any source: the item class, a Property Book on this stack, or a Sentient
+     * Codex enchant. This used to hand-roll the class and enchant cases and knew nothing about the
+     * stack; deferring to {@link AdvPropertyResolver} is what makes a book-granted Ashen Legacy
+     * actually survive lava, with no other change anywhere in the drop pipeline.
+     */
     public static boolean isLegendaryDropItem(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return false;
-        // Sentient Codex confers the Ashen Legacy property on ANY item (the enchant works on vanilla
-        // gear that can't implement ITweaksPropertyHolder), so detect it by enchant presence.
-        if (ModConfig.enchantments.sentientCodex.conferAshenLegacy && EnchantmentSentientCodex.hasSentientCodex(stack)) {
-            return true;
-        }
-        Item item = stack.getItem();
-        return item instanceof ITweaksPropertyHolder
-                && ((ITweaksPropertyHolder) item).hasAdvProperty(stack, AdvPropertyRegistry.ASHEN_LEGACY);
+        return AdvPropertyResolver.has(stack, AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
     public static void applyLegendaryDropRules(EntityItem entityItem) {
