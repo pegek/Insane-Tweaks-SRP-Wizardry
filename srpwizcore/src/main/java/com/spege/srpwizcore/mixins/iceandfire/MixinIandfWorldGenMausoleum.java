@@ -1,8 +1,12 @@
 package com.spege.srpwizcore.mixins.iceandfire;
 
+import java.util.Random;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.github.alexthe666.iceandfire.structures.WorldGenMausoleum;
 import com.spege.srpwizcore.util.IandfMausoleumGuard;
@@ -19,10 +23,13 @@ import net.minecraft.world.World;
  *
  * <p>{@code generate} is an override of the vanilla {@code WorldGenerator} method, hence the
  * dual dev/SRG selector; {@code checkIfCanGenAt} is Ice&amp;Fire's own name and needs none.
- * Known quirk left alone: a failed generate() still returns {@code true} to
- * {@code StructureGenerator}, which then arms the min-distance gate around a mausoleum that
- * does not exist — with the tolerant check failures become rare enough that this stops
- * mattering, and fixing it would mean patching a second method for no measured gain.
+ *
+ * <p>Second patch (1.7.4): Ice&amp;Fire's generate() returns {@code true} even when the
+ * foundation check vetoed, so {@code StructureGenerator} recorded {@code lastMausoleum} and
+ * its min-distance gate then suppressed every attempt around a structure that was never
+ * built (observed live 2026-07-28: one veto silenced a whole region). The RETURN inject
+ * consumes the veto flag the guard sets and forces the honest {@code false}, so vetoed
+ * chunks keep rolling.
  */
 @Mixin(value = WorldGenMausoleum.class, remap = false)
 public class MixinIandfWorldGenMausoleum {
@@ -39,5 +46,15 @@ public class MixinIandfWorldGenMausoleum {
     private boolean srpwizcore$tolerantFoundation(WorldGenMausoleum self, World world,
             BlockPos pos, int xSize, int zSize, EnumFacing facing) {
         return IandfMausoleumGuard.check(self, world, pos, xSize, zSize, facing);
+    }
+
+    @Inject(method = { "generate", "func_180709_b" }, at = @At("RETURN"), cancellable = true,
+            remap = false)
+    private void srpwizcore$vetoedGenerateReturnsFalse(World world, Random rand, BlockPos pos,
+            CallbackInfoReturnable<Boolean> cir) {
+        if (IandfMausoleumGuard.lastCheckVetoed) {
+            IandfMausoleumGuard.lastCheckVetoed = false;
+            cir.setReturnValue(Boolean.FALSE);
+        }
     }
 }
