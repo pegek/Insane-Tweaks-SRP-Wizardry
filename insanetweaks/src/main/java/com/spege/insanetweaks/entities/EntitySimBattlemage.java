@@ -23,8 +23,8 @@ import net.minecraft.world.World;
  * which until now fell back to a plain {@code srparasites:sim_human}.
  *
  * <h3>Why a subclass rather than a sibling class</h3>
- * The design spec called for a separate entity because a battlemage needs its own model (ASC's
- * biped {@code ModelClassWizard}, not SRP's non-biped {@code ModelInfHuman}), its own equipment
+ * The design spec called for a separate entity because a battlemage needs its own model (a vanilla
+ * biped {@code ModelPlayer}, not SRP's non-biped {@code ModelInfHuman}), its own equipment
  * stack (offhand shield, {@link IShieldUser}, {@link ICustomCooldown}), and because
  * {@code initEntityAI()} runs from the {@code EntityLiving} constructor - before NBT is read - so
  * a mere tier flag on one class could never drive a different task list.
