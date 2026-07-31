@@ -86,6 +86,23 @@ public class EntitySimBattlemage extends EntitySimWizard implements ICustomCoold
         this.tasks.addTask(2, this.shieldAI);
     }
 
+    /**
+     * A battlemage carries the mod's own blade, not a wand.
+     *
+     * <p>This is the hook the parent's per-tick {@code ensureVisualWand} consults, so overriding it
+     * here is what actually sticks - equipping the main hand directly would be undone on the very
+     * next tick, and the mismatch would also re-equip the slot 20 times a second.
+     *
+     * <p>Purely cosmetic, like the parent's wand: EBW's NPC cast path calls
+     * {@code spell.cast(World, EntityLiving, ...)} and never touches the held item, and
+     * {@code BaseCustomWandItem.calculateModifiers} is player-only, so no held item can leak a
+     * bonus into the cast (the v2.1 double-buff lesson).
+     */
+    @Override
+    protected net.minecraft.item.Item tierWandItem() {
+        return ModItems.LIVING_SPELLBLADE;
+    }
+
     @Override
     public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, IEntityLivingData livingdata) {
         IEntityLivingData data = super.onInitialSpawn(difficulty, livingdata);

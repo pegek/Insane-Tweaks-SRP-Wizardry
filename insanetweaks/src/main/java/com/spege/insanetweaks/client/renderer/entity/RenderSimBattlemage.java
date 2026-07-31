@@ -2,7 +2,6 @@ package com.spege.insanetweaks.client.renderer.entity;
 
 import javax.annotation.Nonnull;
 
-import com.spege.insanetweaks.client.renderer.entity.layers.LayerSimWizardFloatingFocus;
 import com.spege.insanetweaks.client.renderer.entity.layers.LayerSimWizardGlow;
 import com.spege.insanetweaks.entities.EntitySimBattlemage;
 import com.windanesz.ancientspellcraft.client.model.ModelClassWizard;
@@ -21,23 +20,26 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * proven stack the Sentinel renders with - rather than SRP's non-biped {@code ModelInfHuman}, which
  * is precisely why the battlemage is its own entity class.
  *
- * <p>The texture is an existing ASC battlemage skin. Deliberately NOT a new UV layout: every past
- * attempt to invent geometry or atlas regions for these entities ended in garbage pixels (the v3.0
- * "stop fighting the model" lesson). Tier identity is carried by the shared glow layer instead.
+ * <p>The texture is a 64x64 player-layout skin, which is exactly what this biped model expects -
+ * no invented geometry, no custom atlas regions (the v3.0 "stop fighting the model" lesson). Tier
+ * identity is carried by the shared glow layer instead.
+ *
+ * <p>Unlike sim_wizard there is NO orbiting focus layer here: {@code RenderBiped} already renders
+ * the held item in the entity's hand, so a levitating copy of the same wand just duplicated it.
  */
 @SideOnly(Side.CLIENT)
 public class RenderSimBattlemage extends RenderBiped<EntitySimBattlemage> {
 
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation("ancientspellcraft", "textures/entity/class_wizard/battlemage_3.png");
+            new ResourceLocation(com.spege.insanetweaks.InsaneTweaksMod.MODID,
+                    "textures/entity/sim_battlemage.png");
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public RenderSimBattlemage(RenderManager renderManager) {
         super(renderManager, new ModelClassWizard(), 0.5F);
         this.addLayer((LayerRenderer) new LayerBipedArmor((RenderLivingBase) this));
-        // Both sim_wizard layers are typed on the parent entity, so they apply unchanged.
+        // The glow layer is typed on the parent entity, so it applies unchanged.
         this.addLayer((LayerRenderer) new LayerSimWizardGlow(this.mainModel, TEXTURE));
-        this.addLayer((LayerRenderer) new LayerSimWizardFloatingFocus());
     }
 
     @Override

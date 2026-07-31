@@ -593,7 +593,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * identity, and being an {@code ItemWand} its {@code calculateModifiers} is player-only, so it
      * can never leak a bonus into the NPC cast pipeline (the v2.1 double-buff lesson).
      */
-    private net.minecraft.item.Item tierWandItem() {
+    protected net.minecraft.item.Item tierWandItem() {
         if (!ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals) {
             return WizardryItems.master_necromancy_wand;
         }
@@ -607,7 +607,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
     }
 
-    private void ensureVisualWand() {
+    protected void ensureVisualWand() {
         // 🚨 Compare against the TIER'S wand, not a fixed one. Comparing against a single item
         // while equipping a different one would re-equip every tick - 20 equipment-sync packets a
         // second, per wizard.
@@ -617,7 +617,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
     }
 
-    private void equipVisualWand() {
+    protected void equipVisualWand() {
         ItemStack wand = new ItemStack(this.tierWandItem());
         // Stamp the visible spell list so wand tooltip / JEI inspection matches the AI pool.
         ArrayList<Spell> visibleSpells = new ArrayList<Spell>(this.spells);
