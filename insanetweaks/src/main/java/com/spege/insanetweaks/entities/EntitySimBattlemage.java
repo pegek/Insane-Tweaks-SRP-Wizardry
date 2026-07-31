@@ -2,12 +2,16 @@ package com.spege.insanetweaks.entities;
 
 import javax.annotation.Nonnull;
 
+import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.entities.ai.EntityAIBattlemageMelee;
 import com.spege.insanetweaks.init.ModItems;
 import com.windanesz.ancientspellcraft.entity.ai.EntityAIBlockWithShield;
 import com.windanesz.ancientspellcraft.entity.ai.IShieldUser;
 import com.windanesz.ancientspellcraft.entity.living.ICustomCooldown;
 
 import net.minecraft.entity.IEntityLivingData;
+import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -84,6 +88,30 @@ public class EntitySimBattlemage extends EntitySimWizard implements ICustomCoold
         super.initEntityAI();
         this.shieldAI = new EntityAIBlockWithShield<EntitySimBattlemage>(this);
         this.tasks.addTask(2, this.shieldAI);
+        // Priority 2 is BELOW the inherited cast task's 3, which is what lets melee interrupt a
+        // cast. EntityAIAttackMelee declares mutex 3 - the same bits the cast task uses - so the
+        // two can never own movement simultaneously. See EntityAIBattlemageMelee's javadoc.
+        this.tasks.addTask(2, new EntityAIBattlemageMelee(this));
+    }
+
+    /**
+     * It carries a spellblade and is built to use it, so it hits harder than the sim_human base.
+     * Multiplied rather than assigned so SRP's own difficulty scaling still shows through.
+     */
+    @Override
+    protected void applyEntityAttributes() {
+        super.applyEntityAttributes();
+        IAttributeInstance damage = this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
+        if (damage != null) {
+            damage.setBaseValue(damage.getBaseValue()
+                    * ModConfig.entities.assimilatedWizard.battlemage.attackDamageMultiplier);
+        }
+    }
+
+    /** Its damage budget sits in the blade, so it pays a longer cooldown for every spell. */
+    @Override
+    protected float castGateMultiplier() {
+        return (float) ModConfig.entities.assimilatedWizard.battlemage.castCooldownMultiplier;
     }
 
     /**
