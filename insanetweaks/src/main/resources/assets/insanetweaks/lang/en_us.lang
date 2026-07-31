@@ -330,6 +330,7 @@ config.insanetweaks.category.modules=Modules & Integrations
 config.insanetweaks.category.tweaks=Tweaks & Fixes
 config.insanetweaks.category.baubleFruits=Bauble Fruits
 config.insanetweaks.category.propertyBooks=Property Books
+config.insanetweaks.category.arcaneSundering=Arcane Sundering
 config.insanetweaks.category.chargeJump=Coiled Spring (Charge Jump)
 config.insanetweaks.category.scarredFlesh=Scarred Flesh
 config.insanetweaks.category.interactions=Cross-Mod Interactions

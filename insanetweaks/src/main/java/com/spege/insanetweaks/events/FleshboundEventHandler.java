@@ -26,10 +26,12 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 /**
  * Fleshbound / Grip: the weapon cannot leave the player's inventory.
  *
- * <p>Three ways in, all funnelling into {@link #isMechanicUnlocked}: the Spartan
+ * <p>Two ways in, both funnelling into {@link #isMechanicUnlocked}: the Spartan
  * {@code ModWeaponProperties.FLESHBOUND} weapon property declared by a {@code BridgeSpellblade}
- * class, a Sentient Spellblade that has earned it at 1900 kills, and - since Property Books - the
- * {@code grip} advanced property granted to a single stack.
+ * class, and the {@code grip} advanced property granted to a single stack by a Property Book. The
+ * third - a Sentient Spellblade earning it at 1900 kills - was removed when that blade's reward
+ * became Arcane Sundering, so a book is now the only way to put this on a weapon that does not
+ * declare it from its class.
  *
  * <h3>What was already here, and stays</h3>
  * Two recovery routes predate Grip and are load-bearing in practice against {@code infernalmobs}
@@ -69,16 +71,15 @@ public class FleshboundEventHandler {
             }
         }
 
-        // 2. Dynamic check for Sentient Spellblade
-        if ("insanetweaks:sentient_spellblade".equals(String.valueOf(stack.getItem().getRegistryName()))) {
-            NBTTagCompound tag = stack.getTagCompound();
-            if (tag != null && tag.getInteger("SentientKills") >= 1900) {
-                return true;
-            }
-        }
-
-        // 3. The 'grip' advanced property, from a Property Book or from an item class that
-        //    declares it. Same mechanic, granted per stack instead of per item type.
+        // 2. The 'grip' advanced property, from a Property Book or from an item class that
+        //    declares it. Granted per stack instead of per item type.
+        //
+        //    This used to be preceded by a third route: a Sentient Spellblade unlocked Fleshbound
+        //    on its own at 1900 kills. That route is gone on purpose - Fleshbound is now something
+        //    a player chooses to put on a weapon, and the blade's 1900-kill reward is Arcane
+        //    Sundering instead. An already-evolved blade therefore loses the binding, which is the
+        //    intended outcome and is reversible with a Grip book; nothing about the book route,
+        //    the recovery routes below, or the sever-on-death cooldown changed with it.
         if (AdvPropertyResolver.has(stack, AdvPropertyRegistry.GRIP)) {
             return true;
         }

@@ -88,6 +88,7 @@ public class AdvPropertyRegistry {
     public static final String ETHEREAL_SHELL = "ethereal_shell";
     public static final String ETHEREAL_SHELL_AWAKENED = "ethereal_shell_awakened";
     public static final String GRIP = "grip";
+    public static final String ARCANE_SUNDERING = "arcane_sundering";
 
     static {
         // Book-grantable. Ashen Legacy hardens the dropped item against fire/lava/explosions
@@ -102,6 +103,12 @@ public class AdvPropertyRegistry {
         // would orphan every book and every grant already in a world.
         register(new Property(GRIP, "Fleshbound", TextFormatting.DARK_RED,
                 true, com.spege.insanetweaks.util.PropertyApplicability.WEAPON));
+
+        // Not book-grantable: this is the Sentient Spellblade's own reward for reaching 1900 kills,
+        // taking the slot Fleshbound used to occupy there. Making a book for it is one boolean and
+        // an Applicability away, and was deliberately not done - it is meant to be earned by the
+        // blade, the way Fleshbound now has to be granted by a book rather than being earned here.
+        register(new Property(ARCANE_SUNDERING, "Arcane Sundering", TextFormatting.DARK_PURPLE));
 
         // Display-only: these are granted by the armour classes themselves and have no book.
         register(new Property(ARMOR_LAST_STAND, "Grave Defiance", TextFormatting.GOLD));

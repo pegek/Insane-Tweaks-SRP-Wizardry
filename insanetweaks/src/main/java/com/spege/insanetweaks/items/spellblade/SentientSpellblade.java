@@ -68,21 +68,26 @@ public class SentientSpellblade extends BridgeSpellblade {
     }
 
     /**
-     * Adds {@code grip} once this blade has earned Fleshbound, on top of the Ashen Legacy every
-     * spellblade carries.
+     * Adds {@code arcane_sundering} at 1900 kills, on top of the Ashen Legacy every spellblade
+     * carries.
      *
-     * <p>Reads the stack rather than returning a constant - the same NBT-driven pattern
-     * {@code SentientWarlockArmorItem} uses for its Veil of Stasis tier. The mechanic itself is not
-     * new here and is not implemented twice: {@code FleshboundEventHandler.isMechanicUnlocked}
-     * already unlocks at this exact kill count independently. What this adds is that the blade now
-     * <i>says</i> so under "Properties:", the same way a Grip book would, instead of the mechanic
-     * being invisible until a player tried to throw the sword away.
+     * <p>This slot used to hold {@code grip} - the property face of Fleshbound - and the swap is
+     * deliberate. Fleshbound is now reached only through a Property Book, so it is something you
+     * choose to put on a weapon rather than something this one blade grows on its own, and the
+     * reward for 1900 kills is a combat property instead of a retention one.
+     *
+     * <p>Reads the stack rather than returning a constant: the same NBT-driven pattern
+     * {@code SentientWarlockArmorItem} uses for its Veil of Stasis tier. Declaring it here is what
+     * makes it real - {@code AdvPropertyResolver} is the single source
+     * {@code ArcaneSunderingHandler} asks on every hit, so the tooltip line and the effect cannot
+     * drift apart.
      */
     @Override
     public List<String> getActiveAdvProperties(ItemStack stack) {
         NBTTagCompound tag = stack.getTagCompound();
         if (tag != null && tag.getInteger("SentientKills") >= 1900) {
-            return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY, AdvPropertyRegistry.GRIP);
+            return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY,
+                    AdvPropertyRegistry.ARCANE_SUNDERING);
         }
         return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
     }

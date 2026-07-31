@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.4.21";
+    public static final String VERSION = "1.4.22";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -485,6 +485,10 @@ public class InsaneTweaksMod implements IGuiHandler {
                     com.spege.insanetweaks.init.ModItems.ADAPTATION_UPGRADE, "adaptation");
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeHitHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.FleshboundEventHandler());
+            // Arcane Sundering, the Sentient Spellblade's 1900-kill reward. Registered here rather
+            // than behind its own module flag because the Spellblade is the only thing that grants
+            // it; arcaneSundering.enabled is read per hit, so it toggles without a restart.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneSunderingHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());

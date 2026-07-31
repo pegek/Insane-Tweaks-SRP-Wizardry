@@ -1,6 +1,7 @@
 package com.spege.insanetweaks.config;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.config.categories.ArcaneSunderingCategory;
 import com.spege.insanetweaks.config.categories.AutoLockPickerCategory;
 import com.spege.insanetweaks.config.categories.BaubleFruitsCategory;
 import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
@@ -101,6 +102,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.propertyBooks")
     @Config.Comment("Property Books: anvil cost and the Grip recovery fallback. Master toggle is modules.enablePropertyBooks.")
     public static final PropertyBooksCategory propertyBooks = new PropertyBooksCategory();
+
+    @Config.Name("arcaneSundering")
+    @Config.LangKey("config.insanetweaks.category.arcaneSundering")
+    @Config.Comment("Arcane Sundering: the true-damage and physical-to-magic shares taken out of each melee hit.")
+    public static final ArcaneSunderingCategory arcaneSundering = new ArcaneSunderingCategory();
 
     @Config.Name("autoLockPicker")
     @Config.LangKey("config.insanetweaks.category.autoLockPicker")
