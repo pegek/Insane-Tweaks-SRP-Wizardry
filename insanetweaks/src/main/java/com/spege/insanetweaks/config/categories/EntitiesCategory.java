@@ -212,6 +212,29 @@ public class EntitiesCategory {
         @Config.RangeInt(min = 2, max = 10)
         public int clusterMinTargets = 2;
 
+        @Config.Comment({
+                "Chance (%) that a met situational condition actually overrides the distance bands.",
+                "These exist to stop a single always-true condition from flattening the whole fight",
+                "onto one spell: the SLOW branch used to fire on every moving target, so ice_shard was",
+                "chosen ~90% of the time and force_orb / spark_bomb / life_drain never came up at all.",
+                "100 restores the old deterministic behaviour, 0 disables the override entirely."
+        })
+        @Config.Name("Situational Override Chance (%)")
+        @Config.RangeInt(min = 0, max = 100)
+        public int situationalOverrideChancePercent = 55;
+
+        @Config.Comment({
+                "Squared lateral speed (blocks/tick) above which a target counts as 'fast moving' and is",
+                "met with a SLOW spell.",
+                "CALIBRATION: a vanilla player WALKS at ~0.216 b/t, so the old 0.04 (= 0.2 b/t) treated",
+                "ordinary walking as sprinting. The default 0.09 (= 0.3 b/t) sits above vanilla sprint",
+                "(~0.28 b/t), so this check now catches genuinely fast mobs; players are already covered",
+                "by the explicit isSprinting() and Speed-potion checks."
+        })
+        @Config.Name("Fast Target Speed Threshold (squared)")
+        @Config.RangeDouble(min = 0.001, max = 1.0)
+        public double fastTargetSpeedSquared = 0.09D;
+
         @Config.Comment("A target above this health percentage and within the distance below is met with a KNOCKBACK opener.")
         @Config.Name("Knockback Opener Health (%)")
         @Config.RangeInt(min = 0, max = 100)
