@@ -37,8 +37,32 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
  * - parasite_mage_boots
  */
 @Mod.EventBusSubscriber(modid = InsaneTweaksMod.MODID)
-@SuppressWarnings("null") // safeItem() guarantees non-null via IllegalStateException; IDE cannot infer this
+@SuppressWarnings("null") // safeItem() never returns null (missing ids fall back to Items.AIR)
 public class ModRecipes {
+
+    // ---------------------------------------------------------------------
+    // Missing-ingredient bookkeeping.
+    //
+    // safeItem() used to throw IllegalStateException when an ingredient id was not in the item
+    // registry, which turned "you run a different SRParasites build than these recipes were
+    // written against" into a hard startup crash (three separate user reports:
+    // srparasites:pearl, srparasites:hive_scrap). It now records the id and hands back AIR
+    // instead; registerFallback() sees that a miss was recorded while the recipe's arguments
+    // were being evaluated and drops that ONE recipe. Everything else still registers.
+    //
+    // The AIR placeholder never reaches the registry: every recipe is built by evaluating its
+    // safeItem() arguments first and registerFallback() is the only registration path, so the
+    // check always runs between construction and registration.
+    // ---------------------------------------------------------------------
+
+    /** Distinct ids missing this run, in discovery order. Reset at the start of each pass. */
+    private static final java.util.Set<String> MISSING_IDS = new java.util.LinkedHashSet<>();
+
+    /** Ids missing since the last registerFallback() call, i.e. those of the recipe being built. */
+    private static final java.util.List<String> PENDING_MISSING = new java.util.ArrayList<>();
+
+    /** How many recipes were dropped this run. */
+    private static int skippedRecipes = 0;
 
     /**
      * OreDictionary bridge for the swparasites crafting components. Registered here, on the
@@ -72,6 +96,8 @@ public class ModRecipes {
 
     @SubscribeEvent
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+        resetMissingTracking();
+
         if (!Loader.isModLoaded("defiledlands")) {
             registerFallback(event, "golden_book_fallback",
                     new ShapedOreRecipe(
@@ -179,13 +205,12 @@ public class ModRecipes {
 
         // Guard: only register srpextra fallbacks if srpextra is absent
         if (Loader.isModLoaded("srpextra")) {
+            logMissingSummary();
             return;
         }
 
-        // Fallback item mapping (srpextra substitutes)
-        ItemStack bladeFrag  = new ItemStack(safeItem("srparasites", "infectious_blade_fragment")); // tightening_buckle
-        ItemStack hiveScrap  = new ItemStack(safeItem("srparasites", "hive_scrap"));                // sturdy_armor_plates
-        ItemStack rupter     = new ItemStack(safeItem(InsaneTweaksMod.MODID, "rupter_solied"));      // flexible_cloth
+        // Fallback item mapping (srpextra substitutes) is provided by bladeFrag() / hiveScrap() /
+        // rupter() below — see those methods for why they are not hoisted into locals.
 
         // =====================================================================
         // living_aegis (srpextra items: sturdy_armor_plates x2, flexible_cloth x1)
@@ -209,8 +234,8 @@ public class ModRecipes {
                         'N', ModOreDict.ORE_LIVING_NUCLEUS, // ore-dict: swparasites clone or insanetweaks fallback
                         'V', new ItemStack(safeItem("srparasites", "vile_shell")),
                         'S', new ItemStack(safeItem("ancientspellcraft", "battlemage_shield")),
-                        'P', hiveScrap,   // srpextra:sturdy_armor_plates
-                        'C', rupter));    // srpextra:flexible_cloth
+                        'P', hiveScrap(),   // srpextra:sturdy_armor_plates
+                        'C', rupter()));    // srpextra:flexible_cloth
 
         // =====================================================================
         // parasite_mage_helmet (srpextra items: tightening_buckle x1,
@@ -244,8 +269,8 @@ public class ModRecipes {
                             " B ",
                             "PSP",
                             " L ",
-                            'B', bladeFrag, // srpextra:tightening_buckle
-                            'P', hiveScrap, // srpextra:sturdy_armor_plates
+                            'B', bladeFrag(), // srpextra:tightening_buckle
+                            'P', hiveScrap(), // srpextra:sturdy_armor_plates
                             'S', new ItemStack(helmetItem, 1, 32767),
                             'L', new ItemStack(safeItem("srparasites", "living_core"))));
         }
@@ -279,8 +304,8 @@ public class ModRecipes {
                             " P ",
                             "FCF",
                             "PSP",
-                            'P', hiveScrap, // srpextra:sturdy_armor_plates
-                            'F', rupter,    // srpextra:flexible_cloth
+                            'P', hiveScrap(), // srpextra:sturdy_armor_plates
+                            'F', rupter(),    // srpextra:flexible_cloth
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(chestItem, 1, 32767)));
         }
@@ -314,8 +339,8 @@ public class ModRecipes {
                             "F F",
                             "BCB",
                             "BSB",
-                            'F', rupter,    // srpextra:flexible_cloth
-                            'B', bladeFrag, // srpextra:tightening_buckle
+                            'F', rupter(),    // srpextra:flexible_cloth
+                            'B', bladeFrag(), // srpextra:tightening_buckle
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(legItem, 1, 32767)));
         }
@@ -349,8 +374,8 @@ public class ModRecipes {
                             " F ",
                             "PCP",
                             " S ",
-                            'F', rupter,    // srpextra:flexible_cloth
-                            'P', hiveScrap, // srpextra:sturdy_armor_plates
+                            'F', rupter(),    // srpextra:flexible_cloth
+                            'P', hiveScrap(), // srpextra:sturdy_armor_plates
                             'C', new ItemStack(safeItem("srparasites", "living_core")),
                             'S', new ItemStack(bootsItem, 1, 32767)));
         }
@@ -371,7 +396,7 @@ public class ModRecipes {
                             new ResourceLocation(InsaneTweaksMod.MODID, "living_battlemage_helmet_fallback"),
                             new ItemStack(ModItems.LIVING_BATTLEMAGE_HELMET),
                             "PBP", "PSP", " L ",
-                            'B', bladeFrag, 'P', hiveScrap,
+                            'B', bladeFrag(), 'P', hiveScrap(),
                             'S', new ItemStack(helmetItem, 1, 32767), 'L', new ItemStack(safeItem("srparasites", "living_core"))));
         }
 
@@ -388,7 +413,7 @@ public class ModRecipes {
                             new ResourceLocation(InsaneTweaksMod.MODID, "living_battlemage_chestplate_fallback"),
                             new ItemStack(ModItems.LIVING_BATTLEMAGE_CHESTPLATE),
                             "FPF", "PCP", "PSP",
-                            'P', hiveScrap, 'F', rupter,
+                            'P', hiveScrap(), 'F', rupter(),
                             'C', new ItemStack(safeItem("srparasites", "living_core")), 'S', new ItemStack(chestItem, 1, 32767)));
         }
 
@@ -405,7 +430,7 @@ public class ModRecipes {
                             new ResourceLocation(InsaneTweaksMod.MODID, "living_battlemage_leggings_fallback"),
                             new ItemStack(ModItems.LIVING_BATTLEMAGE_LEGGINGS),
                             "FPF", "BCB", "BSB",
-                            'F', rupter, 'B', bladeFrag, 'P', hiveScrap,
+                            'F', rupter(), 'B', bladeFrag(), 'P', hiveScrap(),
                             'C', new ItemStack(safeItem("srparasites", "living_core")), 'S', new ItemStack(legItem, 1, 32767)));
         }
 
@@ -422,37 +447,96 @@ public class ModRecipes {
                             new ResourceLocation(InsaneTweaksMod.MODID, "living_battlemage_boots_fallback"),
                             new ItemStack(ModItems.LIVING_BATTLEMAGE_BOOTS),
                             "BFB", "PCP", " S ",
-                            'F', rupter, 'P', hiveScrap, 'B', bladeFrag,
+                            'F', rupter(), 'P', hiveScrap(), 'B', bladeFrag(),
                             'C', new ItemStack(safeItem("srparasites", "living_core")), 'S', new ItemStack(bootsItem, 1, 32767)));
         }
 
+        logMissingSummary();
     }
 
     /**
-     * Null-safe item lookup from ForgeRegistries.
-     * Throws IllegalStateException during init if an item is missing, which is the
-     * correct behavior — a missing required ingredient means the modpack is
-     * misconfigured.
-     * This also satisfies @Nonnull contracts and eliminates IDE @Nullable warnings.
+     * Item lookup from ForgeRegistries that never returns null and never throws.
+     *
+     * <p>A missing id means the pack ships a different build of the ingredient's mod than these
+     * recipes were written against. That is a recipe-shaped problem, not a reason to kill the
+     * game, so the id is recorded and {@code Items.AIR} is returned as a non-null placeholder.
+     * {@link #registerFallback} then refuses to register the recipe that asked for it, and the
+     * placeholder is discarded with it.
      */
     @Nonnull
     private static Item safeItem(String modid, String path) {
         Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(modid, path));
         if (item == null) {
-            throw new IllegalStateException(
-                    "[InsaneTweaks] ModRecipes: required item not found: " + modid + ":" + path);
+            String id = modid + ":" + path;
+            if (!PENDING_MISSING.contains(id)) {
+                PENDING_MISSING.add(id);
+            }
+            MISSING_IDS.add(id);
+            return net.minecraft.init.Items.AIR;
         }
         return item;
     }
 
+    /** Shared srpextra substitutes. Methods rather than hoisted locals so a missing id is
+     *  attributed to each recipe that actually uses it, instead of to whichever one happened to
+     *  register next. */
+    @Nonnull
+    private static ItemStack bladeFrag() { // srpextra:tightening_buckle
+        return new ItemStack(safeItem("srparasites", "infectious_blade_fragment"));
+    }
+
+    @Nonnull
+    private static ItemStack hiveScrap() { // srpextra:sturdy_armor_plates
+        return new ItemStack(safeItem("srparasites", "hive_scrap"));
+    }
+
+    @Nonnull
+    private static ItemStack rupter() { // srpextra:flexible_cloth
+        return new ItemStack(safeItem(InsaneTweaksMod.MODID, "rupter_solied"));
+    }
+
     /**
-     * Helper — assigns a unique ResourceLocation to the recipe and registers it.
-     * Using a unique name per recipe is mandatory in 1.12.2; duplicate names cause
+     * Helper — assigns a unique ResourceLocation to the recipe and registers it, unless one of
+     * its ingredients was missing from the registry.
+     *
+     * <p>Using a unique name per recipe is mandatory in 1.12.2; duplicate names cause
      * silent overwrite or FMLMissingMappingsEvent warnings.
      */
     private static void registerFallback(RegistryEvent.Register<IRecipe> event,
             String name, ShapedOreRecipe recipe) {
+        if (!PENDING_MISSING.isEmpty()) {
+            skippedRecipes++;
+            InsaneTweaksMod.LOGGER.warn(
+                    "[InsaneTweaks] ModRecipes: skipping recipe '{}' - item(s) not in the registry: {}",
+                    name, PENDING_MISSING);
+            PENDING_MISSING.clear();
+            return;
+        }
         recipe.setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, name));
         event.getRegistry().register(recipe);
+    }
+
+    /** Clears the per-run bookkeeping. Called at the top of {@link #registerRecipes}. */
+    private static void resetMissingTracking() {
+        MISSING_IDS.clear();
+        PENDING_MISSING.clear();
+        skippedRecipes = 0;
+    }
+
+    /** One line at the end of registration saying what, if anything, was dropped. */
+    private static void logMissingSummary() {
+        // A recipe block can bail out before reaching registerFallback (the mod-loaded guards),
+        // leaving ids recorded but unattributed. Fold them into the summary rather than into the
+        // next recipe's tally.
+        PENDING_MISSING.clear();
+
+        if (skippedRecipes == 0) {
+            return;
+        }
+        InsaneTweaksMod.LOGGER.warn(
+                "[InsaneTweaks] ModRecipes: {} recipe(s) skipped because {} item(s) were not in the "
+                        + "registry: {}. This is usually a version mismatch with one of the mods the "
+                        + "recipe draws from - every other recipe registered normally.",
+                Integer.valueOf(skippedRecipes), Integer.valueOf(MISSING_IDS.size()), MISSING_IDS);
     }
 }
