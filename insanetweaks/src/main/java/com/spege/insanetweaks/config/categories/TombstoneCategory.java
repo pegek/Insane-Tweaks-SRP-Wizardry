@@ -32,6 +32,25 @@ public class TombstoneCategory {
     public boolean enableKnowledgeTab = true;
 
     // ----------------------------------------------------------------
+    // EXACT SLOT RESTORE
+    // ----------------------------------------------------------------
+    @Config.Comment({
+            "Recovering a grave puts every item back in the slot it was in when you died, instead of",
+            "packing it in from the first free slot. Covers the hotbar and inventory, armour, the",
+            "offhand and Baubles.",
+            "A slot you have refilled since dying is never overwritten - that item stays in the grave",
+            "and is handed back the stock way, so nothing is lost or duplicated.",
+            "Read live, but it only affects deaths that happen while it is on: a grave from before",
+            "has no layout recorded and is recovered normally."
+    })
+    @Config.Name("Restore Original Inventory Slots")
+    public boolean restoreOriginalSlots = true;
+
+    @Config.Comment("Log what each death recorded and what each recovered grave put back.")
+    @Config.Name("Slot Restore Debug Logging")
+    public boolean slotRestoreDebugLogging = false;
+
+    // ----------------------------------------------------------------
     // GRAVE ITEM DECAY
     // ----------------------------------------------------------------
     @Config.Comment({

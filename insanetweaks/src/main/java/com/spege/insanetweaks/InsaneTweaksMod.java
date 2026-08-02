@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.7.0";
+    public static final String VERSION = "1.8.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -430,6 +430,14 @@ public class InsaneTweaksMod implements IGuiHandler {
                 // list simply matches nothing when the raid mod is absent.
                 MinecraftForge.EVENT_BUS.register(
                         new com.spege.insanetweaks.tombstone.RaiderAlignmentHandler());
+
+                // Exact slot restore: the snapshot is taken on LivingDeathEvent, the layout is
+                // reapplied on Tombstone's own RestoreInventoryEvent. Both read
+                // tombstone.restoreOriginalSlots live.
+                MinecraftForge.EVENT_BUS.register(
+                        new com.spege.insanetweaks.tombstone.slots.SlotSnapshotHandler());
+                MinecraftForge.EVENT_BUS.register(
+                        new com.spege.insanetweaks.tombstone.slots.SlotRestoreHandler());
             }
 
             // Knowledge of Death tab in the inventory. Client only, and both mods must be present:
