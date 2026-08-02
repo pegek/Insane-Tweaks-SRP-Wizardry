@@ -129,6 +129,9 @@ public class ModConfig {
                 // edits to entities.assimilated_wizard.spells.spellRoles apply without a restart.
                 com.spege.insanetweaks.entities.ai.SpellRoleResolver.invalidateCache();
                 com.spege.insanetweaks.util.SrpWizardryAssimilationHelper.invalidateCache();
+                // Tombstone's effect whitelist is parsed from registry names once and cached; drop
+                // it so edits to tombstone.effectpools apply without a restart.
+                com.spege.insanetweaks.tombstone.effects.EffectPoolRegistry.invalidate();
             }
         }
     }

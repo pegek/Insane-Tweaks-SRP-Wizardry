@@ -79,6 +79,16 @@ public class TombstoneCategory {
     public int bookOfMagicImpregnationCooldownMinutes = 6;
 
     // ----------------------------------------------------------------
+    // RANDOM EFFECT WHITELIST
+    // ----------------------------------------------------------------
+    @Config.Name("effectpools")
+    @Config.Comment({"Whitelists for every Tombstone item and enchantment that rolls a random potion effect.",
+            "Tombstone rolls out of the whole potion registry, which in a large pack means hundreds of",
+            "effects from dozens of mods. Its own config only offers blacklists, and those also stop an",
+            "effect being preserved by the Scroll of Preservation, so they cannot be used for this."})
+    public EffectPoolsConfig effectPools = new EffectPoolsConfig();
+
+    // ----------------------------------------------------------------
     // KNOWLEDGE OF DEATH - PERK SETTINGS
     // Each perk has: enabled (bool) and maxLevel (int capped at native max)
     // Native max levels: alchemist=5, concentration=2, gladiator=5,
@@ -162,6 +172,84 @@ public class TombstoneCategory {
             this.enabled = enabled;
             this.maxLevel = maxLevel;
         }
+    }
+
+    // ========================================================================
+    // RANDOM EFFECT WHITELIST
+    // ========================================================================
+
+    /**
+     * Whitelists for Tombstone's random-effect rolls.
+     *
+     * <p>Only three lists, because Tombstone offers two useful choke points: the shared
+     * {@code EffectHelper.getRandomEffect} funnel — where the beneficial/harmful polarity is still
+     * visible — and the Magic Scroll, which bypasses that funnel entirely and therefore gets its
+     * own list for free. Ankh of Prayer, Lollipop and Blessing share the beneficial list; Tablet of
+     * Cupidity and Plague Bringer share the harmful one.
+     *
+     * <p>The lists are a starting point, not a final answer — they are text with weights precisely
+     * so they can be tuned while playing.
+     */
+    public static class EffectPoolsConfig {
+
+        @Config.Name("Enable Effect Whitelist")
+        @Config.Comment({"Restrict Tombstone's random potion effects to the lists below.",
+                "false restores Tombstone's stock behaviour: it rolls out of the entire potion registry.",
+                "Read live - no restart needed, and it never changes which effects can be PRESERVED on",
+                "death, only which ones can be ROLLED."})
+        public boolean enableEffectWhitelist = false;
+
+        @Config.Name("Beneficial Pool")
+        @Config.Comment({"Effects the Ankh of Prayer, the Lollipop and the Blessing enchantment may roll.",
+                "Format: modid:effect[;weight][;maxAmplifier] - for example minecraft:regeneration;10;1",
+                "weight defaults to 1 (higher = drawn more often); maxAmplifier caps the level Tombstone",
+                "rolled, and is left off to accept whatever it picked.",
+                "An unknown effect name is logged as a warning and skipped, never a crash."})
+        public String[] beneficialPool = {
+                "minecraft:speed",
+                "minecraft:haste",
+                "minecraft:strength",
+                "minecraft:jump_boost",
+                "minecraft:regeneration",
+                "minecraft:resistance",
+                "minecraft:fire_resistance",
+                "minecraft:water_breathing",
+                "minecraft:night_vision",
+                "minecraft:absorption",
+                "minecraft:health_boost",
+                "minecraft:saturation",
+                "minecraft:luck",
+                "minecraft:invisibility",
+                "ebwizardry:ironflesh",
+                "ebwizardry:ward",
+                "ebwizardry:empowerment",
+                "ebwizardry:font_of_mana",
+                "ancientspellcraft:tenacity",
+                "ancientspellcraft:magelight",
+                "ancientspellcraft:mana_regeneration",
+                "xat:ice_resistance" };
+
+        @Config.Name("Harmful Pool")
+        @Config.Comment({"Effects the Tablet of Cupidity and the Plague Bringer enchantment may roll.",
+                "Same format as the beneficial pool.",
+                "minecraft:nausea is deliberately absent - it is already cut in tombstone.cfg."})
+        public String[] harmfulPool = {
+                "minecraft:slowness",
+                "minecraft:mining_fatigue",
+                "minecraft:weakness",
+                "minecraft:poison",
+                "minecraft:wither",
+                "minecraft:blindness",
+                "minecraft:hunger",
+                "minecraft:unluck",
+                "defiledlands:bleeding",
+                "champions:injured" };
+
+        @Config.Name("Magic Scroll Pool")
+        @Config.Comment({"Effects a Magic Scroll may be generated with. Same format as the pools above.",
+                "Left empty on purpose: an empty list inherits the beneficial pool. Fill it only to give",
+                "scrolls a roster of their own."})
+        public String[] magicScrollPool = {};
     }
 
     // ========================================================================
