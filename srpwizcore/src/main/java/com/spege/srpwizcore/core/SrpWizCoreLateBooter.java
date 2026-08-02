@@ -30,6 +30,10 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         }
         if (Loader.isModLoaded("cqrepoured")) {
             configs.add("mixins.srpwizcore.cqr.json");
+            // Crossbow AI grafts CQR's IRangedWeapon onto Spartan's ItemCrossbow — needs both.
+            if (Loader.isModLoaded("spartanweaponry")) {
+                configs.add("mixins.srpwizcore.cqrspartan.json");
+            }
         }
         if (Loader.isModLoaded("raids")) {
             configs.add("mixins.srpwizcore.raids.json");

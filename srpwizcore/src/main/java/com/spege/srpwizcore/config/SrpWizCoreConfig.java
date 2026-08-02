@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import com.spege.srpwizcore.SrpWizCore;
+import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
@@ -42,6 +43,10 @@ public class SrpWizCoreConfig {
     @Config.Name("iandfWorldgen")
     @Config.Comment("Per-dimension control over Ice&Fire worldgen (empty = native Ice&Fire).")
     public static final IandfWorldgenCategory iandfWorldgen = new IandfWorldgenCategory();
+
+    @Config.Name("cqrIntegration")
+    @Config.Comment("CQR x Spartan Weaponry integration: dungeon-mob gear swap + crossbow ranged AI.")
+    public static final CqrIntegrationCategory cqrIntegration = new CqrIntegrationCategory();
 
     @Config.Name("dormantWaystones")
     @Config.Comment("Dormant-waystone travel system (configurable key item + dimension pair).")
