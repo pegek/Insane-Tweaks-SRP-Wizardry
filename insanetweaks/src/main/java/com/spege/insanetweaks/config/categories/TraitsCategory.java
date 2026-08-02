@@ -84,6 +84,23 @@ public class TraitsCategory {
     // TRAIT CONFIG HELPER
     // ========================================================================
     public static class TraitConfig {
+        @Config.Name("Enabled")
+        @Config.Comment({
+                "Whether this trait exists at all.",
+                "Turn this OFF and the trait is not added to the skill tree: nobody can buy it, and",
+                "its effect stops working for everyone who already had it.",
+                "Read this before switching one off on a world you care about. If a player has",
+                "ALREADY bought this trait, their unlock is quietly dropped the next time their",
+                "character data is loaded, and the skill points they paid for it are NOT refunded.",
+                "Nothing crashes and nothing else on the character is touched - but those points are",
+                "gone, and turning the trait back on later does not bring the unlock back, because by",
+                "then it has already been erased from the save. If you disable a trait part-way",
+                "through a world, hand the affected players their points back yourself.",
+                "Requires a restart. Default ON."
+        })
+        @Config.RequiresMcRestart
+        public boolean enabled = true;
+
         @Config.Name("SP Cost")
         @Config.Comment("Skill point cost to unlock this trait.")
         @Config.RequiresMcRestart
@@ -99,10 +116,16 @@ public class TraitsCategory {
         @Config.RequiresMcRestart
         public String[] requirements;
 
+        /** Keeps the 21 declarations above unchanged; {@link #enabled} defaults to true. */
         public TraitConfig(int cost, String parentSkill, String[] requirements) {
+            this(cost, parentSkill, requirements, true);
+        }
+
+        public TraitConfig(int cost, String parentSkill, String[] requirements, boolean enabled) {
             this.cost = cost;
             this.parentSkill = parentSkill;
             this.requirements = requirements;
+            this.enabled = enabled;
         }
     }
 }

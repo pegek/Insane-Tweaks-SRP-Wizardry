@@ -29,7 +29,14 @@ public abstract class TraitBase extends Trait {
             (cfg != null) ? cfg.cost : defaultCost,
             (cfg != null && cfg.requirements != null && cfg.requirements.length > 0) ? cfg.requirements : defaultRequirements
         );
-        SkillsModule.TRAITS.add(this);
+        // The single gate for traits.Enabled. TRAITS is the only thing that ever reaches
+        // Reskillable's Unlockable registry (SkillsModule.RegistryHandler iterates it), and the
+        // handlers all ask hasTrait() by id, which answers false for anything unregistered. So
+        // leaving a disabled trait out of this list removes it from the skill tree AND stops its
+        // effect, with one condition and no per-handler changes.
+        if (cfg == null || cfg.enabled) {
+            SkillsModule.TRAITS.add(this);
+        }
     }
 
     // -------------------------------------------------------------------------
