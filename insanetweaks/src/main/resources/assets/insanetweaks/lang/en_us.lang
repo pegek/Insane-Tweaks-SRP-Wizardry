@@ -52,7 +52,26 @@ item.insanetweaks:zhonyas_hourglass.desc=Right-click to enter golden stasis: bri
 item.insanetweaks.zhonyas_hourglass.disabled=Disabled in config (tweaks -> Enable Zhonya's Hourglass)
 
 item.insanetweaks.restoration_hourglass.name=§eHourglass of Restoration
-item.insanetweaks:restoration_hourglass.desc=Restores SRP-infected entities to their original form when using Purifying Pulse spell. In Creative, right-click to directly restore targeted entity.
+item.insanetweaks:restoration_hourglass.desc=Restores SRP-infected entities to their original form when using the Purifying Pulse spell, or on right-click.
+tooltip.insanetweaks.restoration_hourglass.flavor=A moment of the past, bottled and returned.
+tooltip.insanetweaks.restoration_hourglass.title=Entity Restoration
+tooltip.insanetweaks.restoration_hourglass.passive=Purifying Pulse restores infected mobs nearby.
+tooltip.insanetweaks.restoration_hourglass.preserves=Name, taming and owner all survive the return.
+tooltip.insanetweaks.restoration_hourglass.incomplete=Incomplete Forms come back as whatever they truly were.
+tooltip.insanetweaks.restoration_hourglass.immunity=Restored mobs gain §630s §eimmunity to re-infection.
+tooltip.insanetweaks.restoration_hourglass.active=Right-click: instant restore. [%s h cooldown]
+
+msg.insanetweaks.restoration.no_target=[Restoration] No infected entity in sight.
+msg.insanetweaks.restoration.restored=[Restoration] Restored: %s
+msg.insanetweaks.restoration.no_origin=[Restoration] No origin data - cannot restore.
+
+# Property Books
+item.insanetweaks.property_book.name=Property Book
+item.insanetweaks.property_book.blank=Blank Property Book
+item.insanetweaks.property_book.named=Property Book: %s
+tooltip.insanetweaks.property_book.blank=Names no property. It cannot be applied to anything.
+tooltip.insanetweaks.property_book.grants=Grants:
+tooltip.insanetweaks.property_book.anvil=Combine with a tool on an anvil to apply it.
 
 # Bauble Fruits
 item.bauble_fruit_ring.name=§dBauble Fruit - Ring
@@ -310,6 +329,8 @@ gui.insanetweaks.thrall.tooltip.dismiss=Removes the thrall and drops its items. 
 config.insanetweaks.category.modules=Modules & Integrations
 config.insanetweaks.category.tweaks=Tweaks & Fixes
 config.insanetweaks.category.baubleFruits=Bauble Fruits
+config.insanetweaks.category.propertyBooks=Property Books
+config.insanetweaks.category.arcaneSundering=Arcane Sundering
 config.insanetweaks.category.chargeJump=Coiled Spring (Charge Jump)
 config.insanetweaks.category.scarredFlesh=Scarred Flesh
 config.insanetweaks.category.interactions=Cross-Mod Interactions

@@ -15,40 +15,44 @@ import net.minecraftforge.common.config.Config;
 public class SpawnEngineCategory {
 
     @Config.Comment({
-            "Master switch for the population budgets, the pass throttle and the refill",
-            "buckets. The vanilla hostile mob-cap is BYPASSED in dim 150 by an unidentified",
-            "mechanism (measured 2026-07-21: 1600-2000 hostiles at cap 55), so the engine does",
-            "not repair vanilla's comparison - it REPLACES it with its own, executed before.",
-            "Does NOT gate 'Strip SRParasites In Dim 150' or 'Diag Logging'. Read live."
+            "Take over natural mob spawning in the dimensions listed below, and hold their population",
+            "to the limits set here.",
+            "For heavily modded dimensions where the vanilla mob cap stops working and hundreds of",
+            "hostiles pile up. Instead of trying to repair the vanilla check, the engine runs its own",
+            "before it.",
+            "IMPORTANT: everything below ships with values from the pack this was written for",
+            "(dimension 150, its mod list, its numbers). Set 'Engine Dims' and the budgets for your own",
+            "world before switching this on, or it will limit spawning in a dimension you did not mean.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Enable Spawn Engine")
-    public boolean enableSpawnEngine = true;
+    public boolean enableSpawnEngine = false;
 
     @Config.Comment({
-            "Dimensions under engine control. Every other dimension is untouched (except the",
-            "SRParasites strip below, which is dim-150-only and independent of this list)."
+            "Which dimensions the engine controls. Every other dimension spawns exactly as normal.",
+            "The default is an example from the pack this was written for - replace it with your own."
     })
     @Config.Name("Engine Dims")
     public int[] engineDims = { 150 };
 
     @Config.Comment({
-            "Run the natural-spawn pass in engine dims only every N ticks (1 = vanilla",
-            "cadence). The every-400-ticks animal pass is never throttled, so any value is",
-            "safe. Start at 1 (parity); raise only after the F1 measurement."
+            "Run the hostile-spawning check only every N ticks in controlled dimensions.",
+            "1 = normal Minecraft timing, which is the safe starting point. Raising it saves server",
+            "time at the cost of mobs appearing a little less promptly. Animal spawning is never",
+            "throttled, so any value here is safe."
     })
     @Config.Name("Hostile Pass Interval (ticks)")
     @Config.RangeInt(min = 1, max = 100)
     public int hostilePassInterval = 1;
 
     @Config.Comment({
-            "Per-dim TOTAL population budgets, replacing the bypassed vanilla comparison.",
-            "Format: dim:TYPE=N  (TYPE: MONSTER/CREATURE/AMBIENT/WATER_CREATURE).",
-            "Counted exactly like vanilla's own World.countEntities(type, true), i.e. every",
-            "loaded entity matching Entity.isCreatureType(type, true).",
-            "The AMBIENT=15 / WATER_CREATURE=5 defaults reproduce vanilla's own base caps for",
-            "a single player (vanilla cap = base * eligibleChunks / 289, and one player caps",
-            "eligibleChunks at 289). They exist so the whole-pass stop below can ever fire -",
-            "see 'Ungoverned Types Veto Stop'."
+            "How many entities of each kind a dimension may hold at once.",
+            "Written as 'dimension:TYPE=number', where TYPE is MONSTER, CREATURE, AMBIENT or",
+            "WATER_CREATURE. Counted the same way Minecraft counts them itself.",
+            "The AMBIENT and WATER_CREATURE defaults simply reproduce Minecraft's own limits for a",
+            "single player - they are there so the engine can tell when nothing is allowed to spawn",
+            "at all (see the next option).",
+            "These defaults come from the pack this was written for. Replace them with your own."
     })
     @Config.Name("Type Budgets")
     public String[] typeBudgets = {
@@ -59,25 +63,25 @@ public class SpawnEngineCategory {
     };
 
     @Config.Comment({
-            "How the whole-pass stop treats a creature type that has NO budget in 'Type",
-            "Budgets' (and no refill bucket) for that dimension.",
-            "true  (default, safe): such a type keeps the pass alive - the pass is skipped only",
-            "      when every type vanilla would process this tick is at its budget. Nothing",
-            "      that could legally spawn is ever suppressed.",
-            "false (aggressive): unbudgeted types are ignored when deciding to skip, so a",
-            "      capped MONSTER budget alone stops the whole pass. Cheaper, but ambient/water",
-            "      spawns stop too while monsters are capped.",
-            "Read live."
+            "What to do about kinds of entity you did not give a budget to.",
+            "ON (safe): a kind with no budget always keeps spawning working, so nothing that could",
+            "legally spawn is ever blocked. The whole spawn pass is only skipped when every kind is",
+            "already at its limit.",
+            "OFF (aggressive): unbudgeted kinds are ignored, so a full monster budget alone stops the",
+            "spawn pass. Cheaper, but ambient and water spawning stops too while monsters are capped.",
+            "No restart needed."
     })
     @Config.Name("Ungoverned Types Veto Stop")
     public boolean ungovernedTypesVetoStop = true;
 
     @Config.Comment({
-            "Per-namespace / per-entity budgets enforced on the candidate LIST",
-            "(WorldEvent.PotentialSpawns) - vanilla never constructs what is not on the list.",
-            "Format: dim:namespace=N  or  dim:modid:entity=N (full id = per-type).",
-            "INVARIANT: namespace-level 'iceandfire' entries are REJECTED with an ERROR",
-            "(a namespace cap would delete unique nest dragons) - iceandfire only per-type."
+            "Limits for individual mods or individual mobs, applied before the game even decides what",
+            "to spawn.",
+            "Written as 'dimension:modid=number' for a whole mod, or 'dimension:modid:entity=number'",
+            "for one mob.",
+            "Note: a whole-mod limit on Ice and Fire is rejected on purpose - it would delete unique",
+            "dragons - so list its mobs individually.",
+            "These defaults come from the pack this was written for. Replace them with your own."
     })
     @Config.Name("Namespace Budgets")
     public String[] namespaceBudgets = {
@@ -94,37 +98,40 @@ public class SpawnEngineCategory {
     };
 
     @Config.Comment({
-            "E4 - population REBUILD rate limit (token bucket), the anti-infinite-horde",
-            "mechanism: a cap limits the LEVEL, this limits the RATE of return to it. Without",
-            "it, killing a dozen mobs frees a dozen cap slots that the very next pass refills.",
-            "Format: dim=tokensPerMinute. v1 supports the MONSTER bucket only, because the",
-            "value consumed is findChunksForSpawning's return value - one number covering the",
-            "whole pass, with no per-type breakdown. 0 or absent = no rate limit for that dim."
+            "How fast a dimension is allowed to repopulate, in monsters per minute.",
+            "A budget limits how many mobs there can be; this limits how fast they come back. Without",
+            "it, killing a dozen mobs frees a dozen slots that the very next spawn pass refills, and an",
+            "area you just cleared is full again seconds later.",
+            "Written as 'dimension=perMinute'. 0 or no entry means no limit for that dimension.",
+            "Applies to monsters only."
     })
     @Config.Name("Monster Refill Rate (per minute)")
     public String[] monsterRefillRate = { "150=12" };
 
     @Config.Comment({
-            "E4 bucket capacity = the largest burst allowed after a long quiet period.",
-            "Format: dim=N. Absent = 20."
+            "How big a burst is allowed after a long quiet spell - the number of spawns saved up while",
+            "nothing was spawning.",
+            "Written as 'dimension=number'. Not listed means 20."
     })
     @Config.Name("Monster Refill Burst")
     public String[] monsterRefillBurst = { "150=24" };
 
     @Config.Comment({
-            "Hard invariant: strip srparasites:* entries from dim-150 spawn candidate lists.",
-            "Independent of the master switch - works with the engine disabled. Read live."
+            "Prevent Scape and Run: Parasites mobs from spawning naturally in dimension 150.",
+            "Very specific to the pack this was written for, where parasites belong elsewhere. Works",
+            "independently of the master switch above.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Strip SRParasites In Dim 150")
-    public boolean stripSrpInDim150 = true;
+    public boolean stripSrpInDim150 = false;
 
     @Config.Comment({
-            "F0 diagnostics: throttled logging of per-type counts vs budgets, bucket tokens and",
-            "pass results in engine dims. Each line also carries vanilla's OWN count",
-            "(World.countEntities) next to the base cap from EnumCreatureType, which is the",
-            "ground truth for the dim-150 cap-bypass investigation: a count far above the cap",
-            "means vanilla's comparison is being satisfied by an inflated eligible-chunk",
-            "count, not by an undercount. Also active while the engine is disabled."
+            "Log what the engine is doing: how many of each kind are alive against their budgets, how",
+            "much refill allowance is left, and whether each spawn pass ran or was skipped.",
+            "Each line also shows Minecraft's own count next to its own cap, which is how you tell",
+            "whether the vanilla limit is being respected at all in that dimension.",
+            "Works even with the engine off, so you can measure before you configure.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Diag Logging")
     public boolean diagLogging = false;

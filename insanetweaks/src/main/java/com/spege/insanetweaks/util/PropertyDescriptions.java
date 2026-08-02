@@ -51,12 +51,26 @@ public class PropertyDescriptions {
                 "Shrouds the bearer in stabilized ether, granting a flat -1.0% resistance against all incoming damage.");
         DESCRIPTIONS.put("ethereal_shell_awakened",
                 "The stasis veil awakens and thickens, granting a flat -1.5% resistance against all incoming damage.");
+        // Word-for-word the line SpellbladeTooltipHandler already showed for Fleshbound, so the
+        // book-granted property and the earned one read identically.
+        DESCRIPTIONS.put("grip",
+                "Grafted to the wielder's flesh. Prevents drops and disarm.");
+        // Present so the substring fallback below can never reach this id, but never returned:
+        // getDescription builds the real line from the configured percentages instead.
+        DESCRIPTIONS.put("arcane_sundering",
+                "The blade's corrupted wisdom bleeds into its edge.");
         }
 
         public static String getDescription(String type) {
                 if (type == null)
                         return null;
                 String lower = type.toLowerCase();
+
+                // Built rather than stored: the two shares are config-driven, and a description
+                // quoting stale numbers is worse than no numbers at all.
+                if (com.spege.insanetweaks.api.AdvPropertyRegistry.ARCANE_SUNDERING.equals(lower)) {
+                        return describeArcaneSundering();
+                }
 
                 if (DESCRIPTIONS.containsKey(lower)) {
                         return DESCRIPTIONS.get(lower);
@@ -69,5 +83,17 @@ public class PropertyDescriptions {
                 }
 
                 return null;
+        }
+
+        private static String describeArcaneSundering() {
+                com.spege.insanetweaks.config.categories.ArcaneSunderingCategory cfg =
+                                com.spege.insanetweaks.config.ModConfig.arcaneSundering;
+                return "The blade's corrupted wisdom bleeds into its edge. \u00a7f"
+                                + cfg.trueDamagePercent
+                                + "%\u00a77 of every strike lands as \u00a7ftrue damage\u00a77,"
+                                + " answering to neither armour, resistance nor absorption, and a"
+                                + " further \u00a7f" + cfg.magicDamagePercent
+                                + "%\u00a77 is rewritten from steel into \u00a7dmagic\u00a77,"
+                                + " slipping past armour but not past wards.";
         }
 }

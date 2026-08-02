@@ -2,12 +2,16 @@ package com.spege.insanetweaks.entities;
 
 import javax.annotation.Nonnull;
 
+import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.entities.ai.EntityAIBattlemageMelee;
 import com.spege.insanetweaks.init.ModItems;
 import com.windanesz.ancientspellcraft.entity.ai.EntityAIBlockWithShield;
 import com.windanesz.ancientspellcraft.entity.ai.IShieldUser;
 import com.windanesz.ancientspellcraft.entity.living.ICustomCooldown;
 
 import net.minecraft.entity.IEntityLivingData;
+import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -23,8 +27,8 @@ import net.minecraft.world.World;
  * which until now fell back to a plain {@code srparasites:sim_human}.
  *
  * <h3>Why a subclass rather than a sibling class</h3>
- * The design spec called for a separate entity because a battlemage needs its own model (ASC's
- * biped {@code ModelClassWizard}, not SRP's non-biped {@code ModelInfHuman}), its own equipment
+ * The design spec called for a separate entity because a battlemage needs its own model (a vanilla
+ * biped {@code ModelPlayer}, not SRP's non-biped {@code ModelInfHuman}), its own equipment
  * stack (offhand shield, {@link IShieldUser}, {@link ICustomCooldown}), and because
  * {@code initEntityAI()} runs from the {@code EntityLiving} constructor - before NBT is read - so
  * a mere tier flag on one class could never drive a different task list.
@@ -84,6 +88,47 @@ public class EntitySimBattlemage extends EntitySimWizard implements ICustomCoold
         super.initEntityAI();
         this.shieldAI = new EntityAIBlockWithShield<EntitySimBattlemage>(this);
         this.tasks.addTask(2, this.shieldAI);
+        // Priority 2 is BELOW the inherited cast task's 3, which is what lets melee interrupt a
+        // cast. EntityAIAttackMelee declares mutex 3 - the same bits the cast task uses - so the
+        // two can never own movement simultaneously. See EntityAIBattlemageMelee's javadoc.
+        this.tasks.addTask(2, new EntityAIBattlemageMelee(this));
+    }
+
+    /**
+     * It carries a spellblade and is built to use it, so it hits harder than the sim_human base.
+     * Multiplied rather than assigned so SRP's own difficulty scaling still shows through.
+     */
+    @Override
+    protected void applyEntityAttributes() {
+        super.applyEntityAttributes();
+        IAttributeInstance damage = this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
+        if (damage != null) {
+            damage.setBaseValue(damage.getBaseValue()
+                    * ModConfig.entities.assimilatedWizard.battlemage.attackDamageMultiplier);
+        }
+    }
+
+    /** Its damage budget sits in the blade, so it pays a longer cooldown for every spell. */
+    @Override
+    protected float castGateMultiplier() {
+        return (float) ModConfig.entities.assimilatedWizard.battlemage.castCooldownMultiplier;
+    }
+
+    /**
+     * A battlemage carries the mod's own blade, not a wand.
+     *
+     * <p>This is the hook the parent's per-tick {@code ensureVisualWand} consults, so overriding it
+     * here is what actually sticks - equipping the main hand directly would be undone on the very
+     * next tick, and the mismatch would also re-equip the slot 20 times a second.
+     *
+     * <p>Purely cosmetic, like the parent's wand: EBW's NPC cast path calls
+     * {@code spell.cast(World, EntityLiving, ...)} and never touches the held item, and
+     * {@code BaseCustomWandItem.calculateModifiers} is player-only, so no held item can leak a
+     * bonus into the cast (the v2.1 double-buff lesson).
+     */
+    @Override
+    protected net.minecraft.item.Item tierWandItem() {
+        return ModItems.LIVING_SPELLBLADE;
     }
 
     @Override

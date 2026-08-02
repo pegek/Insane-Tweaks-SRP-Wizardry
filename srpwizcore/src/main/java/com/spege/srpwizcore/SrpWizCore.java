@@ -24,7 +24,7 @@ import net.minecraftforge.fml.common.Mod;
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.7.3";
+    public static final String VERSION = "1.8.10";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -48,6 +48,19 @@ public class SrpWizCore {
                 new com.spege.srpwizcore.spawnengine.SpawnEngineTickHandler());
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                 new com.spege.srpwizcore.spawnengine.SpawnListFilterHandler());
+
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("cqrepoured")) {
+            // Boss-room chest lock + boss-death bonus loot. All flags read live inside the
+            // handlers; the class touches no CQR types (class-name checks only).
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.util.CqrBossRoomHandler());
+            // Experimental combat rules (2026-08-01): siege digging of player-placed
+            // blocks inside protected dungeons + per-player attacker cap. Flags read live.
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.util.CqrSiegeDigHandler());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.util.CqrAttackerCapHandler());
+        }
 
         if (com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.enabled) {
             if (com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.worldgenEnabled) {

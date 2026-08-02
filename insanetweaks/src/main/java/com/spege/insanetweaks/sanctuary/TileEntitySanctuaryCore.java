@@ -631,6 +631,20 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             // Cleanse is no longer fuel-gated (fuel now powers the Sanctuary's upkeep, not cleanse).
             // It runs freely while the Sanctuary is active; the mana tank is spent by tickCost().
             net.minecraft.util.ResourceLocation cleansedId = world.getBlockState(p).getBlock().getRegistryName();
+            // Dead blood is a non-finite fluid: it has to go as a whole connected cluster or it just
+            // refills. That gets its own budget and ends the tick's pass, since one drain already
+            // costs far more than the convert budget was ever sized for.
+            if (com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseDeadBlood
+                    && com.spege.insanetweaks.util.SrpPurificationHelper.isDeadBlood(world.getBlockState(p))) {
+                int drained = com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.drainDeadBlood(world, p,
+                        com.spege.insanetweaks.config.ModConfig.sanctuary.deadBloodDrainPerTick);
+                if (drained > 0) {
+                    com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "drained-deadblood",
+                            drained + " cells from @(" + p.getX() + "," + p.getY() + "," + p.getZ() + ")");
+                    return;
+                }
+                continue;
+            }
             if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) {
                 converted++;
                 com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "cleansed",
@@ -643,6 +657,9 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
         if (!world.isBlockLoaded(p)) { return false; }
         net.minecraft.block.state.IBlockState st = world.getBlockState(p);
         if (com.spege.insanetweaks.util.SrpPurificationHelper.isSrpInfested(st)) { return true; }
+        // Dead blood is deliberately outside isSrpInfested (fluid, not terrain) - see its javadoc.
+        if (com.spege.insanetweaks.config.ModConfig.sanctuary.cleanseDeadBlood
+                && com.spege.insanetweaks.util.SrpPurificationHelper.isDeadBlood(st)) { return true; }
         // R2: also treat blocks SRP's own map recognises (broader/more accurate than our heuristic).
         return com.spege.insanetweaks.config.ModConfig.sanctuary.nativeBlockPurify
                 && com.spege.insanetweaks.util.SrpNativePurifyHelper.isAvailable()

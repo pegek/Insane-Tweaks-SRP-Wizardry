@@ -4,7 +4,7 @@
   "package": "com.spege.srpwizcore.mixins.cqr",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinCqrStructureHelper" ],
+  "mixins": [ "MixinCqrStructureHelper", "MixinCqrSpawnerGearSwap" ],
   "client": [],
   "server": [],
   "injectors": { "defaultRequire": 1 }

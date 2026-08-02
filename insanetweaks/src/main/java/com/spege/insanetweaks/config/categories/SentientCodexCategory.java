@@ -105,13 +105,26 @@ public class SentientCodexCategory {
     public double bindingDamage = 1.0;
 
     @Config.Comment({
-            "When ON, a Sentient Codex item carries the 'Ashen Legacy' property: once dropped it is routed",
-            "through the hardened EntityItemIndestructible (immune to fire, lava, cactus and explosions)",
-            "and lingers far longer than ordinary gear, and shows the Ashen Legacy tooltip line. This",
-            "reuses the same drop-protection our legendary Living/Sentient gear uses. Read live (no restart)."
+            "When ON, a Sentient Codex item ALSO carries the 'Ashen Legacy' property for free: once dropped",
+            "it is routed through the hardened EntityItemIndestructible (immune to fire, lava, cactus and",
+            "explosions) and lingers far longer than ordinary gear.",
+            "Default is now OFF: the two are separate rewards since 1.4.21. Ashen Legacy is applied with",
+            "its own Property Book on an anvil, so an item can have either, both, or neither. Turn this",
+            "back ON to restore the old bundled behaviour. Read live (no restart)."
     })
     @Config.Name("Confer Ashen Legacy")
-    public boolean conferAshenLegacy = true;
+    public boolean conferAshenLegacy = false;
+
+    @Config.Comment({
+            "Safety net for the split above. When ON and 'Confer Ashen Legacy' is OFF, every Sentient",
+            "Codex item a player already owns is granted Ashen Legacy once, permanently, the first time",
+            "they log in - so nothing that was already lava-proof silently stops being lava-proof.",
+            "Runs exactly once per player and covers inventory, armour, offhand and ender chest. Items",
+            "sitting in a chest are not reached; they keep whatever they were explicitly granted.",
+            "Newly enchanted items are NOT covered - that is the point of the split. Read live."
+    })
+    @Config.Name("Grandfather Ashen Legacy")
+    public boolean grandfatherAshenLegacy = true;
 
     @Config.Comment({
             "When ON, an item that already carries Sentient Codex cannot be further modified on an anvil.",

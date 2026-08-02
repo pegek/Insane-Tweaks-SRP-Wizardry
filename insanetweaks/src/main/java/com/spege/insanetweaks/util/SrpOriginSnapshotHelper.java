@@ -24,29 +24,32 @@ import net.minecraft.world.World;
 /**
  * Pomocnik przywracania entity SRP do ich oryginalnych vanilla/mod form.
  *
- * System działa w dwóch warstwach:
+ * System działa w trzech warstwach:
  *
- * 1. SNAPSHOT (przed transformacją):
- *    MixinParasiteEventEntity przechwytuje oryginalne entity tuż przed
- *    wywołaniem world.removeEntity() przez spawnInsider() / convertEntity().
- *    Pełny NBT dump + ResourceLocation ID zapisywane są w PENDING.
+ * 1. SNAPSHOT (w trakcie transformacji):
+ *    MixinParasiteEventEntity robi zrzut oryginalnego entity na HEAD metody
+ *    spawnInsider()/convertEntity(), a @Redirect na World.spawnEntity() stempluje
+ *    ten zrzut na DOKŁADNIE tym entity, które SRP właśnie spawnuje — pod kluczami
+ *    itOriginalId i itOriginalNBT w jego getEntityData().
  *
- * 2. APPLY ON JOIN:
- *    ZhonyasEventHandler łapie nowo spawnowane EntityInhooM/S lub
- *    EntityPInfected i stosuje snapshot do ich entityData —
- *    pod kluczem itOriginalNBT i itOriginalId.
- *
- * 3. RESTORE:
+ * 2. RESTORE:
  *    ItemRestorationHourglassArtefact odczytuje te klucze z entity data
  *    i wywołuje performRestore() który tworzy nowe entity z pełnym NBT.
  *
+ * 3. OCHRONA:
+ *    applyRestorationProtection() daje 30 s odporności na ponowną asymilację.
+ *
  * Obsługa EntityInhooM/S (Incomplete Form):
  *    Mobs bez odpowiednika w SRP (np. EBWizardry wizards, modded mobs) konwertują
- *    do EntityInhooM (duże) lub EntityInhooS (małe). MixinParasiteEventEntity
- *    przechwytuje je PO stronie spawnInsider() i zapisuje pełny snapshot
- *    oryginalnego entity do PENDING. ZhonyasEventHandler stosuje snapshot do
- *    danych InhooM/S. performRestore() może następnie w pełni odtworzyć
- *    oryginalny mob — włącznie z modded entity — z kompletnym NBT.
+ *    do EntityInhooM (duże) lub EntityInhooS (małe). Dla nich zrzut jest JEDYNYM
+ *    źródłem prawdy — bez niego resolveVanillaId() ma tylko rozmiar hitboxa i kończy
+ *    zgadywaniem świnia/krowa.
+ *
+ * HISTORIA: istniała tu też mapa PENDING + savePending()/popMostRecent()/cleanupStale()
+ * jako "fallback" dla ZhonyasEventHandler. savePending() nie miało ani jednego wywołania
+ * w całym repo, więc popMostRecent() zawsze zwracało null, a gałąź fallbacku w handlerze
+ * była martwa. Usunięte 2026-07-28 razem z całą architekturą, która stała na błędnej
+ * diagnozie (patrz javadoc MixinParasiteEventEntity).
  */
 public final class SrpOriginSnapshotHelper {
 
@@ -54,18 +57,9 @@ public final class SrpOriginSnapshotHelper {
     public static final String KEY_ORIGINAL_NBT = "itOriginalNBT";
     /** NBT klucz: ResourceLocation ID oryginalnego entity. */
     public static final String KEY_ORIGINAL_ID  = "itOriginalId";
-    /** NBT klucz: cooldown EPEL repel protection po przywróceniu (ticki). */
-    public static final String KEY_RESTORE_CD   = "itRestoreCooldown";
 
     // Czas trwania efektu EPEL_E nakładanego po udanym przywróceniu (30 sekund).
     private static final int RESTORATION_EPEL_DURATION = 600;
-
-    /**
-     * Chwilowa mapa oczekujących snapshotów: entityId usuwanego entity → snapshot.
-     * Klucz = entityId STAREGO (usuwanego) entity — to samo ID którego używa Mixin.
-     * Czyszczona po zastosowaniu lub po 3 sekundach (cleanupStale).
-     */
-    private static final Map<Integer, OriginalSnapshot> PENDING = new HashMap<>();
 
     // ─────────────────────────────────────────────────────────────────
     //  Reverse mapping: SRP entity ID → vanilla entity ID (fallback)
@@ -136,45 +130,6 @@ public final class SrpOriginSnapshotHelper {
     private SrpOriginSnapshotHelper() {}
 
     // ─────────────────────────────────────────────────────────────────
-    //  Pending Snapshot API (used by mixin)
-    // ─────────────────────────────────────────────────────────────────
-
-    /** Sprawdza czy jest już pending snapshot dla danego entityId (idempotencja). */
-    public static boolean hasPending(int entityId) {
-        return PENDING.containsKey(entityId);
-    }
-
-    /** Zapisuje snapshot oryginalnego entity. Wywoływane przez Mixin. */
-    public static void savePending(int originalEntityId, String originalResourceId, NBTTagCompound fullNbt) {
-        PENDING.put(originalEntityId, new OriginalSnapshot(originalResourceId, fullNbt.copy(), System.currentTimeMillis()));
-    }
-
-    /**
-     * Pobiera i usuwa NAJŚWIEŻSZY snapshot.
-     * Heurystyka dla InhooM/S (spawnInsider): ostatni snapshot = ostatnia transformacja.
-     * Używać tylko gdy nie ma możliwości matchowania po kluczu (tj. entity nie ma parent ID).
-     */
-    @Nullable
-    public static OriginalSnapshot popMostRecent() {
-        if (PENDING.isEmpty()) return null;
-        int newestKey   = -1;
-        long newestTime = Long.MIN_VALUE;
-        for (Map.Entry<Integer, OriginalSnapshot> entry : PENDING.entrySet()) {
-            if (entry.getValue().timestamp > newestTime) {
-                newestTime = entry.getValue().timestamp;
-                newestKey  = entry.getKey();
-            }
-        }
-        return (newestKey >= 0) ? PENDING.remove(newestKey) : null;
-    }
-
-    /** Czyści snapshoty starsze niż 3 sekundy (zabezpieczenie przed wyciekiem). */
-    public static void cleanupStale() {
-        long now = System.currentTimeMillis();
-        PENDING.entrySet().removeIf(e -> now - e.getValue().timestamp > 3000L);
-    }
-
-    // ─────────────────────────────────────────────────────────────────
     //  Identyfikacja SRP entity
     // ─────────────────────────────────────────────────────────────────
 
@@ -231,7 +186,7 @@ public final class SrpOriginSnapshotHelper {
         if (data.hasKey(KEY_ORIGINAL_ID, 8)) {
             String id = data.getString(KEY_ORIGINAL_ID);
             if (!id.isEmpty()) {
-                InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Found KEY_ORIGINAL_ID: " + id);
+                SrpOriginCaptureState.debug("getIdForSrpEntity: Found KEY_ORIGINAL_ID: " + id);
                 return id;
             }
         }
@@ -240,7 +195,7 @@ public final class SrpOriginSnapshotHelper {
         if (entity instanceof EntityPInfected) {
             String host = ((EntityPInfected) entity).getHost();
             if (host != null && !host.isEmpty()) {
-                InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Found EntityPInfected host: " + host);
+                SrpOriginCaptureState.debug("getIdForSrpEntity: Found EntityPInfected host: " + host);
                 return host;
             }
         }
@@ -250,22 +205,22 @@ public final class SrpOriginSnapshotHelper {
         if (srpId != null) {
             String mapped = SRP_TO_VANILLA.get(srpId.toString());
             if (mapped != null) {
-                InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Found static map mapping: " + mapped);
+                SrpOriginCaptureState.debug("getIdForSrpEntity: Found static map mapping: " + mapped);
                 return mapped;
             }
         }
 
         // 4. Rozmiarowy fallback (InhooM/S bez snapshotu — niezidentyfikowany host)
         if (entity instanceof EntityInhooS) {
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Fallback EntityInhooS -> minecraft:pig");
+            SrpOriginCaptureState.debug("getIdForSrpEntity: Fallback EntityInhooS -> minecraft:pig");
             return "minecraft:pig";
         }
         if (entity instanceof EntityInhooM) {
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Fallback EntityInhooM -> minecraft:cow");
+            SrpOriginCaptureState.debug("getIdForSrpEntity: Fallback EntityInhooM -> minecraft:cow");
             return "minecraft:cow";
         }
 
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG] getIdForSrpEntity: Could not resolve ID returning null.");
+        SrpOriginCaptureState.debug("getIdForSrpEntity: Could not resolve ID returning null.");
         return null;
     }
 
@@ -284,25 +239,25 @@ public final class SrpOriginSnapshotHelper {
      */
     @Nullable
     public static Entity performRestore(EntityLivingBase srpEntity, World world, String vanillaId) {
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG] performRestore BEGUN for target id: " + vanillaId);
+        SrpOriginCaptureState.debug("performRestore BEGUN for target id: " + vanillaId);
         ResourceLocation rl;
         try {
             rl = new ResourceLocation(vanillaId);
         } catch (Exception ex) {
-            InsaneTweaksMod.LOGGER.warn("[IT][DEBUG] performRestore Failed to parse resource location: " + vanillaId);
+            InsaneTweaksMod.LOGGER.warn("[InsaneTweaks][Restoration] performRestore Failed to parse resource location: " + vanillaId);
             return null;
         }
 
         NBTTagCompound data = srpEntity.getEntityData();
         boolean hasOriginalNbt = data.hasKey(KEY_ORIGINAL_NBT, 10);
         
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG] performRestore: entityData holds keys: " + data.getKeySet());
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG] performRestore: hasOriginalNbt = " + hasOriginalNbt);
+        SrpOriginCaptureState.debug("performRestore: entityData holds keys: " + data.getKeySet());
+        SrpOriginCaptureState.debug("performRestore: hasOriginalNbt = " + hasOriginalNbt);
 
         Entity restored;
 
         if (hasOriginalNbt) {
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG] performRestore: Taking Path 1: FULL NBT RESTORE");
+            SrpOriginCaptureState.debug("performRestore: Taking Path 1: FULL NBT RESTORE");
             // ── Ścieżka 1: Pełny NBT restore ─────────────────────────
             restored = EntityList.createEntityByIDFromName(rl, world);
             if (restored == null) return null;

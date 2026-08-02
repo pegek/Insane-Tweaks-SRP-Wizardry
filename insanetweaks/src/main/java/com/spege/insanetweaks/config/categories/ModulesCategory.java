@@ -50,6 +50,18 @@ public class ModulesCategory {
     public boolean enableMmmm = true;
 
     @Config.Comment({
+            "Enables Property Books: combine a tool and a Property Book on an anvil to grant that ONE item",
+            "an advanced property (the 'Properties:' block in its tooltip). Ships with Ashen Legacy (the",
+            "dropped item survives fire, lava and explosions) and Grip (the weapon cannot leave your",
+            "inventory - the same mechanic an evolved Sentient Spellblade earns on its own). Tunables live",
+            "in the 'propertyBooks' category.",
+            "This gates the anvil recipe only. The book item itself stays registered either way, so turning",
+            "this off never makes books already in a world disappear." })
+    @Config.Name("Enable Property Books")
+    @Config.RequiresMcRestart
+    public boolean enablePropertyBooks = true;
+
+    @Config.Comment({
             "Enables the Auto Lock Picker: an item that opens a Locks lock by holding right-click on it,",
             "instead of playing Locks' pin minigame. Channel time and durability cost scale with the",
             "lock's pin count; the lock's Complexity, Sturdy and Shocking enchantments all still apply.",

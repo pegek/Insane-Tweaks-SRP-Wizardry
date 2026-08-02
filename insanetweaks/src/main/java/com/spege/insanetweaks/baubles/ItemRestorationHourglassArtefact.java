@@ -10,6 +10,7 @@ import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.util.SrpOriginSnapshotHelper;
 
 import electroblob.wizardry.item.ItemArtefact;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -25,7 +26,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -44,16 +45,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  *    Wszystkie zarażone entity SRP w zasięgu fali są przywracane
  *    do oryginalnej postaci z pełnymi atrybutami (dzięki snapshotom).
  *
- * 2. AKTYWNY — Creative Right-Click:
- *    Gracz w trybie Creative celuje w zarażone entity i klika PPM.
- *    Entity zostaje natychmiast przywrócone bez potrzeby fali.
+ * 2. AKTYWNY — prawy klik:
+ *    Gracz celuje w zarażone entity i klika PPM. Entity zostaje natychmiast
+ *    przywrócone bez potrzeby fali. Dostępne dla KAŻDEGO gracza, nie tylko
+ *    w kreatywie — kreatyw jedynie omija 6-godzinny cooldown.
  *
  * System snapshotów:
- *    MixinParasiteEventEntity przechwytuje KAŻDE entity tuż przed
- *    usunięciem przez spawnInsider() i convertEntity(). Pełne NBT
- *    (imię, właściciel, oswojenie, atrybuty) jest zapisywane globalnie.
- *    ZhonyasEventHandler stosuje snapshot do nowo spawnanego SRP entity,
- *    skąd artefakt go odczytuje przy przywracaniu.
+ *    MixinParasiteEventEntity robi zrzut entity na HEAD spawnInsider()/convertEntity(),
+ *    a @Redirect na World.spawnEntity() stempluje go na dokładnie tym entity,
+ *    które SRP spawnuje. Pełne NBT (imię, właściciel, oswojenie, atrybuty) ląduje
+ *    w getEntityData() pasożyta, skąd artefakt odczytuje je przy przywracaniu.
  *
  *    Incomplete Form (EntityInhooM/S): mobs bez odpowiednika w SRP — np. modded
  *    entity jak ebwizardry:wizard — trafiają do InhooM lub InhooS.
@@ -69,8 +70,10 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
 
     /** Minimalny promień sprawdzania w zasięgu fali. */
     private static final double RESTORE_RADIUS  = 12.0D;
-    /** Zasięg ray-trace dla trybu Creative. */
+    /** Zasięg ray-trace dla trybu aktywnego (prawy klik). */
     private static final double CREATIVE_REACH  = 20.0D;
+    /** Cooldown po aktywnym użyciu: 6 godzin. Kreatywny gracz jest z niego zwolniony. */
+    private static final int ACTIVE_COOLDOWN_TICKS = 432000;
 
     public ItemRestorationHourglassArtefact() {
         // CHARM = slot "charm/totem" w EBWizardry (najbliższy do TOTEM).
@@ -157,27 +160,29 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
             }
         }
 
+        // These are server-side chat messages, so they must be TextComponentTranslation and not
+        // client-side I18n.format - the server has no client language and would send the raw key.
         if (target == null) {
-            player.sendMessage(new TextComponentString(
-                TextFormatting.GRAY + "[Restoration] No infected entity in sight."));
+            player.sendMessage(new TextComponentTranslation("msg.insanetweaks.restoration.no_target")
+                    .setStyle(new net.minecraft.util.text.Style().setColor(TextFormatting.GRAY)));
             return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
         Entity restored = doRestore(target, world, player);
         if (restored != null) {
-            player.sendMessage(new TextComponentString(
-                TextFormatting.GREEN + "[Restoration] Restored: " + restored.getName()));
-            
-            // Nakładamy 6-godzinny cooldown (432 000 ticków) jeśli gracz nie jest na creative.
+            player.sendMessage(new TextComponentTranslation("msg.insanetweaks.restoration.restored",
+                    restored.getName())
+                    .setStyle(new net.minecraft.util.text.Style().setColor(TextFormatting.GREEN)));
+
             if (!player.isCreative()) {
-                player.getCooldownTracker().setCooldown(this, 432000);
+                player.getCooldownTracker().setCooldown(this, ACTIVE_COOLDOWN_TICKS);
             }
-            
+
             return new ActionResult<>(EnumActionResult.SUCCESS, stack);
         }
 
-        player.sendMessage(new TextComponentString(
-            TextFormatting.RED + "[Restoration] No origin data — cannot restore."));
+        player.sendMessage(new TextComponentTranslation("msg.insanetweaks.restoration.no_origin")
+                .setStyle(new net.minecraft.util.text.Style().setColor(TextFormatting.RED)));
         return new ActionResult<>(EnumActionResult.FAIL, stack);
     }
 
@@ -190,8 +195,8 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
             @Nullable EntityPlayer instigator) {
         String vanillaId = SrpOriginSnapshotHelper.resolveVanillaId(srpEntity);
         if (vanillaId == null) {
-            InsaneTweaksMod.LOGGER.debug(
-                "[IT][Restoration] Brak ID dla {} ({})",
+            com.spege.insanetweaks.util.SrpOriginCaptureState.debug(
+                "Brak ID dla {} ({})",
                 srpEntity.getClass().getSimpleName(),
                 SrpOriginSnapshotHelper.isIncompleteForm(srpEntity) ? "IncompleteForm — brak snapshotu" : "brak mapowania");
             return null;
@@ -221,8 +226,9 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
         world.playSound(null, ex, ey, ez,
             SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.NEUTRAL, 1.0F, 1.2F);
 
+        // Stays at INFO: a restore is a rare, deliberate player action, not a per-tick event.
         InsaneTweaksMod.LOGGER.info(
-            "[IT][Restoration] Restored '{}' → '{}' at {},{},{}",
+            "[InsaneTweaks][Restoration] Restored '{}' -> '{}' at {},{},{}",
             srpEntity.getClass().getSimpleName(), vanillaId,
             (int) ex, (int) srpEntity.posY, (int) ez);
 
@@ -238,23 +244,33 @@ public class ItemRestorationHourglassArtefact extends ItemArtefact {
         return true;
     }
 
+    /**
+     * Every line here is a lang key rather than a literal.
+     *
+     * <p>The literals this replaces were unreachable in any language but English, and said something
+     * the code does not do. {@code ItemArtefact.addInformation} renders
+     * {@code item.<id>.desc} from the lang file, but this override never called {@code super}, so
+     * both {@code en_us} and {@code ru_ru} shipped a {@code .desc} entry that could never appear -
+     * and the English lang text claimed right-click was Creative-only while
+     * {@link #onItemRightClick} lets anyone use it and only skips the cooldown in Creative. The
+     * text below matches the code.
+     */
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(@Nonnull ItemStack stack, @Nullable World world,
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
-        tooltip.add(TextFormatting.GRAY + "A moment of the past, bottled and returned.");
+        tooltip.add(TextFormatting.GRAY + I18n.format("tooltip.insanetweaks.restoration_hourglass.flavor"));
         tooltip.add("");
-        tooltip.add(TextFormatting.AQUA + "Entity Restoration");
-        tooltip.add(TextFormatting.GRAY + "When using Purifying Pulse spell,");
-        tooltip.add(TextFormatting.GRAY + "restores infected mobs to their original form,");
-        tooltip.add(TextFormatting.GRAY + "preserving name, taming & owner data.");
-        tooltip.add(TextFormatting.GRAY + "Incomplete Forms (modded/unknown mobs)");
-        tooltip.add(TextFormatting.GRAY + "are fully restored if snapshot available.");
+        tooltip.add(TextFormatting.AQUA + I18n.format("tooltip.insanetweaks.restoration_hourglass.title"));
+        tooltip.add(TextFormatting.GRAY + I18n.format("tooltip.insanetweaks.restoration_hourglass.passive"));
+        tooltip.add(TextFormatting.GRAY + I18n.format("tooltip.insanetweaks.restoration_hourglass.preserves"));
+        tooltip.add(TextFormatting.GRAY + I18n.format("tooltip.insanetweaks.restoration_hourglass.incomplete"));
         tooltip.add("");
-        tooltip.add(TextFormatting.YELLOW + "Restored entities gain §630s §7re-infection immunity.");
+        tooltip.add(TextFormatting.YELLOW + I18n.format("tooltip.insanetweaks.restoration_hourglass.immunity"));
         tooltip.add("");
         tooltip.add(TextFormatting.GOLD + "" + TextFormatting.ITALIC
-            + "Right-click: instant restore. [6 h cooldown]");
+                + I18n.format("tooltip.insanetweaks.restoration_hourglass.active",
+                        Integer.valueOf(ACTIVE_COOLDOWN_TICKS / 72000)));
     }
 
     @Override

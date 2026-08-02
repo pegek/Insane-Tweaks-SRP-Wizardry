@@ -66,6 +66,28 @@ public final class SrpPurificationHelper {
                 || path.contains("heart") || path.contains("node");
     }
 
+    /** SRP's infested fluid, {@code srparasites:deadblood} ({@code SRPBlocks.DeadBlood}). */
+    private static final ResourceLocation DEAD_BLOOD = new ResourceLocation("srparasites", "deadblood");
+
+    /**
+     * True for SRP's dead-blood fluid, which is deliberately <b>not</b> covered by
+     * {@link #isSrpInfested(IBlockState)}.
+     *
+     * <p>Two reasons to keep it separate. First, it is invisible to every keyword test on both
+     * sides: SRP's own {@code PurifyMappings.isSrp} requires {@code inf}/{@code infect}/
+     * {@code parasite} in the registry path and our heuristic wants one of those plus
+     * {@code gore*}/{@code remain}/{@code heart}/{@code node} - the path {@code deadblood} matches
+     * nothing, so neither purifier has ever touched it. Second, it is a fluid, not terrain: it is a
+     * non-finite {@link net.minecraftforge.fluids.BlockFluidClassic}, so clearing one cell refills
+     * from its neighbours' quanta and the caller has to drain the whole connected cluster instead of
+     * doing a one-block swap. Callers therefore need to know which of the two they are looking at.
+     *
+     * @see com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper#drainDeadBlood
+     */
+    public static boolean isDeadBlood(IBlockState state) {
+        return state != null && DEAD_BLOOD.equals(state.getBlock().getRegistryName());
+    }
+
     public static boolean isBeckon(Entity entity) {
         ResourceLocation id = EntityList.getKey(entity);
         return BECKON_SI.equals(id) || BECKON_SII.equals(id) || BECKON_SIII.equals(id) || BECKON_SIV.equals(id);

@@ -593,7 +593,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * identity, and being an {@code ItemWand} its {@code calculateModifiers} is player-only, so it
      * can never leak a bonus into the NPC cast pipeline (the v2.1 double-buff lesson).
      */
-    private net.minecraft.item.Item tierWandItem() {
+    protected net.minecraft.item.Item tierWandItem() {
         if (!ModConfig.entities.assimilatedWizard.tiers.enableTierVisuals) {
             return WizardryItems.master_necromancy_wand;
         }
@@ -607,7 +607,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
     }
 
-    private void ensureVisualWand() {
+    protected void ensureVisualWand() {
         // 🚨 Compare against the TIER'S wand, not a fixed one. Comparing against a single item
         // while equipping a different one would re-equip every tick - 20 equipment-sync packets a
         // second, per wizard.
@@ -617,7 +617,7 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         }
     }
 
-    private void equipVisualWand() {
+    protected void equipVisualWand() {
         ItemStack wand = new ItemStack(this.tierWandItem());
         // Stamp the visible spell list so wand tooltip / JEI inspection matches the AI pool.
         ArrayList<Spell> visibleSpells = new ArrayList<Spell>(this.spells);
@@ -641,10 +641,55 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
      * and wants a quick retry must not be able to cancel the long cooldown another cast just paid.
      */
     public void setCastGate(int ticks) {
-        long candidate = this.world.getTotalWorldTime() + Math.max(0, ticks);
+        int scaled = (int) Math.round(Math.max(0, ticks) * this.castGateMultiplier());
+        long candidate = this.world.getTotalWorldTime() + scaled;
         if (candidate > this.nextCastReadyTime) {
             this.nextCastReadyTime = candidate;
         }
+    }
+
+    /**
+     * Optionally forces SRP's remains coin flip in our favour. OFF by default - the pack wants the
+     * native 50/50, so this normally does nothing and the entity dies on stock SRP terms.
+     *
+     * <p>{@code EntityParasiteBase} starts with {@code madeRng == -1} and, the first time the
+     * parasite takes damage, rolls {@code nextInt(2)}. {@code onDeathUpdate} then branches on it:
+     * 0 runs {@code dyingBurst} - whose fuse reaches {@code selfExplode()} and therefore
+     * {@code spawnGore()}, placing the gore block and the {@code EntityRemain} - while 1 falls
+     * through to the plain {@code onDeathUpdateOG()} and leaves nothing behind. So a stock SRP
+     * parasite leaves remains only half the time.
+     *
+     * <p>We rewrite ONLY the losing roll, after super has run. {@code madeRng} is
+     * {@code protected}, so this needs neither reflection nor a mixin.
+     *
+     * <p>The roll is also what triggers SRP's status-40 client effect, and super only fires it when
+     * the roll came up 0 - so when we flip a 1 we have to send it ourselves, otherwise the forced
+     * remains would arrive without the burst that normally announces them.
+     */
+    @Override
+    public boolean attackEntityFrom(@Nonnull net.minecraft.util.DamageSource source, float amount) {
+        boolean unrolled = this.madeRng == -1;
+        boolean result = super.attackEntityFrom(source, amount);
+        if (!this.world.isRemote
+                && ModConfig.entities.assimilatedWizard.spawning.guaranteedRemains
+                && this.madeRng == 1) {
+            this.madeRng = 0;
+            if (unrolled) {
+                this.world.setEntityState(this, (byte) 40);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Scales every cast cooldown this entity pays. 1.0 for a plain sim_wizard.
+     *
+     * <p>Applied here rather than at the call sites so that EVERY path - normal casts, failed-cast
+     * retries, panic, ally support - is covered by construction. A subclass that casts less can
+     * therefore not be defeated by some future task calling {@code setCastGate} directly.
+     */
+    protected float castGateMultiplier() {
+        return 1.0F;
     }
 
     public boolean isCastCommitted() {

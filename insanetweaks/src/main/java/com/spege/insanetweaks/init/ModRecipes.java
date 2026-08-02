@@ -150,6 +150,33 @@ public class ModRecipes {
                             'R', new ItemStack(safeItem("ebwizardry", "runestone"), 1, 4))); // Necromancy Runestone
         }
 
+        // ---------------------------------------------------------------------
+        // Hourglass of Restoration. Until now the artefact had NO acquisition path whatsoever -
+        // no recipe, no loot table, no quest reward, no command - so it was reachable only by
+        // /give. Thematically: a clock to run time backwards, a Healing Runestone to undo, and
+        // parasite matter for what is being undone.
+        //   Magic Crystal | Healing Runestone   | Magic Crystal
+        //   SRP Pearl     | Clock               | SRP Pearl
+        //   Magic Crystal | Assimilated Flesh   | Magic Crystal
+        // Ingredients are a balance decision - change them here freely; nothing else depends on
+        // them. safeItem throws on a missing id, hence the explicit mod gate.
+        // ---------------------------------------------------------------------
+        if (com.spege.insanetweaks.config.ModConfig.tweaks.restorationHourglassRecipe
+                && Loader.isModLoaded("srparasites") && Loader.isModLoaded("ebwizardry")) {
+            registerFallback(event, "restoration_hourglass",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "restoration_hourglass"),
+                            new ItemStack(safeItem(InsaneTweaksMod.MODID, "restoration_hourglass")),
+                            "CRC",
+                            "PKP",
+                            "CFC",
+                            'C', new ItemStack(safeItem("ebwizardry", "magic_crystal")),
+                            'R', new ItemStack(safeItem("ebwizardry", "runestone"), 1, 7), // Healing Runestone
+                            'P', new ItemStack(safeItem("srparasites", "pearl")),
+                            'K', new ItemStack(safeItem("minecraft", "clock")),
+                            'F', new ItemStack(safeItem("srparasites", "assimilated_flesh"))));
+        }
+
         // Guard: only register srpextra fallbacks if srpextra is absent
         if (Loader.isModLoaded("srpextra")) {
             return;

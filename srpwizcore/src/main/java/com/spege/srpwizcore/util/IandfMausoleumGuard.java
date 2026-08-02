@@ -30,6 +30,15 @@ public final class IandfMausoleumGuard {
     public static int passes;
     public static int rejects;
 
+    /**
+     * Set by every {@link #check} call, consumed by the mixin's RETURN inject: {@code true}
+     * when the foundation check vetoed this generate() attempt, so the mixin can force the
+     * return value to {@code false} and stop {@code StructureGenerator} from arming its
+     * min-distance gate around a mausoleum that was never built. Worldgen runs on the server
+     * thread only, so a plain field is enough.
+     */
+    public static boolean lastCheckVetoed;
+
     private IandfMausoleumGuard() {
     }
 
@@ -37,7 +46,9 @@ public final class IandfMausoleumGuard {
             int xSize, int zSize, EnumFacing facing) {
         int tolerance = SrpWizCoreConfig.iandfWorldgen.mausoleumFoundationTolerance;
         if (tolerance <= 0) {
-            return gen.checkIfCanGenAt(world, pos, xSize, zSize, facing);
+            boolean vanilla = gen.checkIfCanGenAt(world, pos, xSize, zSize, facing);
+            lastCheckVetoed = !vanilla;
+            return vanilla;
         }
         BlockPos[] edges = new BlockPos[] {
                 pos.offset(facing, zSize / 2),
@@ -52,6 +63,9 @@ public final class IandfMausoleumGuard {
                 IBlockState state = world.getBlockState(edges[i].down(dy));
                 if (WorldGenMausoleum.isPartOfMausoleum(state)) {
                     // Same overlap veto as vanilla: never build into an existing mausoleum.
+                    // NOT flagged as a veto for the RETURN inject: here a real mausoleum
+                    // exists nearby, so the min-distance suppression is legitimate.
+                    lastCheckVetoed = false;
                     return false;
                 }
                 if (state.isOpaqueCube()) {
@@ -61,6 +75,7 @@ public final class IandfMausoleumGuard {
             }
             ok = found;
         }
+        lastCheckVetoed = !ok;
         if (ok) {
             passes++;
             SrpWizCore.LOGGER.info("[srpwizcore] Mausoleum foundation check PASSED at {} "

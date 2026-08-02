@@ -660,9 +660,14 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         }
 
         // ---- SITUATIONAL OVERRIDES ----
+        // Each one is rolled, NOT deterministic. A condition that is almost always true would
+        // otherwise short-circuit the distance bands on every single decision and collapse the
+        // fight onto one spell - which is exactly what the SLOW branch did (see rollSituational).
+
         // Enemies bunched in the forward cone -> hit them all at once
-        if (countTargetsInFrontCone(tuning().clusterConeRadius,
-                Math.toRadians(tuning().clusterConeAngleDegrees)) >= tuning().clusterMinTargets) {
+        if (rollSituational()
+                && countTargetsInFrontCone(tuning().clusterConeRadius,
+                        Math.toRadians(tuning().clusterConeAngleDegrees)) >= tuning().clusterMinTargets) {
             Spell aoe = pickByRoles(pool, SpellRole.AOE);
             if (aoe != null) {
                 return aoe;
@@ -670,7 +675,7 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         }
 
         // Target sprinting or hasted -> impair it
-        if (isTargetFastMoving(target)) {
+        if (rollSituational() && isTargetFastMoving(target)) {
             Spell slow = pickByRoles(pool, SpellRole.SLOW);
             if (slow != null) {
                 return slow;
@@ -678,7 +683,8 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         }
 
         // Healthy target already in our face -> open by shoving it back out
-        if (target.getHealth() / target.getMaxHealth() > tuning().knockbackTargetHealthPercent / 100.0F
+        if (rollSituational()
+                && target.getHealth() / target.getMaxHealth() > tuning().knockbackTargetHealthPercent / 100.0F
                 && distance <= tuning().knockbackMaxDistance) {
             Spell knockback = pickByRoles(pool, SpellRole.KNOCKBACK);
             if (knockback != null) {
@@ -735,10 +741,26 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         if (target.isPotionActive(MobEffects.SPEED)) {
             return true;
         }
-        // Cheap kinematic check - SRP-style approach speed.
+        // Cheap kinematic check for genuinely fast MOBS - players are already handled above by the
+        // explicit sprint and Speed-potion tests.
+        //
+        // 🚨 The old literal here was 0.04, i.e. 0.2 blocks/tick. A vanilla player walks at
+        // ~0.216 b/t, so merely WALKING satisfied it. Since this branch ran unconditionally and
+        // ice_shard is the only SLOW spell in the default pool, the wizard picked ice_shard on
+        // essentially every decision and never reached the distance bands at all - 8 of 9 casts in
+        // the 2026-07-31 playtest log. Keep this above vanilla sprint (~0.28 b/t).
         double dx = target.posX - target.prevPosX;
         double dz = target.posZ - target.prevPosZ;
-        return (dx * dx + dz * dz) > 0.04D; // ~0.2 blocks/tick lateral
+        return (dx * dx + dz * dz) > tuning().fastTargetSpeedSquared;
+    }
+
+    /**
+     * @return true when a situational override is allowed to pre-empt the distance bands this
+     *         decision. Uniform-random per call, so two overrides in a row are independent.
+     */
+    private boolean rollSituational() {
+        int chance = tuning().situationalOverrideChancePercent;
+        return chance >= 100 || (chance > 0 && this.wizard.getRNG().nextInt(100) < chance);
     }
 
     /**

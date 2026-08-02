@@ -43,121 +43,106 @@ import net.minecraftforge.common.config.Config;
 public class ThreadingCompatCategory {
 
     @Config.Comment({
-            "Replace EntityTracker's entry HashSet with a concurrent set so that entity",
-            "tracking survives multithreaded entity ticking (EntityThreading).",
-            "Fixes 'Exception in server tick loop' NPE/CME crashes in EntityTracker.tick.",
-            "Requires MC restart (applied when a world's EntityTracker is constructed). Default ON."
+            "Stops the server crashing when a mod ticks entities on more than one thread at once",
+            "(EntityThreading and similar).",
+            "Minecraft's entity-tracking list is not safe to touch from two threads, and when it",
+            "breaks the server dies with 'Exception in server tick loop'.",
+            "Harmless if you run no threading mod - it only makes that one list safe.",
+            "Requires a restart. Default ON."
     })
     @Config.Name("Fix: EntityTracker Concurrent Entries")
     @Config.RequiresMcRestart
     public boolean fixEntityTrackerConcurrent = true;
 
     @Config.Comment({
-            "Bounce off-thread SoundManager.playSound/stopSound/stopAllSounds calls to the",
-            "client main thread. EntityThreading ticks CLIENT-world entities on worker threads",
-            "and its own deferral only covers World.playSound - direct SoundHandler/SoundManager",
-            "calls from entity ticks mutate the playingSounds HashBiMap while the client tick",
-            "iterates it (CME crash 2026-07-25 03:50). Requires MC restart. Default ON."
+            "Stops the game client crashing when a sound is started from the wrong thread.",
+            "With a threading mod installed, entities in the world around you can tick on a worker",
+            "thread and play their sounds from there, which corrupts the list of currently playing",
+            "sounds and crashes the client.",
+            "With this ON those sounds are simply played a moment later on the main thread instead.",
+            "Harmless if you run no threading mod. Requires a restart. Default ON."
     })
     @Config.Name("Fix: SoundManager Off-Thread Bounce")
     @Config.RequiresMcRestart
     public boolean fixSoundManagerBounce = true;
 
     @Config.Comment({
-            "Replace MapStorage's world-data ArrayList with a CopyOnWriteArrayList so that",
-            "registering world data from a worker thread cannot corrupt it.",
-            "MapStorage is not thread-safe: setData AND getOrLoadData both mutate the list with no",
-            "synchronization, so two concurrent adds can leave a null hole (size is incremented",
-            "before the element lands in the array). saveAllData then walks the list by index and",
-            "dies on that null - which silently TRUNCATES the world save: everything registered",
-            "after the bad entry never reaches disk (server crash 2026-07-26 00:36).",
-            "Off-thread registrants in this pack: NoiseThreader (structures register their data",
-            "while chunks generate) and EntityThreading (entity ticks that create world data).",
-            "Requires MC restart (applied when a MapStorage is constructed). Default OFF."
+            "Protects your world save from being silently cut short.",
+            "Minecraft keeps per-world data (map markers, structure data, mod save data) in a list",
+            "that is not safe to write from two threads. If a mod registers data from a worker thread",
+            "while the game saves, the list can end up with a hole - and everything after that hole",
+            "never reaches the disk. You lose data with no error message.",
+            "Turn this ON if you run any mod that generates chunks or ticks entities on worker threads.",
+            "Requires a restart. Default OFF."
     })
     @Config.Name("Fix: MapStorage Concurrent Data List")
     @Config.RequiresMcRestart
     public boolean fixMapStorageConcurrent = false;
 
     @Config.Comment({
-            "Second line of defence: skip a null entry while saving world data instead of dying",
-            "on it, so the rest of the list still reaches disk. Independent of the fix above -",
-            "it protects against any other producer of a null (e.g. a mod poking the list",
-            "reflectively). With this OFF the behaviour is byte-for-byte vanilla: a null still",
-            "throws the NPE. Logs a one-shot forensic dump (null index, list size, list-vs-map",
-            "diff, stack trace) the first time it fires. Read live (no restart)."
+            "A second safety net for the same problem: if the save data list does have a hole, skip",
+            "over it and save the rest instead of aborting the whole save.",
+            "Works on its own, whether or not the fix above is on. Writes one detailed report to the",
+            "log the first time it happens so the cause can be tracked down.",
+            "With this OFF the game behaves exactly like vanilla and the save still fails.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Fix: Skip Null World Data On Save")
     public boolean skipNullOnSave = false;
 
     @Config.Comment({
-            "Diagnostic: log every MapStorage.setData call arriving from a thread other than the",
-            "main server/client threads, with data id, type, list size and a stack trace",
-            "(capped at 40 lines per game run). This is the decisive test for who registers world",
-            "data off-thread - an empty log is also a result, it rules the race out and points at",
-            "a single mod instead. Read live (no restart). Default OFF."
+            "Diagnostic for the two options above: log every time world data is registered from a",
+            "worker thread, with a stack trace so you can see which mod did it (capped at 40 entries",
+            "per session).",
+            "An empty log is a useful result too - it rules this out as the cause.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Diag: Log Off-Thread MapStorage.setData")
     public boolean diagOffThreadSetData = false;
 
     @Config.Comment({
-            "Give every thread its own IntCache array pools, so concurrent chunk generation",
-            "cannot corrupt biome data.",
-            "IntCache is the static int[] pool shared by the whole GenLayer chain. Its methods are",
-            "synchronized, so the pools never corrupt structurally - but resetIntCache() recycles",
-            "EVERY in-use array globally. When cascading chunk gen runs on a worker thread and the",
-            "server thread at once, one thread's reset pulls the arrays out from under the other's",
-            "GenLayer chain, which then reads whatever the first thread wrote over them. Symptom:",
-            "garbage biome/climate ids - server crash 2026-07-26 03:28, 'Climate lookup failed",
-            "climateOrdinal: 92' in GenLayerBiomeBOP (valid BoP ordinals are 0-14), right after a",
-            "Roguelike dungeon generated on EntityThreading-Worker-192.",
-            "Vanilla semantics are preserved exactly - only the pools become per-thread.",
-            "This one is a REAL mixin gate (IntCacheMixinPlugin.shouldApplyMixin reads this key",
-            "straight out of this file), so the mixin is not even applied when it is off.",
-            "Requires MC restart. Default ON."
+            "Stops biome data getting corrupted when two threads generate chunks at the same time.",
+            "Terrain generation borrows scratch memory from one shared pool. When a worker thread and",
+            "the server thread both generate at once, one of them recycles the memory the other is",
+            "still using, and you get impossible biome values and a crash.",
+            "With this ON every thread gets its own pool. Nothing about generation changes otherwise.",
+            "Requires a restart. Default ON."
     })
     @Config.Name("Fix: IntCache Thread Local")
     @Config.RequiresMcRestart
     public boolean fixIntCacheThreadLocal = true;
 
     @Config.Comment({
-            "Never generate a chunk on a thread other than the server thread. Off-thread callers",
-            "get the already-loaded chunk if there is one, and an empty (all air) chunk if there",
-            "is not - instead of pulling a full generation with population and structures onto a",
-            "worker thread, which tears the vanilla ArrayLists underneath (BiomeCache crash",
-            "2026-07-28 10:28, MapStorage crash 2026-07-26 00:36 that truncated the world save).",
-            "This stands in for EntityThreading's own guard, whose MixinWorld has failed to apply",
-            "on every boot since 2026-07-21 - see notes/crash_biomecache_race_2026-07-28.md.",
-            "Cost: an entity ticked on a worker sees ungenerated terrain as air, so a projectile",
-            "flies on through and a mob finds no path there. Cosmetic next to a corrupted save.",
-            "Logs one WARN with a stack per distinct offending thread name (capped at 40 a run) -",
-            "anything other than EntityThreading-Worker-* is a caller that was not predicted.",
-            "Read live (no restart): with this OFF the guard only reports, it cancels nothing.",
-            "Default ON."
+            "Only ever generate new terrain on the main server thread.",
+            "When a threading mod ticks an entity on a worker thread and that entity reaches into",
+            "terrain that does not exist yet - an arrow flying past the edge of the generated world,",
+            "a mob looking for a path - the game starts generating a chunk from the wrong thread.",
+            "That is what corrupts biome data and the world save.",
+            "With this ON such a request gets air instead of new terrain. The cost is cosmetic: an",
+            "arrow flies on through, a mob finds no path out there.",
+            "With it OFF the guard only writes a warning to the log and blocks nothing, which is a",
+            "good way to find out whether anything on your setup is even doing this.",
+            "No restart needed. Default ON."
     })
     @Config.Name("Fix: Block Off-Thread Chunk Generation")
     public boolean blockOffThreadChunkGen = true;
 
     @Config.Comment({
-            "While blocking, look the chunk up in ChunkProviderServer's loaded-chunk map and",
-            "return the real chunk when it is already loaded, so only genuinely ungenerated",
-            "terrain reads as air. The lookup is guarded twice (a coordinate check and a catch)",
-            "because that map is an open-addressing fastutil map whose rehash publishes its new",
-            "mask before its new key array - an off-thread read landing in that window can index",
-            "out of bounds or return a chunk from a different position.",
-            "Turn OFF for the ultra-conservative mode: never touch the map, always hand back an",
-            "empty chunk. Read live (no restart). Default ON."
+            "While the guard above is blocking, still hand back terrain that is already loaded, so",
+            "only genuinely ungenerated chunks read as air. This is the friendlier of the two modes.",
+            "Turn it OFF for the strictest behaviour: never look anything up, always return an empty",
+            "chunk.",
+            "No restart needed. Default ON."
     })
     @Config.Name("Fix: Read Loaded Chunk Off-Thread")
     public boolean readLoadedChunkOffThread = true;
 
     @Config.Comment({
-            "Thread-name prefixes exempt from the guard above - a thread listed here may generate",
-            "chunks. Empty by default: an audit of this pack found no legitimate off-thread caller",
-            "(Chunk-Pregenerator generates on the server thread, JourneyMap reads the client-side",
-            "provider, and Forge's async chunk I/O never reaches provideChunk). This exists so a",
-            "future pregen or async-worldgen mod can be let through without a rebuild - take the",
-            "prefix from the WARN the guard logs. Read live (no restart)."
+            "Threads allowed to generate terrain anyway, matched by the start of the thread name.",
+            "Empty by default, because on a normal setup nothing legitimately generates chunks off the",
+            "main thread. This exists so a world-pregenerator or async worldgen mod can be let through",
+            "without a new build - take the name from the warning the guard writes to the log.",
+            "No restart needed."
     })
     @Config.Name("Diag: Off-Thread Chunk Gen Allowed Threads")
     public String[] offThreadChunkGenAllowedThreads = new String[0];

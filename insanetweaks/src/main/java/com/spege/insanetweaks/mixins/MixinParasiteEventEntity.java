@@ -1,206 +1,126 @@
 package com.spege.insanetweaks.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityPInfected;
-import com.dhanantry.scapeandrunparasites.entity.monster.crude.EntityInhooM;
-import com.dhanantry.scapeandrunparasites.entity.monster.crude.EntityInhooS;
 import com.dhanantry.scapeandrunparasites.util.ParasiteEventEntity;
-import com.spege.insanetweaks.InsaneTweaksMod;
-import com.spege.insanetweaks.util.SrpOriginSnapshotHelper;
-import com.spege.insanetweaks.util.SrpOriginSnapshotHelper.OriginalSnapshot;
+import com.spege.insanetweaks.util.SrpOriginCaptureState;
 import com.spege.insanetweaks.util.SrpWizardryAssimilationHelper;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
 /**
- * Mixin dla systemu snapshotów Zhonyas Hourglass.
+ * Captures what a mob was before SRP infected it, so the Hourglass of Restoration can put it back.
  *
- * === ANALIZA TIMINGU (z kodu SRP) ===
+ * <h3>Why a snapshot is needed at all</h3>
+ * SRP keeps the host id only for the forms it has a mapping for ({@code inf_cow} and friends).
+ * Anything it does not recognise - a modded mob, an EB Wizardry wizard - becomes an Incomplete Form
+ * ({@code EntityInhooM}/{@code EntityInhooS}), and the only surviving clue is the hitbox size. That
+ * is why {@code SrpOriginSnapshotHelper.resolveVanillaId} ends in a pig/cow guess: without a
+ * snapshot there is genuinely nothing else to go on.
  *
- * SRP w spawnInsider() i convertEntity() używa world.func_72838_d() (addEntity),
- * NIE world.spawnEntity(). Forge patchuje tylko spawnEntity() do EntityJoinWorldEvent,
- * więc ZhonyasEventHandler nigdy nie widzi nowych entity SRP.
- * Kolejność: removeEntity(stare) → addEntity(nowe) — stare entity nieobecne przy spawnie.
+ * <h3>Correcting the record on the old approach</h3>
+ * The previous version of this file claimed SRP used {@code func_72838_d} (addEntity) rather than
+ * {@code spawnEntity}, and that {@code EntityJoinWorldEvent} therefore never fired. That is wrong:
+ * in 1.12.2 {@code func_72838_d} <b>is</b> the SRG name of {@code World.spawnEntity} - one method,
+ * and the event fires normally. The real reason the event-only {@code ZhonyasEventHandler} could
+ * never find the original is the ordering. {@code javap -p -c} on {@code ParasiteEventEntity}
+ * (2026-07-28) shows {@code removeEntity} strictly before {@code spawnEntity} on every branch:
+ * {@code convertEntity} 279-&gt;332, 607-&gt;667, 921-&gt;974; {@code spawnInsider} 236-&gt;242.
+ * By the time anything can observe the new parasite, the original is already dead, and a handler
+ * that skips dead candidates finds nothing. The whole PENDING-map workaround was built on that
+ * mis-diagnosis and has been removed.
  *
- * ROZWIĄZANIE: Wstrzyknięcie bezpośrednio w Mixinie:
- *   HEAD  → captureEntity() → zapis do ThreadLocal (entity żywe)
- *   RETURN → findLatestSrpEntity() → applySnapshot() do entityData nowego entity
+ * <h3>How it works now</h3>
+ * HEAD snapshots the doomed entity into {@link SrpOriginCaptureState}; a {@link Redirect} on the
+ * {@code spawnEntity} call stamps that snapshot onto <b>exactly</b> the entity being spawned, then
+ * performs the spawn; RETURN clears the thread-local.
  *
- * UWAGA: Klasy wewnętrzne (@Unique static class) NIE mogą być definiowane w pakiecie
- * Mixin — MixinTransformer rzuca IllegalClassLoadError. Dlatego używamy
- * SrpOriginSnapshotHelper.OriginalSnapshot z pakietu util (poza pakietem mixin).
+ * <p>This replaces a "scan {@code loadedEntityList} backwards for any Inhoo" heuristic, which
+ * picked an arbitrary matching parasite whenever more than one was loaded - so the snapshot could
+ * land on the wrong mob and restore it into something it never was. The redirect has the reference
+ * in hand, so mis-attribution is impossible.
  *
- * require=0: nie crasha gdy SRP zmieni sygnatury.
+ * <p>The redirect is scoped per method, which is what makes it bind all three of
+ * {@code convertEntity}'s alternative spawn branches and {@code spawnInsider}'s single one.
+ * Stamping happens <i>before</i> the spawn so the data is present when
+ * {@code EntityJoinWorldEvent} fires.
+ *
+ * <p>Not covered, deliberately: {@code convertEntityFeral} (spawns at 402/534/816) and
+ * {@code hijackEntity} (250/364) follow the same remove-then-spawn shape. Their outputs are
+ * {@code fer_*} forms that the static host table already maps for vanilla hosts, so they only lose
+ * fidelity for modded hosts. Extending to them is a one-line-per-method addition if that turns out
+ * to matter.
  */
 @Mixin(value = ParasiteEventEntity.class, remap = false)
 public abstract class MixinParasiteEventEntity {
 
-    /**
-     * ThreadLocal trzymający snapshot oryginału między HEAD a RETURN.
-     * Używamy SrpOriginSnapshotHelper.OriginalSnapshot (klasa poza pakietem mixin!).
-     * Bezpieczny wielowątkowo.
-     */
-    @Unique
-    private static final ThreadLocal<OriginalSnapshot> INSANETWEAKS$CAPTURE = new ThreadLocal<>();
+    private static final String SPAWN_INSIDER =
+            "spawnInsider(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/world/World;"
+            + "Lnet/minecraft/nbt/NBTTagCompound;)V";
+    private static final String CONVERT_ENTITY =
+            "convertEntity(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/nbt/NBTTagCompound;"
+            + "Z[Ljava/lang/String;)V";
+    private static final String SPAWN_ENTITY =
+            "Lnet/minecraft/world/World;func_72838_d(Lnet/minecraft/entity/Entity;)Z";
 
-    // ─────────────────────────────────────────────────────────────────
-    //  spawnInsider — HEAD: capture, RETURN: apply
-    // ─────────────────────────────────────────────────────────────────
+    // ── spawnInsider: modded/unknown host -> Incomplete Form ─────────────────────────────────
 
-    @Inject(
-        method = "spawnInsider(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/world/World;Lnet/minecraft/nbt/NBTTagCompound;)V",
-        at = @At("HEAD"),
-        require = 0
-    )
-    private static void insanetweaks$spawnInsiderHead(
-            EntityLivingBase entity, World world, NBTTagCompound tags, CallbackInfo ci) {
-        if (entity == null || world.isRemote) return;
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] spawnInsiderHead: capturing " + entity.getClass().getSimpleName());
-        INSANETWEAKS$CAPTURE.set(insanetweaks$captureEntity(entity));
-    }
-
-    @Inject(
-        method = "spawnInsider(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/world/World;Lnet/minecraft/nbt/NBTTagCompound;)V",
-        at = @At("RETURN"),
-        require = 0
-    )
-    private static void insanetweaks$spawnInsiderReturn(
-            EntityLivingBase entity, World world, NBTTagCompound tags, CallbackInfo ci) {
-        OriginalSnapshot capture = INSANETWEAKS$CAPTURE.get();
-        INSANETWEAKS$CAPTURE.remove();
-        if (capture == null || world == null || world.isRemote) return;
-
-        Entity newEntity = insanetweaks$findLatestInhoo(world);
-        if (newEntity == null) {
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] spawnInsiderReturn: could not find new InhooM/S in world");
+    @Inject(method = SPAWN_INSIDER, at = @At("HEAD"), remap = false, require = 0)
+    private static void insanetweaks$captureForInsider(EntityLivingBase entity, World world,
+            NBTTagCompound tags, CallbackInfo ci) {
+        if (entity == null || world == null || world.isRemote) {
             return;
         }
-        insanetweaks$applySnapshot(newEntity, capture);
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] spawnInsiderReturn: applied '{}' -> {}",
-            capture.resourceId, newEntity.getClass().getSimpleName());
+        SrpOriginCaptureState.capture(entity);
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    //  convertEntity — HEAD: capture, RETURN: apply
-    // ─────────────────────────────────────────────────────────────────
+    @Redirect(method = SPAWN_INSIDER, at = @At(value = "INVOKE", target = SPAWN_ENTITY), remap = false,
+            require = 0)
+    private static boolean insanetweaks$stampInsider(World world, Entity spawned) {
+        SrpOriginCaptureState.stampOnto(spawned);
+        return world.spawnEntity(spawned);
+    }
 
-    @Inject(
-        method = "convertEntity(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/nbt/NBTTagCompound;Z[Ljava/lang/String;)V",
-        at = @At("HEAD"),
-        cancellable = true,
-        require = 0
-    )
-    private static void insanetweaks$convertEntityHead(
-            EntityLivingBase entityin, NBTTagCompound tags, boolean ignoreKey,
-            String[] list, CallbackInfo ci) {
-        if (entityin == null || entityin.world == null || entityin.world.isRemote) return;
+    @Inject(method = SPAWN_INSIDER, at = @At("RETURN"), remap = false, require = 0)
+    private static void insanetweaks$clearAfterInsider(EntityLivingBase entity, World world,
+            NBTTagCompound tags, CallbackInfo ci) {
+        SrpOriginCaptureState.clear();
+    }
+
+    // ── convertEntity: known host -> assimilated form ────────────────────────────────────────
+
+    @Inject(method = CONVERT_ENTITY, at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void insanetweaks$captureForConvert(EntityLivingBase entityin, NBTTagCompound tags,
+            boolean ignoreKey, String[] list, CallbackInfo ci) {
+        if (entityin == null || entityin.world == null || entityin.world.isRemote) {
+            return;
+        }
+        // The wizard-assimilation bridge takes the entity down its own path entirely; if it claims
+        // this conversion there is no SRP spawn to stamp and nothing to snapshot.
         if (SrpWizardryAssimilationHelper.tryConvertSupportedWizard(entityin, tags)) {
             ci.cancel();
             return;
         }
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] convertEntityHead: capturing " + entityin.getClass().getSimpleName());
-        INSANETWEAKS$CAPTURE.set(insanetweaks$captureEntity(entityin));
+        SrpOriginCaptureState.capture(entityin);
     }
 
-    @Inject(
-        method = "convertEntity(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/nbt/NBTTagCompound;Z[Ljava/lang/String;)V",
-        at = @At("RETURN"),
-        require = 0
-    )
-    private static void insanetweaks$convertEntityReturn(
-            EntityLivingBase entityin, NBTTagCompound tags, boolean ignoreKey,
-            String[] list, CallbackInfo ci) {
-        OriginalSnapshot capture = INSANETWEAKS$CAPTURE.get();
-        INSANETWEAKS$CAPTURE.remove();
-        if (capture == null || entityin == null || entityin.world == null || entityin.world.isRemote) return;
-
-        Entity newEntity = insanetweaks$findLatestSrpEntity(entityin.world);
-        if (newEntity == null) {
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] convertEntityReturn: could not find new SRP entity in world");
-            return;
-        }
-        insanetweaks$applySnapshot(newEntity, capture);
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] convertEntityReturn: applied '{}' -> {}",
-            capture.resourceId, newEntity.getClass().getSimpleName());
+    @Redirect(method = CONVERT_ENTITY, at = @At(value = "INVOKE", target = SPAWN_ENTITY), remap = false,
+            require = 0)
+    private static boolean insanetweaks$stampConverted(World world, Entity spawned) {
+        SrpOriginCaptureState.stampOnto(spawned);
+        return world.spawnEntity(spawned);
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    //  Pomocnicze metody
-    // ─────────────────────────────────────────────────────────────────
-
-    @Unique
-    private static OriginalSnapshot insanetweaks$captureEntity(EntityLivingBase entity) {
-        try {
-            ResourceLocation id = EntityList.getKey(entity);
-            if (id == null) {
-                InsaneTweaksMod.LOGGER.warn("[IT][DEBUG][Mixin] captureEntity: null key for {}", entity.getClass().getSimpleName());
-                return null;
-            }
-            NBTTagCompound nbt = new NBTTagCompound();
-            entity.writeToNBT(nbt);
-            nbt.removeTag("DeathTime");
-            nbt.removeTag("HurtTime");
-            nbt.removeTag("FallDistance");
-            nbt.removeTag("srpcothimmunity");
-            nbt.setFloat("Health", entity.getMaxHealth() * 0.75f);
-            insanetweaks$cleanSrpEffects(nbt);
-            InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] captureEntity: '{}' NBT keys count: {}", id, nbt.getKeySet().size());
-            return new OriginalSnapshot(id.toString(), nbt, System.currentTimeMillis());
-        } catch (Exception ex) {
-            InsaneTweaksMod.LOGGER.warn("[IT][DEBUG][Mixin] captureEntity failed: {}", ex.getMessage());
-            return null;
-        }
-    }
-
-    @Unique
-    private static void insanetweaks$applySnapshot(Entity target, OriginalSnapshot capture) {
-        NBTTagCompound data = target.getEntityData();
-        data.setString(SrpOriginSnapshotHelper.KEY_ORIGINAL_ID, capture.resourceId);
-        data.setTag(SrpOriginSnapshotHelper.KEY_ORIGINAL_NBT, capture.fullNbt.copy());
-        InsaneTweaksMod.LOGGER.info("[IT][DEBUG][Mixin] applySnapshot done. entityData keys: {}", data.getKeySet());
-    }
-
-    /** Iteruje od końca loadedEntityList — nowo addEntity() jest ostatnim elementem. */
-    @Unique
-    private static Entity insanetweaks$findLatestInhoo(World world) {
-        java.util.List<Entity> list = world.loadedEntityList;
-        for (int i = list.size() - 1; i >= 0; i--) {
-            Entity e = list.get(i);
-            if (e instanceof EntityInhooM || e instanceof EntityInhooS) return e;
-        }
-        return null;
-    }
-
-    @Unique
-    private static Entity insanetweaks$findLatestSrpEntity(World world) {
-        java.util.List<Entity> list = world.loadedEntityList;
-        for (int i = list.size() - 1; i >= 0; i--) {
-            Entity e = list.get(i);
-            if (e instanceof EntityPInfected || e instanceof EntityInhooM || e instanceof EntityInhooS) return e;
-        }
-        return null;
-    }
-
-    @Unique
-    private static void insanetweaks$cleanSrpEffects(NBTTagCompound nbt) {
-        if (!nbt.hasKey("ActiveEffects", 9)) return;
-        net.minecraft.nbt.NBTTagList effectList = nbt.getTagList("ActiveEffects", 10);
-        net.minecraft.nbt.NBTTagList cleaned    = new net.minecraft.nbt.NBTTagList();
-        for (int i = 0; i < effectList.tagCount(); i++) {
-            NBTTagCompound effect = effectList.getCompoundTagAt(i);
-            int pid = effect.getByte("Id") & 0xFF;
-            if (pid < 100) cleaned.appendTag(effect);
-        }
-        nbt.setTag("ActiveEffects", cleaned);
+    @Inject(method = CONVERT_ENTITY, at = @At("RETURN"), remap = false, require = 0)
+    private static void insanetweaks$clearAfterConvert(EntityLivingBase entityin, NBTTagCompound tags,
+            boolean ignoreKey, String[] list, CallbackInfo ci) {
+        SrpOriginCaptureState.clear();
     }
 }

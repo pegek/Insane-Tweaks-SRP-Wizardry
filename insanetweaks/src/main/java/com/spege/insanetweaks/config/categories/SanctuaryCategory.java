@@ -116,6 +116,51 @@ public class SanctuaryCategory {
     @Config.Name("Debug Logging")
     public boolean debugLogging = false;
 
+    @Config.Comment({"Drain SRP's 'dead blood' fluid (srparasites:deadblood) inside the dome, turning it to",
+            "air. Neither SRP's own PurifyMappings nor our block heuristic recognise it - its registry",
+            "path contains none of the infestation keywords - so without this it stays forever. Read live."})
+    @Config.Name("Cleanse Dead Blood")
+    public boolean cleanseDeadBlood = true;
+
+    @Config.Comment({"Max dead-blood cells drained in one pass. Dead blood is a non-finite BlockFluidClassic:",
+            "clearing a single cell just refills from its neighbours' quanta, so the whole connected",
+            "cluster has to go at once. When a drain runs it replaces that tick's normal cleanse pass.",
+            "Read live."})
+    @Config.Name("Dead Blood Drain Per Tick")
+    @Config.RangeInt(min = 16, max = 8192)
+    public int deadBloodDrainPerTick = 256;
+
+    @Config.Comment({"Make dead blood harmless inside the dome: no damage, no Corrosive/Viral, and no free",
+            "healing for parasites standing in it. Worth having even with the drain on, because the",
+            "fluid's damage writes health DIRECTLY (setHealth), bypassing armour, i-frames and",
+            "LivingHurtEvent entirely - nothing else in the pack can mitigate it.",
+            "READ LIVE: this gates the mixin's handler body, NOT whether the mixin is applied."})
+    @Config.Name("Neutralize Dead Blood")
+    public boolean neutralizeDeadBlood = true;
+
+    @Config.Comment({"Execute any SRP parasite that has spent long enough inside the dome, so a parasite can't",
+            "camp indefinitely while Purge Fire chips at it. Read live."})
+    @Config.Name("Enable Dwell Execution")
+    public boolean enableDwellExecution = true;
+
+    @Config.Comment("Ticks a parasite must accumulate inside the dome before it is executed (2400 = 2min). Read live.")
+    @Config.Name("Dwell Execution Ticks")
+    @Config.RangeInt(min = 20, max = 72000)
+    public int dwellExecutionTicks = 2400;
+
+    @Config.Comment({"How often (in ticks) the dwell counter decays for a parasite that has left the dome.",
+            "Decay rather than a hard reset, so stepping outside for a moment does not wipe the timer.",
+            "Read live."})
+    @Config.Name("Dwell Decay Interval")
+    @Config.RangeInt(min = 1, max = 200)
+    public int dwellDecayInterval = 20;
+
+    @Config.Comment({"Entity ids exempt from dwell execution, e.g. 'srparasites:overseer'. A bare entry with",
+            "no namespace matches that path in ANY namespace, so 'overseer' covers the SRParasites,",
+            "SRPExtra and SW: Parasites variants at once. Empty = nothing is exempt. Read live."})
+    @Config.Name("Dwell Execution Exempt Entities")
+    public String[] dwellExecutionExemptIds = {};
+
     @Config.Comment("Purge Fire: an active sanctuary ignites/damages parasites inside it. Read live.")
     @Config.Name("Enable Purge Fire")
     public boolean enablePurgeFire = true;

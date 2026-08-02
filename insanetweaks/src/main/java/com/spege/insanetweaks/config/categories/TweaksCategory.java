@@ -69,6 +69,19 @@ public class TweaksCategory {
     @Config.RangeInt(min = 1)
     public int zhonyaEbManaCapacity = 3000;
 
+    @Config.Comment({"Restoration Hourglass: log the origin-snapshot pipeline (what a parasite was",
+            "before SRP infected it, and what it restores to). Off by default because these lines sit",
+            "on a per-entity-join path - on a parasite-heavy pack that is thousands of lines a minute.",
+            "Real problems are still reported as warnings regardless of this flag. Read live."})
+    @Config.Name("Restoration Debug Logging")
+    public boolean restorationDebugLogging = false;
+
+    @Config.Comment({"Restoration Hourglass: enable its crafting recipe. Without it the artefact has no",
+            "acquisition path at all beyond /give - there is no loot table or quest reward for it."})
+    @Config.Name("Restoration Hourglass Recipe")
+    @Config.RequiresMcRestart
+    public boolean restorationHourglassRecipe = true;
+
     // The Bauble Fruit acquisition loop (fragment drops, sapling, corrupted fruit) moved to the
     // dedicated 'baubleFruits' category in 1.4.18 — see BaubleFruitsCategory.
 }

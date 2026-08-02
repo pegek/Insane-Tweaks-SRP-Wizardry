@@ -1,10 +1,13 @@
 package com.spege.insanetweaks.items.spellblade;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.Multimap;
 import javax.annotation.Nonnull;
+
+import com.spege.insanetweaks.api.AdvPropertyRegistry;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -62,6 +65,31 @@ public class SentientSpellblade extends BridgeSpellblade {
     @Nonnull
     public String getItemStackDisplayName(@Nonnull ItemStack stack) {
         return "\u00a7e" + super.getItemStackDisplayName(stack);
+    }
+
+    /**
+     * Adds {@code arcane_sundering} at 1900 kills, on top of the Ashen Legacy every spellblade
+     * carries.
+     *
+     * <p>This slot used to hold {@code grip} - the property face of Fleshbound - and the swap is
+     * deliberate. Fleshbound is now reached only through a Property Book, so it is something you
+     * choose to put on a weapon rather than something this one blade grows on its own, and the
+     * reward for 1900 kills is a combat property instead of a retention one.
+     *
+     * <p>Reads the stack rather than returning a constant: the same NBT-driven pattern
+     * {@code SentientWarlockArmorItem} uses for its Veil of Stasis tier. Declaring it here is what
+     * makes it real - {@code AdvPropertyResolver} is the single source
+     * {@code ArcaneSunderingHandler} asks on every hit, so the tooltip line and the effect cannot
+     * drift apart.
+     */
+    @Override
+    public List<String> getActiveAdvProperties(ItemStack stack) {
+        NBTTagCompound tag = stack.getTagCompound();
+        if (tag != null && tag.getInteger("SentientKills") >= 1900) {
+            return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY,
+                    AdvPropertyRegistry.ARCANE_SUNDERING);
+        }
+        return Arrays.asList(AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
     @Override

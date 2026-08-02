@@ -62,6 +62,11 @@ public class ModItems {
     // Loader.isModLoaded("locks") gate the item's BEHAVIOUR instead, inside AutoLockPickerItem.
     public static final Item AUTO_LOCK_PICKER = new com.spege.insanetweaks.items.AutoLockPickerItem();
 
+    // Property Book. Registered UNCONDITIONALLY, for the same reason as the Auto Lock Picker above:
+    // modules.enablePropertyBooks gates the ANVIL HANDLER, never this registry entry, so switching
+    // the module off leaves books already in a world intact (just inapplicable).
+    public static final Item PROPERTY_BOOK = new com.spege.insanetweaks.items.PropertyBookItem();
+
     // Sentient Warlock Armor (originally Battlemage)
     public static final Item SENTIENT_WARLOCK_HELMET = new com.spege.insanetweaks.items.armor.SentientWarlockArmorItem(
             net.minecraft.inventory.EntityEquipmentSlot.HEAD);
@@ -143,12 +148,20 @@ public class ModItems {
         // Always registered - see the field comment for why this one is not config-gated.
         event.getRegistry().register(AUTO_LOCK_PICKER);
 
+        // Also always registered. A registry object hidden behind a config flag DISAPPEARS from any
+        // world saved while the flag was on, which is the one thing config must never do - so the
+        // flag has to gate behaviour, not registration. This one had a second, live symptom: the
+        // passive restore path in EntityPurifyingWave runs regardless of enableSrpEbWizardryBridge,
+        // so with the bridge off it was handing an unregistered Item to ItemArtefact.isArtefactActive.
+        event.getRegistry().register(RESTORATION_HOURGLASS);
+        event.getRegistry().register(PROPERTY_BOOK);
+
         // Items gated by Golden Book module
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
             event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
             event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT);
-            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS, RESTORATION_HOURGLASS);
+            event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS);
 
             // Crafting-component clones: only register when swparasites is NOT present, so the
             // originals aren't duplicated. Recipes resolve via the OreDictionary bridge either way.
@@ -186,6 +199,8 @@ public class ModItems {
     @SubscribeEvent
     public static void registerModels(net.minecraftforge.client.event.ModelRegistryEvent event) {
         registerModel(AUTO_LOCK_PICKER);
+        registerModel(RESTORATION_HOURGLASS); // registered unconditionally - see registerItems
+        registerModel(PROPERTY_BOOK);
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             registerModel(GOLDEN_BOOK);
@@ -227,7 +242,6 @@ public class ModItems {
             registerModel(SENTIENT_AEGIS);
             registerModel(INFERNAL_CROWN);
             registerModel(ZHONYAS_HOURGLASS);
-            registerModel(RESTORATION_HOURGLASS);
         }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {

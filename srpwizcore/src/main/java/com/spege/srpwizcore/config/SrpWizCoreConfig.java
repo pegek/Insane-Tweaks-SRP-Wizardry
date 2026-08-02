@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import com.spege.srpwizcore.SrpWizCore;
+import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
@@ -20,31 +21,35 @@ import com.spege.srpwizcore.util.IandfWorldgenOverrides;
 public class SrpWizCoreConfig {
 
     @Config.Name("otgCompat")
-    @Config.Comment("OpenTerrainGenerator structure-gen null-biome guards.")
+    @Config.Comment("Crash guards for OpenTerrainGenerator terrain generation, plus the option to hide its world type.")
     public static final OtgCompatCategory otgCompat = new OtgCompatCategory();
 
     @Config.Name("futureMcCompat")
-    @Config.Comment("FutureMC bamboo worldgen race guard.")
+    @Config.Comment("Crash guard for FutureMC's bamboo generation.")
     public static final FutureMcCompatCategory futureMcCompat = new FutureMcCompatCategory();
 
     @Config.Name("threadingCompat")
-    @Config.Comment("Concurrency patches for threading coremods (EntityTracker, MapStorage, IntCache).")
+    @Config.Comment("Crash and save-corruption guards for mods that tick entities or generate chunks on more than one thread.")
     public static final ThreadingCompatCategory threadingCompat = new ThreadingCompatCategory();
 
     @Config.Name("perfGlue")
-    @Config.Comment("Performance/correctness guards for third-party pack mods (Doomlike, CQR, Raids).")
+    @Config.Comment("Performance fixes for other pack mods: Doomlike Dungeons, Chocolate Quest Repoured, Raids-Backport and Defiled Lands.")
     public static final PerfGlueCategory perfGlue = new PerfGlueCategory();
 
+    @Config.Comment("Take over natural spawning in chosen dimensions and hold their mob population to your own limits. Off by default - the shipped values are examples.")
     @Config.Name("spawnEngine")
-    @Config.Comment("SpawnEngine v1 - native per-dimension spawn control (budgets, candidate-list filtering, refill rate limiting).")
     public static final SpawnEngineCategory spawnEngine = new SpawnEngineCategory();
 
     @Config.Name("iandfWorldgen")
-    @Config.Comment("Per-dimension control over Ice&Fire worldgen (empty = native Ice&Fire).")
+    @Config.Comment("Decide per dimension which Ice & Fire structures and ores generate, and how often. Empty lists = untouched Ice & Fire.")
     public static final IandfWorldgenCategory iandfWorldgen = new IandfWorldgenCategory();
 
+    @Config.Name("cqrIntegration")
+    @Config.Comment("Arm Chocolate Quest Repoured dungeon mobs with Spartan Weaponry gear and working crossbows, plus optional boss-room and siege behaviour.")
+    public static final CqrIntegrationCategory cqrIntegration = new CqrIntegrationCategory();
+
     @Config.Name("dormantWaystones")
-    @Config.Comment("Dormant-waystone travel system (configurable key item + dimension pair).")
+    @Config.Comment("Rare surface waystones that carry you to another dimension and back. Off by default.")
     public static final DormantWaystonesCategory dormantWaystones = new DormantWaystonesCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)

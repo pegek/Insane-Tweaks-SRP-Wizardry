@@ -64,6 +64,72 @@ public class EntitiesCategory {
                 "Every value here is read live on use - no restart, no world reload."
         })
         public final Tuning tuning = new Tuning();
+
+        @Config.Name("battlemage")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.battlemage")
+        @Config.Comment({
+                "Overrides that apply to sim_battlemage ONLY. It inherits every value above; these",
+                "are the deltas that make it read as a front-line caster instead of an artillery one."
+        })
+        public final Battlemage battlemage = new Battlemage();
+    }
+
+    /**
+     * sim_battlemage behaves as a melee-first caster: while healthy it closes and swings its
+     * spellblade, and it falls back on spellcasting once wounded or when the target is out of
+     * reach. That split is what distinguishes it from sim_wizard, which is a pure artillery caster.
+     */
+    public static class Battlemage {
+
+        @Config.Comment({
+                "Above this health percentage the battlemage prefers melee over casting.",
+                "Drop below it and it reverts to sim_wizard behaviour - spells, retreat, panic.",
+                "Set to 0 to disable melee entirely and make it a plain caster."
+        })
+        @Config.Name("Melee Health Percent")
+        @Config.RangeInt(min = 0, max = 100)
+        public int meleeHealthPercent = 70;
+
+        @Config.Comment({
+                "Only engages in melee when the target is already within this many blocks.",
+                "Beyond it the battlemage stays a caster, so it never abandons ranged pressure to",
+                "sprint across a field. This is what keeps it casting SOME spells while healthy."
+        })
+        @Config.Name("Melee Engage Distance")
+        @Config.RangeDouble(min = 1.0, max = 32.0)
+        public double meleeEngageDistance = 6.0D;
+
+        @Config.Comment({
+                "Hysteresis: once engaged it keeps swinging out to this multiple of the engage",
+                "distance, so a target stepping back one block does not flip it between modes.",
+                "The AI task is polled every 3 ticks, so a hard cut-off would visibly stutter."
+        })
+        @Config.Name("Melee Disengage Multiplier")
+        @Config.RangeDouble(min = 1.0, max = 4.0)
+        public double meleeDisengageMultiplier = 1.6D;
+
+        @Config.Comment({
+                "Movement speed multiplier while closing for a melee attack.",
+                "Unlike the rest of this category this one is read when the entity is CREATED",
+                "(EntityAIAttackMelee stores it), so it applies to newly spawned battlemages only."
+        })
+        @Config.Name("Melee Move Speed")
+        @Config.RangeDouble(min = 0.1, max = 4.0)
+        public double meleeMoveSpeed = 1.15D;
+
+        @Config.Comment("Base attack damage multiplier - it carries a spellblade, so it hits harder than a sim_human.")
+        @Config.Name("Attack Damage Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double attackDamageMultiplier = 1.6D;
+
+        @Config.Comment({
+                "Every cast cooldown the battlemage pays is multiplied by this. Above 1.0 it casts",
+                "less often than a sim_wizard, which is the point: its damage budget is in the blade.",
+                "Read live - applies to the NEXT cooldown paid, not to one already running."
+        })
+        @Config.Name("Cast Cooldown Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double castCooldownMultiplier = 1.5D;
     }
 
     /**
@@ -211,6 +277,29 @@ public class EntitiesCategory {
         @Config.Name("AoE Minimum Targets")
         @Config.RangeInt(min = 2, max = 10)
         public int clusterMinTargets = 2;
+
+        @Config.Comment({
+                "Chance (%) that a met situational condition actually overrides the distance bands.",
+                "These exist to stop a single always-true condition from flattening the whole fight",
+                "onto one spell: the SLOW branch used to fire on every moving target, so ice_shard was",
+                "chosen ~90% of the time and force_orb / spark_bomb / life_drain never came up at all.",
+                "100 restores the old deterministic behaviour, 0 disables the override entirely."
+        })
+        @Config.Name("Situational Override Chance (%)")
+        @Config.RangeInt(min = 0, max = 100)
+        public int situationalOverrideChancePercent = 55;
+
+        @Config.Comment({
+                "Squared lateral speed (blocks/tick) above which a target counts as 'fast moving' and is",
+                "met with a SLOW spell.",
+                "CALIBRATION: a vanilla player WALKS at ~0.216 b/t, so the old 0.04 (= 0.2 b/t) treated",
+                "ordinary walking as sprinting. The default 0.09 (= 0.3 b/t) sits above vanilla sprint",
+                "(~0.28 b/t), so this check now catches genuinely fast mobs; players are already covered",
+                "by the explicit isSprinting() and Speed-potion checks."
+        })
+        @Config.Name("Fast Target Speed Threshold (squared)")
+        @Config.RangeDouble(min = 0.001, max = 1.0)
+        public double fastTargetSpeedSquared = 0.09D;
 
         @Config.Comment("A target above this health percentage and within the distance below is met with a KNOCKBACK opener.")
         @Config.Name("Knockback Opener Health (%)")
@@ -427,6 +516,22 @@ public class EntitiesCategory {
         })
         @Config.Name("Enable Loot Table")
         public boolean enableLootTable = true;
+
+        @Config.Comment({
+                "Always leave SRP remains (gore block + EntityRemain) on death.",
+                "",
+                "SRP itself makes this a COIN FLIP, not a certainty: EntityParasiteBase starts with",
+                "madeRng = -1 and rolls nextInt(2) the first time the parasite is damaged. On a 1,",
+                "onDeathUpdate takes the plain branch and no remains are produced at all. Every",
+                "vanilla SRP parasite behaves this way - so does sim_wizard.",
+                "",
+                "false (default) leaves that native 50/50 untouched, so this mod's casters die on",
+                "exactly the same terms as any other parasite. Set true to force the losing roll",
+                "back to 0 and make remains guaranteed.",
+                "Read live - affects entities damaged after the change."
+        })
+        @Config.Name("Always Leave Remains")
+        public boolean guaranteedRemains = false;
     }
 
     public static class Combat {
