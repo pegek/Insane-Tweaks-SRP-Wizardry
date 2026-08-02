@@ -71,7 +71,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.6.0";
+    public static final String VERSION = "1.7.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -424,6 +424,12 @@ public class InsaneTweaksMod implements IGuiHandler {
             if (Loader.isModLoaded("tombstone")) {
                 MinecraftForge.EVENT_BUS.register(
                         new com.spege.insanetweaks.tombstone.AssimilatedKnowledgeHandler());
+
+                // Alignment for the raiders of a third-party raid mod. Registered unconditionally
+                // alongside it — the handler reads raiderAlignment.enabled live, and its entity
+                // list simply matches nothing when the raid mod is absent.
+                MinecraftForge.EVENT_BUS.register(
+                        new com.spege.insanetweaks.tombstone.RaiderAlignmentHandler());
             }
 
             // Knowledge of Death tab in the inventory. Client only, and both mods must be present:

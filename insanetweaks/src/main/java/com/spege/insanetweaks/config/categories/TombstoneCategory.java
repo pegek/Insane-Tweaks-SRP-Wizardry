@@ -89,6 +89,15 @@ public class TombstoneCategory {
     public EffectPoolsConfig effectPools = new EffectPoolsConfig();
 
     // ----------------------------------------------------------------
+    // RAID BRIDGE
+    // ----------------------------------------------------------------
+    @Config.Name("raideralignment")
+    @Config.Comment({"Pays Tombstone alignment for killing the raiders of a third-party raid mod.",
+            "Tombstone only recognises the raiders of its own village siege, so on a pack that runs",
+            "a different raid system the alignment for fighting one is simply never awarded."})
+    public RaiderAlignmentConfig raiderAlignment = new RaiderAlignmentConfig();
+
+    // ----------------------------------------------------------------
     // KNOWLEDGE OF DEATH - PERK SETTINGS
     // Each perk has: enabled (bool) and maxLevel (int capped at native max)
     // Native max levels: alchemist=5, concentration=2, gladiator=5,
@@ -250,6 +259,48 @@ public class TombstoneCategory {
                 "Left empty on purpose: an empty list inherits the beneficial pool. Fill it only to give",
                 "scrolls a roster of their own."})
         public String[] magicScrollPool = {};
+    }
+
+    // ========================================================================
+    // RAID BRIDGE
+    // ========================================================================
+
+    /**
+     * Which entities count as raiders, for the alignment bridge.
+     *
+     * <p>The reward itself is not configured here on purpose: it is read from
+     * {@code tombstone.cfg -> alignment.pointsKillRaider}, so a raider killed through this bridge
+     * is worth exactly what a raider killed in Tombstone's own siege is worth, and there is one
+     * number to tune rather than two that can disagree.
+     */
+    public static class RaiderAlignmentConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment({"Award alignment for killing an entity from the list below.",
+                "Read live - no restart needed."})
+        public boolean enabled = true;
+
+        @Config.Name("Raider Entity Types")
+        @Config.Comment({"Full registry names of the entities that count as raiders. Matched exactly,",
+                "not as a prefix, so an entry names one entity and nothing else.",
+                "The default list is the wave roster of Raids-Backport minus minecraft:witch: witches",
+                "spawn naturally all over the world, so counting them would pay alignment for ordinary",
+                "swamp grinding rather than for defending a village. Add it back if your pack only",
+                "spawns witches in raids.",
+                "Names that no mod registers are simply never matched - a list for a mod you do not",
+                "have costs nothing.",
+                "Do not list anything Tombstone already rewards itself (a zombie of its own village",
+                "siege) or the kill pays out twice."})
+        public String[] raiderEntityTypes = {
+                "raids:pillager",
+                "raids:ravager",
+                "minecraft:vindication_illager",
+                "minecraft:evocation_illager",
+                "minecraft:illusion_illager" };
+
+        @Config.Name("Debug Logging")
+        @Config.Comment("Log every raider kill and the alignment it paid to the server log.")
+        public boolean debugLogging = false;
     }
 
     // ========================================================================
