@@ -47,6 +47,13 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         if (Loader.isModLoaded("setbonus")) {
             configs.add("mixins.srpwizcore.setbonus.json");
         }
+        // The Non-Euclidean Cube searches for a teleport destination by recursing up to 10 000
+        // deep on its own thread pool, where our chunk guard makes every probe miss — so the
+        // search always ends in a StackOverflowError that kills the server tick.
+        // See MixinElItemTheCube.
+        if (Loader.isModLoaded("enigmaticlegacy")) {
+            configs.add("mixins.srpwizcore.enigmatic.json");
+        }
         return configs;
     }
 
