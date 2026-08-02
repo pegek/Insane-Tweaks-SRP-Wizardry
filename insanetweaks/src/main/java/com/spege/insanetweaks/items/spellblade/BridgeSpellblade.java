@@ -187,6 +187,8 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
                         magicDmg = magicBonus / 100.0D;
                     }
 
+                    magicDmg *= com.spege.insanetweaks.config.ModConfig.gear.spellblades.magicDamageMultiplier;
+
                     if (magicDmg > 0) {
                         multimap.put(
                                 "potioncore.magicDamage",
@@ -316,7 +318,12 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
 
         if (bonusPercent > 0) {
             if (hasSynergy) {
-                float multiplier = 1.0f + (bonusPercent / 100.0f);
+                // Config scales the computed bonus rather than replacing it, so a part-evolved
+                // Living Spellblade keeps its place on the kill-count curve.
+                com.spege.insanetweaks.config.categories.GearCategory.Spellblades cfg =
+                        com.spege.insanetweaks.config.ModConfig.gear.spellblades;
+                float bonus = (bonusPercent / 100.0f) * (float) cfg.synergyPotencyMultiplier;
+                float multiplier = 1.0f + bonus;
 
                 // Nerf runewords: reduce our custom synergy bonus by half specifically for
                 // Runewords
@@ -325,7 +332,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
                 if (spell.getRegistryName() != null
                         && "ancientspellcraft".equals(spell.getRegistryName().getResourceDomain())
                         && spell.getRegistryName().getResourcePath().contains("runeword")) {
-                    multiplier = 1.0f + ((bonusPercent / 100.0f) * 0.5f);
+                    multiplier = 1.0f + (bonus * (float) cfg.runewordSynergyMultiplier);
                 }
 
                 modifiers.set(SpellModifiers.POTENCY, multiplier, true);

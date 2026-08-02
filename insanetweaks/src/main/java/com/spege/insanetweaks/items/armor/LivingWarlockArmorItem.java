@@ -74,6 +74,11 @@ public class LivingWarlockArmorItem extends ItemWizardArmour implements ITweaksP
                 
             double customToughness = 2.5d;
 
+            com.spege.insanetweaks.config.categories.GearCategory.Armour cfg =
+                    com.spege.insanetweaks.config.ModConfig.gear.armour;
+            customArmor *= cfg.livingWarlockArmorMultiplier;
+            customToughness *= cfg.livingWarlockToughnessMultiplier;
+
             multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuid, "Armor modifier", customArmor, 0));
             multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuid, "Armor toughness", customToughness, 0));
         }
@@ -90,6 +95,10 @@ public class LivingWarlockArmorItem extends ItemWizardArmour implements ITweaksP
         // reduction per piece (unchanged from the original Groovy implementation).
         ItemStack equippedPiece = caster.getItemStackFromSlot(this.armorType);
         float reduction = getSpellReductionPercent(equippedPiece) / 100.0f;
+
+        // Scaled rather than replaced: this value grows with absorbed damage, so a multiplier
+        // keeps part-adapted armour on its own curve.
+        reduction *= (float) com.spege.insanetweaks.config.ModConfig.gear.armour.spellDiscountMultiplier;
 
         float multiplier = 1.0f - reduction;
         modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * multiplier), false);

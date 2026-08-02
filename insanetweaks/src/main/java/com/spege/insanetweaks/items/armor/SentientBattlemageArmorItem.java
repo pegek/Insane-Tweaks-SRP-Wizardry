@@ -78,6 +78,11 @@ public class SentientBattlemageArmorItem extends ItemWizardArmour implements ITw
                 
             double customToughness = 4.0d;
 
+            com.spege.insanetweaks.config.categories.GearCategory.Armour cfg =
+                    com.spege.insanetweaks.config.ModConfig.gear.armour;
+            customArmor *= cfg.sentientBattlemageArmorMultiplier;
+            customToughness *= cfg.sentientBattlemageToughnessMultiplier;
+
             multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuid, "Armor modifier", customArmor, 0));
             multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuid, "Armor toughness", customToughness, 0));
         }
@@ -88,8 +93,10 @@ public class SentientBattlemageArmorItem extends ItemWizardArmour implements ITw
     @Override
     @SuppressWarnings("null")
     public void applySpellModifiers(EntityLivingBase caster, Spell spell, SpellModifiers modifiers) {
-        // Flat 2% reduction per piece for Sentient Battlemage (and NO ward as per user's request)
-        float multiplier = 1.0f - 0.02f;
+        // Flat 2% reduction per piece for Sentient Battlemage (and NO ward as per user's request),
+        // scaled by the shared multiplier.
+        float multiplier = 1.0f - 0.02f
+                * (float) com.spege.insanetweaks.config.ModConfig.gear.armour.spellDiscountMultiplier;
         modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * multiplier), false);
         modifiers.set(SpellModifiers.CHARGEUP, (modifiers.get(SpellModifiers.CHARGEUP) * multiplier), false);
         modifiers.set("cooldown", (modifiers.get("cooldown") * multiplier), true);

@@ -57,8 +57,10 @@ public class SentientAegisItem extends ItemBattlemageShield implements ITweaksPr
             UUID uuidArmor = equipmentSlot == EntityEquipmentSlot.MAINHAND ? ARMOR_MAIN_UUID : ARMOR_OFF_UUID;
             UUID uuidToughness = equipmentSlot == EntityEquipmentSlot.MAINHAND ? TOUGHNESS_MAIN_UUID : TOUGHNESS_OFF_UUID;
              
-            if (uuidArmor != null) multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuidArmor, "Armor modifier", 3.0D, 0));
-            if (uuidToughness != null) multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuidToughness, "Armor toughness", 3.0D, 0));
+            com.spege.insanetweaks.config.categories.GearCategory.Aegis cfg =
+                    com.spege.insanetweaks.config.ModConfig.gear.aegis;
+            if (uuidArmor != null) multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuidArmor, "Armor modifier", cfg.sentientArmor, 0));
+            if (uuidToughness != null) multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuidToughness, "Armor toughness", cfg.sentientToughness, 0));
         }
         return multimap;
     }

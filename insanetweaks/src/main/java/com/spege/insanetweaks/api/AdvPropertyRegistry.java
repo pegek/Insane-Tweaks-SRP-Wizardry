@@ -65,7 +65,7 @@ public class AdvPropertyRegistry {
 
         /** @return true when a Property Book for this may be applied to {@code stack}. */
         public boolean canApplyTo(ItemStack stack) {
-            return this.bookGrantable && stack != null && !stack.isEmpty()
+            return this.bookGrantable && isEnabled(this.id) && stack != null && !stack.isEmpty()
                     && this.applicability.test(stack);
         }
 
@@ -115,6 +115,38 @@ public class AdvPropertyRegistry {
         register(new Property(ETHEREAL_SHELL, "Veil of Stasis", TextFormatting.DARK_GRAY));
         register(new Property(ETHEREAL_SHELL_AWAKENED, "Awakened Veil of Stasis",
                 TextFormatting.LIGHT_PURPLE));
+    }
+
+    /**
+     * Whether a property is switched on in the config ({@code gear.properties}).
+     *
+     * <p>A disabled property is invisible to every consumer at once, because
+     * {@code AdvPropertyResolver} filters on this and the resolver is the single answer to "what
+     * does this stack have": no tooltip line, no effect, and no Property Book may be applied for
+     * it. Nothing is erased - a property already written into a stack's NBT stays there, so
+     * turning the option back on restores it everywhere, on those stacks included.
+     *
+     * <p>Ids this mod does not own are always enabled: they belong to whoever registered them.
+     */
+    public static boolean isEnabled(String id) {
+        com.spege.insanetweaks.config.categories.GearCategory.Properties cfg =
+                com.spege.insanetweaks.config.ModConfig.gear.properties;
+        if (ASHEN_LEGACY.equals(id)) {
+            return cfg.ashenLegacy;
+        }
+        if (ARMOR_LAST_STAND.equals(id)) {
+            return cfg.graveDefiance;
+        }
+        if (ETHEREAL_SHELL.equals(id) || ETHEREAL_SHELL_AWAKENED.equals(id)) {
+            return cfg.veilOfStasis;
+        }
+        if (GRIP.equals(id)) {
+            return cfg.fleshbound;
+        }
+        if (ARCANE_SUNDERING.equals(id)) {
+            return cfg.arcaneSundering;
+        }
+        return true;
     }
 
     /** Adds a property. Re-registering an id replaces the previous entry. */

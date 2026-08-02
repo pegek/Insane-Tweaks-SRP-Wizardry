@@ -78,6 +78,13 @@ public class ArmorEventHandler {
         // always measures the true incoming hit, not the already-discounted value.
         final float rawDamage = event.getAmount();
         float totalReductionPercent = (0.01f * sentientArmorCount) + (0.005f * awakenedSentientCount);
+        // Veil of Stasis is a named property, so gear.properties can switch it off. Only the
+        // reduction is gated - the evolution tracking below still runs, so armour keeps
+        // progressing normally whether or not the property is on.
+        if (!com.spege.insanetweaks.api.AdvPropertyRegistry
+                .isEnabled(com.spege.insanetweaks.api.AdvPropertyRegistry.ETHEREAL_SHELL)) {
+            totalReductionPercent = 0.0f;
+        }
         if (totalReductionPercent > 0) {
             float multiplier = 1.0f - totalReductionPercent;
             event.setAmount(rawDamage * multiplier);
@@ -180,6 +187,11 @@ public class ArmorEventHandler {
         if (player.world.isRemote)
             return;
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge)
+            return;
+        // This IS Grave Defiance. Gated here as well as in the tooltip so switching the property
+        // off actually stops the death save rather than just hiding the line.
+        if (!com.spege.insanetweaks.api.AdvPropertyRegistry
+                .isEnabled(com.spege.insanetweaks.api.AdvPropertyRegistry.ARMOR_LAST_STAND))
             return;
 
         // Require: all 4 armor slots must be exclusively Living or Sentient pieces.

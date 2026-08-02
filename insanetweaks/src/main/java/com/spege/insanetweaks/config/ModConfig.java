@@ -8,6 +8,7 @@ import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
+import com.spege.insanetweaks.config.categories.GearCategory;
 import com.spege.insanetweaks.config.categories.PropertyBooksCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
@@ -42,6 +43,11 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.baubleFruits")
     @Config.Comment("Bauble Fruits: consumption cap, tooltip counter, and the corrupted seed/sapling/fruit loop.")
     public static final BaubleFruitsCategory baubleFruits = new BaubleFruitsCategory();
+
+    @Config.Name("gear")
+    @Config.LangKey("config.insanetweaks.category.gear")
+    @Config.Comment("The Living/Sentient gear line: Spellblades, Aegis shields, armour sets, wands, their advanced properties, and which of them are obtainable.")
+    public static final GearCategory gear = new GearCategory();
 
     @Config.Name("interactions")
     @Config.LangKey("config.insanetweaks.category.interactions")

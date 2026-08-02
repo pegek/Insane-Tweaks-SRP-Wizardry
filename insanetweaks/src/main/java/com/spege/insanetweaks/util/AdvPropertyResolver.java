@@ -56,7 +56,9 @@ public final class AdvPropertyResolver {
             List<String> fromClass = ((ITweaksPropertyHolder) item).getActiveAdvProperties(stack);
             if (fromClass != null) {
                 for (String id : fromClass) {
-                    if (id != null && !resolved.contains(id)) {
+                    // gear.properties can switch an individual property off. Filtering here rather
+                    // than at each source means one check covers all three of them.
+                    if (id != null && !resolved.contains(id) && AdvPropertyRegistry.isEnabled(id)) {
                         resolved.add(id);
                     }
                 }
@@ -64,12 +66,13 @@ public final class AdvPropertyResolver {
         }
 
         for (String id : AdvPropertyStorage.read(stack)) {
-            if (!resolved.contains(id)) {
+            if (!resolved.contains(id) && AdvPropertyRegistry.isEnabled(id)) {
                 resolved.add(id);
             }
         }
 
-        if (ModConfig.enchantments.sentientCodex.conferAshenLegacy
+        if (AdvPropertyRegistry.isEnabled(AdvPropertyRegistry.ASHEN_LEGACY)
+                && ModConfig.enchantments.sentientCodex.conferAshenLegacy
                 && EnchantmentSentientCodex.hasSentientCodex(stack)
                 && !resolved.contains(AdvPropertyRegistry.ASHEN_LEGACY)) {
             resolved.add(AdvPropertyRegistry.ASHEN_LEGACY);
@@ -81,7 +84,8 @@ public final class AdvPropertyResolver {
 
     /** Whether this stack has {@code propertyId} from any source. */
     public static boolean has(ItemStack stack, String propertyId) {
-        if (stack == null || stack.isEmpty() || propertyId == null) {
+        if (stack == null || stack.isEmpty() || propertyId == null
+                || !AdvPropertyRegistry.isEnabled(propertyId)) {
             return false;
         }
 

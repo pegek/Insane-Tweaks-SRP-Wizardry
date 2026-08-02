@@ -94,7 +94,7 @@ public class SentientSpellblade extends BridgeSpellblade {
 
     @Override
     public float getBaseAttackDamage() {
-        return 22.0f;
+        return (float) com.spege.insanetweaks.config.ModConfig.gear.spellblades.sentientAttackDamage;
     }
 
     // ==========================================================
@@ -235,7 +235,9 @@ public class SentientSpellblade extends BridgeSpellblade {
                 }
 
                 if (mainMod != null) {
-                    double customAttackDamage = 22.0d;
+                    // Single source with getBaseAttackDamage() - these used to be two copies of
+                    // the same literal, which is exactly how they would drift apart.
+                    double customAttackDamage = getBaseAttackDamage();
                     double finalDamage = customAttackDamage;
 
                     int level = WandHelper.getUpgradeLevel(stack, WizardryItems.melee_upgrade);
@@ -247,7 +249,8 @@ public class SentientSpellblade extends BridgeSpellblade {
                     if (level > 0 && (innateManaAvailable || anyManaAvailable)) {
                         finalDamage = customAttackDamage + level;
                     } else if (!innateManaAvailable && !anyManaAvailable && stack.hasTagCompound()) {
-                        finalDamage = customAttackDamage * 0.5d;
+                        finalDamage = customAttackDamage
+                                * com.spege.insanetweaks.config.ModConfig.gear.spellblades.outOfManaDamageMultiplier;
                     }
 
                     if (anyManaAvailable && stack.hasTagCompound()) {

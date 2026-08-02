@@ -43,7 +43,7 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
     public SpellModifiers calculateModifiers(ItemStack stack, EntityPlayer player, Spell spell) {
         SpellModifiers modifiers = super.calculateModifiers(stack, player, spell);
 
-        float customPotency = 1.0f + this.basePotencyBonus;
+        float customPotency = 1.0f + this.getPotencyBonus();
         modifiers.set(SpellModifiers.POTENCY, customPotency, true);
 
         int points = 0;
@@ -82,10 +82,20 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
             chargeupReduction = 0.20f;
             cooldownReduction = 0.20f;
 
-            if (points >= 10000) {
+            if (points >= 10000 && com.spege.insanetweaks.config.ModConfig.gear.wands.sentientExtraMinion) {
                 modifiers.set("minion_count", modifiers.get("minion_count") + 1.0f, false);
             }
         }
+
+        // Every bonus above is derived from evolution progress, so config scales the computed
+        // value instead of replacing it - a part-evolved wand stays where it is on its curve.
+        com.spege.insanetweaks.config.categories.GearCategory.Wands wandCfg =
+                com.spege.insanetweaks.config.ModConfig.gear.wands;
+        durationBonus *= (float) wandCfg.durationMultiplier;
+        minionHealthBonus *= (float) wandCfg.minionHealthMultiplier;
+        costReduction *= (float) wandCfg.spellDiscountMultiplier;
+        chargeupReduction *= (float) wandCfg.spellDiscountMultiplier;
+        cooldownReduction *= (float) wandCfg.spellDiscountMultiplier;
 
         modifiers.set("minion_health", modifiers.get("minion_health") + minionHealthBonus, false);
         modifiers.set("duration", modifiers.get("duration") + durationBonus, false);
@@ -104,7 +114,20 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
         return false;
     }
 
+    /**
+     * The wand's flat spell-power bonus. Config overrides it for the two wands this mod ships;
+     * anything else built on this class keeps the value it was constructed with.
+     */
     public float getPotencyBonus() {
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_wand".equals(reg.getResourcePath())) {
+                return (float) com.spege.insanetweaks.config.ModConfig.gear.wands.livingPotencyBonus;
+            }
+            if ("sentient_wand".equals(reg.getResourcePath())) {
+                return (float) com.spege.insanetweaks.config.ModConfig.gear.wands.sentientPotencyBonus;
+            }
+        }
         return this.basePotencyBonus;
     }
 
@@ -116,14 +139,16 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
         return AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(this.getArcaneAdaptationLevel(stack));
     }
 
+    /** Scaled here rather than at the call site so the tooltip and the effect cannot disagree. */
     public int getMagicDamageBonusPercent(ItemStack stack) {
         ResourceLocation reg = this.getRegistryName();
+        double multiplier = com.spege.insanetweaks.config.ModConfig.gear.wands.magicDamageMultiplier;
         if (reg != null) {
             if ("living_wand".equals(reg.getResourcePath())) {
-                return 5;
+                return (int) Math.round(5 * multiplier);
             }
             if ("sentient_wand".equals(reg.getResourcePath())) {
-                return 10;
+                return (int) Math.round(10 * multiplier);
             }
         }
 

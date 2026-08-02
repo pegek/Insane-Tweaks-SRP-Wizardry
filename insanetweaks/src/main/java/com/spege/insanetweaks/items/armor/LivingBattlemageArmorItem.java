@@ -82,6 +82,11 @@ public class LivingBattlemageArmorItem extends ItemWizardArmour implements ITwea
                 
             double customToughness = 3.0d;
 
+            com.spege.insanetweaks.config.categories.GearCategory.Armour cfg =
+                    com.spege.insanetweaks.config.ModConfig.gear.armour;
+            customArmor *= cfg.livingBattlemageArmorMultiplier;
+            customToughness *= cfg.livingBattlemageToughnessMultiplier;
+
             multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(uuid, "Armor modifier", customArmor, 0));
             multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(uuid, "Armor toughness", customToughness, 0));
         }
@@ -92,8 +97,9 @@ public class LivingBattlemageArmorItem extends ItemWizardArmour implements ITwea
     @Override
     @SuppressWarnings("null")
     public void applySpellModifiers(EntityLivingBase caster, Spell spell, SpellModifiers modifiers) {
-        // Flat 1% reduction per piece for Living Battlemage
-        float multiplier = 1.0f - 0.01f;
+        // Flat 1% reduction per piece for Living Battlemage, scaled by the shared multiplier.
+        float multiplier = 1.0f - 0.01f
+                * (float) com.spege.insanetweaks.config.ModConfig.gear.armour.spellDiscountMultiplier;
         modifiers.set(SpellModifiers.COST, (modifiers.get(SpellModifiers.COST) * multiplier), false);
         modifiers.set(SpellModifiers.CHARGEUP, (modifiers.get(SpellModifiers.CHARGEUP) * multiplier), false);
         modifiers.set("cooldown", (modifiers.get("cooldown") * multiplier), true);
