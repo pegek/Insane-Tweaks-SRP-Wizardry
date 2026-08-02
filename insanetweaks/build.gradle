@@ -15,7 +15,7 @@ repositories {
     }
 }
 
-version = '1.5.0'
+version = '1.6.0'
 group = 'com.spege.insanetweaks'
 archivesBaseName = 'insanetweaks'
 
@@ -60,7 +60,7 @@ jar {
         attributes([
             "Specification-Title": "insanetweaks SRP&Wizardry",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.5.0",
+            "Specification-Version": "1.6.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
