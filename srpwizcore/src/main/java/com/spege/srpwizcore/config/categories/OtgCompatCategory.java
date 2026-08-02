@@ -19,23 +19,27 @@ import net.minecraftforge.common.config.Config;
 public class OtgCompatCategory {
 
     @Config.Comment({
-            "Fix OTG structure generators (Nether Fortress, Mineshaft) crashing with NPE",
-            "when the biome lookup returns null (virtual biomes in OTG dimensions like Underneath).",
-            "When true, the structure's canSpawnStructureAtCoords returns false for null biomes",
-            "instead of crashing. Requires MC restart (mixin gate). Default ON."
+            "Stops the server crashing while generating terrain in an OpenTerrainGenerator dimension.",
+            "In OTG dimensions whose biomes are all remapped to something else, OTG can fail to work",
+            "out which biome a spot belongs to. Nether fortress and mineshaft generation do not expect",
+            "that and crash the server outright.",
+            "With this ON, those two generators simply place no structure there instead of crashing.",
+            "Does nothing unless OpenTerrainGenerator is installed. Requires a restart. Default ON."
     })
     @Config.Name("Fix: OTG Structure Gen Null Biome")
     @Config.RequiresMcRestart
     public boolean fixStructureGenNullBiome = true;
 
     @Config.Comment({
-            "Hide OpenTerrainGenerator's 'OTG' world type from the vanilla Create-World",
-            "world-type selector button. Since B1 the Underneath (dim 150) is auto-injected",
-            "into the vanilla Default overworld, so the standalone 'OTG' world type is",
-            "redundant and picking it would bypass the intended generation. Existing OTG-type",
-            "saves still load normally (parseWorldType ignores this flag). Toggles live.",
-            "No-op when OTG is not installed. Default ON."
+            "Hide OpenTerrainGenerator's 'OTG' entry from the world-type button on the Create World",
+            "screen.",
+            "Useful for a pack that injects its OTG dimensions into a normal Overworld and does not",
+            "want players picking the OTG world type by accident. Worlds already created with it still",
+            "load normally.",
+            "Only enable this if your pack is set up that way - on a plain OTG setup it hides an option",
+            "players need. Does nothing unless OTG is installed.",
+            "No restart needed. Default OFF."
     })
     @Config.Name("Hide: OTG World Type In Create Menu")
-    public boolean hideOtgWorldType = true;
+    public boolean hideOtgWorldType = false;
 }

@@ -28,140 +28,124 @@ import net.minecraftforge.common.config.Config;
 public class SrpCompatCategory {
 
     @Config.Comment({
-            "Diagnostic logging for the SRP-compat module.",
-            "When true, logs the real despawn channel that removes beckons/nexuses and the",
-            "dimension-points init sequence (addDim / setTotalKills / choice multiplier).",
-            "Read live at runtime - can be toggled without a restart. Verbose; leave OFF in normal play."
+            "Extra logging for this mod, for when something is not behaving and you want to know why.",
+            "Logs what actually removed a Beckon or Nexus, and how each dimension's evolution points",
+            "were set up at world load.",
+            "Very noisy - only turn it on while investigating something. No restart needed. Default OFF."
     })
     @Config.Name("Debug Logging")
     public boolean debugLogging = false;
 
     @Config.Comment({
-            "Fix A - stop SRP's over-cap parasite purge from deleting flagged entities.",
-            "When the parasite population exceeds the spawning mob cap, SRP's custom spawner",
-            "(SRPSpawning$DimensionHandler.onSpawn, the 'SOO MANY PARASITES' cull) calls setDead",
-            "on nearby parasites one by one - blindly, ignoring the cannot-despawn flag. That is",
-            "what silently deletes summoned/important beckons and nexuses (confirmed via diag).",
-            "With this ON, the cull always skips beckons/nexuses (SRP registry name beckon/venkrol/",
-            "nexus), and additionally skips ANY parasite within 'Cap Purge Protect Radius' of a player",
-            "(see below). Parasites far from every player are still culled, so the mob cap is still",
-            "enforced where the player can't see it.",
-            "Read live (no restart): the mixin is always applied and this flag is an",
-            "early-return at method entry. Default OFF."
+            "Stops parasites vanishing in front of you when the population hits its cap.",
+            "When there are too many parasites in a dimension, SRP deletes some of them - and it does",
+            "not check whether they were meant to stay, so a Beckon or Nexus you were fighting can",
+            "disappear mid-fight.",
+            "With this ON, Beckons and Nexuses are never deleted this way, and no parasite is deleted",
+            "while it is close to a player (see the two radius options below). Parasites far from",
+            "everyone are still removed, so the cap still does its job.",
+            "Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Fix: Protect Non-Despawnable From Cap Purge")
     public boolean protectNonDespawnableFromCapPurge = false;
 
     @Config.Comment({
-            "Radius (blocks) around each player inside which ORDINARY parasites are spared from the",
-            "over-cap 'SOO MANY PARASITES' cull (only applies when the fix above is ON). Parasites",
-            "farther than this from every player are still culled. 0 = no near-player protection for",
-            "ordinary parasites. Lower it if a huge nearby horde hurts performance. Read live (no restart)."
+            "How close (in blocks) an ordinary parasite has to be to a player to be spared from the",
+            "over-population cull. Only used when the fix above is ON.",
+            "Lower this if a big horde right next to you is hurting performance. 0 = no protection",
+            "for ordinary parasites at all. No restart needed."
     })
     @Config.Name("Cap Purge Protect Radius")
     @Config.RangeInt(min = 0, max = 256)
     public int capPurgeProtectRadius = 48;
 
     @Config.Comment({
-            "Radius (blocks) around each player inside which BECKONS/NEXUSES are spared from the",
-            "over-cap cull. Separate from (and normally larger than) the ordinary radius so deterrent",
-            "structures survive over a wider area - but beyond this distance even they can be culled,",
-            "so beckons don't pile up forever far from any player. 0 = beckons/nexuses are never",
-            "specially protected (culled like anything else). Read live (no restart)."
+            "The same thing for Beckons and Nexuses, which normally deserve a wider safety zone so",
+            "they are not wiped out from across the map. Beyond this distance even they can be culled,",
+            "so they do not pile up forever in chunks nobody visits.",
+            "0 = they get no special protection. No restart needed."
     })
     @Config.Name("Beckon/Nexus Cap Purge Radius")
     @Config.RangeInt(min = 0, max = 2048)
     public int beckonCapPurgeRadius = 200;
 
     @Config.Comment({
-            "Fix B - honor the per-dimension starting POINTS token in the SRP config option",
-            "'Evolution Phases Dimension Starting Phase List' (format dim;phase;points).",
-            "On 1.10.7 the config-init calls setTotalKills with canChangePhase=false, which does",
-            "not persist the value, so every fresh dimension keeps 'Default Points Start' (-300)",
-            "regardless of the configured points (confirmed via diag: dim 111 configured 600M",
-            "ended up -300, then degraded a phase on the first point tick). Phase -2 dimensions",
-            "are rejected outright. With this ON, the starting-list points are written directly",
-            "at world-data creation so each dimension starts with exactly the configured value.",
-            "Read live (no restart): the mixin is always applied and this flag is an",
-            "early-return at method entry. Default OFF."
+            "Makes SRP actually use the starting evolution points you configured per dimension.",
+            "In SRP's own config you can write 'dimension;phase;points' to give a dimension a head",
+            "start - but on 1.10.7 the points part is thrown away, so every new dimension silently",
+            "falls back to the global default instead.",
+            "With this ON, the configured value is written when the dimension is first created.",
+            "Set it up in SRP's config first; this only makes that setting stick.",
+            "Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Fix: Apply Starting Points")
     public boolean fixStartingPoints = false;
 
     @Config.Comment({
-            "P3 (mobcapmulti) - enable per-dimension parasite mob-cap multipliers.",
-            "SRP's spawn caps are global; this lets a dimension use a fraction (or multiple) of the",
-            "spawning cap. Scales SRPConfig.worldSpawningMobCap (the population the 'SOO MANY",
-            "PARASITES' cull trims down to) for dimensions listed in 'Per-Dimension Mob Cap",
-            "Multipliers' below. Dimensions without an entry are unaffected.",
-            "Read live (no restart): the mixin is always applied and this flag is an",
-            "early-return at method entry. Default OFF."
+            "Lets you set a different parasite population cap per dimension.",
+            "SRP's cap is a single global number, so a parasite dimension and your home dimension",
+            "have to share it. With this ON, the dimensions you list below get their own multiplier.",
+            "Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Enable Per-Dimension Mob Cap")
     public boolean enablePerDimMobCap = false;
 
     @Config.Comment({
-            "Per-dimension parasite spawning-cap multipliers, one entry per line as 'dim=multiplier'.",
-            "Only applies when 'Enable Per-Dimension Mob Cap' is ON. Multiplier < 1 lowers the cap,",
-            "> 1 raises it. Example: '111=0.75' gives Lost Cities (dim 111) a 25% lower parasite cap.",
-            "Read live (no restart). Malformed entries are ignored."
+            "One entry per line, written as 'dimension=multiplier'.",
+            "Below 1 lowers the cap, above 1 raises it. For example '111=0.75' gives dimension 111",
+            "a quarter fewer parasites than the global cap allows.",
+            "Only used when the option above is ON. Dimensions you do not list are unaffected.",
+            "Bad entries are ignored. No restart needed."
     })
     @Config.Name("Per-Dimension Mob Cap Multipliers")
     public String[] perDimMobCapMultipliers = new String[] { "111=0.75" };
 
     @Config.Comment({
-            "Fix C - route evolution-point writes from worker threads onto the server thread.",
-            "EntityThreading ticks entities on worker threads; SRP entity code (e.g. the COTH",
-            "duration refresh) then calls SRPSaveData.setTotalKills concurrently with the server",
-            "thread, corrupting the parallel ArrayLists that hold per-dimension points/phases.",
-            "With this ON, a setTotalKills call arriving off-thread is re-scheduled onto the main",
-            "thread (the caller gets 'false'; the write lands a fraction of a tick later).",
-            "REQUIRED before unlocking parasites in any dimension while EntityThreading is active.",
-            "Read live (no restart): the mixin is always applied and this flag is an",
-            "early-return at method entry. Default OFF."
+            "Required if you run a mod that ticks entities on more than one thread (EntityThreading).",
+            "SRP keeps each dimension's evolution points and phase in lists that are not safe to write",
+            "from two threads at once, so a parasite ticked on a worker thread can corrupt them - your",
+            "world ends up with wrong phases or points that jump around.",
+            "With this ON, such writes are handed back to the main thread and land a fraction of a",
+            "second later instead of corrupting anything.",
+            "Turn this ON before unlocking parasites in more than one dimension while a threading mod",
+            "is installed. Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Fix: SaveData Thread Safety")
     public boolean fixSaveDataThreadSafety = false;
 
     @Config.Comment({
-            "Fix D - serialize the creation path of SRPSaveData.get, which is static and",
-            "unsynchronized. On the server it does getOrLoadData and, when that returns null,",
-            "creates the instance and registers it in the world's MapStorage. Entity AI and block",
-            "code call it constantly, so with EntityThreading it runs on worker threads. Two races",
-            "follow: (1) MapStorage appends to a plain ArrayList, and a torn concurrent add leaves a",
-            "null hole that later TRUNCATES the world save (crash 2026-07-26 00:36); (2) two threads",
-            "can both see null and both create an instance - one is orphaned and the points written",
-            "into it are lost. With this ON the whole check-then-create runs under a lock; behavior",
-            "is otherwise identical to SRP (the client path is untouched).",
-            "NOTE: the mixin takes over the server-side body of get() - re-verify it after an SRP",
-            "version bump. Pairs with 'Fix: SaveData Thread Safety' above.",
-            "Read live (no restart): the mixin is always applied and this flag is an",
-            "early-return at method entry. Default OFF."
+            "The companion to the fix above, for the moment SRP's save data is first created.",
+            "That code is not thread-safe either: two threads can create it at the same time, which",
+            "either loses every point written into the discarded copy, or corrupts the world's save-data",
+            "list badly enough to cut the world save short.",
+            "With this ON that step runs one thread at a time. Nothing else changes.",
+            "Turn it on together with the fix above if you run a threading mod.",
+            "Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Fix: SaveData Get Race")
     public boolean fixSaveDataGetRace = false;
 
     @Config.Comment({
-            "Perf - reject doomed setTotalKills calls cheaply at method entry.",
-            "SRP computes the 'choice' multiplier and builds debug/CSV log data BEFORE checking",
-            "whether the dimension can actually gain/lose points (gaining off, phase -2). Infestation",
-            "blocks call this on EVERY random tick (~1100/s at node area ~550), so a locked overworld",
-            "burns CPU on calls that are always rejected. With this ON, the exact same rejection",
-            "conditions are evaluated first and such calls return false immediately.",
-            "Only runs on the server thread (the getters mutate on unknown dims). Behavior is",
-            "identical to unmodified SRP - only wasted work is skipped.",
-            "Read live at call time (no restart needed). Default OFF."
+            "Performance: stop SRP doing expensive bookkeeping for point updates it is going to throw",
+            "away anyway.",
+            "Infestation blocks ask SRP to add evolution points on nearly every block tick - roughly a",
+            "thousand times a second in a developed infestation - and in a dimension where parasites",
+            "cannot gain points those requests are all rejected, but only after the work is done.",
+            "With this ON the rejection happens first. The result is identical to unmodified SRP,",
+            "it just costs less.",
+            "Takes effect immediately, no restart. Default OFF."
     })
     @Config.Name("Perf: Early Reject SetTotalKills")
     public boolean perfEarlyRejectSetTotalKills = false;
 
     @Config.Comment({
-            "Perf - infestation spread throttle divisor. SRP's infestation blocks",
-            "(BlockParasiteSpreading/BlockInfestedRemain) do their full spread + evolution-point",
-            "work on every update tick (~1100/s at node area ~550). With divisor N, only ~1/N of",
-            "those ticks run; the rest are skipped at method entry. Visual spread continues at 1/N",
-            "pace - throttle, don't disable (the creep IS the atmosphere). 1 = off (vanilla SRP).",
-            "Read live at call time (no restart). Default 1."
+            "Slows down how fast parasite infestation spreads across blocks, and cuts the server load",
+            "it causes by the same amount. In a heavily infested world this is one of the biggest tick",
+            "costs in the game.",
+            "2 = half speed, 4 = quarter speed, and so on. 1 = untouched SRP behaviour.",
+            "The creep still spreads and still looks the same, it just takes longer - which is usually",
+            "what you want rather than turning it off.",
+            "Takes effect immediately, no restart. Default 1."
     })
     @Config.Name("Perf: Infestation Spread Throttle Divisor")
     @Config.RangeInt(min = 1, max = 64)

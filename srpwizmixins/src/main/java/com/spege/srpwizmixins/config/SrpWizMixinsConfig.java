@@ -13,7 +13,7 @@ import com.spege.srpwizmixins.config.categories.SrpCompatCategory;
 public class SrpWizMixinsConfig {
 
     @Config.Name("srpCompat")
-    @Config.Comment("Native SRParasites 1.10.7 fixes — each toggle independent.")
+    @Config.Comment("Optional fixes for Scape and Run: Parasites 1.10.7. Every one is independent and off by default - turn on only what you need.")
     public static final SrpCompatCategory srpCompat = new SrpCompatCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizMixins.MODID)

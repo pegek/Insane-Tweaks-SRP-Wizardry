@@ -4,7 +4,7 @@ import net.minecraftforge.common.config.Config;
 
 /**
  * Small performance/correctness guards for third-party pack mods (Doomlike Dungeons, Chocolate
- * Quest Repoured, Raids-Backport).
+ * Quest Repoured, Raids-Backport, Defiled Lands).
  *
  * <p>Each mixin config is queued only when its mod is present, but none of them declares an
  * {@code IMixinConfigPlugin} — so these flags do <b>not</b> gate mixin application. They are
@@ -13,46 +13,51 @@ import net.minecraftforge.common.config.Config;
 public class PerfGlueCategory {
 
     @Config.Comment({
-            "Doomlike Dungeons: skip building dungeon plans whose map is null instead of",
-            "throwing an NPE per chunk the plan spans (364 exceptions / 6393 log lines in one",
-            "three-minute burst, dim 150, 2026-07-26). Adds and removes no dungeons — the",
-            "original code could not build those plans either, it only threw on the way out.",
-            "Read live at call time (no restart). Default ON."
+            "Doomlike Dungeons: stop a broken dungeon plan from flooding the log with errors.",
+            "When a dungeon fails to lay itself out, the mod throws an error for every single chunk",
+            "that dungeon would have covered - hundreds of them in a few seconds, which lags the",
+            "server and buries anything useful in the log.",
+            "With this ON the failed plan is skipped quietly. No dungeon is added or removed: the",
+            "mod could not build that one either way.",
+            "Does nothing unless Doomlike Dungeons is installed. No restart needed. Default ON."
     })
     @Config.Name("Doomlike: Null Dungeon Map Guard")
     public boolean doomlikeNullMapGuard = true;
 
     @Config.Comment({
-            "CQR: skip getNearestStructurePos ring scans in OpenTerrainGenerator dimensions for",
-            "structures disabled in that dimension's WorldConfig. Such a scan can never find",
-            "anything and always runs to the attempt limit (measured 143.6 s = 49.4% of the",
-            "dim-150 worldgen profile, 2026-07-26). The guard returns the same 'nothing in",
-            "range' answer a completed scan would have, so dungeon placement is unchanged.",
-            "Read live at call time (no restart). Default ON."
+            "Chocolate Quest Repoured: skip searches for structures that cannot exist.",
+            "When something asks CQR for the nearest structure of a type that is switched off in an",
+            "OpenTerrainGenerator dimension, CQR searches outward to its limit before giving up - and",
+            "that search can take minutes of world-generation time for an answer that was never in",
+            "doubt.",
+            "With this ON it gives the same 'nothing nearby' answer straight away. Dungeon placement",
+            "is unchanged.",
+            "Does nothing unless CQR and OTG are both installed. No restart needed. Default ON."
     })
     @Config.Name("CQR: Skip Disabled-Structure Scans (OTG dims)")
     public boolean cqrStructureScanGuard = true;
 
     @Config.Comment({
-            "DefiledLands: percentage of CorruptionHelper.spread calls allowed through the",
-            "HEAD gate. The mod has NO config for the block-corruption pace (conversionRate is",
-            "unrelated), and spread was 13.5% of dim-150 spike time in the 2026-07-27 re-profile.",
-            "Cuts the corruption speed and the tick cost by the same factor: 50 = half pace,",
-            "100 = untouched vanilla behaviour, 0 = corruption spread fully frozen.",
-            "Read live at call time (no restart). Default 50."
+            "Defiled Lands: how fast corruption spreads from block to block, as a percentage of",
+            "normal. The mod itself has no setting for this, and in a corrupted area the spreading is",
+            "one of the more expensive things running on the server.",
+            "100 = untouched Defiled Lands behaviour. 50 = half speed and half the cost. 0 = corruption",
+            "stops spreading entirely.",
+            "Does nothing unless Defiled Lands is installed. No restart needed. Default 100."
     })
     @Config.Name("DefiledLands: Corruption Spread Percent")
     @Config.RangeInt(min = 0, max = 100)
-    public int defiledCorruptionSpreadPct = 50;
+    public int defiledCorruptionSpreadPct = 100;
 
     @Config.Comment({
-            "Raids-Backport: register WorldDataRaids in the per-world storage it is actually",
-            "read from, instead of the global one. Fixes a per-world-tick disk stat() (384 ms",
-            "in the 2026-07-25 overworld profile), a per-tick allocation, and a cross-dimension",
-            "overwrite of the shared 'raids' save key. Dim 0 keeps its existing raids.dat;",
-            "other dimensions start with clean raid state (it was overwritten every tick",
-            "anyway). Read live at call time (no restart). Default ON."
+            "Raids-Backport: store each dimension's raid data with that dimension instead of globally.",
+            "As shipped, every dimension writes its raid data to the same slot, so they overwrite each",
+            "other every tick, and the game hits the disk on every world tick looking for it.",
+            "With this ON the Overworld keeps its existing raid data; other dimensions start with",
+            "clean raid state (it was being overwritten every tick anyway, so there was nothing to",
+            "keep). That is a change to saved data, which is why this is off by default.",
+            "Does nothing unless Raids-Backport is installed. No restart needed. Default OFF."
     })
     @Config.Name("Raids: Per-World Storage Consistency")
-    public boolean raidsPerWorldStorage = true;
+    public boolean raidsPerWorldStorage = false;
 }
