@@ -86,11 +86,45 @@ public class ModRecipes {
 
     @SubscribeEvent(priority = net.minecraftforge.fml.common.eventhandler.EventPriority.LOWEST)
     public static void removeRecipes(RegistryEvent.Register<IRecipe> event) {
+        net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe> modRegistry =
+            (net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe>) event.getRegistry();
+
         if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks && 
             com.spege.insanetweaks.config.ModConfig.tombstone.disableEnchantKeyRecipe) {
-            net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe> modRegistry = 
-                (net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe>) event.getRegistry();
             modRegistry.remove(new ResourceLocation("tombstone", "enchanted_grave_key"));
+        }
+
+        // gear.availability: strip every recipe that produces a piece of gear the pack has switched
+        // off, whichever mod or JSON file declared it. Removing a RECIPE is save-safe - recipes are
+        // not stored in a world - which is exactly why "disabled" is expressed this way instead of
+        // by skipping item registration. Runs at LOWEST priority so everyone else's recipes,
+        // including the JSON ones, are already in the registry by now.
+        //
+        // Collected first, removed after: mutating the registry while iterating it is not safe.
+        java.util.List<ResourceLocation> disabledGearRecipes = new java.util.ArrayList<>();
+        for (IRecipe recipe : modRegistry) {
+            if (recipe == null) {
+                continue;
+            }
+            ItemStack output = recipe.getRecipeOutput();
+            if (output == null || output.isEmpty()) {
+                continue; // dynamic recipes have no fixed output; nothing to match on
+            }
+            if (ModItems.isGearDisabled(output.getItem())) {
+                ResourceLocation name = recipe.getRegistryName();
+                if (name != null) {
+                    disabledGearRecipes.add(name);
+                }
+            }
+        }
+        for (ResourceLocation name : disabledGearRecipes) {
+            modRegistry.remove(name);
+        }
+        if (!disabledGearRecipes.isEmpty()) {
+            InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] gear.availability: removed {} recipe(s) for gear switched off in "
+                            + "the config. The items themselves stay registered.",
+                    Integer.valueOf(disabledGearRecipes.size()));
         }
     }
 

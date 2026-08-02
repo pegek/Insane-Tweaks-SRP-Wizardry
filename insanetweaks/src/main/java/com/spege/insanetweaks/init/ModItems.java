@@ -189,6 +189,8 @@ public class ModItems {
             event.getRegistry().registerAll(CORRUPTED_SEED_FRAGMENT, CORRUPTED_SEED, CORRUPTED_FRUIT);
         }
 
+        applyGearAvailability();
+
         // NOTE: OreDictionary bridge registration is NOT done here. During the Item event the
         // cross-mod handler order is not guaranteed, so a swparasites:* lookup can still return
         // null (its Register<Item> may run after ours even with 'after:swparasites'). It is done
@@ -283,6 +285,70 @@ public class ModItems {
         DefaultArtifactVersion current = new DefaultArtifactVersion(baubles.getVersion());
         DefaultArtifactVersion minRequired = new DefaultArtifactVersion("2.0.0");
         return current.compareTo(minRequired) >= 0;
+    }
+
+    // =====================================================================
+    // gear.availability
+    //
+    // "Disabled" here NEVER means unregistered. A registry object hidden behind a config flag
+    // disappears from every world that was saved while the flag was on - the one thing config must
+    // never do, and the same reasoning that already keeps AUTO_LOCK_PICKER and PROPERTY_BOOK
+    // registered unconditionally above. So a disabled piece of gear stays in the registry, keeps
+    // working in the hands of anyone who already has one, and keeps its NBT (kill counts, armour
+    // adaptation, wand evolution). What goes away is the ways to GET one: hidden from the creative
+    // menu and from recipe viewers here, and stripped of its recipes in ModRecipes.removeRecipes.
+    // =====================================================================
+
+    /** Items switched off in gear.availability. Populated during item registration. */
+    private static final java.util.Set<Item> DISABLED_GEAR = new java.util.HashSet<>();
+
+    /** @return true when {@code item} is gear the pack has switched off. */
+    public static boolean isGearDisabled(Item item) {
+        return item != null && DISABLED_GEAR.contains(item);
+    }
+
+    private static void applyGearAvailability() {
+        com.spege.insanetweaks.config.categories.GearCategory.Availability cfg =
+                com.spege.insanetweaks.config.ModConfig.gear.availability;
+
+        hideIfDisabled(cfg.livingSpellblade, LIVING_SPELLBLADE);
+        hideIfDisabled(cfg.sentientSpellblade, SENTIENT_SPELLBLADE);
+        hideIfDisabled(cfg.livingAegis, LIVING_AEGIS);
+        hideIfDisabled(cfg.sentientAegis, SENTIENT_AEGIS);
+        hideIfDisabled(cfg.livingWand, LIVING_WAND);
+        hideIfDisabled(cfg.sentientWand, SENTIENT_WAND);
+        hideIfDisabled(cfg.livingWarlockSet, PARASITE_WIZARD_HELMET, PARASITE_WIZARD_CHESTPLATE,
+                PARASITE_WIZARD_LEGGINGS, PARASITE_WIZARD_BOOTS);
+        hideIfDisabled(cfg.sentientWarlockSet, SENTIENT_WARLOCK_HELMET, SENTIENT_WARLOCK_CHESTPLATE,
+                SENTIENT_WARLOCK_LEGGINGS, SENTIENT_WARLOCK_BOOTS);
+        hideIfDisabled(cfg.livingBattlemageSet, LIVING_BATTLEMAGE_HELMET, LIVING_BATTLEMAGE_CHESTPLATE,
+                LIVING_BATTLEMAGE_LEGGINGS, LIVING_BATTLEMAGE_BOOTS);
+        hideIfDisabled(cfg.sentientBattlemageSet, SENTIENT_BATTLEMAGE_HELMET,
+                SENTIENT_BATTLEMAGE_CHESTPLATE, SENTIENT_BATTLEMAGE_LEGGINGS,
+                SENTIENT_BATTLEMAGE_BOOTS);
+
+        if (!DISABLED_GEAR.isEmpty()) {
+            InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] gear.availability: {} item(s) hidden from creative and left "
+                            + "without a recipe. They stay registered, so existing ones keep working.",
+                    Integer.valueOf(DISABLED_GEAR.size()));
+        }
+    }
+
+    /**
+     * Takes the items out of the creative menu (and so out of JEI, which builds its list from the
+     * same call) by clearing their creative tab. Pure item state - it touches no registry.
+     */
+    private static void hideIfDisabled(boolean enabled, Item... items) {
+        if (enabled) {
+            return;
+        }
+        for (Item item : items) {
+            if (item != null) {
+                item.setCreativeTab(null);
+                DISABLED_GEAR.add(item);
+            }
+        }
     }
 
     private static void registerModel(Item item) {
