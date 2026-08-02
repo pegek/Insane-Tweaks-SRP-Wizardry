@@ -133,16 +133,6 @@ msg.insanetweaks.corrupted_hint=§5Your ring pulses hungrily... High-tier parasi
 entity.insanetweaks.corrupted_sapling.name=Corrupted Sapling
 entity.corrupted_sapling.name=Corrupted Sapling
 
-# Custom Corail Tombstone perks.
-# The key prefix MUST be tombstone.perk.* — Perk.getTranslationKey() is final and builds it
-# from the perk name. Lang keys are a global namespace, so shipping them here works fine.
-tombstone.perk.assimilated_knowledge=Assimilated Knowledge
-tombstone.perk.assimilated_knowledge.desc=You have cut open enough of the hive to start reading it. Slaying a high-tier parasite may teach you something about death itself, granting knowledge.
-tombstone.perk.assimilated_knowledge.bonus=chance of knowledge per high-tier parasite slain
-tombstone.perk.relief_for_the_damned=Relief for the Damned
-tombstone.perk.relief_for_the_damned.desc=The Ring of the Seven Curses still takes its due, but no longer all of it. Every one of the ring's penalties — the damage you suffer, the armour it unmakes, the harm it withholds from your blows — is eased by a share of its own weight.
-tombstone.perk.relief_for_the_damned.bonus=of every Cursed Ring penalty waived
-
 # Potion effects
 potion.insanetweaks.cleanse=§eCleanse
 potion.insanetweaks.gilded_stasis=§6Gilded Stasis
@@ -335,9 +325,6 @@ config.insanetweaks.category.chargeJump=Coiled Spring (Charge Jump)
 config.insanetweaks.category.scarredFlesh=Scarred Flesh
 config.insanetweaks.category.interactions=Cross-Mod Interactions
 config.insanetweaks.category.traits=Skill Traits
-config.insanetweaks.category.tombstone=Tombstone Tweaks
-config.insanetweaks.category.tombstone.assimilatedKnowledge=Custom Perk: Assimilated Knowledge
-config.insanetweaks.category.tombstone.reliefForTheDamned=Custom Perk: Relief for the Damned
 config.insanetweaks.category.thrall=Thrall
 config.insanetweaks.category.entities=Entities
 config.insanetweaks.category.client=Client & Debug
@@ -406,6 +393,3 @@ tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Co
 tooltip.insanetweaks.auto_lock_picker.timing=Wood lock %ss - Diamond lock %ss
 tooltip.insanetweaks.auto_lock_picker.no_locks=Requires the Locks mod.
 tooltip.insanetweaks.auto_lock_picker.disabled=Disabled in the config (modules.enableAutoLockPicker).
-
-# Inventory tab that opens Corail Tombstone's perk tree (KnowledgeTabHandler).
-insanetweaks.tab.knowledge=Knowledge of Death

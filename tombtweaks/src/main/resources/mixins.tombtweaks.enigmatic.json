@@ -1,0 +1,18 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.tombtweaks.mixins.enigmatic",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinEnigmaticEventsCurses",
+    "MixinItemCursedRingArmor"
+  ],
+  "client": [
+    "MixinItemCursedRingTooltip"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

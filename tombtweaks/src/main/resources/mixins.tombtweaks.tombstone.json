@@ -1,0 +1,19 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.tombtweaks.mixins",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinTombstoneEffectHelper",
+    "MixinTombstoneMagicScroll",
+    "MixinTombstonePerk",
+    "MixinTombstonePerkBase",
+    "MixinTombstonePlayerGrave"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

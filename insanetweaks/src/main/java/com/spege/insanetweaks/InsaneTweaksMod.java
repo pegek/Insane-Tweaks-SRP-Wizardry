@@ -15,7 +15,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import com.spege.insanetweaks.events.LivingDeathEventHandler;
 
 
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -71,7 +70,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.8.0";
+    public static final String VERSION = "1.9.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -131,17 +130,6 @@ public class InsaneTweaksMod implements IGuiHandler {
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_NOVICE);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_ADEPT);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_MASTER);
-
-        // Custom Corail Tombstone perks. Registration is deliberately NOT behind a module flag:
-        // Tombstone persists perks by numeric registry ID, so a perk that vanishes when a flag
-        // is flipped would drop out of existing worlds. The config greys perks out instead.
-        // Gated only on Tombstone's presence, which keeps TombstonePerks — and the Perk type in
-        // its method signature — off the classloader in packs without it. RegistryEvent.Register
-        // fires on the Forge bus after preInit in 1.12.2, so registering the listener here is
-        // early enough.
-        if (Loader.isModLoaded("tombstone")) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.tombstone.TombstonePerks());
-        }
 
         // Sanctuary Dome is an SRP-compat feature end-to-end (blocks, spawn veto, TE logic
         // all key off SRParasites). Defensively disable if SRP isn't present so the module
@@ -410,46 +398,6 @@ public class InsaneTweaksMod implements IGuiHandler {
 
         // Zhonya rework: Gilded Stasis enforcement (immortality, root, aggro loss).
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaStasisHandler());
-
-        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks) {
-            if (com.spege.insanetweaks.config.ModConfig.tombstone.enableCurseOfPossessionPatch) {
-                MinecraftForge.EVENT_BUS.register(new LivingDeathEventHandler());
-            }
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneDropEventHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.TombstoneBooksHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GraveDecayHandler());
-
-            // Runtime for the Assimilated Knowledge perk. The perk itself is registered in
-            // preInit regardless of these flags — only its effect is gated here.
-            if (Loader.isModLoaded("tombstone")) {
-                MinecraftForge.EVENT_BUS.register(
-                        new com.spege.insanetweaks.tombstone.AssimilatedKnowledgeHandler());
-
-                // Alignment for the raiders of a third-party raid mod. Registered unconditionally
-                // alongside it — the handler reads raiderAlignment.enabled live, and its entity
-                // list simply matches nothing when the raid mod is absent.
-                MinecraftForge.EVENT_BUS.register(
-                        new com.spege.insanetweaks.tombstone.RaiderAlignmentHandler());
-
-                // Exact slot restore: the snapshot is taken on LivingDeathEvent, the layout is
-                // reapplied on Tombstone's own RestoreInventoryEvent. Both read
-                // tombstone.restoreOriginalSlots live.
-                MinecraftForge.EVENT_BUS.register(
-                        new com.spege.insanetweaks.tombstone.slots.SlotSnapshotHandler());
-                MinecraftForge.EVENT_BUS.register(
-                        new com.spege.insanetweaks.tombstone.slots.SlotRestoreHandler());
-            }
-
-            // Knowledge of Death tab in the inventory. Client only, and both mods must be present:
-            // the handler names Reskillable AND Tombstone types in its signatures, so the branch
-            // must not be taken otherwise — the JVM would resolve them on class load.
-            if (com.spege.insanetweaks.config.ModConfig.tombstone.enableKnowledgeTab
-                    && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT
-                    && Loader.isModLoaded("tombstone")
-                    && Loader.isModLoaded("reskillable")) {
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.KnowledgeTabHandler());
-            }
-        }
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableCustomCores) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CustomCoresEventHandler());

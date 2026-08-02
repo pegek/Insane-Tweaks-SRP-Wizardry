@@ -1,0 +1,17 @@
+# Custom Corail Tombstone perks.
+# The key prefix MUST be tombstone.perk.* — Perk.getTranslationKey() is final and builds it
+# from the perk name. Lang keys are a global namespace, so shipping them here works fine.
+tombstone.perk.assimilated_knowledge=Assimilated Knowledge
+tombstone.perk.assimilated_knowledge.desc=You have cut open enough of the hive to start reading it. Slaying a high-tier parasite may teach you something about death itself, granting knowledge.
+tombstone.perk.assimilated_knowledge.bonus=chance of knowledge per high-tier parasite slain
+tombstone.perk.relief_for_the_damned=Relief for the Damned
+tombstone.perk.relief_for_the_damned.desc=The Ring of the Seven Curses still takes its due, but no longer all of it. Every one of the ring's penalties — the damage you suffer, the armour it unmakes, the harm it withholds from your blows — is eased by a share of its own weight.
+tombstone.perk.relief_for_the_damned.bonus=of every Cursed Ring penalty waived
+
+# Inventory tab that opens Corail Tombstone's perk tree (KnowledgeTabHandler).
+tombtweaks.tab.knowledge=Knowledge of Death
+
+# Config GUI
+config.tombtweaks.category.tombstone=Tombstone Tweaks
+config.tombtweaks.category.tombstone.assimilatedKnowledge=Custom Perk: Assimilated Knowledge
+config.tombtweaks.category.tombstone.reliefForTheDamned=Custom Perk: Relief for the Damned

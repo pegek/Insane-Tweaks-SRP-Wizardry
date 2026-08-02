@@ -16,7 +16,6 @@ import com.spege.insanetweaks.config.categories.SanctuaryCategory;
 import com.spege.insanetweaks.config.categories.ScarredFleshCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
-import com.spege.insanetweaks.config.categories.TombstoneCategory;
 import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
 
@@ -58,11 +57,6 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.traits")
     @Config.Comment("SP costs, parent trees and requirements for custom Reskillable traits.")
     public static final TraitsCategory traits = new TraitsCategory();
-
-    @Config.Name("tombstone")
-    @Config.LangKey("config.insanetweaks.category.tombstone")
-    @Config.Comment("Bugfixes and mechanic alterations for Corail Tombstone.")
-    public static final TombstoneCategory tombstone = new TombstoneCategory();
 
     @Config.Name("thrall")
     @Config.LangKey("config.insanetweaks.category.thrall")
@@ -129,9 +123,6 @@ public class ModConfig {
                 // edits to entities.assimilated_wizard.spells.spellRoles apply without a restart.
                 com.spege.insanetweaks.entities.ai.SpellRoleResolver.invalidateCache();
                 com.spege.insanetweaks.util.SrpWizardryAssimilationHelper.invalidateCache();
-                // Tombstone's effect whitelist is parsed from registry names once and cached; drop
-                // it so edits to tombstone.effectpools apply without a restart.
-                com.spege.insanetweaks.tombstone.effects.EffectPoolRegistry.invalidate();
             }
         }
     }

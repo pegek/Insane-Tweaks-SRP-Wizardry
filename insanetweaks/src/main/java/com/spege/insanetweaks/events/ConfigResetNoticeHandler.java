@@ -31,7 +31,6 @@ public class ConfigResetNoticeHandler {
         player.sendMessage(new TextComponentString(TextFormatting.GOLD + "[InsaneTweaks] "
                 + TextFormatting.YELLOW
                 + "The config layout changed and your settings were reset to defaults. "
-                + "Your previous file was saved as config/insanetweaks.cfg.pre-rework - re-apply any customizations. "
-                + "Note: Tombstone Books cooldowns are now configured in minutes (previously hours)."));
+                + "Your previous file was saved as config/insanetweaks.cfg.pre-rework - re-apply any customizations."));
     }
 }

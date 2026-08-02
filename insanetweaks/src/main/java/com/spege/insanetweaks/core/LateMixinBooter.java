@@ -21,18 +21,8 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("player_mana")) {
             configs.add("mixins.insanetweaks.playermana.json");
         }
-        if (net.minecraftforge.fml.common.Loader.isModLoaded("tombstone")) {
-            configs.add("mixins.insanetweaks.tombstone.json");
-        }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
             configs.add("mixins.insanetweaks.srpcontent.json");
-        }
-        // "Relief for the Damned" perk: softens the Ring of the Seven Curses penalties at the
-        // instruction where Enigmatic Legacy reads its own constants. Gated on EL, NOT on
-        // Tombstone — the mixins go transparent without Tombstone because TombstonePerkHelper
-        // reports level 0, and that is also why they must never touch a Tombstone class.
-        if (net.minecraftforge.fml.common.Loader.isModLoaded("enigmaticlegacy")) {
-            configs.add("mixins.insanetweaks.enigmatic.json");
         }
         // Enchant quest-gate, third-party sources: mods that roll an enchantment straight out of
         // Enchantment.REGISTRY instead of going through any vanilla choke point, so the three early

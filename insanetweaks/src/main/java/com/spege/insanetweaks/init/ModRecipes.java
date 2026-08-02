@@ -89,11 +89,6 @@ public class ModRecipes {
         net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe> modRegistry =
             (net.minecraftforge.registries.IForgeRegistryModifiable<IRecipe>) event.getRegistry();
 
-        if (com.spege.insanetweaks.config.ModConfig.tombstone.enableTombstoneTweaks && 
-            com.spege.insanetweaks.config.ModConfig.tombstone.disableEnchantKeyRecipe) {
-            modRegistry.remove(new ResourceLocation("tombstone", "enchanted_grave_key"));
-        }
-
         // gear.availability: strip every recipe that produces a piece of gear the pack has switched
         // off, whichever mod or JSON file declared it. Removing a RECIPE is save-safe - recipes are
         // not stored in a world - which is exactly why "disabled" is expressed this way instead of
