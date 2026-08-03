@@ -22,7 +22,14 @@ import org.lwjgl.opengl.GL11;
  */
 public class PotionGildedStasis extends Potion {
 
-    @SideOnly(Side.CLIENT)
+    /**
+     * 🚨 Deliberately NOT {@code @SideOnly(Side.CLIENT)} — an inline initialiser on a
+     * {@code static final} field compiles into {@code <clinit>}, which cannot be annotated, so
+     * SideTransformer would strip the field on a dedicated server and leave the {@code putstatic}
+     * pointing at nothing ({@code NoSuchFieldError}). See {@code PotionCleanse.CLEANSE_TEXTURE}
+     * for the full reasoning; that one is the copy that actually crashed. The annotations on the
+     * render methods below stay — those really do touch {@code Minecraft}.
+     */
     private static final ResourceLocation STASIS_TEXTURE =
             new ResourceLocation("insanetweaks", "textures/gui/potion/gilded_stasis.png");
 

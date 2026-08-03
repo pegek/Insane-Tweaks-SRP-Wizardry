@@ -34,8 +34,26 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class PotionCleanse extends Potion {
 
-    /** Path to the 18x18 icon PNG shown in HUD and inventory. */
-    @SideOnly(Side.CLIENT)
+    /**
+     * Path to the 18x18 icon PNG shown in HUD and inventory.
+     *
+     * <p>🚨 Deliberately NOT {@code @SideOnly(Side.CLIENT)}, and it must never become one again.
+     * The annotation was here and crashed the dedicated server with
+     * {@code NoSuchFieldError: PotionCleanse does not have member field
+     * 'net.minecraft.util.ResourceLocation CLEANSE_TEXTURE'} at {@code <clinit>}: an inline
+     * initialiser on a {@code static final} field compiles into {@code <clinit>}, and
+     * {@code <clinit>} carries no annotation of its own and cannot be given one. Forge's
+     * SideTransformer therefore strips the field and leaves the {@code putstatic} behind,
+     * pointing at something that no longer exists.
+     *
+     * <p>The general rule: {@code @SideOnly} on a <em>field</em> is safe only when no
+     * unannotated code touches it. A field initialised in {@code <clinit>} or in a constructor
+     * always fails that test. Nothing is saved by annotating this one anyway —
+     * {@code ResourceLocation} is a plain resource identifier that exists server-side.
+     * The annotations on {@code renderHUDEffect}, {@code renderInventoryEffect},
+     * {@code shouldRenderHUD}, {@code shouldRenderInvText} and {@code drawFullTexture} stay:
+     * those genuinely touch {@code Minecraft} and are meant to be stripped.
+     */
     private static final ResourceLocation CLEANSE_TEXTURE =
             new ResourceLocation("insanetweaks", "textures/gui/potion/cleanse.png");
 
