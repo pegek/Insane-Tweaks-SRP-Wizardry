@@ -9,7 +9,14 @@
     "MixinTombstoneMagicScroll",
     "MixinTombstonePerk",
     "MixinTombstonePerkBase",
-    "MixinTombstonePlayerGrave"
+    "MixinTombstonePlayerGrave",
+    "MixinTombstoneBookOfDisenchantment",
+    "MixinTombstoneDeathHandler",
+    "MixinTombstoneGladiator",
+    "MixinTombstoneGraveKey",
+    "MixinTombstoneLootHelper",
+    "MixinTombstonePlayerStatus",
+    "MixinTombstoneTablet"
   ],
   "client": [],
   "server": [],

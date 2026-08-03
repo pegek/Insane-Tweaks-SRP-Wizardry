@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.0.0'
+version = '1.2.0'
 group = 'com.spege.tombtweaks'
 archivesBaseName = 'tombtweaks'
 
@@ -44,7 +44,7 @@ jar {
         attributes([
             "Specification-Title": "Tombstone Tweaks",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.0.0",
+            "Specification-Version": "1.2.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

@@ -126,11 +126,21 @@ public class TombstoneCategory {
 
     // ----------------------------------------------------------------
     // KNOWLEDGE OF DEATH - PERK SETTINGS
-    // Each perk has: enabled (bool) and maxLevel (int capped at native max)
+    // Each perk has: enabled (bool), maxLevel (int capped at native max) and
+    // pointCostPerLevel (int, 1 = Tombstone's own flat rate)
     // Native max levels: alchemist=5, concentration=2, gladiator=5,
     // jailer=5, memento_mori=dynamic, rune_inscriber=5, scribe=5,
     // shadow_walker=5, treasure_seeker=5, witch_doctor=5
     // ----------------------------------------------------------------
+    @Config.Name("perktuning")
+    @Config.Comment({"The numbers behind the native perks, rather than just their level cap.",
+            "Tombstone hardcodes what one perk level is worth, so these are the only way to make a",
+            "perk weaker or stronger without disabling it. Every default here is Tombstone's own",
+            "value, so an untouched section changes nothing.",
+            "Pairs with the \"Perk: X\" sections above, which stay in charge of enabled/cap/cost.",
+            "All read live - no restart needed."})
+    public PerkTuningConfig perkTuning = new PerkTuningConfig();
+
     @Config.Name("Perk: Alchemist")
     @Config.Comment("Controls the Alchemist perk (scroll duration bonus). Native max level: 5")
     public PerkConfig alchemist = new PerkConfig(true, 5);
@@ -204,10 +214,115 @@ public class TombstoneCategory {
         @Config.RangeInt(min = 0, max = 5)
         public int maxLevel;
 
+        @Config.Name("Point Cost Per Level")
+        @Config.Comment({"Perk points charged for EACH level of this perk. 1 is Tombstone's own flat rate.",
+                "The cost is per level and adds up, so at 2 a perk taken to level 3 costs 6 points",
+                "rather than 3. Points already spent are re-evaluated at the new price: raising this",
+                "can leave a player over budget until they respec.",
+                "Read live - no restart needed."})
+        @Config.RangeInt(min = 1, max = 10)
+        public int pointCostPerLevel = 1;
+
         public PerkConfig(boolean enabled, int maxLevel) {
+            this(enabled, maxLevel, 1);
+        }
+
+        public PerkConfig(boolean enabled, int maxLevel, int pointCostPerLevel) {
             this.enabled = enabled;
             this.maxLevel = maxLevel;
+            this.pointCostPerLevel = pointCostPerLevel;
         }
+    }
+
+    // ========================================================================
+    // PERK EFFECT VALUES
+    // ========================================================================
+
+    /**
+     * The gameplay numbers behind the native perks.
+     *
+     * <p>A separate section rather than fields on {@link PerkConfig} because these are per-perk:
+     * "enchantments per level" means nothing for Gladiator. It cannot be a subclass of
+     * {@code PerkConfig} either — Forge only treats a field as a config category when its type
+     * extends {@code Object} directly ({@code ConfigManager.sync}), so a subclass is silently not
+     * a category at all.
+     *
+     * <p>Every default is Tombstone's own value, verified with javap against 4.7.6. Four perks are
+     * deliberately absent:
+     * <ul>
+     *   <li><b>witch_doctor</b> — its {@code level * 10} save chance shares the constant 10 with the
+     *       Regeneration amplifier in all six branches of the same method, so there is no anchor
+     *       that hits only the perk.</li>
+     *   <li><b>concentration</b> — binary, not scalable: at level 0 a hit interrupts your channel,
+     *       above 0 it does not. There is no number to turn.</li>
+     *   <li><b>alchemist</b> — its scroll-duration bonus is read at three separate sites across
+     *       three classes; worth doing, but not as a one-constant edit.</li>
+     *   <li><b>shadow_walker</b> — present below, but see the warning on its field.</li>
+     * </ul>
+     */
+    public static class PerkTuningConfig {
+
+        @Config.Name("Scribe: Enchantments At Level Zero")
+        @Config.Comment({"How many enchantments one Book of Disenchantment pulls off an item before",
+                "the perk adds anything. Tombstone's own value is 2, which is why the book is strong",
+                "even untrained - it strips two enchantments per use at perk level 0.",
+                "Each one becomes its own enchanted book and is removed from the item."})
+        @Config.RangeInt(min = 1, max = 16)
+        public int scribeEnchantsAtLevelZero = 2;
+
+        @Config.Name("Scribe: Enchantments Per Level")
+        @Config.Comment({"Extra enchantments pulled per Scribe level, on top of the base above.",
+                "Native 1, so a maxed Scribe natively strips 2 + 5 = 7 enchantments in a single use.",
+                "0 makes the perk cosmetic without disabling it."})
+        @Config.RangeInt(min = 0, max = 8)
+        public int scribeEnchantsPerLevel = 1;
+
+        @Config.Name("Jailer: Grave Key Enchant Chance Per Level (%)")
+        @Config.Comment({"Percentage points added per Jailer level to the chance that a grave key is",
+                "re-enchanted on death. Added on top of tombstone.cfg -> chanceEnchantedGraveKey.",
+                "Native 20, so a maxed Jailer natively adds 100 points and the roll always succeeds."})
+        @Config.RangeInt(min = 0, max = 50)
+        public int jailerKeyChancePerLevel = 20;
+
+        @Config.Name("Treasure Seeker: Bonus Loot Chance Per Level (%)")
+        @Config.Comment({"Percentage points added per Treasure Seeker level to the chance of one extra",
+                "loot roll when an undead mob dies. Native 20, so a maxed perk natively guarantees it.",
+                "The base roll count (1, or 5 for a boss) is Tombstone's and is not touched here."})
+        @Config.RangeInt(min = 0, max = 50)
+        public int treasureSeekerBonusLootChancePerLevel = 20;
+
+        @Config.Name("Memento Mori: XP Kept Per Level (%)")
+        @Config.Comment({"Percentage points of experience the perk gives back per level, offsetting",
+                "tombstone.cfg -> xpLoss. Native 20, so a maxed perk natively cancels a 100% loss.",
+                "The result is clamped to 0-100 by Tombstone, so overshooting is harmless."})
+        @Config.RangeInt(min = 0, max = 50)
+        public int mementoMoriXpKeptPerLevel = 20;
+
+        @Config.Name("Gladiator: Damage Modifier Per Level")
+        @Config.Comment({"Share of damage added to your hits AND removed from hits you take, per level.",
+                "Native 0.05, so a maxed Gladiator natively deals +25% and takes -25%.",
+                "One number drives both directions - that is how Tombstone wrote it, and there is no",
+                "anchor that separates them."})
+        @Config.RangeDouble(min = 0.0, max = 0.25)
+        public double gladiatorDamageModifierPerLevel = 0.05D;
+
+        @Config.Name("Shadow Walker: Visibility Reduction Per Level")
+        @Config.Comment({"Share of your visibility removed per level, multiplicatively.",
+                "Native 0.1, so a maxed perk natively halves the range you are noticed from.",
+                "Worth knowing what this actually covers: it works through Forge's player-visibility",
+                "event, which in vanilla only Endermen consult. Most mobs use a targeting AI that",
+                "never asks. Scape and Run: Parasites is the notable exception - it queries the hook",
+                "directly for every parasite, so in a parasite pack this perk is doing real work."})
+        @Config.RangeDouble(min = 0.0, max = 0.5)
+        public double shadowWalkerVisibilityReductionPerLevel = 0.1D;
+
+        @Config.Name("Rune Inscriber: Tablet Keep Chance Divisor")
+        @Config.Comment({"A tablet survives use with a chance of (perk level / this number).",
+                "Native 10, i.e. 10% per level and 50% at a maxed perk. Raising it makes the perk",
+                "weaker: 20 halves it to 5% per level. Below the perk's max level it becomes a",
+                "guaranteed keep, so do not set it under the cap."})
+        @Config.RangeInt(min = 1, max = 100)
+        public int runeInscriberKeepChanceDivisor = 10;
     }
 
     // ========================================================================

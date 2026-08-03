@@ -14,6 +14,9 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 
 /**
  * Mixin on all 10 concrete Tombstone Perk subclasses.
+ *
+ * <p>Only what the subclasses actually declare belongs here — {@code getCost} is not overridden by
+ * any of them, so its price cap lives on the base class in {@link MixinTombstonePerkBase}.
  */
 @Mixin(targets = {
     "ovh.corail.tombstone.perk.PerkAlchemist",
@@ -62,21 +65,6 @@ public abstract class MixinTombstonePerk {
         IForgeRegistryEntry<?> registryEntry = (IForgeRegistryEntry<?>) (Object) this;
         if (registryEntry.getRegistryName() == null) return null;
 
-        String perkName = registryEntry.getRegistryName().getResourcePath();
-
-        com.spege.tombtweaks.config.categories.TombstoneCategory ts = TombTweaksConfig.tombstone;
-        switch (perkName) {
-            case "alchemist":       return ts.alchemist;
-            case "concentration":   return ts.concentration;
-            case "gladiator":       return ts.gladiator;
-            case "jailer":          return ts.jailer;
-            case "memento_mori":    return ts.mementoMori;
-            case "rune_inscriber":  return ts.runeInscriber;
-            case "scribe":          return ts.scribe;
-            case "shadow_walker":   return ts.shadowWalker;
-            case "treasure_seeker": return ts.treasureSeeker;
-            case "witch_doctor":    return ts.witchDoctor;
-            default:                return null;
-        }
+        return com.spege.tombtweaks.util.PerkConfigLookup.byName(registryEntry.getRegistryName().getResourcePath());
     }
 }

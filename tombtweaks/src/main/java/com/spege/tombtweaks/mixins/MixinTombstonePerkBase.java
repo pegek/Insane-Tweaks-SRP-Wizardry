@@ -26,7 +26,8 @@ public abstract class MixinTombstonePerkBase {
             CallbackInfoReturnable<Boolean> cir) {
         if (!TombTweaksConfig.tombstone.enableTombstoneTweaks) return;
 
-        com.spege.tombtweaks.config.categories.TombstoneCategory.PerkConfig cfg = tombtweaks$resolveConfig(name);
+        com.spege.tombtweaks.config.categories.TombstoneCategory.PerkConfig cfg =
+                com.spege.tombtweaks.util.PerkConfigLookup.byName(this.name);
         if (cfg == null) return;
 
         if (!cfg.enabled || cfg.maxLevel == 0) {
@@ -34,22 +35,24 @@ public abstract class MixinTombstonePerkBase {
         }
     }
 
-    @Nullable
-    private static com.spege.tombtweaks.config.categories.TombstoneCategory.PerkConfig tombtweaks$resolveConfig(String perkName) {
-        if (perkName == null) return null;
-        com.spege.tombtweaks.config.categories.TombstoneCategory ts = TombTweaksConfig.tombstone;
-        switch (perkName) {
-            case "alchemist":       return ts.alchemist;
-            case "concentration":   return ts.concentration;
-            case "gladiator":       return ts.gladiator;
-            case "jailer":          return ts.jailer;
-            case "memento_mori":    return ts.mementoMori;
-            case "rune_inscriber":  return ts.runeInscriber;
-            case "scribe":          return ts.scribe;
-            case "shadow_walker":   return ts.shadowWalker;
-            case "treasure_seeker": return ts.treasureSeeker;
-            case "witch_doctor":    return ts.witchDoctor;
-            default:                return null;
-        }
+    /**
+     * Per-perk point price. The base method is a flat {@code level > 0 ? 1 : 0} and not one of the
+     * ten native perks overrides it (verified with javap on 4.7.6), so this single injection prices
+     * all ten — and prices them everywhere at once, since purchase validation, the used-points sum
+     * and the respec refund all read {@code getCost}.
+     *
+     * <p>This mod's own two perks are untouched by design: they override {@code getCost} in
+     * {@code PerkTombTweaksBase} with their own config field, so the base method never runs for them.
+     */
+    @Inject(method = "getCost", at = @At("HEAD"), cancellable = true)
+    private void tombtweaks$overrideCost(int level, CallbackInfoReturnable<Integer> cir) {
+        if (!TombTweaksConfig.tombstone.enableTombstoneTweaks) return;
+        if (level <= 0) return;
+
+        com.spege.tombtweaks.config.categories.TombstoneCategory.PerkConfig cfg =
+                com.spege.tombtweaks.util.PerkConfigLookup.byName(this.name);
+        if (cfg == null) return;
+
+        cir.setReturnValue(cfg.pointCostPerLevel);
     }
 }
