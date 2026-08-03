@@ -1,15 +1,10 @@
 package com.spege.insanetweaks.events;
 
-import java.util.List;
-
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.util.EnchantGrantMarker;
 
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.event.AnvilUpdateEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -31,6 +26,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * <p>Both slots are checked. The right slot is the usual case (a book being applied); the left matters
  * when two books are combined, which would otherwise launder an unmarked book into a marked-looking
  * result. Gated on {@code enchantments.requireGrantMarker}.
+ *
+ * <p>🚨 Server-side mechanic — this class must NEVER get a class-level
+ * {@code @SideOnly(Side.CLIENT)}. It used to also carry the explanatory tooltip, which made it a
+ * mixed-side class and an inviting target for exactly that annotation; the result would have been
+ * a dedicated server that starts cleanly and silently stops gating enchantments. The tooltip now
+ * lives in {@link EnchantGrantTooltipHandler}, so there is nothing client-side left here to tempt
+ * anyone. Registration stays unconditional in {@code InsaneTweaksMod.init()}.
  */
 public class EnchantGrantAnvilHandler {
 
@@ -50,24 +52,5 @@ public class EnchantGrantAnvilHandler {
         if (blocked != null) {
             event.setCanceled(true);
         }
-    }
-
-    /**
-     * Tell the player why an unmarked book is refusing to work, instead of letting them wonder why the
-     * anvil is silent. Fires client-side only, which is why it can sit on the same handler as the
-     * server-side veto without a side check.
-     */
-    @SubscribeEvent
-    public void onItemTooltip(ItemTooltipEvent event) {
-        if (!ModConfig.enchantments.requireGrantMarker || !ModConfig.enchantments.grantMarkerTooltip) {
-            return;
-        }
-        ItemStack stack = event.getItemStack();
-        if (EnchantGrantMarker.findUngranted(stack) == null) {
-            return;
-        }
-        List<String> tooltip = event.getToolTip();
-        tooltip.add(I18n.translateToLocal("tooltip.insanetweaks.enchant.not_granted"));
-        tooltip.add(I18n.translateToLocal("tooltip.insanetweaks.enchant.not_granted.hint"));
     }
 }

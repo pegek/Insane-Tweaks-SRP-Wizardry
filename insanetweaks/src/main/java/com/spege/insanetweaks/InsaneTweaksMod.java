@@ -57,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.3";
+    public static final String VERSION = "1.9.4";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -240,8 +240,11 @@ public class InsaneTweaksMod implements IGuiHandler {
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
 
         // Quest-gate for the mod's own enchantments: the anvil refuses an unmarked gated book.
-        // Registered unconditionally - both the veto and the tooltip early-return on their own live
-        // config flags, and this must stay registered so turning the flag on needs no restart.
+        // Registered unconditionally - the veto early-returns on its own live config flag, and this
+        // must stay registered so turning the flag on needs no restart. 🚨 Server-side mechanic:
+        // never move this into a Side.CLIENT block and never annotate the handler @SideOnly, or the
+        // gate stops working on a dedicated server without a word in the log. The matching tooltip
+        // is a separate class, EnchantGrantTooltipHandler, registered in the client block below.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantAnvilHandler());
 
         if (!com.spege.insanetweaks.config.ModConfig.tweaks.enableZhonya) {
@@ -417,6 +420,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
+            // Client half of the enchant quest-gate; the server-side veto is registered
+            // unconditionally above. Both flags it reads are live, so no config gate here.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());

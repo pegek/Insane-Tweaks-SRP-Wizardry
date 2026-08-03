@@ -12,7 +12,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * Re-labels the element line on Abomination-styled scroll and spell-book tooltips.
+ *
+ * <p>Purely presentational, hence {@code @SideOnly(Side.CLIENT)} — which brings this class in line
+ * with the eight other tooltip handlers in this package. The annotation is safe here only because
+ * the single registration site in {@code InsaneTweaksMod.init()} already sits inside an
+ * {@code event.getSide() == Side.CLIENT} block: a class-level {@code @SideOnly} makes
+ * {@code new SpellItemTooltipHandler()} fatal on a dedicated server, so if that registration ever
+ * moves out of the guard, this annotation has to go with it.
+ */
+@SideOnly(Side.CLIENT)
 public class SpellItemTooltipHandler {
 
     @SubscribeEvent
