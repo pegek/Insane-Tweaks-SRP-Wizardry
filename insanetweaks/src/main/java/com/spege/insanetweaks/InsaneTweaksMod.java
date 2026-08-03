@@ -17,27 +17,15 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import net.minecraftforge.fml.client.registry.IRenderFactory;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.entity.RenderSnowball;
-import net.minecraft.init.Items;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
 import com.spege.insanetweaks.entities.EntityBeckonSivMinion;
-import com.spege.insanetweaks.client.renderer.entity.RenderBeckonSivMinion;
-import com.spege.insanetweaks.client.renderer.entity.RenderSimWizard;
 import com.spege.insanetweaks.entities.EntityFerCowMinion;
 import com.spege.insanetweaks.entities.EntityLightBomberMinion;
 import com.spege.insanetweaks.entities.projectile.EntityBomberBomb;
-import com.spege.insanetweaks.client.renderer.entity.RenderBomberBomb;
-import com.spege.insanetweaks.client.renderer.entity.RenderLightBomberMinion;
 import com.spege.insanetweaks.entities.EntitySentinel;
 import com.spege.insanetweaks.entities.EntitySimWizard;
 import com.spege.insanetweaks.entities.EntityThrallMinion;
-import com.spege.insanetweaks.client.renderer.entity.RenderThrallMinion;
 import com.spege.insanetweaks.entities.EntityWizardMinion;
 import com.spege.insanetweaks.entities.EntityRupterMinion;
 import com.spege.insanetweaks.entities.EntitySummonerVomitCloud;
@@ -54,7 +42,6 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
@@ -70,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.0";
+    public static final String VERSION = "1.9.1";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -86,6 +73,15 @@ public class InsaneTweaksMod implements IGuiHandler {
 
     @Mod.Instance
     public static InsaneTweaksMod INSTANCE;
+
+    /**
+     * Sided proxy. Everything client-only (entity renderers, the Sanctuary TESR) hangs off this —
+     * it must never be inlined back into this class, see {@link CommonProxy}.
+     */
+    @net.minecraftforge.fml.common.SidedProxy(
+            clientSide = "com.spege.insanetweaks.client.ClientProxy",
+            serverSide = "com.spege.insanetweaks.CommonProxy")
+    public static CommonProxy proxy;
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -140,150 +136,11 @@ public class InsaneTweaksMod implements IGuiHandler {
             LOGGER.warn("[InsaneTweaks] Sanctuary module auto-disabled: SRParasites not present.");
         }
 
-        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-            if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) {
-                net.minecraftforge.fml.client.registry.ClientRegistry.bindTileEntitySpecialRenderer(
-                        com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,
-                        new com.spege.insanetweaks.client.renderer.tile.RenderSanctuaryDome());
-            }
-            RenderingRegistry.registerEntityRenderingHandler(EntitySentinel.class,
-                    new IRenderFactory<EntitySentinel>() {
-                        @Override
-                        public Render<? super EntitySentinel> createRenderFor(RenderManager manager) {
-                            return new RenderSentinel(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityWizardMinion.class,
-                    new IRenderFactory<EntityWizardMinion>() {
-                        @Override
-                        public Render<? super EntityWizardMinion> createRenderFor(RenderManager manager) {
-                            return new RenderWizardMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntitySimWizard.class,
-                    new IRenderFactory<EntitySimWizard>() {
-                        @Override
-                        public Render<? super EntitySimWizard> createRenderFor(RenderManager manager) {
-                            return new RenderSimWizard(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(
-                    com.spege.insanetweaks.entities.EntitySimBattlemage.class,
-                    new IRenderFactory<com.spege.insanetweaks.entities.EntitySimBattlemage>() {
-                        @Override
-                        public Render<? super com.spege.insanetweaks.entities.EntitySimBattlemage> createRenderFor(
-                                RenderManager manager) {
-                            return new com.spege.insanetweaks.client.renderer.entity.RenderSimBattlemage(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityFerCowMinion.class,
-                    new IRenderFactory<EntityFerCowMinion>() {
-                        @Override
-                        public Render<? super EntityFerCowMinion> createRenderFor(RenderManager manager) {
-                            return new RenderFerCowMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityPrimitiveYelloweyeMinion.class,
-                    new IRenderFactory<EntityPrimitiveYelloweyeMinion>() {
-                        @Override
-                        public Render<? super EntityPrimitiveYelloweyeMinion> createRenderFor(RenderManager manager) {
-                            return new RenderPrimitiveYelloweyeMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityPrimitiveSummonerMinion.class,
-                    new IRenderFactory<EntityPrimitiveSummonerMinion>() {
-                        @Override
-                        public Render<? super EntityPrimitiveSummonerMinion> createRenderFor(RenderManager manager) {
-                            return new RenderPrimitiveSummonerMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityRupterMinion.class,
-                    new IRenderFactory<EntityRupterMinion>() {
-                        @Override
-                        public Render<? super EntityRupterMinion> createRenderFor(RenderManager manager) {
-                            return new RenderRupterMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeSpineball.class,
-                    new IRenderFactory<EntityYelloweyeSpineball>() {
-                        @Override
-                        public Render<? super EntityYelloweyeSpineball> createRenderFor(RenderManager manager) {
-                            return new RenderSnowball<EntityYelloweyeSpineball>(manager,
-                                    Objects.requireNonNull(Items.SLIME_BALL),
-                                    Minecraft.getMinecraft().getRenderItem());
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeGlandProjectile.class,
-                    new IRenderFactory<EntityYelloweyeGlandProjectile>() {
-                        @Override
-                        public Render<? super EntityYelloweyeGlandProjectile> createRenderFor(RenderManager manager) {
-                            return new RenderYelloweyeGlandProjectile(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNadeProjectile.class,
-                    new IRenderFactory<EntityYelloweyeNadeProjectile>() {
-                        @Override
-                        public Render<? super EntityYelloweyeNadeProjectile> createRenderFor(RenderManager manager) {
-                            return new RenderYelloweyeNadeProjectile(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityYelloweyeNade.class,
-                    new IRenderFactory<EntityYelloweyeNade>() {
-                        @Override
-                        public Render<? super EntityYelloweyeNade> createRenderFor(RenderManager manager) {
-                            return new RenderYelloweyeNade(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityBeckonSivMinion.class,
-                    new IRenderFactory<EntityBeckonSivMinion>() {
-                        @Override
-                        public Render<? super EntityBeckonSivMinion> createRenderFor(RenderManager manager) {
-                            return new RenderBeckonSivMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityLightBomberMinion.class,
-                    new IRenderFactory<EntityLightBomberMinion>() {
-                        @Override
-                        public Render<? super EntityLightBomberMinion> createRenderFor(RenderManager manager) {
-                            return new RenderLightBomberMinion(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityBomberBomb.class,
-                    new IRenderFactory<EntityBomberBomb>() {
-                        @Override
-                        public Render<? super EntityBomberBomb> createRenderFor(RenderManager manager) {
-                            return new RenderBomberBomb(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(
-                    com.spege.insanetweaks.entities.EntityDispatcherClaw.class,
-                    new IRenderFactory<com.spege.insanetweaks.entities.EntityDispatcherClaw>() {
-                        @Override
-                        public Render<? super com.spege.insanetweaks.entities.EntityDispatcherClaw> createRenderFor(
-                                RenderManager manager) {
-                            return new com.spege.insanetweaks.client.renderer.entity.RenderDispatcherClaw(manager);
-                        }
-                    });
-            RenderingRegistry.registerEntityRenderingHandler(EntityThrallMinion.class,
-                    new IRenderFactory<EntityThrallMinion>() {
-                        @Override
-                        public Render<? super EntityThrallMinion> createRenderFor(RenderManager manager) {
-                            return new RenderThrallMinion(manager);
-                        }
-                    });
-            net.minecraftforge.fml.client.registry.RenderingRegistry.registerEntityRenderingHandler(
-                    com.spege.insanetweaks.entities.EntityCorruptedSapling.class,
-                    new net.minecraftforge.fml.client.registry.IRenderFactory<com.spege.insanetweaks.entities.EntityCorruptedSapling>() {
-                        @Override
-                        public net.minecraft.client.renderer.entity.Render<com.spege.insanetweaks.entities.EntityCorruptedSapling> createRenderFor(
-                                net.minecraft.client.renderer.entity.RenderManager manager) {
-                            return new com.spege.insanetweaks.client.renderer.entity.RenderCorruptedSapling(manager);
-                        }
-                    });
-
-            // Zhonya rework: golden player tint during Gilded Stasis.
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ZhonyaClientHandler());
-        }
+        // 🚨 Renderers live in ClientProxy, NOT here. A `if (side == CLIENT)` block inside this
+        // method would not help: the verifier resolves IRenderFactory / net.minecraft.client.*
+        // while loading this class in FMLModContainer.constructMod, long before the guard runs,
+        // and the dedicated server has no such classes. See CommonProxy.
+        proxy.preInit(event);
 
         // Auto-detect Baubles; disable Bauble Fruits only if totally missing.
         boolean hasBaubles = Loader.isModLoaded("baubles");
@@ -453,17 +310,27 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneSunderingHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
+            // 🚨 SpellbladeTooltipHandler is @SideOnly(Side.CLIENT) at CLASS level, so merely
+            // instantiating it on a dedicated server makes Forge's SideTransformer throw
+            // ("Attempted to load class ... for invalid side SERVER"). Same for ArmorTooltipHandler
+            // and WandTooltipHandler below. The guard is what keeps the `new` from ever executing.
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeTooltipHandler());
+            }
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AttackSpeedDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorEventHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorTooltipHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArmorTooltipHandler());
+            }
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.BattlemageAdaptationHandler());
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.BattlemageTooltipHandler());
             }
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisEventHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.AegisTooltipHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandTooltipHandler());
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandTooltipHandler());
+            }
             MinecraftForge.EVENT_BUS.register(com.spege.insanetweaks.baubles.ItemInfernalCrownArtefact.class);
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
