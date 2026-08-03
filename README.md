@@ -29,13 +29,16 @@ Version numbers are per-mod. Bumping a mod means editing its `build.gradle` (`ve
 
 ## Side safety
 
-Every mod here ships to dedicated servers, so client-only code must never be reachable from a common code path. Three rules learned the hard way (see 1.9.1–1.9.3):
+Every mod here ships to dedicated servers, so client-only code must never be reachable from a common code path. Four rules learned the hard way (see 1.9.1–1.9.4):
 
 - **Never put `registerEntityRenderingHandler` or any `IRenderFactory` behind a runtime `if (side == CLIENT)`.** The verifier resolves those types while loading the `@Mod` class, long before the guard runs. Use a sided proxy.
 - **Never annotate a `SimpleNetworkWrapper` message handler `@SideOnly(CLIENT)`.** `registerMessage` instantiates the handler on both sides; the trailing `Side` argument only picks which side processes the message.
 - **Never annotate a field `@SideOnly(CLIENT)` when its initialiser is inline.** The assignment lives in `<clinit>`, which carries no annotation, so SideTransformer strips the field and leaves the `putstatic` behind — `NoSuchFieldError` at class init.
+- **Never hand a class that mixes sides to `EventBus.register`.** Registration calls `getMethods()`, which resolves the parameter types of every *public* method — so one client-typed listener drags its types in even though the event never fires server-side. Split the class, or annotate just the client method `@SideOnly(CLIENT)` so SideTransformer strips it. Method *bodies* are fine; resolution there is lazy.
 
 Also avoid subclassing a vanilla class that carries a class-level client `@SideOnly` (`EmptyChunk` is the one that bit us). Such a failure resolves lazily, so the server boots fine and dies later.
+
+**The worst case is not a crash.** A class holding both a server mechanic and its tooltip is an inviting target for a class-level `@SideOnly(CLIENT)` — and that annotation takes the mechanic down with the tooltip. The server then starts with no error at all and quietly stops doing its job, which is far harder to notice than a stack trace. `EnchantGrantAnvilHandler` (the anvil veto) and `EnchantGrantTooltipHandler` (the explanatory line) are two classes for exactly this reason. When a handler mixes sides, split it rather than annotate it.
 
 ## Runtime requirements
 
