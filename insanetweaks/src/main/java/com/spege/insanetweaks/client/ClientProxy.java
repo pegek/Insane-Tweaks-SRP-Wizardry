@@ -53,6 +53,12 @@ public class ClientProxy extends CommonProxy {
     @Override
     @SuppressWarnings("null")
     public void preInit(FMLPreInitializationEvent event) {
+        // Main-menu notice about the Tombstone module moving to CTombstone-Tweaks. Registered
+        // unconditionally: the verdict depends on the mod list, which is not settled here, and the
+        // handler re-checks it when the menu actually opens. It is a client-only class, so this is
+        // the only place it may be constructed - see CommonProxy.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.TombstoneSplitNoticeHandler());
+
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) {
             net.minecraftforge.fml.client.registry.ClientRegistry.bindTileEntitySpecialRenderer(
                     com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore.class,

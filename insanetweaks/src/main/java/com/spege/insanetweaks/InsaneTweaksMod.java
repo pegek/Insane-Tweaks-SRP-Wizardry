@@ -57,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.4";
+    public static final String VERSION = "1.9.5";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -107,6 +107,10 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Must run before FML's first ConfigManager.sync (which fires later inside
         // FMLModContainer.constructMod) - see OldConfigBackup.
         com.spege.insanetweaks.config.OldConfigBackup.backupOldConfigIfPresent();
+        // Reads whichever of the two config files survived the call above, looking for the
+        // "tombstone" category this mod stopped writing in 1.9.0. Must come second: the pre-rework
+        // file is only at its backup name once OldConfigBackup has moved it there.
+        com.spege.insanetweaks.config.TombstoneSplitNotice.scan();
     }
 
     // -------------------------------------------------------------------------
@@ -119,6 +123,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         
         // Print compatibility report to log and set version flags.
         logCompatibilityReport();
+
+        // The Tombstone module left in 1.9.0. Says so in the log for dedicated servers and for
+        // anyone reading someone else's log; the client also gets a screen before the main menu,
+        // registered in ClientProxy. Only fires when there is something at stake - see
+        // TombstoneSplitNotice.
+        com.spege.insanetweaks.config.TombstoneSplitNotice.logIfNeeded();
+
         com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
         // 🚨 A loot table that is never registered here silently resolves to EMPTY in 1.12.2 -
