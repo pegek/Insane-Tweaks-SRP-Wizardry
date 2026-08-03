@@ -69,4 +69,33 @@ public final class PerkTuningHelper {
     public static int runeInscriberKeepDivisor(int nativeValue) {
         return active() ? cfg().runeInscriberKeepChanceDivisor : nativeValue;
     }
+
+    // ------------------------------------------------------------------
+    // The same numbers again, in the units the Knowledge of Death tooltip
+    // prints them in. Tombstone builds the tooltip from its own literals
+    // rather than from the effect code, so a perk whose effect we retune
+    // would otherwise keep advertising the stock figure.
+    // ------------------------------------------------------------------
+
+    /** Gladiator's bonus line is a percentage, where the effect is a fraction. Native 5. */
+    public static int gladiatorDamagePercentPerLevel(int nativeValue) {
+        return active() ? (int) Math.round(cfg().gladiatorDamageModifierPerLevel * 100.0D) : nativeValue;
+    }
+
+    /** Shadow Walker's bonus line is a percentage, where the effect is a fraction. Native 10. */
+    public static int shadowWalkerVisibilityPercentPerLevel(int nativeValue) {
+        return active() ? (int) Math.round(cfg().shadowWalkerVisibilityReductionPerLevel * 100.0D) : nativeValue;
+    }
+
+    /**
+     * Rune Inscriber's bonus line is a percentage per level, where the effect is a divisor —
+     * {@code level / divisor} is {@code level * (100 / divisor)} percent. Native 10.
+     *
+     * <p>Integer division, so a divisor that does not divide 100 rounds the printed figure down
+     * (divisor 3 prints 33% for a real 33.3%). The effect itself is exact either way.
+     */
+    public static int runeInscriberKeepPercentPerLevel(int nativeValue) {
+        if (!active()) return nativeValue;
+        return 100 / Math.max(1, cfg().runeInscriberKeepChanceDivisor);
+    }
 }

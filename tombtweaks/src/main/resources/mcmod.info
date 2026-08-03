@@ -3,7 +3,7 @@
   "modid": "tombtweaks",
   "name": "Tombstone Tweaks",
   "description": "Tweaks and additions for Corail Tombstone: a whitelist for every random potion effect Tombstone rolls (Ankh of Prayer, Magic Scroll, Lollipop, Tablet of Cupidity, Blessing, Plague Bringer), exact-slot inventory restore when a grave is recovered (inventory, armour, offhand, Baubles), optional grave item decay with admin restore, a fix for the Curse of Possession exploit, cooldowns for the Book of Disenchantment and Book of Magic Impregnation, per-perk level and cost caps for the ten native perks, two perks of its own (Assimilated Knowledge, Relief for the Damned), an alignment bridge for third-party raid mods, and a Knowledge of Death tab on Reskillable's inventory strip. Everything independently config-gated.",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "dependencies": ["tombstone"]

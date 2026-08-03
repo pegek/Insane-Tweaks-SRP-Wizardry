@@ -25,6 +25,18 @@ public class TombstoneCategory {
     @Config.Name("Curse of Possession Debug Messages")
     public boolean curseOfPossessionDebugMessages = false;
 
+    @Config.Comment({
+            "Puts two of Tombstone's own particle textures back on the block atlas.",
+            "Tombstone stitches most of its particle sprites explicitly, but two still look theirs up",
+            "by raw name - the soul orb above a decorative grave (items/soul) and the shield particle",
+            "(items/pray_of_protection). Neither texture belongs to a registered item any longer, so",
+            "nothing ever puts it on the atlas and both particles draw as nothing at all.",
+            "Client side only, and only takes effect on a texture reload (restart, or F3+T)."
+    })
+    @Config.Name("Fix Missing Particle Sprites")
+    @Config.RequiresMcRestart
+    public boolean fixMissingParticleSprites = true;
+
     @Config.Comment("Removes the vanilla Tombstone recipe to craft an Enchanted Grave Key using an Ender Pearl.")
     @Config.Name("Disable Enchant Key Recipe")
     @Config.RequiresMcRestart

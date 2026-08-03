@@ -16,7 +16,14 @@
     "MixinTombstoneGraveKey",
     "MixinTombstoneLootHelper",
     "MixinTombstonePlayerStatus",
-    "MixinTombstoneTablet"
+    "MixinTombstoneTablet",
+    "perkinfo.MixinPerkGladiatorInfo",
+    "perkinfo.MixinPerkJailerInfo",
+    "perkinfo.MixinPerkMementoMoriInfo",
+    "perkinfo.MixinPerkRuneInscriberInfo",
+    "perkinfo.MixinPerkScribeInfo",
+    "perkinfo.MixinPerkShadowWalkerInfo",
+    "perkinfo.MixinPerkTreasureSeekerInfo"
   ],
   "client": [],
   "server": [],
