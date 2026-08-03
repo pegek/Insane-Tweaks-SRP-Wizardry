@@ -1,7 +1,5 @@
 package com.spege.srpwizcore.dormant;
 
-import java.util.List;
-
 import com.spege.srpwizcore.api.DormantWaystoneRegistry;
 import com.spege.srpwizcore.config.SrpWizCoreConfig;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
@@ -13,7 +11,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -141,30 +138,10 @@ public class DormantEyeHandler {
     }
 
     // --- client: tooltip ------------------------------------------------------
-    // ItemTooltipEvent only ever fires client-side; registering this handler on the dedicated
-    // server is harmless (never called).
-
-    private static final String HINT_1 =
-            "§5Locates a hidden waystone that opens a portal to the §8Underneath§5.";
-    private static final String HINT_2 =
-            "§8Hold it — coloured motes trace the path to the nearest one.";
-
-    @SubscribeEvent
-    public void onTooltip(ItemTooltipEvent event) {
-        ItemStack stack = event.getItemStack();
-        if (!DormantTeleportHandler.isKeyItem(stack)) {
-            return;
-        }
-        List<String> tt = event.getToolTip();
-        if (!tt.contains(HINT_1)) {
-            tt.add(HINT_1);
-            tt.add(HINT_2);
-        }
-        NBTTagCompound tag = stack.getTagCompound();
-        if (tag != null && tag.hasKey(NBT_KEY)) {
-            NBTTagCompound c = tag.getCompoundTag(NBT_KEY);
-            tt.add("§7Nearest waystone: §f"
-                    + c.getInteger("x") + " " + c.getInteger("y") + " " + c.getInteger("z"));
-        }
-    }
+    // 🚨 The tooltip half lives in DormantEyeTooltipHandler and must stay there. It used to be a
+    // second @SubscribeEvent in this class, which broke the dedicated server: EventBus.register()
+    // reflects over EVERY method of the class it is handed, so registering this handler resolved
+    // ItemTooltipEvent — and through it net.minecraft.client.util.ITooltipFlag, which does not
+    // exist server-side. The event never firing on a server does not help; the load happens at
+    // registration.
 }
