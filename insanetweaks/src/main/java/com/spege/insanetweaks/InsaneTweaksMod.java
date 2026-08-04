@@ -57,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.6";
+    public static final String VERSION = "1.9.7";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -600,6 +600,19 @@ public class InsaneTweaksMod implements IGuiHandler {
             // Never fatal — the LivingSetAttackTargetEvent handler is the primary guarantee.
             LOGGER.warn("[InsaneTweaks] Could not append thrall to SRP mobattackingBlackList: {}", t.toString());
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // postInit
+    // -------------------------------------------------------------------------
+
+    /**
+     * Cross-mod reaching-in goes here, not in init: postInit is the first phase where every other
+     * mod has finished its own init, so foreign singletons are fully built.
+     */
+    @Mod.EventHandler
+    public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
+        com.spege.insanetweaks.skills.EffectTwistPairs.install();
     }
 
     // -------------------------------------------------------------------------
