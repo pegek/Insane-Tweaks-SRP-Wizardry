@@ -46,7 +46,15 @@ public abstract class TraitBase extends Trait {
     /**
      * Safely checks if the given player has unlocked a specific trait.
      * Uses Reskillable's native sync — safe on both server and client sides.
+     *
+     * @deprecated for code inside this mod, use {@link TraitHandle} instead. Every call here
+     *             re-parses both ids into {@code ResourceLocation}s (eight objects) and re-does
+     *             both registry lookups, and every internal call site passes compile-time
+     *             constants. All of them were migrated on 2026-08-04.
+     *             <p>This overload is deliberately kept rather than deleted: it takes plain
+     *             strings, which makes it the only sane entry point for GroovyScript in the pack.
      */
+    @Deprecated
     public static boolean hasTrait(EntityPlayer player, String skillId, String unlockableId) {
         try {
             PlayerData playerData = PlayerDataHandler.get(player);

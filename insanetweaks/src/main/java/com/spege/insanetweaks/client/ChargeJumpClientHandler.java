@@ -5,8 +5,7 @@ import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.network.InsaneTweaksNetwork;
 import com.spege.insanetweaks.network.PacketChargeJump;
 import com.spege.insanetweaks.skills.ChargeJumpHandler;
-import com.spege.insanetweaks.skills.SkillsModule;
-import com.spege.insanetweaks.skills.TraitBase;
+import com.spege.insanetweaks.skills.TraitHandle;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -49,8 +48,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ChargeJumpClientHandler {
 
-    private static final String SKILL_ID = "reskillable:agility";
-    private static final String TRAIT_ID = SkillsModule.DOMAIN + ":coiled_spring";
 
     /** Vanilla {@code EntityLivingBase.getJumpUpwardsMotion()}. */
     private static final float BASE_JUMP_MOTION = 0.42F;
@@ -97,7 +94,7 @@ public class ChargeJumpClientHandler {
             return;
         }
 
-        if (!ModConfig.modules.enableSkillsModule || !TraitBase.hasTrait(player, SKILL_ID, TRAIT_ID)) {
+        if (!ModConfig.modules.enableSkillsModule || !TraitHandle.COILED_SPRING.has(player)) {
             reset();
             return;
         }
@@ -188,7 +185,7 @@ public class ChargeJumpClientHandler {
         if (player == null || event.getEntity() != player) {
             return;
         }
-        if (!ModConfig.modules.enableSkillsModule || !TraitBase.hasTrait(player, SKILL_ID, TRAIT_ID)) {
+        if (!ModConfig.modules.enableSkillsModule || !TraitHandle.COILED_SPRING.has(player)) {
             return;
         }
 

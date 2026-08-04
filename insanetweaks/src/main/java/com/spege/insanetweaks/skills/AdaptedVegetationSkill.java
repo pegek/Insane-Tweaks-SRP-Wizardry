@@ -25,7 +25,7 @@ public class AdaptedVegetationSkill {
 
             boolean hasTraitPlayer = false;
             for (EntityPlayer player : players) {
-                if (TraitBase.hasTrait(player, "reskillable:farming", "compatskills:adapted_vegetation")) {
+                if (TraitHandle.ADAPTED_VEGETATION.has(player)) {
                     net.minecraft.item.Item mainhand = player.getHeldItemMainhand().getItem();
                     net.minecraft.item.Item offhand = player.getHeldItemOffhand().getItem();
                     

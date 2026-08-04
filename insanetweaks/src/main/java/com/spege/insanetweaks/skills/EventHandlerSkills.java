@@ -52,13 +52,53 @@ public class EventHandlerSkills {
     // Removed memory-leaking static maps. Data is stored directly on player NBT
     // securely.
 
+    /**
+     * {@code Entity.isInWeb}, resolved once for Spider's Grace.
+     *
+     * <p>This used to go through {@code ObfuscationReflectionHelper.getPrivateValue} on every
+     * tick. That ends up in {@code ReflectionHelper.findField}, which caches nothing at all -
+     * {@code getDeclaredField} plus {@code setAccessible(true)} per call, every call. Forge's own
+     * javadoc on it says to store the result and not call it repeatedly.
+     *
+     * <p>It was also passed only the SRG name, which is right in the packaged jar but wrong in
+     * {@code runClient}, where the classes carry MCP names - so in dev the lookup threw and the
+     * catch block printed a stack trace every tick, on both sides. Both names are tried here.
+     */
+    private static final java.lang.reflect.Field IN_WEB_FIELD = resolveInWebField();
+
+    /**
+     * Set if Spider's Grace ever throws at runtime. It then stops trying, so a broken reflection
+     * cannot cost a thrown exception and a log line on every tick for every player - which is what
+     * the old code did in dev, where the SRG-only field name never resolved.
+     */
+    private static boolean spidersGraceFailed = false;
+
+    private static java.lang.reflect.Field resolveInWebField() {
+        // MCP name first (dev), SRG second (packaged runtime).
+        String[] candidates = { "isInWeb", "field_70134_J" };
+        for (String name : candidates) {
+            try {
+                java.lang.reflect.Field field = net.minecraft.entity.Entity.class.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                // try the other naming
+            } catch (Exception e) {
+                break;
+            }
+        }
+        com.spege.insanetweaks.InsaneTweaksMod.LOGGER.error(
+                "[InsaneTweaks] Could not resolve Entity.isInWeb - Spider's Grace will do nothing.");
+        return null;
+    }
+
     // Basic Forge Events
     @SubscribeEvent
     public void onExperienceDrop(LivingExperienceDropEvent event) {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
             return;
         if (event.getAttackingPlayer() != null) {
-            if (TraitBase.hasTrait(event.getAttackingPlayer(), "reskillable:attack", "compatskills:fast_learner")) {
+            if (TraitHandle.FAST_LEARNER.has(event.getAttackingPlayer())) {
                 event.setDroppedExperience((int) (event.getDroppedExperience() * 1.15));
             }
         }
@@ -75,7 +115,7 @@ public class EventHandlerSkills {
         ItemStack item = event.getItem();
         if (item.getItem() instanceof ItemFood) {
             // Przyspieszenie jedzenia o 15%
-            if (TraitBase.hasTrait(player, "reskillable:defense", "compatskills:iron_stomach")) {
+            if (TraitHandle.IRON_STOMACH.has(player)) {
                 int newDuration = (int) (event.getDuration() * 0.85F);
                 event.setDuration(newDuration);
             }
@@ -131,7 +171,7 @@ public class EventHandlerSkills {
             return;
         if (!(event.getItem().getItem() instanceof ItemFood))
             return;
-        if (!TraitBase.hasTrait(player, "reskillable:defense", "compatskills:iron_stomach"))
+        if (!TraitHandle.IRON_STOMACH.has(player))
             return;
 
         java.util.Map<net.minecraft.potion.Potion, Integer> before = new java.util.HashMap<>();
@@ -207,7 +247,7 @@ public class EventHandlerSkills {
             return;
 
         // Double Loot (6% chance)
-        if (TraitBase.hasTrait(player, "reskillable:gathering", "compatskills:double_loot")) {
+        if (TraitHandle.DOUBLE_LOOT.has(player)) {
             if (player.world.rand.nextInt(100) < 6) {
                 List<ItemStack> additionalDrops = new ArrayList<>();
                 for (ItemStack drop : event.getDrops()) {
@@ -220,7 +260,7 @@ public class EventHandlerSkills {
         }
 
         // Enchant Fishing (0.5% chance)
-        if (TraitBase.hasTrait(player, "reskillable:gathering", "compatskills:enchant_fishing")) {
+        if (TraitHandle.ENCHANT_FISHING.has(player)) {
             if (player.world.rand.nextFloat() < 0.005f) {
                 ItemStack book = generateRandomEnchantedBook(player);
                 if (book != null && !book.isEmpty()) {
@@ -301,7 +341,7 @@ public class EventHandlerSkills {
         if (event.getHarvester() != null && !event.getWorld().isRemote) {
             if (event.getHarvester() instanceof net.minecraftforge.common.util.FakePlayer)
                 return;
-            if (TraitBase.hasTrait(event.getHarvester(), "reskillable:mining", "compatskills:astral_prospector")) {
+            if (TraitHandle.ASTRAL_PROSPECTOR.has(event.getHarvester())) {
                 if (isOreBlock(event.getState())) {
                     if (event.getWorld().rand.nextInt(100) < 10) {
                         List<ItemStack> additionalDrops = new ArrayList<>();
@@ -416,7 +456,7 @@ public class EventHandlerSkills {
         List<EntityPlayer> players = event.getWorld().getEntitiesWithinAABB(EntityPlayer.class, searchBox);
 
         for (EntityPlayer player : players) {
-            if (TraitBase.hasTrait(player, "reskillable:building", "compatskills:supreme_enchanter")) {
+            if (TraitHandle.SUPREME_ENCHANTER.has(player)) {
                 
                 // Wirtualne Enchantability (+10). Wzór Vanilli to średnio +1 mocy za +2 enchantability.
                 int virtualEnchantabilityBonus = 10; 
@@ -445,7 +485,7 @@ public class EventHandlerSkills {
             if (player.ticksExisted % 5 == 0) {
                 net.minecraft.entity.ai.attributes.IAttributeInstance reachAttr = player.getEntityAttribute(EntityPlayer.REACH_DISTANCE);
                 if (reachAttr != null) {
-                    boolean hasBob = TraitBase.hasTrait(player, "reskillable:building", "compatskills:bob_the_builder");
+                    boolean hasBob = TraitHandle.BOB_THE_BUILDER.has(player);
                     boolean holdingBlock = false;
                     
                     if (hasBob) {
@@ -470,7 +510,7 @@ public class EventHandlerSkills {
                 net.minecraft.entity.ai.attributes.IAttributeInstance dmgAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_DAMAGE);
                 
                 if (dmgAttr != null) {
-                    boolean hasFarmer = TraitBase.hasTrait(player, "reskillable:farming", "compatskills:angry_farmer");
+                    boolean hasFarmer = TraitHandle.ANGRY_FARMER.has(player);
                     boolean holdingFarmTool = false;
                     
                     if (hasFarmer) {
@@ -503,7 +543,7 @@ public class EventHandlerSkills {
 
             // GOLDEN OSMOSIS - Passive Buffs for Gold Equipment
             if (player.ticksExisted % 5 == 0) {
-                boolean hasGoldenOsmosis = TraitBase.hasTrait(player, "reskillable:magic", "reskillable:golden_osmosis");
+                boolean hasGoldenOsmosis = TraitHandle.GOLDEN_OSMOSIS.has(player);
 
                 // 1. Attack Speed Buff for Golden Tools/Weapons (+25%)
                 net.minecraft.entity.ai.attributes.IAttributeInstance speedAttr = player.getEntityAttribute(net.minecraft.entity.SharedMonsterAttributes.ATTACK_SPEED);
@@ -571,7 +611,7 @@ public class EventHandlerSkills {
                 if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
                     net.minecraft.entity.ai.attributes.IAttributeInstance magicDamageAttr = player.getAttributeMap().getAttributeInstanceByName("potioncore.magicDamage");
                     if (magicDamageAttr != null) {
-                        boolean hasArchmage = TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage");
+                        boolean hasArchmage = TraitHandle.ARCHMAGE.has(player);
                         boolean hasModifier = magicDamageAttr.hasModifier(ARCHMAGE_MODIFIER);
                         
                         if (hasArchmage && !hasModifier) {
@@ -604,7 +644,7 @@ public class EventHandlerSkills {
             nbt.setInteger("insanetweaks_meditation_ticks", currentIdle);
 
             if (player.ticksExisted % 20 == 0) {
-                if (currentIdle >= 20 && TraitBase.hasTrait(player, "reskillable:agility", "compatskills:meditation")) {
+                if (currentIdle >= 20 && TraitHandle.MEDITATION.has(player)) {
                     for (ItemStack stack : player.getArmorInventoryList()) {
                         if (!stack.isEmpty() && stack.getItem() instanceof ItemWizardArmour) {
                             ((IManaStoringItem) stack.getItem()).rechargeMana(stack, 2);
@@ -619,27 +659,36 @@ public class EventHandlerSkills {
         }
 
         // SPIDER'S GRACE - execution
-        if (TraitBase.hasTrait(player, "reskillable:defense", "compatskills:spiders_grace")) {
+        //
+        // Deliberately OUTSIDE the !isRemote guard above. Player movement is computed client-side
+        // and only then sent to the server, so a server-only version would be fighting the client's
+        // own web slowdown and produce rubber-banding. Both sides have to agree.
+        //
+        // This also has to stay on LivingUpdateEvent and cannot move to Trait.onPlayerTick: that
+        // one fires at Phase.END, i.e. AFTER EntityLivingBase.travel() -> Entity.move(), which is
+        // where isInWeb is consumed and zeroed (Entity.java:640). LivingUpdateEvent fires on the
+        // first line of onUpdate(), before it. By END the flag is already gone.
+        //
+        // The flag is read BEFORE asking about the trait on purpose. Reading a cached Field is a
+        // plain boolean load; the trait lookup is a map walk. Webs are rare, so on the overwhelming
+        // majority of ticks this now costs one field read and nothing else.
+        if (IN_WEB_FIELD != null && !spidersGraceFailed) {
             try {
-                // 1. Sprawdzamy, czy gracz wdepnął w pajęczynę
-                boolean inWeb = net.minecraftforge.fml.common.ObfuscationReflectionHelper
-                        .getPrivateValue(net.minecraft.entity.Entity.class, player, "field_70134_J");
-                
-                if (inWeb) {
-                    // 2. Wyłączamy drastyczne spowolnienie (-75%) z czystej gry
-                    net.minecraftforge.fml.common.ObfuscationReflectionHelper
-                            .setPrivateValue(net.minecraft.entity.Entity.class, player, false, "field_70134_J");
-                    
-                    // 3. Aplikujemy własne, łagodniejsze spowolnienie (-15% speeda)
+                if (IN_WEB_FIELD.getBoolean(player) && TraitHandle.SPIDERS_GRACE.has(player)) {
+                    // 1. Wyłączamy drastyczne spowolnienie (-75%) z czystej gry
+                    IN_WEB_FIELD.setBoolean(player, false);
+
+                    // 2. Aplikujemy własne, łagodniejsze spowolnienie (-15% speeda)
                     player.motionX *= 0.85D;
                     player.motionZ *= 0.85D;
-                    
+
                     // (Opcjonalnie) Spowalnia też minimalnie opadanie w dół, żeby gracz nie spadał przez pajęczyny jak kamień
-                    player.motionY *= 0.85D; 
+                    player.motionY *= 0.85D;
                 }
             } catch (Exception e) {
-                System.err.println("[InsaneTweaks] Error applying Spider's Grace reflection:");
-                e.printStackTrace();
+                spidersGraceFailed = true;
+                com.spege.insanetweaks.InsaneTweaksMod.LOGGER.error(
+                        "[InsaneTweaks] Spider's Grace failed and is disabled for this session.", e);
             }
         }
     }
@@ -656,7 +705,7 @@ public class EventHandlerSkills {
             return;
 
         // Arcane Mastery (10% Cost Reduction)
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:arcane_mastery")) {
+        if (TraitHandle.ARCANE_MASTERY.has(player)) {
             // Legacy syntax used to be event.getModifiers().set("cost", ...).
             // Keep the note here so future edits remember why we now use the native constant.
             float currentCost = event.getModifiers().get(SpellModifiers.COST);
@@ -672,7 +721,7 @@ public class EventHandlerSkills {
         // School of Conjuration - TESTING
         // Moved from Post to Pre so summon-related modifiers are applied before
         // SpellMinion reads them during minion creation.
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_conjuration")) {
+        if (TraitHandle.SCHOOL_OF_CONJURATION.has(player)) {
             if (type == electroblob.wizardry.constants.SpellType.MINION
                     || type == electroblob.wizardry.constants.SpellType.CONSTRUCT) {
                 SummonDurationStat.applyTestModifier(event);
@@ -680,7 +729,7 @@ public class EventHandlerSkills {
         }
 
         // Archmage
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:archmage")) {
+        if (TraitHandle.ARCHMAGE.has(player)) {
             if (net.minecraftforge.fml.common.Loader.isModLoaded("potioncore")) {
                 event.getModifiers().set(SpellModifiers.POTENCY,
                         event.getModifiers().get(SpellModifiers.POTENCY) * 1.05f, false);
@@ -691,7 +740,7 @@ public class EventHandlerSkills {
         }
 
         // School of Alteration
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_alteration")) {
+        if (TraitHandle.SCHOOL_OF_ALTERATION.has(player)) {
             if (type == electroblob.wizardry.constants.SpellType.BUFF
                     || type == electroblob.wizardry.constants.SpellType.ALTERATION) {
                 event.getModifiers().set("duration",
@@ -718,7 +767,7 @@ public class EventHandlerSkills {
          */
 
         // School of Destruction
-        if (TraitBase.hasTrait(player, "reskillable:magic", "compatskills:school_of_destruction")) {
+        if (TraitHandle.SCHOOL_OF_DESTRUCTION.has(player)) {
             if (type == electroblob.wizardry.constants.SpellType.ATTACK
                     || type == electroblob.wizardry.constants.SpellType.PROJECTILE) {
                 event.getModifiers().set(SpellModifiers.POTENCY,
@@ -776,7 +825,7 @@ public class EventHandlerSkills {
             // Jeśli wyrzucił ją gracz posiadający Safe Port
             if (thrower instanceof EntityPlayer) {
                 EntityPlayer player = (EntityPlayer) thrower;
-                if (TraitBase.hasTrait(player, "reskillable:magic", "reskillable:safe_port")) {
+                if (TraitHandle.SAFE_PORT.has(player)) {
                     // Zwiększamy szybkość wyrzutu o 30%
                     pearl.motionX *= 1.3D;
                     pearl.motionY *= 1.3D;

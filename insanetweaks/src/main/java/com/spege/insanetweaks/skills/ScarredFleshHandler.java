@@ -68,8 +68,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 public class ScarredFleshHandler {
 
-    private static final String SKILL_ID = "reskillable:defense";
-    private static final String TRAIT_ID = SkillsModule.DOMAIN + ":scarred_flesh";
 
     /**
      * Guards the re-apply below. A ThreadLocal rather than a plain boolean because the
@@ -109,7 +107,7 @@ public class ScarredFleshHandler {
             return;
         }
 
-        if (!TraitBase.hasTrait(player, SKILL_ID, TRAIT_ID)) {
+        if (!TraitHandle.SCARRED_FLESH.has(player)) {
             return;
         }
 

@@ -39,8 +39,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 public class StoneFistsHandler {
 
-    private static final String SKILL_ID = "reskillable:mining";
-    private static final String TRAIT_ID = SkillsModule.DOMAIN + ":stone_fists";
 
     /**
      * The tools a Stone Fists player emulates.
@@ -115,7 +113,7 @@ public class StoneFistsHandler {
     private static boolean isBareHanded(EntityPlayer player) {
         if (player == null) return false;
         if (!player.getHeldItemMainhand().isEmpty()) return false;
-        return TraitBase.hasTrait(player, SKILL_ID, TRAIT_ID);
+        return TraitHandle.STONE_FISTS.has(player);
     }
 
     // -------------------------------------------------------------------------

@@ -2,8 +2,7 @@ package com.spege.insanetweaks.network;
 
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.skills.ChargeJumpHandler;
-import com.spege.insanetweaks.skills.SkillsModule;
-import com.spege.insanetweaks.skills.TraitBase;
+import com.spege.insanetweaks.skills.TraitHandle;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -53,7 +52,7 @@ public class PacketChargeJump implements IMessage {
             if (!ModConfig.modules.enableSkillsModule) {
                 return;
             }
-            if (!TraitBase.hasTrait(player, "reskillable:agility", SkillsModule.DOMAIN + ":coiled_spring")) {
+            if (!TraitHandle.COILED_SPRING.has(player)) {
                 return;
             }
 

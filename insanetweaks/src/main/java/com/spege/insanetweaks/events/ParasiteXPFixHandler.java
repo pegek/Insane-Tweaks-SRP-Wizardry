@@ -3,7 +3,7 @@ package com.spege.insanetweaks.events;
 import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
-import com.spege.insanetweaks.skills.TraitBase;
+import com.spege.insanetweaks.skills.TraitHandle;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -70,7 +70,7 @@ public class ParasiteXPFixHandler {
         }
 
         EntityPlayer killer = (EntityPlayer) trueSource;
-        if (!TraitBase.hasTrait(killer, "reskillable:attack", "compatskills:assimilated_warfare")) {
+        if (!TraitHandle.ASSIMILATED_WARFARE.has(killer)) {
             return;
         }
 
