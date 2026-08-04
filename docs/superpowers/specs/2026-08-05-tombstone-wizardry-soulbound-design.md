@@ -87,7 +87,7 @@ is filled. No duplication, no loss.
 |---|---|---|
 | `WandSoulbindConsumer` | `com.spege.tombtweaks.wizardry` | implements `ISoulConsumer` for a wand stack |
 | `WandSoulbindAttacher` | `com.spege.tombtweaks.wizardry` | `@Mod.EventBusSubscriber`, attaches the capability to wand stacks |
-| `SoulbindConfig` | `config.categories.TombstoneCategory` | nested config section `wandsoulbinding` |
+| `WandSoulbindingConfig` | `config.categories.TombstoneCategory` | nested config section `wandsoulbinding` |
 
 ### Contract of `WandSoulbindConsumer`
 
