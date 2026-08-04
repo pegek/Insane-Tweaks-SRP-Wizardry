@@ -1,9 +1,7 @@
 package com.spege.insanetweaks.events;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
+import com.dhanantry.scapeandrunparasites.init.SRPPotions;
+import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
 import com.spege.insanetweaks.skills.TraitBase;
 
@@ -15,38 +13,49 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
  * Implements the "Assimilated Warfare" trait mechanic.
  *
- * SRParasites can suppress vanilla XP drops at higher evolution phases, so
- * LivingExperienceDropEvent never fires and the player receives no XP.
+ * SRParasites suppresses vanilla XP drops under two conditions, so for those kills
+ * LivingExperienceDropEvent never fires and the player receives no XP at all. This
+ * handler detects exactly those two conditions and spawns a small replacement orb.
  *
- * This handler records parasite deaths for players with the trait, waits briefly
- * to see whether vanilla/SRP XP is dropped naturally, and only then spawns a
- * small fallback XP orb if necessary.
+ * It also drains one evolution point per parasite kill from a configured phase onward.
+ *
+ * HISTORY (2026-08-04): this used to record the death, wait TICK_DELAY = 2 ticks and
+ * cancel itself if LivingExperienceDropEvent fired in the meantime. That could never
+ * work. SRP's EntityParasiteBase.onDeathUpdateOG() is a copy of vanilla's
+ * onDeathUpdate(): it increments deathTime and only reaches
+ * ForgeEventFactory.getExperienceDrop() at deathTime == 20. So the natural XP event
+ * arrives 20 ticks after LivingDeathEvent - 18 ticks after the fallback orb had
+ * already been handed out. The trait was paying +4 XP on every kill, on top of the
+ * XP SRP dropped normally. The suppression conditions are all knowable at death time,
+ * so the wait (and the pending map that leaked World references) is gone.
  */
 public class ParasiteXPFixHandler {
 
     private static final int PARASITE_XP_GRANT = 4;
-    private static final int TICK_DELAY = 2;
     private static final int ASSIMILATED_WARFARE_EVOLUTION_STAGE = 5;
     private static final int ASSIMILATED_WARFARE_EVOLUTION_DRAIN = 1;
 
     /**
-     * Key: entity id
-     * Value: [world, posX, posY, posZ, ticksLeft, xpToGive]
+     * SRPSaveData.get(World, int) only reads this int on the CLIENT branch, where it is
+     * forwarded to createData(); server-side it is ignored entirely. 37 is what SRP itself
+     * passes at its own call sites, so we match it rather than invent a value.
      */
-    private final Map<Integer, Object[]> pending = new HashMap<>();
+    private static final int SRP_SAVEDATA_HINT = 37;
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onParasiteDeath(LivingDeathEvent event) {
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule) {
+            return;
+        }
+
         EntityLivingBase entity = event.getEntityLiving();
-        if (entity.world.isRemote) {
+        if (entity == null || entity.world.isRemote) {
             return;
         }
 
@@ -67,19 +76,50 @@ public class ParasiteXPFixHandler {
 
         this.tryDrainEvolutionPoints(entity.world);
 
+        // SRP is about to drop XP by itself in 20 ticks - adding an orb here would double it.
+        if (!this.isSrpXpSuppressed(entity)) {
+            return;
+        }
+
         int xpToGive = this.getFallbackXpForParasite(entity, id);
         if (xpToGive <= 0) {
             return;
         }
 
-        pending.put(entity.getEntityId(), new Object[] {
-                entity.world,
-                entity.posX,
-                entity.posY,
-                entity.posZ,
-                TICK_DELAY,
-                xpToGive
-        });
+        entity.world.spawnEntity(new EntityXPOrb(entity.world, entity.posX, entity.posY, entity.posZ, xpToGive));
+    }
+
+    /**
+     * Mirrors the two XP cut-offs inside EntityParasiteBase.onDeathUpdateOG(). Returns true
+     * only when SRP will refuse to drop XP for this parasite, i.e. when the trait has
+     * something to replace.
+     */
+    private boolean isSrpXpSuppressed(EntityLivingBase entity) {
+        World world = entity.world;
+
+        // Both vanilla and SRP gate the whole XP block on this gamerule. If the pack turned
+        // mob loot off, the trait has no business handing XP out either.
+        if (!world.getGameRules().getBoolean("doMobLoot")) {
+            return false;
+        }
+
+        // Suppressor 1: dislocation code 18 ("Parasite when killed, will not drop loot, xp")
+        // applies DEBAR_E, and SRP skips the XP block outright while it is active.
+        if (entity.isPotionActive(SRPPotions.DEBAR_E)) {
+            return true;
+        }
+
+        // Suppressor 2: evolution phase at or past SRP's own cut-off. Read SRP's config rather
+        // than hardcoding a phase - the pack owns that number ("Phase Parasites Without XP").
+        if (SRPConfigSystems.useEvolution) {
+            SRPSaveData saveData = SRPSaveData.get(world, SRP_SAVEDATA_HINT);
+            if (saveData != null
+                    && saveData.getEvolutionPhase(world.provider.getDimension()) >= SRPConfigSystems.evolutionPArasitesWithoutXP) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private int getFallbackXpForParasite(EntityLivingBase entity, ResourceLocation id) {
@@ -105,7 +145,7 @@ public class ParasiteXPFixHandler {
             return;
         }
 
-        SRPSaveData saveData = SRPSaveData.get(world, 0);
+        SRPSaveData saveData = SRPSaveData.get(world, SRP_SAVEDATA_HINT);
         if (saveData == null) {
             return;
         }
@@ -119,44 +159,5 @@ public class ParasiteXPFixHandler {
         // without forcibly dropping the current phase below its floor.
         // srcID 9 = PENALTY_OR_LOSS in SRP 1.10.7's point-source debug log.
         saveData.setTotalKills(dimension, -ASSIMILATED_WARFARE_EVOLUTION_DRAIN, true, world, false, 9);
-    }
-
-    @SubscribeEvent
-    public void onExperienceDrop(LivingExperienceDropEvent event) {
-        if (event.getEntityLiving() == null) {
-            return;
-        }
-
-        pending.remove(event.getEntityLiving().getEntityId());
-    }
-
-    @SubscribeEvent
-    public void onWorldTick(TickEvent.WorldTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.world.isRemote || pending.isEmpty()) {
-            return;
-        }
-
-        Iterator<Map.Entry<Integer, Object[]>> it = pending.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Integer, Object[]> entry = it.next();
-            Object[] data = entry.getValue();
-
-            World world = (World) data[0];
-            if (world != event.world) {
-                continue;
-            }
-
-            int ticksLeft = (int) data[4] - 1;
-            if (ticksLeft <= 0) {
-                double posX = (double) data[1];
-                double posY = (double) data[2];
-                double posZ = (double) data[3];
-                int xpToGive = (int) data[5];
-                world.spawnEntity(new EntityXPOrb(world, posX, posY, posZ, xpToGive));
-                it.remove();
-            } else {
-                data[4] = ticksLeft;
-            }
-        }
     }
 }

@@ -57,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.5";
+    public static final String VERSION = "1.9.6";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -542,9 +542,12 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.AdaptedVegetationSkill());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.StoneFistsHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ChargeJumpHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
             if (Loader.isModLoaded(SRP_MODID)) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ScarredFleshHandler());
+                // Assimilated Warfare reads SRPPotions/SRPConfigSystems/SRPSaveData. Those sit in
+                // method bodies (lazy resolution), so registering without SRP would not crash - but
+                // the handler cannot fire either, since it bails on any non-srparasites entity.
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
             }
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.ChargeJumpClientHandler());

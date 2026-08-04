@@ -82,6 +82,84 @@ public class EventHandlerSkills {
         }
     }
 
+    // Iron Stomach's saturation bonus lived here (LivingEntityUseItemEvent.Finish) until
+    // 2026-08-04. It applied MobEffects.SATURATION for (healAmount * saturationModifier / 2)
+    // ticks, and vanilla's saturation potion runs addStats(1, 1.0F) EVERY tick - so a steak
+    // handed out +3 hunger and +6 saturation on top of the food itself. Removed as a balance
+    // decision, replaced by the food-debuff resistance below.
+
+    // -------------------------------------------------------------------------
+    // Iron Stomach - food debuff resistance
+    // -------------------------------------------------------------------------
+
+    /** Fraction cut off the debuff duration a piece of food inflicts. 1.0F would be full immunity. */
+    private static final float IRON_STOMACH_DEBUFF_REDUCTION = 0.5F;
+
+    /**
+     * Per-player snapshot of active effect durations, taken on the last use tick before the food
+     * lands. Key: entity id. Value: [player.ticksExisted at capture, Map&lt;Potion, duration&gt;].
+     *
+     * Bounded by the number of players who have ever eaten while holding the trait - it stores no
+     * World or Entity references, only Potion singletons and ints, and each player has at most one
+     * entry which the next meal overwrites. The tick stamp makes a stale entry inert rather than
+     * wrong: a meal interrupted by an item swap goes through Entity.resetActiveHand(), which fires
+     * no event at all, so there is no reliable place to clear it.
+     */
+    private final java.util.Map<Integer, Object[]> ironStomachSnapshots = new java.util.HashMap<>();
+
+    /**
+     * Capture the effect state one step before the food applies its own.
+     *
+     * Verified against EntityLivingBase.updateActiveHand() (Forge 1.12.2): ForgeEventFactory
+     * .onItemUseTick fires with activeItemStackUseCount BEFORE the decrement, and the very next
+     * statement is {@code if (--activeItemStackUseCount <= 0 && !world.isRemote) onItemUseFinish();}
+     * So the tick that reports duration == 1 is the last one before ItemFood.onFoodEaten runs, in
+     * the same tick. Diffing this snapshot against the state in Finish yields exactly the effects
+     * the food itself inflicted - which is what makes this work for any mod's food rather than a
+     * hardcoded list of vanilla's.
+     */
+    @SubscribeEvent
+    public void onItemUseTick(LivingEntityUseItemEvent.Tick event) {
+        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
+            return;
+        if (event.getDuration() > 1)
+            return;
+        if (!(event.getEntityLiving() instanceof EntityPlayer))
+            return;
+        EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        if (player.world.isRemote)
+            return;
+        if (!(event.getItem().getItem() instanceof ItemFood))
+            return;
+        if (!TraitBase.hasTrait(player, "reskillable:defense", "compatskills:iron_stomach"))
+            return;
+
+        java.util.Map<net.minecraft.potion.Potion, Integer> before = new java.util.HashMap<>();
+        for (net.minecraft.potion.PotionEffect active : player.getActivePotionEffects()) {
+            before.put(active.getPotion(), active.getDuration());
+        }
+        ironStomachSnapshots.put(player.getEntityId(), new Object[] { player.ticksExisted, before });
+    }
+
+    /**
+     * Shorten whatever debuff the food just inflicted.
+     *
+     * Only effects that are new, or whose duration grew past the snapshot, count as "inflicted by
+     * this meal" - so a Poison picked up in combat while chewing is left alone, and an extended
+     * effect is only trimmed down to what the player already had.
+     *
+     * FUTURE NOTE - SRP effects are deliberately NOT handled here. Classification uses vanilla's
+     * Potion.isBadEffect(), the mandatory constructor flag, which is the only marker that is both
+     * server-safe (Forge's isBeneficial() is @SideOnly(Side.CLIENT) - see PotionCleanse) and
+     * respected by well-behaved mods. SRParasites sets it wrong: 15 of its 24 harmful effects are
+     * constructed with isBadEffect = false (coth, fear, vomit, senses, debar, needler, foster,
+     * link, parate, spotted, braining, novision, indeaf, the_sign, thornshade_thorns - verified on
+     * SRPPotions.<clinit>, SRParasites 1.10.7), so SRP food debuffs slip through untouched. Fixing
+     * that needs the inverse approach: a whitelist of effects worth KEEPING (vanilla's 16
+     * setBeneficial() entries minus instant_damage, plus PotionCleanse.BUILT_IN_PROTECTED_EFFECTS)
+     * and treat everything else the food applied as hostile. Deferred on purpose - do not "fix" it
+     * by adding an SRP effect list here, that would be the third copy of the same list in this repo.
+     */
     @SubscribeEvent
     public void onItemUseFinish(LivingEntityUseItemEvent.Finish event) {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
@@ -90,24 +168,33 @@ public class EventHandlerSkills {
             return;
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
         if (player.world.isRemote)
-            return; // Efekty nakładamy tylko na serwerze
+            return;
 
-        ItemStack item = event.getItem();
-        if (item.getItem() instanceof ItemFood) {
-            ItemFood food = (ItemFood) item.getItem();
-            if (food.getSaturationModifier(item) > 0) {
-                if (TraitBase.hasTrait(player, "reskillable:defense", "compatskills:iron_stomach")) {
-                    float healAmount = food.getHealAmount(item);
-                    float saturationMod = food.getSaturationModifier(item);
-                    
-                    // Obliczamy skalę bonusu (ucięta o połowę dla balansu). 
-                    // Np. dla steka (Heal: 8, SatMod: 0.8) wyjdzie ~3 ticki potężnego efektu Saturation.
-                    int durationTicks = Math.max(1, (int) ((healAmount * saturationMod) / 2.0f));
-                    
-                    // Nakładamy natywny efekt nasycenia, który wywoła efekt szybkiego leczenia z Vanilli
-                    player.addPotionEffect(new net.minecraft.potion.PotionEffect(net.minecraft.init.MobEffects.SATURATION, durationTicks, 0, false, false));
-                }
-            }
+        Object[] snapshot = ironStomachSnapshots.remove(player.getEntityId());
+        if (snapshot == null || (int) snapshot[0] != player.ticksExisted)
+            return; // no snapshot, or a stale one left by an interrupted meal
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<net.minecraft.potion.Potion, Integer> before =
+                (java.util.Map<net.minecraft.potion.Potion, Integer>) snapshot[1];
+
+        // Copy: removePotionEffect/addPotionEffect mutate the active-effect map we are walking.
+        for (net.minecraft.potion.PotionEffect active
+                : new ArrayList<>(player.getActivePotionEffects())) {
+            net.minecraft.potion.Potion potion = active.getPotion();
+            if (!potion.isBadEffect())
+                continue;
+
+            Integer previous = before.get(potion);
+            int floor = (previous == null) ? 0 : previous.intValue();
+            int gained = active.getDuration() - floor;
+            if (gained <= 0)
+                continue; // predates this meal
+
+            int trimmed = floor + Math.max(1, (int) (gained * (1.0F - IRON_STOMACH_DEBUFF_REDUCTION)));
+            player.removePotionEffect(potion);
+            player.addPotionEffect(new net.minecraft.potion.PotionEffect(potion, trimmed,
+                    active.getAmplifier(), active.getIsAmbient(), active.doesShowParticles()));
         }
     }
 
@@ -212,10 +299,10 @@ public class EventHandlerSkills {
         if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule)
             return;
         if (event.getHarvester() != null && !event.getWorld().isRemote) {
+            if (event.getHarvester() instanceof net.minecraftforge.common.util.FakePlayer)
+                return;
             if (TraitBase.hasTrait(event.getHarvester(), "reskillable:mining", "compatskills:astral_prospector")) {
-                Block block = event.getState().getBlock();
-                ResourceLocation regName = block.getRegistryName();
-                if (regName != null && regName.getResourcePath().toLowerCase().contains("ore")) {
+                if (isOreBlock(event.getState())) {
                     if (event.getWorld().rand.nextInt(100) < 10) {
                         List<ItemStack> additionalDrops = new ArrayList<>();
                         for (ItemStack drop : event.getDrops()) {
@@ -226,6 +313,47 @@ public class EventHandlerSkills {
                 }
             }
         }
+    }
+
+    /**
+     * Astral Prospector's "is this an ore" test.
+     *
+     * This used to be regName.getResourcePath().contains("ore"), which is a substring match and
+     * therefore matched a pile of things that are not ores. Verified false positives in the DEv 1.2
+     * pack: srparasites:goreada/gorefer/goremar/gorepri/gorepur/goresim and srpextra:goredorpa (g-ORE-),
+     * srparasites:parasitic_colony_core_slab and iceandfire:dragonforge_core* and our own
+     * insanetweaks:sanctuary_core (c-ORE), all 16 quark:colored_flowerpot_* (fl-ORE-wpot), and
+     * da:spore_blossom. The SRP gore blocks were the practical problem - they carpet infested biomes.
+     *
+     * The OreDictionary is the 1.12.2 cross-mod contract for "this is an ore", so it goes first. The
+     * name test stays as a fallback for mods that never registered their ore, but as an exact shape
+     * rather than a substring.
+     */
+    private static boolean isOreBlock(net.minecraft.block.state.IBlockState state) {
+        Block block = state.getBlock();
+        ResourceLocation regName = block.getRegistryName();
+        if (regName == null)
+            return false;
+
+        net.minecraft.item.Item blockItem = net.minecraft.item.Item.getItemFromBlock(block);
+        if (blockItem != net.minecraft.init.Items.AIR) {
+            try {
+                // Meta-variant ore blocks (thermalfoundation:ore and friends) are registered per
+                // block metadata, so ask with the state's own meta, not damageDropped().
+                ItemStack blockStack = new ItemStack(blockItem, 1, block.getMetaFromState(state));
+                for (int oreId : net.minecraftforge.oredict.OreDictionary.getOreIDs(blockStack)) {
+                    if (net.minecraftforge.oredict.OreDictionary.getOreName(oreId).startsWith("ore")) {
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                // getMetaFromState can throw on blocks with a partial state->meta mapping.
+                // Fall through to the name test rather than breaking the harvest.
+            }
+        }
+
+        String path = regName.getResourcePath().toLowerCase(java.util.Locale.ROOT);
+        return path.endsWith("_ore") || path.startsWith("ore_") || path.equals("ore");
     }
 
     @SubscribeEvent
