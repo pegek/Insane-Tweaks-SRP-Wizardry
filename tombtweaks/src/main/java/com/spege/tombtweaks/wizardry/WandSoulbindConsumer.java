@@ -43,16 +43,37 @@ public class WandSoulbindConsumer implements ISoulConsumer {
         return TombTweaksConfig.tombstone.wandSoulbinding;
     }
 
-    /** The configured upgrade, or null when no mod registers it. */
+    /**
+     * The configured upgrade, or null when the name is malformed or no mod registers it.
+     *
+     * <p>The colon check is not pedantry: {@code getByNameOrId} falls back to a legacy numeric item
+     * id, so a config value of "42" would quietly resolve to an unrelated item instead of failing.
+     */
     @Nullable
     private static Item upgradeItem() {
-        return Item.getByNameOrId(cfg().upgradeItem);
+        String name = cfg().upgradeItem;
+        if (name == null || name.indexOf(':') <= 0) {
+            return null;
+        }
+        return Item.getByNameOrId(name);
     }
 
-    /** 🚨 Load-bearing — see the class javadoc. */
+    /**
+     * 🚨 Load-bearing, and deliberately more than a constant: this is the filter Tombstone applies
+     * to the off-hand stack. Returning true commits the grave to the soul-consumer branch and
+     * swallows the click, so anything that means "this feature is not operating" has to be answered
+     * here rather than in {@link #canEnchant} — otherwise a disabled feature, or a missing upgrade
+     * mod, would still take over the interaction instead of leaving it to Tombstone.
+     *
+     * <p>The Ankh requirement is deliberately NOT checked here. Holding a wand in the off hand at a
+     * grave is a clear enough intent that telling the player "hold the Ankh" is more useful than
+     * silently doing something else.
+     */
     @Override
     public boolean isUsingOffhandToEnchant() {
-        return true;
+        return TombTweaksConfig.tombstone.enableTombstoneTweaks
+                && cfg().enabled
+                && upgradeItem() != null;
     }
 
     /** The soul is the whole price. */
@@ -135,6 +156,8 @@ public class WandSoulbindConsumer implements ISoulConsumer {
                 return "Hold the Ankh of Prayer in your main hand.";
             }
         }
+        // Unreachable via the grave — Tombstone calls isEnchanted() first and short-circuits with
+        // its own message. Kept for any other caller that drives the capability directly.
         if (WandHelper.getUpgradeLevel(stack, upgrade) > 0) {
             return "This wand is already bound to your soul.";
         }
