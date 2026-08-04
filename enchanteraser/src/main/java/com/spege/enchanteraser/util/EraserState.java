@@ -200,7 +200,7 @@ public final class EraserState {
             Enchantment enchantment = Enchantment.getEnchantmentByID(tag.getInteger("id"));
             if (isDisabled(enchantment)) {
                 list.removeTag(i);
-                logOnce(enchantment, source);
+                logOnce(enchantment, source, "stripped");
                 changed = true;
             }
         }
@@ -233,13 +233,22 @@ public final class EraserState {
 
     /** One INFO line per enchantment per source, and only under {@code Log Blocks}. */
     public static void logOnce(Enchantment enchantment, String source) {
+        logOnce(enchantment, source, "blocked");
+    }
+
+    /**
+     * As {@link #logOnce(Enchantment, String)}, but naming what actually happened. Refusing to hand an
+     * enchantment out and deleting one that was already on an item are worth telling apart in a log a
+     * pack author is reading to check the mod is doing what they asked.
+     */
+    public static void logOnce(Enchantment enchantment, String source, String verb) {
         if (!EnchantEraserConfig.logBlocks || enchantment == null) {
             return;
         }
         ResourceLocation id = enchantment.getRegistryName();
         String key = (id == null ? "?" : id.toString()) + "@" + source;
         if (LOGGED.add(key)) {
-            com.spege.enchanteraser.EnchantEraser.LOGGER.info("[EnchantEraser] blocked "
+            com.spege.enchanteraser.EnchantEraser.LOGGER.info("[EnchantEraser] " + verb + " "
                     + (id == null ? "?" : id.toString()) + " at " + source);
         }
     }

@@ -10,8 +10,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * The whole mod's configuration: one list plus three cosmetic/diagnostic switches, all in the
- * {@code general} category of {@code config/enchanteraser.cfg}.
+ * The whole mod's configuration: one list plus four switches, all in the {@code general} category of
+ * {@code config/enchanteraser.cfg}. Only one of them changes item data — {@code Strip Erased On Anvil
+ * Pass} — and it is off by default.
  *
  * <p>🚨 The sibling mods in this repo all set {@code category = ""}, and that must NOT be copied here.
  * An empty category means "every field of this class is itself a category object": verified in
@@ -52,6 +53,22 @@ public class EnchantEraserConfig {
             "Log one INFO line the first time each enchantment is blocked at each source.",
             "Diagnostic only - leave off in normal play. Read live." })
     public static boolean logBlocks = false;
+
+    @Config.Name("Strip Erased On Anvil Pass")
+    @Config.Comment({
+            "When an item passes through an anvil - renamed, repaired or combined - remove any erased",
+            "enchantment it still carries from the result. Off by default: the mod's promise is that",
+            "existing gear is never touched, and this is the one switch that deliberately breaks it.",
+            "",
+            "Only the anvil OUTPUT is edited, and that output is already a copy, so an item sitting in",
+            "the input slot is never modified - the player has to take the result for the change to",
+            "stick, and the anvil produces no result at all unless they were paying for something",
+            "anyway. Nothing is refunded for the lost enchantment.",
+            "",
+            "This is the slow, opt-in way to drain erased enchantments out of a live world: gear gets",
+            "cleaned as players happen to use it, with no mass edit and no reachability problem.",
+            "Read live." })
+    public static boolean stripOnAnvilPass = false;
 
     @Config.Name("Hide Erased From JEI")
     @Config.Comment({
