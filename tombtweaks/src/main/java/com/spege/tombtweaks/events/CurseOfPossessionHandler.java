@@ -58,7 +58,10 @@ public class CurseOfPossessionHandler {
         if (enchantTag != null) {
             for (int i = 0; i < enchantTag.tagCount(); i++) {
                 NBTTagCompound enchant = enchantTag.getCompoundTagAt(i);
-                Enchantment enchantObj = Enchantment.getEnchantmentByID(enchant.getShort("id"));
+                // getInteger, not getShort: JustEnoughIDs widens enchantment ids past 32767 and
+                // rewrites vanilla's own reads, but not ours. getInteger reads a short tag fine
+                // (NBTTagCompound.getInteger accepts any numeric tag), so this is safe without JEID.
+                Enchantment enchantObj = Enchantment.getEnchantmentByID(enchant.getInteger("id"));
                 if (enchantObj != null) {
                     net.minecraft.util.ResourceLocation regName = enchantObj.getRegistryName();
                     String registryName = regName != null
