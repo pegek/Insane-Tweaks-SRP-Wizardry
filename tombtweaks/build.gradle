@@ -37,6 +37,11 @@ dependencies {
     implementation fg.deobf(files(rootProject.file('libs/BaublesEX-1.12.2-2.3.6.jar')))
     implementation fg.deobf(files(rootProject.file('libs/enigmaticlegacy-legacy-2.7.0.jar')))
 
+    // Electroblob's Wizardry — the ItemWand type and WandHelper, for soulbinding a wand with a
+    // grave's soul. Pulled from CurseMaven exactly as content does; it is deliberately excluded
+    // from the libs fileTree everywhere in this repo, so do not add a jar to libs/.
+    implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
+
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
