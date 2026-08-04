@@ -125,6 +125,23 @@ public final class EraserState {
         }
     }
 
+    /**
+     * Allocation-free "is it even worth looking" test, for call sites hot enough that
+     * {@link #stripFromStack} would be too expensive to reach unconditionally.
+     *
+     * <p>{@code ItemStack.getEnchantmentTagList} and {@code ItemEnchantedBook.getEnchantments} both
+     * allocate a fresh empty {@code NBTTagList} when the tag is missing, which is the overwhelmingly
+     * common case on a deserialization path. Reading the keys directly avoids that. Tag type 9 is
+     * {@code NBTTagList}.
+     */
+    public static boolean mayCarryEnchantments(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || DISABLED.isEmpty()) {
+            return false;
+        }
+        NBTTagCompound tag = stack.getTagCompound();
+        return tag != null && (tag.hasKey("ench", 9) || tag.hasKey("StoredEnchantments", 9));
+    }
+
     /** The first erased enchantment carried by this stack, or null when it is clean. */
     public static Enchantment firstDisabledOn(ItemStack stack) {
         if (stack == null || stack.isEmpty() || DISABLED.isEmpty()) {

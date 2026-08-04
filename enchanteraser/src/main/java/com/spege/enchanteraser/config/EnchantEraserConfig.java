@@ -10,9 +10,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * The whole mod's configuration: one list plus five switches, all in the {@code general} category of
- * {@code config/enchanteraser.cfg}. Only one of them changes item data — {@code Strip Erased On Anvil
- * Pass} — and it is off by default.
+ * The whole mod's configuration: one list plus six switches, all in the {@code general} category of
+ * {@code config/enchanteraser.cfg}. Two of them change item data — {@code Strip Erased On Anvil Pass}
+ * and {@code Strip Erased On Item Load} — and both are off by default.
  *
  * <p>🚨 The sibling mods in this repo all set {@code category = ""}, and that must NOT be copied here.
  * An empty category means "every field of this class is itself a category object": verified in
@@ -85,6 +85,24 @@ public class EnchantEraserConfig {
             "cleaned as players happen to use it, with no mass edit and no reachability problem.",
             "Read live." })
     public static boolean stripOnAnvilPass = false;
+
+    @Config.Name("Strip Erased On Item Load")
+    @Config.Comment({
+            "Delete erased enchantments from items that already carry them, as those items are read",
+            "back in. This is the broad version of the anvil switch above: everything that gets loaded",
+            "is cleaned - chest and tile-entity contents when a chunk loads, player inventories and",
+            "ender chests, item entities, Tombstone graves, every stack that crosses the network.",
+            "",
+            "🚨 THIS DESTROYS DATA AND CANNOT BE UNDONE. Turning the flag back off restores nothing,",
+            "and neither does removing an entry from the list above - the enchantment is gone from every",
+            "item that was loaded while it was on. Take a world backup before the first run with this on.",
+            "",
+            "An item in a chunk that never loads is never touched, so this cleans a world gradually",
+            "rather than all at once. An enchanted book whose only enchantments were erased ends up",
+            "blank - the item cannot be swapped for a plain book at that point.",
+            "",
+            "Off by default. Read live." })
+    public static boolean stripOnItemLoad = false;
 
     @Config.Name("Hide Erased From JEI")
     @Config.Comment({

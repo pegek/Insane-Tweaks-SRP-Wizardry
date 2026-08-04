@@ -11,7 +11,8 @@
     "MixinVillagerBookTradeErase",
     "MixinItemEnchantedBookErase",
     "MixinEnchantmentAllowedOnBooks",
-    "MixinItemStackAddEnchantment"
+    "MixinItemStackAddEnchantment",
+    "MixinItemStackLoadErase"
   ],
   "client": [],
   "server": [],

@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.2.0'
+version = '1.3.0'
 group = 'com.spege.enchanteraser'
 archivesBaseName = 'enchanteraser'
 
@@ -41,7 +41,7 @@ jar {
         attributes([
             "Specification-Title": "Enchant Eraser",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.2.0",
+            "Specification-Version": "1.3.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
