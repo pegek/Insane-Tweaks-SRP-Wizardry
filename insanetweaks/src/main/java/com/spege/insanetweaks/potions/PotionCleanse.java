@@ -95,10 +95,15 @@ public class PotionCleanse extends Potion {
 
     /**
      * Parasite-ecosystem effects Cleanse must NEVER remove, regardless of how the
-     * runtime classifies them (stock Forge: isBeneficial() is false for ALL SRP
-     * effects because SRP never calls setBeneficial(); Cleanroom may differ).
-     * repel = EPEL_E anti-assimilation protection, antimall = player-brewed ward,
-     * the rest are player-usable kill/lure or discovery mechanics.
+     * runtime classifies them. repel = EPEL_E anti-assimilation protection,
+     * antimall = player-brewed ward, the rest are player-usable kill/lure or
+     * discovery mechanics.
+     *
+     * <p>This guard is load-bearing under isBadEffect(): SRP passes that flag per
+     * effect and gets it wrong in both directions. Of the nine effects listed here,
+     * <b>antimall</b> and <b>distorted_enlightenment</b> are constructed with
+     * isBadEffect = true (verified on SRPPotions.&lt;clinit&gt;, SRParasites 1.10.7),
+     * so pass 1 would strip a player's own ward without this exemption.
      */
     private static final String[] BUILT_IN_PROTECTED_EFFECTS = {
             "srparasites:repel", "srparasites:antimall",
@@ -141,7 +146,7 @@ public class PotionCleanse extends Potion {
 
     /**
      * On each trigger (every 10t):
-     *   Pass 1   removes all effects where isBeneficial() == false, EXCEPT those in the
+     *   Pass 1   removes all effects where isBadEffect() == true, EXCEPT those in the
      *             built-in protected set (BUILT_IN_PROTECTED_EFFECTS) — protective/mechanic
      *             SRP effects like repel and antimall must survive Cleanse.
      *   Pass 1.5 removes the built-in parasite-ecosystem effect list (BUILT_IN_CLEANSED_EFFECTS),
@@ -153,9 +158,31 @@ public class PotionCleanse extends Potion {
      */
     @Override
     public void performEffect(@Nonnull EntityLivingBase entity, int amplifier) {
-        // Pass 1: standard non-beneficial removal (protected SRP effects exempt)
+        // Pass 1: standard bad-effect removal (protected SRP effects exempt).
+        //
+        // isBadEffect(), NOT isBeneficial(). Two reasons, in order of severity:
+        //
+        // 1. Potion.isBeneficial() is @SideOnly(Side.CLIENT) - verified on the compiled class
+        //    (forge-1.12.2-14.23.5.2860, func_188408_i carries RuntimeVisibleAnnotations
+        //    @SideOnly(CLIENT); func_76398_f/isBadEffect carries none). SideTransformer strips
+        //    client-only METHODS on a dedicated server, so this call was a latent
+        //    NoSuchMethodError there. It never fired because a single-player/dev client runs
+        //    as side CLIENT - the integrated server shares that side - so the path was never
+        //    executed. It would have surfaced the first time anyone ran a real server.
+        //
+        // 2. PotionCore's PotionCure - which this effect was modelled on - uses isBadEffect()
+        //    for exactly this reason, and schedules its removal onto the server thread. We had
+        //    diverged from the model on this one line.
+        //
+        // Semantics narrow as a result: isBeneficial() is Forge's OPT-IN flag (false for
+        // anything that never calls setBeneficial(), i.e. almost every modded effect), while
+        // isBadEffect() is vanilla's mandatory constructor flag (true only when the author said
+        // so). Pass 1 therefore catches less. For SRP that costs nothing - pass 1.5's explicit
+        // 26-entry list already covers all of its harmful effects, which matters because SRP
+        // marks 15 of its 24 harmful effects isBadEffect = false. Other mods' unmarked debuffs
+        // go in ModConfig.tweaks.cleanseAdditionalEffects (pass 2), as before.
         for (Potion potion : new java.util.ArrayList<>(entity.getActivePotionMap().keySet())) {
-            if (!potion.isBeneficial() && !getBuiltInProtected().contains(potion)) {
+            if (potion.isBadEffect() && !getBuiltInProtected().contains(potion)) {
                 entity.removePotionEffect(potion);
             }
         }
