@@ -34,7 +34,7 @@ dependencies {
     //                     signature. Its mixins still use string targets.
     implementation fg.deobf(files(rootProject.file('libs/tombstone-1.12.2-4.7.6.jar')))
     implementation fg.deobf(files(rootProject.file('libs/Reskillable-1.12.2-1.13.1.jar')))
-    implementation fg.deobf(files(rootProject.file('libs/BaublesEX-1.12.2-2.3.4.jar')))
+    implementation fg.deobf(files(rootProject.file('libs/BaublesEX-1.12.2-2.3.6.jar')))
     implementation fg.deobf(files(rootProject.file('libs/enigmaticlegacy-legacy-2.7.0.jar')))
 
     implementation 'zone.rong:mixinbooter:7.1'
