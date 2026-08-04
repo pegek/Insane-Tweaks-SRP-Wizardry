@@ -89,12 +89,18 @@ public class WandSoulbindConsumer implements ISoulConsumer {
     }
 
     /**
-     * The grave calls this immediately before {@link #setEnchant} and abandons the whole
-     * interaction when it is false, so a refusal here never costs the player a soul.
+     * Deliberately permissive, and deliberately still here rather than left to the interface
+     * default — because the obvious thing to do is validate here, and that would be wrong.
+     *
+     * <p>Tombstone discards whatever reason this method computed: a {@code false} sends its own
+     * generic "not allowed" message and {@code setEnchant} is never called. Every refusal therefore
+     * has to travel as a {@code ConsumeResult.fail} from {@code setEnchant}, which is where the
+     * player actually reads it. Nothing is risked by letting it through — the grave spends the soul
+     * only on {@code ConsumeResult.result().success()}.
      */
     @Override
     public boolean canEnchant(World world, BlockPos pos, EntityPlayer player, ItemStack stack) {
-        return refusal(player, stack) == null;
+        return true;
     }
 
     @Override
@@ -140,6 +146,9 @@ public class WandSoulbindConsumer implements ISoulConsumer {
     /** The reason this interaction cannot proceed, or null when it can. */
     @Nullable
     private static String refusal(EntityPlayer player, ItemStack stack) {
+        // Unreachable via the grave: isUsingOffhandToEnchant() already answered this upstream, and
+        // a false there means Tombstone never picks this consumer at all. Kept as the honest
+        // precondition for any other caller.
         if (!TombTweaksConfig.tombstone.enableTombstoneTweaks || !cfg().enabled) {
             return "Wand soulbinding is switched off.";
         }
@@ -147,6 +156,7 @@ public class WandSoulbindConsumer implements ISoulConsumer {
             return "Hold a wand in your off hand.";
         }
         Item upgrade = upgradeItem();
+        // Unreachable via the grave for the same reason as the switched-off check above.
         if (upgrade == null) {
             return "No mod registers the upgrade \"" + cfg().upgradeItem + "\".";
         }
