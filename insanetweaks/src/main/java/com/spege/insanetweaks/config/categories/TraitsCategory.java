@@ -80,6 +80,17 @@ public class TraitsCategory {
     @Config.Name("Archmage")
     public TraitConfig archmage = new TraitConfig(8, "magic", new String[] { "reskillable:magic|45" });
 
+    @Config.Name("Astral Prospector - Extra Ore Blocks")
+    @Config.Comment({
+            "Block ids Astral Prospector should treat as ore even though nothing else identifies them.",
+            "Format: modid:block_name (e.g. srparasites:infestedore).",
+            "Only needed for blocks that are BOTH absent from the OreDictionary and named in a way",
+            "the shape test cannot see - i.e. 'ore' in the middle of a word with no underscore, like",
+            "'crystalore'. Ancient Spellcraft's crystal_ore_* and anything ending in _ore are already",
+            "covered without a config entry. Read live, no restart needed."
+    })
+    public String[] astralProspectorExtraOres = new String[] {};
+
     // ========================================================================
     // TRAIT CONFIG HELPER
     // ========================================================================

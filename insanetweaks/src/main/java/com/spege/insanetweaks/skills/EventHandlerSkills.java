@@ -326,14 +326,32 @@ public class EventHandlerSkills {
      * da:spore_blossom. The SRP gore blocks were the practical problem - they carpet infested biomes.
      *
      * The OreDictionary is the 1.12.2 cross-mod contract for "this is an ore", so it goes first. The
-     * name test stays as a fallback for mods that never registered their ore, but as an exact shape
-     * rather than a substring.
+     * name test stays as a fallback for mods that never registered their ore, but as a shape test
+     * rather than a bare substring.
+     *
+     * <p>Three layers, because no single one of them is enough:
+     * <ol>
+     * <li><b>Explicit ids.</b> The override, for ores that pass neither of the other two. Built-in
+     * list in code plus a config list - the built-in cannot be shipped as a config default, because
+     * a Forge {@code @Config} file already on disk never picks up new defaults.</li>
+     * <li><b>OreDictionary.</b> Semantically right, but only as good as the mod. Verified 2026-08-04:
+     * Ancient Spellcraft contains no {@code registerOre} call at all, and neither does Scaling
+     * Health, so their ores are invisible here.</li>
+     * <li><b>Name shape.</b> {@code _ore} suffix, {@code ore_} prefix, bare {@code ore}, or
+     * {@code _ore_} infix. The infix case is what catches {@code ancientspellcraft:crystal_ore_*}
+     * (7 blocks) and is safe against every false positive listed above, because all of those have a
+     * letter rather than an underscore in front of their "ore": g-ore, c-ore, col-ore-d, sp-ore.
+     * Deliberately NOT {@code endsWith("ore")} - that would drag every {@code *_core} block back in.</li>
+     * </ol>
      */
     private static boolean isOreBlock(net.minecraft.block.state.IBlockState state) {
         Block block = state.getBlock();
         ResourceLocation regName = block.getRegistryName();
         if (regName == null)
             return false;
+
+        if (isExplicitlyListedOre(regName))
+            return true;
 
         net.minecraft.item.Item blockItem = net.minecraft.item.Item.getItemFromBlock(block);
         if (blockItem != net.minecraft.init.Items.AIR) {
@@ -353,7 +371,33 @@ public class EventHandlerSkills {
         }
 
         String path = regName.getResourcePath().toLowerCase(java.util.Locale.ROOT);
-        return path.endsWith("_ore") || path.startsWith("ore_") || path.equals("ore");
+        return path.endsWith("_ore") || path.startsWith("ore_") || path.equals("ore")
+                || path.contains("_ore_");
+    }
+
+    /**
+     * Ores that neither the OreDictionary nor the name shape can recognise. Shipped in code rather
+     * than as config defaults - see the note in {@link #isOreBlock}.
+     *
+     * <p>{@code srparasites:infestedore} is deliberately absent: it fits the same "no underscore"
+     * shape but duplicating it hands out more parasite material, which is a balance call for the
+     * pack rather than a correctness fix. Add it via the config list if that is wanted.
+     */
+    private static final String[] BUILT_IN_EXTRA_ORES = { "scalinghealth:crystalore" };
+
+    private static boolean isExplicitlyListedOre(ResourceLocation regName) {
+        String id = regName.toString();
+        for (String builtIn : BUILT_IN_EXTRA_ORES) {
+            if (builtIn.equals(id))
+                return true;
+        }
+        // Read live, and scanned linearly on purpose: this array is normally empty or has a couple
+        // of entries, which beats building and invalidating a set behind a config that can change.
+        for (String extra : com.spege.insanetweaks.config.ModConfig.traits.astralProspectorExtraOres) {
+            if (id.equals(extra))
+                return true;
+        }
+        return false;
     }
 
     @SubscribeEvent
