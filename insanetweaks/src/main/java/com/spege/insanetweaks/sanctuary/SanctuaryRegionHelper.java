@@ -37,19 +37,58 @@ public final class SanctuaryRegionHelper {
     private static final String SRP_PARASITE_BASE =
             "com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase";
 
-    /** True if the entity's class chain includes SRP's EntityParasiteBase (covers SRP, SRPExtra, SimWizard). */
-    public static boolean isSrpParasite(net.minecraft.entity.Entity e) {
-        if (e == null) {
-            return false;
-        }
-        Class<?> c = e.getClass();
-        while (c != null) {
-            if (c.getName().equals(SRP_PARASITE_BASE)) {
-                return true;
+    /**
+     * SRP's {@code EntityParasiteBase}, resolved once, or null when SRParasites is absent.
+     *
+     * <p>Resolved by name rather than referenced as a class literal on purpose: this helper is
+     * reached from the sanctuary handlers and from mixins, and must stay loadable in a pack without
+     * SRParasites. A literal would put the type in the constant pool and turn a missing mod into a
+     * {@code NoClassDefFoundError}. That is the whole reason the name lived here as a string.
+     *
+     * <p>{@code initialize = false} because {@link Class#isInstance} never needs it - resolving the
+     * type must not drag SRP's static initialisers in at whatever moment we first ask.
+     */
+    private static final Class<?> SRP_PARASITE_CLASS = resolveParasiteBase();
+
+    private static Class<?> resolveParasiteBase() {
+        try {
+            return Class.forName(SRP_PARASITE_BASE, false, SanctuaryRegionHelper.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            // Expected when SRParasites is not installed. Only worth shouting about when it IS,
+            // because then the class was renamed or repackaged by an SRP update and every sanctuary
+            // parasite check has just gone quiet - which would otherwise look like "the dome does
+            // nothing" with no error anywhere.
+            if (net.minecraftforge.fml.common.Loader
+                    .isModLoaded(com.spege.insanetweaks.InsaneTweaksMod.SRP_MODID)) {
+                com.spege.insanetweaks.InsaneTweaksMod.LOGGER.error(
+                        "[InsaneTweaks] SRParasites is loaded but " + SRP_PARASITE_BASE
+                        + " could not be resolved. Every sanctuary parasite check will answer false.");
             }
-            c = c.getSuperclass();
+            return null;
+        } catch (Exception e) {
+            com.spege.insanetweaks.InsaneTweaksMod.LOGGER.error(
+                    "[InsaneTweaks] Failed to resolve " + SRP_PARASITE_BASE, e);
+            return null;
         }
-        return false;
+    }
+
+    /**
+     * True if the entity's class chain includes SRP's EntityParasiteBase (covers SRP, SRPExtra,
+     * SimWizard).
+     *
+     * <p>🚨 This is one of the hottest methods in the mod: five handlers call it from
+     * {@code LivingUpdateEvent} and friends, i.e. for every living entity in the world on every
+     * tick. It used to walk the entity's whole superclass chain comparing {@code c.getName()}
+     * against a 68-character string, so an ordinary cow cost eight iterations and eight string
+     * comparisons per tick. A Flare profile from 2026-08-01 put it at 1064 ms of a 201 s server
+     * thread (0.53%), the single most expensive method in this mod.
+     *
+     * <p>{@code isInstance} against the resolved type replaces all of that. {@code EntityParasiteBase}
+     * is a class rather than an interface, so the JVM answers it with a primary-supertype check -
+     * one load and one comparison at a fixed offset - instead of a loop.
+     */
+    public static boolean isSrpParasite(net.minecraft.entity.Entity e) {
+        return e != null && SRP_PARASITE_CLASS != null && SRP_PARASITE_CLASS.isInstance(e);
     }
 
     /** True when (x,z) is inside any active sanctuary within min(regionRadius, purgeFireRadiusCap). */
