@@ -27,7 +27,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
  * dividing the already-multiplied damage back out and re-deriving every one of those guards by
  * hand — wrong the moment EL changes one of them.
  *
- * <p>Verified with {@code javap -p -c} against enigmaticlegacy-legacy-2.6.0: each field is read
+ * <p>Verified with {@code javap -p -c} against enigmaticlegacy-legacy-2.7.0: each field is read
  * exactly once in the entire class, both reads inside {@code onEntityHurt}, so no
  * {@code ordinal} is needed. Re-check on any EL update.
  */

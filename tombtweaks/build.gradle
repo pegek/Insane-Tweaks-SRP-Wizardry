@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.4.0'
+version = '1.5.0'
 group = 'com.spege.tombtweaks'
 archivesBaseName = 'tombtweaks'
 
@@ -29,12 +29,13 @@ dependencies {
     //   tombstone       — the mod being tweaked (perks, capability, events, EffectHelper)
     //   Reskillable     — the inventory tab strip the Knowledge tab hangs off
     //   BaublesEX       — the bauble slots the grave restore writes back into
-    //   Enigmatic Legacy— the three EnigmaticConfigs constants the Cursed Ring redirects read.
-    //                     Its mixins use string targets, so only these field reads need it.
+    //   Enigmatic Legacy— the three EnigmaticConfigs constants the Cursed Ring redirects read,
+    //                     plus ItemBaseBauble/ItemCursedRing for the armour-relief handler's
+    //                     signature. Its mixins still use string targets.
     implementation fg.deobf(files(rootProject.file('libs/tombstone-1.12.2-4.7.6.jar')))
     implementation fg.deobf(files(rootProject.file('libs/Reskillable-1.12.2-1.13.1.jar')))
     implementation fg.deobf(files(rootProject.file('libs/BaublesEX-1.12.2-2.3.4.jar')))
-    implementation fg.deobf(files(rootProject.file('libs/enigmaticlegacy-legacy-2.6.0.jar')))
+    implementation fg.deobf(files(rootProject.file('libs/enigmaticlegacy-legacy-2.7.0.jar')))
 
     implementation 'zone.rong:mixinbooter:7.1'
 }
@@ -44,7 +45,7 @@ jar {
         attributes([
             "Specification-Title": "Tombstone Tweaks",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.4.0",
+            "Specification-Version": "1.5.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

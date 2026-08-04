@@ -18,7 +18,7 @@ import net.minecraft.entity.player.EntityPlayer;
  * mixins reduce, so without this the ring keeps advertising the unmitigated numbers — "30%"
  * armour loss while actually applying 19%, and so on.
  *
- * <p>Verified with {@code javap -p -c} against enigmaticlegacy-legacy-2.6.0: inside
+ * <p>Verified with {@code javap -p -c} against enigmaticlegacy-legacy-2.7.0: inside
  * {@code func_77624_a} the reads are {@code painMultiplier} at 22 and 78, {@code armorDebuff}
  * at 143 and {@code monsterDamageDebuff} at 207. None of the redirects carries an
  * {@code ordinal}, so each binds to every read of its field in the method — see the note on
@@ -54,7 +54,7 @@ public abstract class MixinItemCursedRingTooltip {
         return player == null ? base : CurseReliefHelper.softenMultiplier(base, player);
     }
 
-    /** Curse 3's line, mirroring {@link MixinItemCursedRingArmor} on the attribute side. */
+    /** Curse 3's line, mirroring {@link MixinItemBaseBaubleArmorRelief} on the attribute side. */
     @Redirect(
             method = { "addInformation", "func_77624_a" },
             at = @At(value = "FIELD",
