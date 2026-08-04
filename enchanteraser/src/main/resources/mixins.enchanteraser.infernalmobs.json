@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.enchanteraser.mixins",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "thirdparty.MixinInfernalMobsErase"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

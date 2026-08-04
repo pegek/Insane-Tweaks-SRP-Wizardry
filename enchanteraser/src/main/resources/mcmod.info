@@ -1,0 +1,11 @@
+[
+{
+  "modid": "enchanteraser",
+  "name": "Enchant Eraser",
+  "description": "Makes unwanted enchantments unobtainable without unregistering them. The enchantment stays in the Forge registry, so existing NBT on player gear still resolves and tooltips render normally - no crash on the anvil or in the enchantment list, and no vanishing weapons. Blocks the enchanting table, enchant_with_levels and enchant_randomly loot, fishing treasure, librarian trades, the anvil, and Infernal Mobs elite drops. Items that still carry an erased enchantment say so in the tooltip. Mixin-only, no content, one config list.",
+  "version": "1.0.1",
+  "mcversion": "1.12.2",
+  "authorList": ["Isuthhh"],
+  "dependencies": []
+}
+]
