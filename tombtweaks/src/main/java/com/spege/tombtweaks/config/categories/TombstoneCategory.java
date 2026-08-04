@@ -130,6 +130,15 @@ public class TombstoneCategory {
     // ----------------------------------------------------------------
     // RAID BRIDGE
     // ----------------------------------------------------------------
+    @Config.Name("wandsoulbinding")
+    @Config.Comment({"Spend a grave's soul to make a wand survive your death.",
+            "Hold the Ankh of Prayer in your main hand and the wand in your off hand, then use a",
+            "decorative grave that holds a soul. The wand gains Ancient Spellcraft's soulbinding",
+            "upgrade and stays in your inventory when you die.",
+            "Needs Electroblob's Wizardry for the wand, and whichever mod owns the upgrade named",
+            "below. Without them the whole section is inert."})
+    public WandSoulbindingConfig wandSoulbinding = new WandSoulbindingConfig();
+
     @Config.Name("firstkillrewards")
     @Config.Comment({"A one-off knowledge reward the first time a player kills a named enemy.",
             "Tombstone pays alignment for seven things and killing a monster is none of them, and",
@@ -420,6 +429,41 @@ public class TombstoneCategory {
                 "Left empty on purpose: an empty list inherits the beneficial pool. Fill it only to give",
                 "scrolls a roster of their own."})
         public String[] magicScrollPool = {};
+    }
+
+    // ========================================================================
+    // WAND SOULBINDING
+    // ========================================================================
+
+    /**
+     * Trading a grave's soul for a wand upgrade.
+     *
+     * <p>Written as "which upgrade does a soul buy" rather than hardcoding soulbinding, so the same
+     * plumbing serves any wand upgrade a pack wants to make purchasable this way.
+     */
+    public static class WandSoulbindingConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment("Allow a grave's soul to upgrade a wand. Read live - no restart needed.")
+        public boolean enabled = true;
+
+        @Config.Name("Upgrade Item")
+        @Config.Comment({"Registry name of the wand upgrade a soul grants.",
+                "The default is Ancient Spellcraft's soulbinding upgrade, which is what makes a wand",
+                "stay in your inventory on death. An item no mod registers means the interaction is",
+                "simply refused, with the reason shown to the player."})
+        public String upgradeItem = "ancientspellcraft:soulbound_upgrade";
+
+        @Config.Name("Require Ankh Of Prayer")
+        @Config.Comment({"Demand the Ankh of Prayer in the main hand.",
+                "Tombstone's own off-hand branch never looks at the main hand, so without this any",
+                "wand you happen to carry in the off hand would eat the soul of the next grave you",
+                "click. Leave it on unless you want that."})
+        public boolean requireAnkhOfPrayer = true;
+
+        @Config.Name("Debug Logging")
+        @Config.Comment("Log every accepted binding and every refusal, with the reason.")
+        public boolean debugLogging = false;
     }
 
     // ========================================================================
