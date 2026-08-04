@@ -114,7 +114,10 @@ public class EnchantmentSentientCodex extends EnchantmentInsaneTweaksBase {
         int gid = Enchantment.getEnchantmentID(INSTANCE);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound en = list.getCompoundTagAt(i);
-            if (en.getShort("id") == gid) {
+            // getInteger on "id", not getShort: JustEnoughIDs widens enchantment ids past 32767 and
+            // rewrites vanilla's own reads, but not ours - and a truncated id here would silently
+            // report level 0. "lvl" stays a short; JEID only widens the id.
+            if (en.getInteger("id") == gid) {
                 return en.getShort("lvl");
             }
         }

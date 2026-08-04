@@ -108,7 +108,10 @@ public class SentientCodexHandler {
         NBTTagList ench = stack.getEnchantmentTagList(); // live "ench" list, edited in place
         for (int i = 0; i < ench.tagCount(); i++) {
             NBTTagCompound en = ench.getCompoundTagAt(i);
-            int id = en.getShort("id");
+            // getInteger, not getShort: JustEnoughIDs widens enchantment ids past 32767 and rewrites
+            // vanilla's own reads, but not ours. getInteger reads a short tag fine, so this is safe
+            // without JEID too. "lvl" stays a short - JEID only widens the id.
+            int id = en.getInteger("id");
             if (id == scId) {
                 continue; // never boost Sentient Codex itself
             }
