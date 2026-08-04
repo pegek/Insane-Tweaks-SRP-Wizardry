@@ -69,13 +69,50 @@ public abstract class MixinParasiteEventEntity {
             + "Z[Ljava/lang/String;)V";
     private static final String SPAWN_ENTITY =
             "Lnet/minecraft/world/World;func_72838_d(Lnet/minecraft/entity/Entity;)Z";
+    private static final String CONVERT_ENTITY_FERAL =
+            "convertEntityFeral(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/nbt/NBTTagCompound;"
+            + "Z[Ljava/lang/String;)Z";
+    private static final String HIJACK_ENTITY =
+            "hijackEntity(Lnet/minecraft/entity/EntityLivingBase;[Ljava/lang/String;)Z";
+
+    /**
+     * Sanctuary guard: may this mob be turned into a parasite where it is standing?
+     *
+     * <p>All four conversion entry points share the same remove-then-spawn shape, and every one of
+     * them is cancelled at HEAD - before {@code removeEntity} has run, so the victim is untouched
+     * rather than deleted-and-not-replaced.
+     *
+     * <p>Complements {@code MixinPotionCothSanctuaryCure}: that one clears an infection already in
+     * progress, this one refuses the conversion itself. Neither helps a mob that was converted
+     * outside the dome and wandered in - by then it is a parasite and purge fire owns it.
+     */
+    private static boolean insanetweaks$sanctuaryRefusesConversion(EntityLivingBase victim) {
+        if (!com.spege.insanetweaks.config.ModConfig.sanctuary.blockCothConversion) {
+            return false;
+        }
+        if (victim == null || victim.world == null || victim.world.isRemote) {
+            return false;
+        }
+        if (!com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper
+                .isProtected(victim.world, victim.getPosition())) {
+            return false;
+        }
+        com.spege.insanetweaks.sanctuary.SanctuaryDebug.log("conversion-blocked",
+                victim.getName() + " @(" + ((int) Math.floor(victim.posX)) + ","
+                + ((int) Math.floor(victim.posY)) + "," + ((int) Math.floor(victim.posZ)) + ")");
+        return true;
+    }
 
     // ── spawnInsider: modded/unknown host -> Incomplete Form ─────────────────────────────────
 
-    @Inject(method = SPAWN_INSIDER, at = @At("HEAD"), remap = false, require = 0)
+    @Inject(method = SPAWN_INSIDER, at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void insanetweaks$captureForInsider(EntityLivingBase entity, World world,
             NBTTagCompound tags, CallbackInfo ci) {
         if (entity == null || world == null || world.isRemote) {
+            return;
+        }
+        if (insanetweaks$sanctuaryRefusesConversion(entity)) {
+            ci.cancel();
             return;
         }
         SrpOriginCaptureState.capture(entity);
@@ -102,6 +139,12 @@ public abstract class MixinParasiteEventEntity {
         if (entityin == null || entityin.world == null || entityin.world.isRemote) {
             return;
         }
+        // Sanctuary first: if the dome refuses the conversion there is nothing for the wizard bridge
+        // or the snapshot to do either.
+        if (insanetweaks$sanctuaryRefusesConversion(entityin)) {
+            ci.cancel();
+            return;
+        }
         // The wizard-assimilation bridge takes the entity down its own path entirely; if it claims
         // this conversion there is no SRP spawn to stamp and nothing to snapshot.
         if (SrpWizardryAssimilationHelper.tryConvertSupportedWizard(entityin, tags)) {
@@ -122,5 +165,33 @@ public abstract class MixinParasiteEventEntity {
     private static void insanetweaks$clearAfterConvert(EntityLivingBase entityin, NBTTagCompound tags,
             boolean ignoreKey, String[] list, CallbackInfo ci) {
         SrpOriginCaptureState.clear();
+    }
+
+    // ── convertEntityFeral / hijackEntity: guard only, no snapshot ───────────────────────────
+    //
+    // The class javadoc above explains why these two were left out of the Hourglass snapshot: their
+    // outputs are fer_* forms the static host table already maps for vanilla hosts, so skipping them
+    // only cost restoration fidelity for modded hosts. That trade-off does NOT carry over to the
+    // sanctuary guard - an uncovered conversion path is a hole a parasite walks straight through, so
+    // both are guarded here even though neither is snapshotted.
+    //
+    // Both return boolean, so the cancel is a CallbackInfoReturnable set to false, i.e. "no
+    // conversion happened" - which is what SRP's callers already handle for a refused conversion.
+
+    @Inject(method = CONVERT_ENTITY_FERAL, at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void insanetweaks$guardFeral(EntityLivingBase entityin, NBTTagCompound tags,
+            boolean ignoreKey, String[] list,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (insanetweaks$sanctuaryRefusesConversion(entityin)) {
+            cir.setReturnValue(Boolean.FALSE);
+        }
+    }
+
+    @Inject(method = HIJACK_ENTITY, at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void insanetweaks$guardHijack(EntityLivingBase entityin, String[] list,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (insanetweaks$sanctuaryRefusesConversion(entityin)) {
+            cir.setReturnValue(Boolean.FALSE);
+        }
     }
 }

@@ -96,6 +96,23 @@ public class SanctuaryCategory {
     @Config.Name("Purge Nodes In Zone")
     public boolean purgeNodesInZone = true;
 
+    @Config.Comment({"PREVENTION: refuse SRP's Call-of-the-Hive conversion outright for any mob standing",
+            "inside the dome. Guards all four conversion entry points (convertEntity, spawnInsider,",
+            "convertEntityFeral, hijackEntity), cancelled before the victim is removed - so the animal",
+            "is left alone, not deleted. Does nothing for a mob converted OUTSIDE and wandering in:",
+            "by then it is a parasite and purge fire handles it. Read live."})
+    @Config.Name("Block CotH Conversion In Zone")
+    public boolean blockCothConversion = true;
+
+    @Config.Comment({"CURE: clear an in-progress CotH infection on mobs inside the dome by writing SRP's own",
+            "'srpcothimmunity' tag to 0, which makes SRP strip its Call of the Hive effect itself.",
+            "Costs nothing except while a mob actually carries the effect - there is no per-tick sweep.",
+            "The tag is PERMANENT: a cured animal stays immune after it leaves, so a herd walked through",
+            "a sanctuary once is safe for good. Turn this off if you would rather the infection only be",
+            "suspended while sheltered. Read live."})
+    @Config.Name("Cure CotH In Zone")
+    public boolean cureCothInZone = true;
+
     @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
     @Config.Name("Render Dome")
     public boolean renderDome = true;
@@ -115,6 +132,15 @@ public class SanctuaryCategory {
             "For debugging whether a pyramid is detected. Read live (no restart)."})
     @Config.Name("Debug Logging")
     public boolean debugLogging = false;
+
+    @Config.Comment({"How long an identical debug line stays suppressed, in seconds.",
+            "Debug logging deduplicates by the whole line, so a spawner grinding against the dome",
+            "prints once rather than once per second, while a veto for a new mob or a new position",
+            "shows up immediately. This is only how often a line that is STILL happening reminds you.",
+            "0 disables deduplication and logs every event - expect a flood. Read live (no restart)."})
+    @Config.Name("Debug Repeat Seconds")
+    @Config.RangeInt(min = 0, max = 3600)
+    public int debugRepeatSeconds = 300;
 
     @Config.Comment({"Drain SRP's 'dead blood' fluid (srparasites:deadblood) inside the dome, turning it to",
             "air. Neither SRP's own PurifyMappings nor our block heuristic recognise it - its registry",
