@@ -10,9 +10,9 @@ import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 /**
- * Queues the one mod-gated mixin config. The four vanilla-target mixins do NOT come through here —
- * they are declared in the jar manifest's {@code MixinConfigs} attribute, which is the only early
- * route that works (CleanMix silently ignores {@code IEarlyMixinLoader}).
+ * Queues the mod-gated mixin configs. The vanilla-target mixins do NOT come through here — they are
+ * declared in the jar manifest's {@code MixinConfigs} attribute, which is the only early route that
+ * works (CleanMix silently ignores {@code IEarlyMixinLoader}).
  *
  * <p>Lives in {@code core} rather than {@code mixins} on purpose: Mixin forbids
  * {@code Class.forName()} of a non-mixin class from inside a {@code *.mixins.*} package.
@@ -30,6 +30,11 @@ public class EnchantEraserLateBooter implements ILateMixinLoader {
         // is what Loader registers — says "infernalmobs". The capitalised form silently never queues.
         if (Loader.isModLoaded("infernalmobs")) {
             configs.add("mixins.enchanteraser.infernalmobs.json");
+        }
+        // Treasure2 rolls its loot through GottschCore, which is where the cloned enchant_randomly
+        // function lives - so the gate is the library, not the mod the player installed.
+        if (Loader.isModLoaded("gottschcore")) {
+            configs.add("mixins.enchanteraser.gottschcore.json");
         }
         return configs;
     }

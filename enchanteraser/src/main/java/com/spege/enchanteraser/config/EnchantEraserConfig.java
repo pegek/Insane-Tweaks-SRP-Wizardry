@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * The whole mod's configuration: one list plus four switches, all in the {@code general} category of
+ * The whole mod's configuration: one list plus five switches, all in the {@code general} category of
  * {@code config/enchanteraser.cfg}. Only one of them changes item data — {@code Strip Erased On Anvil
  * Pass} — and it is off by default.
  *
@@ -38,8 +38,8 @@ public class EnchantEraserConfig {
             "Registry names of enchantments that must stop being obtainable, one per line.",
             "The enchantment STAYS in the registry, so existing gear keeps working and nothing crashes;",
             "it simply stops appearing at the enchanting table, in enchant_with_levels and",
-            "enchant_randomly loot, in fishing treasure, in librarian trades, on the anvil and in",
-            "Infernal Mobs elite drops.",
+            "enchant_randomly loot, in fishing treasure, in librarian trades, on the anvil, in Treasure2",
+            "chests, in Infernal Mobs elite drops, and in anything that uses the standard enchant API.",
             "",
             "Entries that do not exist in the registry are ignored silently - this list is expected to",
             "accumulate leftovers from removed mods. The startup log reports how many of them matched,",
@@ -53,6 +53,22 @@ public class EnchantEraserConfig {
             "Log one INFO line the first time each enchantment is blocked at each source.",
             "Diagnostic only - leave off in normal play. Read live." })
     public static boolean logBlocks = false;
+
+    @Config.Name("Block Direct Enchant Calls")
+    @Config.Comment({
+            "Refuse an erased enchantment at ItemStack.addEnchantment - the standard API a mod uses to",
+            "put an enchantment on an item. This is the catch-all for third-party rollers that build",
+            "their own pool instead of going through a vanilla path, including ones nobody has looked",
+            "at yet: Chance Cubes alone hands out enchantments from four different classes and all four",
+            "end up here.",
+            "",
+            "In an otherwise vanilla game the only thing this changes is that /enchant refuses an erased",
+            "enchantment - every other vanilla caller is already filtered earlier. Turn it off if an",
+            "admin needs the command to work anyway.",
+            "",
+            "Enchanted BOOKS are built through a different method and are unaffected by this switch;",
+            "they are handled by the librarian, loot and JEI mixins instead. Read live." })
+    public static boolean blockDirectEnchantCalls = true;
 
     @Config.Name("Strip Erased On Anvil Pass")
     @Config.Comment({
