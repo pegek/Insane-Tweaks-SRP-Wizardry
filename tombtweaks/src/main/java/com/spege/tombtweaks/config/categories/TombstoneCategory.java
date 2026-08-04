@@ -130,6 +130,13 @@ public class TombstoneCategory {
     // ----------------------------------------------------------------
     // RAID BRIDGE
     // ----------------------------------------------------------------
+    @Config.Name("firstkillrewards")
+    @Config.Comment({"A one-off knowledge reward the first time a player kills a named enemy.",
+            "Tombstone pays alignment for seven things and killing a monster is none of them, and",
+            "knowledge only ever comes from advancements and loot - so clearing a boss is worth",
+            "nothing to the Knowledge of Death tree. This closes that, once per enemy per player."})
+    public FirstKillRewardConfig firstKillRewards = new FirstKillRewardConfig();
+
     @Config.Name("raideralignment")
     @Config.Comment({"Pays Tombstone alignment for killing the raiders of a third-party raid mod.",
             "Tombstone only recognises the raiders of its own village siege, so on a pack that runs",
@@ -413,6 +420,49 @@ public class TombstoneCategory {
                 "Left empty on purpose: an empty list inherits the beneficial pool. Fill it only to give",
                 "scrolls a roster of their own."})
         public String[] magicScrollPool = {};
+    }
+
+    // ========================================================================
+    // FIRST-KILL REWARDS
+    // ========================================================================
+
+    /**
+     * One-off knowledge for the first kill of a named enemy.
+     *
+     * <p>The reward is written in <b>perk points</b> rather than raw knowledge, because raw
+     * knowledge means nothing on its own: points are {@code floor(sqrt(knowledge - 1))}, so the
+     * knowledge a point costs grows the whole way up. Two points is two points whether it is your
+     * first boss or your twentieth; two knowledge would be a level early on and a rounding error
+     * later. The handler converts, using Tombstone's own {@code getKnowledgeForLevel}.
+     */
+    public static class FirstKillRewardConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment({"Grant the rewards listed below. Read live - no restart needed.",
+                "Turning it off does not erase what a player has already claimed, so turning it",
+                "back on will not pay for the same kill twice."})
+        public boolean enabled = true;
+
+        @Config.Name("Rewards")
+        @Config.Comment({"Enemies worth a one-off reward, as modid:entity;perkPoints.",
+                "For example mod_lavacow:skeletonking;2 pays two perk points the first time a",
+                "player kills a Skeleton King, and nothing on any kill after that.",
+                "Keep this list SHORT and keep it to genuine set-pieces. Perk points are the whole",
+                "progression currency - the tree is roughly thirty points end to end, so every entry",
+                "here is a permanent slice of it.",
+                "Names that no mod registers are simply never matched, so a list naming a mod you do",
+                "not have costs nothing. A malformed line is logged as a warning and skipped."})
+        public String[] rewards = {
+                "mod_lavacow:skeletonking;2",
+                "mutantbeasts:mutant_zombie;1" };
+
+        @Config.Name("Announce In Chat")
+        @Config.Comment("Tell the player what they earned and for what, on top of Tombstone's own knowledge message.")
+        public boolean announceInChat = true;
+
+        @Config.Name("Debug Logging")
+        @Config.Comment("Log every matched kill, the knowledge it converted to, and every repeat that paid nothing.")
+        public boolean debugLogging = false;
     }
 
     // ========================================================================

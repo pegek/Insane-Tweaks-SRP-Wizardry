@@ -36,6 +36,8 @@ public class TombTweaksConfig {
                 // The effect whitelist is parsed from registry names once and cached; drop it so
                 // edits to tombstone.effectpools apply without a restart.
                 com.spege.tombtweaks.effects.EffectPoolRegistry.invalidate();
+                // Same reason for the first-kill list: it is parsed once and cached per death.
+                com.spege.tombtweaks.util.FirstKillRewardRegistry.invalidate();
             }
         }
     }

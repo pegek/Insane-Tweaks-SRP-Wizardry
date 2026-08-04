@@ -37,7 +37,7 @@ public class TombstoneTweaks {
 
     public static final String MODID = "tombtweaks";
     public static final String NAME = "Tombstone Tweaks";
-    public static final String VERSION = "1.5.1";
+    public static final String VERSION = "1.6.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -77,6 +77,10 @@ public class TombstoneTweaks {
             // alongside it — the handler reads raiderAlignment.enabled live, and its entity list
             // simply matches nothing when the raid mod is absent.
             MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.events.RaiderAlignmentHandler());
+
+            // One-off knowledge for the first kill of a named enemy. Reads its list live, and an
+            // empty or unmatched list costs one map lookup per death.
+            MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.events.FirstKillRewardHandler());
 
             // Exact slot restore: the snapshot is taken on LivingDeathEvent, the layout is
             // reapplied on Tombstone's own RestoreInventoryEvent. Both read restoreOriginalSlots
