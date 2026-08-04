@@ -21,10 +21,11 @@ import net.minecraftforge.common.util.EnumHelper;
  * which pins saturation at full for a duration that scales with the eater's XP level. All the
  * runtime logic lives in {@link MmmmHandler}; this class is only the registered {@link Enchantment}.
  *
- * <p><b>Single tier by design.</b> {@code maxLevel} defaults to 1 and
- * {@code ModConfig.enchantments.mmmm.powerPerLevel} defaults to 2, so our level I feeds the
- * original's formula with an effective level of 2 - i.e. one tier here is exactly as strong as
- * Ambrosia II upstream, with no weaker step to find first.
+ * <p><b>Two tiers, top-anchored.</b> {@code maxLevel} defaults to 2 and
+ * {@code ModConfig.enchantments.mmmm.powerPerLevel} to 1, so our level II feeds the original's formula
+ * with an effective level of 2 - i.e. the top tier here is exactly as strong as Ambrosia II upstream,
+ * and level I is the weaker step below it, scaled by {@code lowerTierStrength}. See
+ * {@link MmmmHandler} for how that split is applied.
  *
  * <p><b>Deliberate narrowing vs the original.</b> Upstream Ambrosia also accepts
  * {@code ItemPotion}/{@code ItemSplashPotion}/{@code ItemLingeringPotion}; this port is food-only,
@@ -111,9 +112,17 @@ public class EnchantmentMmmm extends EnchantmentInsaneTweaksBase {
      * Food only, plus the book that carries it to the anvil. Note that the anvil ignores this when
      * the player is in creative mode (verified in {@code ContainerRepair} bytecode), so a creative
      * test will happily stick this on a sword - that is vanilla behaviour, not a hole here.
+     *
+     * <p>Rot is excluded explicitly, because {@code Items.ROTTEN_FLESH} <i>is</i> an {@link ItemFood}
+     * and would otherwise be a perfectly legal carrier - which is precisely what
+     * {@link MmmmCarrierGuard} exists to prevent. Reading config from a registry object is the same
+     * concession {@link #getMaxLevel()} already makes.
      */
     @Override
     public boolean canApply(ItemStack stack) {
+        if (MmmmCarrierGuard.isForbiddenCarrier(stack)) {
+            return false;
+        }
         return stack.getItem() instanceof ItemFood || stack.getItem() instanceof ItemEnchantedBook;
     }
 

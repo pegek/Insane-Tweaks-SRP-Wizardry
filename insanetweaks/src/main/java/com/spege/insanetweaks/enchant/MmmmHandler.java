@@ -17,8 +17,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  *
  * <h3>What it does (port of UniqueEnchantments' Ambrosia)</h3>
  * <ol>
- * <li>Fills the hunger bar outright - {@code addStats(2000, 0)}, i.e. food to 20 with no saturation
- *     of its own. This lands <i>after</i> the food's normal healing, because
+ * <li>Refills the hunger bar - at the top tier outright, {@code addStats(2000, 0)}, i.e. food to 20
+ *     with no saturation of its own. This lands <i>after</i> the food's normal healing, because
  *     {@code LivingEntityUseItemEvent.Finish} fires at the end of {@code onItemUseFinish}.</li>
  * <li>Applies {@code insanetweaks:nourished} for a duration driven by the eater's XP level, which
  *     keeps saturation pinned so hunger never starts draining again until it runs out.</li>
@@ -32,9 +32,21 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * long before anything is logged, which would come out of the {@code int} cast as
  * {@link Integer#MAX_VALUE}; the linear form just keeps scaling.
  *
- * <p>{@code power} is {@code level * powerPerLevel}, which is how a single tier here reproduces
- * upstream tier II - see {@link EnchantmentMmmm}. At the defaults (base 600, multiplier 40,
- * power 2) a level-30 player gets roughly 4500 ticks, about three and three-quarter minutes.
+ * <h3>How the two tiers differ</h3>
+ * "Power" plays two roles, on purpose:
+ * <ul>
+ * <li>the Nourished <b>amplifier</b> uses this stack's own {@code level * powerPerLevel}, so it steps
+ *     down per tier - level II gets amplifier 2, level I amplifier 1;</li>
+ * <li>the <b>duration curve</b> is evaluated once at the top tier's power,
+ *     {@code maxLevel * powerPerLevel}, so it has the same shape at every level, and the tiers are
+ *     separated there by {@link #tierStrength} alone.</li>
+ * </ul>
+ * Without that split the two nerfs would compound and a lower tier would come out far weaker than
+ * {@code lowerTierStrength} advertises. The same strength also scales the hunger refill.
+ *
+ * <p>At the defaults ({@code maxLevel} 2, {@code powerPerLevel} 1, base 600, multiplier 40, strength
+ * 0.65) a level-30 player gets roughly 4500 ticks from level II - about three and three-quarter
+ * minutes, i.e. exactly what the old single tier gave - and about 2950 from level I.
  *
  * <p>Registered unconditionally in {@code InsaneTweaksMod#init} and gated live on
  * {@code modules.enableMmmm} below, so the flag can be flipped without a restart. The enchantment
@@ -76,8 +88,28 @@ public class MmmmHandler {
     /** Upstream's magic "fill it completely" argument to {@code FoodStats.addStats}. */
     private static final int FILL_HUNGER = 2000;
 
+    /** A full hunger bar in food points, the base a partial refill is taken as a fraction of. */
+    private static final int FULL_HUNGER = 20;
+
     /** Vanilla refuses potion amplifiers beyond this; upstream clamps to the same value. */
     private static final int MAX_AMPLIFIER = 20;
+
+    /**
+     * How strong this tier is relative to the top one: 1.0 at (or above) {@code maxLevel}, and one
+     * factor of {@code lowerTierStrength} per step below it.
+     *
+     * <p>🚨 The {@code level >= maxLevel} clamp is load-bearing, not defensive noise. A stack can
+     * legitimately carry a level <i>above</i> the cap - Sentient Codex boosts held items past
+     * {@code getMaxLevel()}, and lowering {@code maxLevel} later leaves old stacks behind - and
+     * {@code pow(0.65, -1)} is 1.54, i.e. an unclamped result would come out <i>stronger</i> than the
+     * top tier rather than equal to it.
+     */
+    private static double tierStrength(int level, MmmmCategory cfg) {
+        if (level >= cfg.maxLevel) {
+            return 1.0D;
+        }
+        return Math.pow(cfg.lowerTierStrength, cfg.maxLevel - level);
+    }
 
     @SubscribeEvent
     public void onItemUseFinish(LivingEntityUseItemEvent.Finish event) {
@@ -110,9 +142,13 @@ public class MmmmHandler {
         }
 
         MmmmCategory cfg = ModConfig.enchantments.mmmm;
-        int power = level * cfg.powerPerLevel;
-        double steps = 1.0D + (double) player.experienceLevel * power;
-        long duration = (long) (cfg.baseDurationTicks + steps * LN_5 * cfg.durationMultiplier);
+        double strength = tierStrength(level, cfg);
+        // The curve is the top tier's, at every level - see the class javadoc. Only `strength`
+        // separates the tiers here.
+        int topPower = Math.max(1, cfg.maxLevel) * cfg.powerPerLevel;
+        double steps = 1.0D + (double) player.experienceLevel * topPower;
+        long duration = (long) ((cfg.baseDurationTicks + steps * LN_5 * cfg.durationMultiplier)
+                * strength);
         if (cfg.maxDurationTicks > 0 && duration > cfg.maxDurationTicks) {
             duration = cfg.maxDurationTicks;
         }
@@ -121,14 +157,21 @@ public class MmmmHandler {
         }
 
         if (cfg.fillHungerBar) {
-            player.getFoodStats().addStats(FILL_HUNGER, 0.0F);
+            // The top tier keeps upstream's "just fill it" magic number; a lower tier refills that
+            // fraction of a full bar instead, and vanilla clamps whatever is already there.
+            int fill = strength >= 1.0D
+                    ? FILL_HUNGER
+                    : Math.max(1, (int) Math.round(FULL_HUNGER * strength));
+            player.getFoodStats().addStats(fill, 0.0F);
         }
         if (ModPotions.NOURISHED != null) {
-            // Amplifier is the effective power, matching upstream. Anything at or above 1 already
-            // pins saturation to the cap, so this only changes how fast it tops back up (and the
-            // roman numeral in the HUD, which is why it reads one higher than the enchant level).
+            // Amplifier is this stack's own power, matching upstream, and is NOT scaled by strength -
+            // it is an integer and already steps down per tier. Anything at or above 1 already pins
+            // saturation to the cap, so this only changes how fast it tops back up (and the roman
+            // numeral in the HUD, which vanilla draws as amplifier+1 - so at the default
+            // powerPerLevel of 1 the effect always reads one higher than the enchant level).
             player.addPotionEffect(new PotionEffect(ModPotions.NOURISHED, (int) duration,
-                    Math.min(MAX_AMPLIFIER, power)));
+                    Math.min(MAX_AMPLIFIER, level * cfg.powerPerLevel)));
         }
     }
 }

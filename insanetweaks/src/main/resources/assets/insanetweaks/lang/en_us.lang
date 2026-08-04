@@ -385,8 +385,8 @@ enchantment.insanetweaks.swift_picking.desc=Practised hands find the pin faster.
 
 # --- Mmmm (food enchantment) ---
 enchantment.mmmm=Mmmm
-enchantment.mmmm.desc=Enchanted food fills you completely, keeps hunger away for a long while, and never spoils in your pack.
-enchantment.insanetweaks.mmmm.desc=The first bite is the best thing you have ever tasted, and the taste refuses to fade. Your belly fills at once and simply stops asking for more - the longer you have lived and learned, the longer the contentment lasts. Nothing that crawls out of the infection will touch it, either; rot finds no purchase on it and passes over to whatever else you carry. Only food will take the enchantment.
+enchantment.mmmm.desc=Enchanted food sates you, keeps hunger away for a long while, and never spoils in your pack. The second tier does all of it in full.
+enchantment.insanetweaks.mmmm.desc=The first bite is the best thing you have ever tasted, and the taste refuses to fade. Your belly fills and simply stops asking for more - the longer you have lived and learned, the longer the contentment lasts, and the deeper the enchantment runs the less of the hunger comes back. Nothing that crawls out of the infection will touch it, either; rot finds no purchase on it, passes over to whatever else you carry, and cannot turn the meal itself into carrion. Only food will take the enchantment.
 config.insanetweaks.category.autoLockPicker=Auto Lock Picker
 tooltip.insanetweaks.auto_lock_picker.usage=Hold right-click on a lock to pick it open.
 tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Complexity)

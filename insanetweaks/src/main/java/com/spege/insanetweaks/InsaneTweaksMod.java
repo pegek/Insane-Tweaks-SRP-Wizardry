@@ -57,7 +57,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.9.10";
+    public static final String VERSION = "1.9.11";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -300,6 +300,12 @@ public class InsaneTweaksMod implements IGuiHandler {
         // that flag live-toggleable. The enchantment and the Nourished effect register on the MOD
         // bus unconditionally too, so no registry entry ever disappears from an existing world.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.MmmmHandler());
+
+        // Mmmm carrier guard: keeps the enchantment off rot items, i.e. stops another mod's
+        // interaction swapping the enchanted food for minecraft:rotten_flesh and taking the
+        // enchantment with it. Same unconditional registration + live self-gating as the handler
+        // above (modules.enableMmmm plus enchantments.mmmm.protectCarrierFromSwap).
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.MmmmCarrierGuard());
 
         // Auto Lock Picker: the item and its enchantment register unconditionally on the MOD bus,
         // and all the picking logic lives in the item's own use methods (no mixin, no tick handler

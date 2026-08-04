@@ -12,24 +12,40 @@ import net.minecraftforge.common.config.Config;
 public class MmmmCategory {
 
     @Config.Comment({
-            "Maximum level of Mmmm. Deliberately 1: one tier is all there is, and 'Power Per Level'",
-            "below makes that single tier as strong as the original Ambrosia's level II, so there is",
-            "no weaker step to find first. Read at registration - requires a MC restart."
+            "Maximum level of Mmmm. The TOP tier is always the full-strength one - it is worth",
+            "(this * 'Power Per Level') levels of the original Ambrosia, so the defaults 2 and 1 make",
+            "our level II behave exactly like upstream Ambrosia II. Every tier below the top is",
+            "weakened by 'Lower Tier Strength'. Read at registration - requires a MC restart."
     })
     @Config.Name("Max Level")
     @Config.RangeInt(min = 1, max = 10)
     @Config.RequiresMcRestart
-    public int maxLevel = 1;
+    public int maxLevel = 2;
 
     @Config.Comment({
-            "How many levels of the original Ambrosia each level here is worth. The duration formula",
-            "and the Nourished amplifier both use (enchantment level * this) in place of the level,",
-            "so the default 2 makes our level I behave exactly like upstream Ambrosia II.",
-            "Read live."
+            "How many levels of the original Ambrosia one level here is worth. It feeds two things,",
+            "and NOT in the same way:",
+            "  - the Nourished amplifier is (enchantment level * this), so it does step down per tier;",
+            "  - the XP-scaled duration curve is evaluated once at the TOP tier's power",
+            "    ('Max Level' * this) and is therefore the same shape at every level - what separates",
+            "    the tiers there is 'Lower Tier Strength' alone.",
+            "That split is deliberate: it stops the two nerfs compounding, so a lower tier is exactly",
+            "as much shorter as 'Lower Tier Strength' says. Read live."
     })
     @Config.Name("Power Per Level")
     @Config.RangeInt(min = 1, max = 10)
-    public int powerPerLevel = 2;
+    public int powerPerLevel = 1;
+
+    @Config.Comment({
+            "How strong a tier is relative to the one above it, as a multiplier on the Nourished",
+            "duration and on the instant hunger refill. The top tier is always 1.0; each step down",
+            "multiplies by this again, so at the default 2 tiers level II is full strength and level I",
+            "is 0.65 - about 35% weaker. (The Nourished amplifier is not scaled by this: it is an",
+            "integer and steps down on its own via 'Power Per Level'.) Read live."
+    })
+    @Config.Name("Lower Tier Strength")
+    @Config.RangeDouble(min = 0.05, max = 1.0)
+    public double lowerTierStrength = 0.65;
 
     @Config.Comment({
             "Flat duration of the Nourished effect in ticks, before the XP-scaled part is added.",
@@ -41,9 +57,10 @@ public class MmmmCategory {
 
     @Config.Comment({
             "Scales the XP-driven part of the duration: the effect lasts",
-            "  base + (1 + xpLevel * power) * ln(5) * this   ticks,",
-            "so each multiplier point is worth about 1.6 ticks per (xpLevel * power). At the",
-            "defaults a level-30 player gets roughly 4500 ticks (~3.75 minutes). Read live."
+            "  (base + (1 + xpLevel * topPower) * ln(5) * this) * tierStrength   ticks,",
+            "where topPower is 'Max Level' * 'Power Per Level'. Each multiplier point is worth about",
+            "1.6 ticks per (xpLevel * topPower). At the defaults a level-30 player gets roughly 4500",
+            "ticks (~3.75 minutes) from the top tier and 2950 from the one below. Read live."
     })
     @Config.Name("Duration Multiplier")
     @Config.RangeInt(min = 0, max = 1000)
@@ -76,4 +93,34 @@ public class MmmmCategory {
     })
     @Config.Name("Protect Food From Parasite Contamination")
     public boolean protectFromParasiteContamination = true;
+
+    @Config.Comment({
+            "Protect the enchantment's CARRIER - the food stack it sits on - from being swapped for",
+            "one of the 'Forbidden Carriers' below by any other mod interaction. This is the general",
+            "form of 'Protect Food From Parasite Contamination' above, which only covers the one SRP",
+            "vector we could name; this one covers whatever else turns your food into rot.",
+            "Does nothing while modules.enableMmmm is off. Read live."
+    })
+    @Config.Name("Protect Carrier From Swap")
+    public boolean protectCarrierFromSwap = true;
+
+    @Config.Comment({
+            "Items Mmmm refuses to be carried by, as registry names. A stack of one of these that is",
+            "found carrying Mmmm gets turned back into the food it came from when we know it, and",
+            "otherwise has the enchantment stripped off it - either way the enchantment never ends up",
+            "owned by a rot item. These items also stop accepting Mmmm on an anvil.",
+            "Format: modid:path, or modid:path#meta to pin a single metadata value.",
+            "Add e.g. srparasites:infected_drop here to cover SRP's Infected Flesh too.",
+            "Empty = the guard is inert. Read live."
+    })
+    @Config.Name("Forbidden Carriers")
+    public String[] forbiddenCarriers = { "minecraft:rotten_flesh" };
+
+    @Config.Comment({
+            "Log one INFO line the first time the carrier guard catches each item at each route.",
+            "Diagnostic: use it to find out WHICH interaction is trying to rot your enchanted food,",
+            "so it can be fixed at the source. Deduplicated, so it will not flood the log. Read live."
+    })
+    @Config.Name("Log Carrier Guard")
+    public boolean logCarrierGuard = false;
 }
