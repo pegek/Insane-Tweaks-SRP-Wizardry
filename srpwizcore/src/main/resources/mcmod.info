@@ -3,7 +3,7 @@
   "modid": "srpwizcore",
   "name": "SRP&WIZ Core",
   "description": "Pack glue for heavy 1.12.2 packs, every feature independently config-gated. Crash and corruption guards for multithreaded entity ticking and chunk generation (EntityTracker, MapStorage, IntCache, off-thread chunk gen), worldgen crash guards for OpenTerrainGenerator and FutureMC, per-dimension control over Ice&Fire worldgen, a per-dimension spawn engine with population budgets and refill rate limiting, performance guards for Doomlike Dungeons, Chocolate Quest Repoured, Raids-Backport and Defiled Lands, a CQR x Spartan Weaponry integration that arms dungeon mobs with Spartan gear and working crossbows, and a configurable dormant-waystone travel system.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "mcversion": "1.12.2",
   "authorList": ["Isuthhh"],
   "url": "https://www.curseforge.com/minecraft/mc-mods/srp-wiz-core",
