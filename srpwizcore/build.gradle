@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.8.13'
+version = '1.9.0'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 
@@ -44,13 +44,10 @@ dependencies {
     // EBW compileOnly — never called: javac needs ISpellCaster resolvable because
     // AbstractEntityCQR (used for setHealingPotions in the gear swap) implements it.
     compileOnly files(rootProject.file('libs/ElectroblobsWizardry-4.3.19.jar'))
-    // Enigmatic Legacy compileOnly, NOT deobf — MixinElItemTheCube touches exactly one member
-    // across the boundary, CachedTeleportationLocation.<init>(IDDD), whose descriptor holds no
-    // MC type, plus two @Shadow fields typed List and Map. Baubles rides along only so javac can
-    // resolve ItemSpellstoneBauble implements baubles.api.IBauble while completing the
-    // ItemTheCube symbol; nothing calls into it.
-    compileOnly files(rootProject.file('libs/enigmaticlegacy-legacy-2.6.0.jar'))
-    compileOnly files(rootProject.file('libs/BaublesEX-1.12.2-2.3.4.jar'))
+    // No Enigmatic Legacy jar here any more: the Non-Euclidean Cube crash guard was retired in
+    // 1.9.0 because Enigmatic Legacy 2.7.0 rewrote the search itself (see MixinElItemTheCube in
+    // git history). BaublesEX went with it — it was only on the classpath so javac could resolve
+    // ItemSpellstoneBauble's IBauble while completing the ItemTheCube symbol.
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
@@ -59,7 +56,7 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.8.13",
+            "Specification-Version": "1.9.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

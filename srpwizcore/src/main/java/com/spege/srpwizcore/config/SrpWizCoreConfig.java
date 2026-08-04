@@ -9,7 +9,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import com.spege.srpwizcore.SrpWizCore;
 import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
-import com.spege.srpwizcore.config.categories.EnigmaticCompatCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
 import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
@@ -48,10 +47,6 @@ public class SrpWizCoreConfig {
     @Config.Name("cqrIntegration")
     @Config.Comment("Arm Chocolate Quest Repoured dungeon mobs with Spartan Weaponry gear and working crossbows, plus optional boss-room and siege behaviour.")
     public static final CqrIntegrationCategory cqrIntegration = new CqrIntegrationCategory();
-
-    @Config.Name("enigmaticCompat")
-    @Config.Comment("Crash guard for Enigmatic Legacy's Non-Euclidean Cube, whose destination search recurses until the thread stack runs out.")
-    public static final EnigmaticCompatCategory enigmaticCompat = new EnigmaticCompatCategory();
 
     @Config.Name("dormantWaystones")
     @Config.Comment("Rare surface waystones that carry you to another dimension and back. Off by default.")
