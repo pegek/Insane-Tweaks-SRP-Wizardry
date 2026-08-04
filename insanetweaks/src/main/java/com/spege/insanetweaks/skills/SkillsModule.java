@@ -56,7 +56,16 @@ public class SkillsModule {
         new TraitArchmage();
 
         // Native Overwrites
-        // new TraitGoldenOsmosisBuffed();
+        // TraitGoldenOsmosisBuffed used to be listed here, commented out. It was deleted on
+        // 2026-08-04: it was a functional duplicate of Reskillable's own TraitGoldenOsmosis, which
+        // already repairs mainhand, offhand AND armour with the same rule (damage > 2, repairable
+        // with a gold ingot, 1 XP per 3 durability). It also registered under
+        // compatskills:golden_osmosis rather than reskillable:golden_osmosis, so it would have been
+        // a second buyable copy of the trait rather than an override.
+        //
+        // Our actual additions on top of the native trait - attack speed, armour and toughness -
+        // live in EventHandlerSkills.onLivingUpdate and correctly gate on TraitHandle.GOLDEN_OSMOSIS,
+        // i.e. the native id. They are unaffected by this deletion.
     }
 
     @Mod.EventBusSubscriber(modid = com.spege.insanetweaks.InsaneTweaksMod.MODID)
