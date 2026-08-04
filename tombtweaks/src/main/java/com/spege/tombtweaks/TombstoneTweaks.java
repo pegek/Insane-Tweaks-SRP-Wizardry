@@ -82,6 +82,14 @@ public class TombstoneTweaks {
             // empty or unmatched list costs one map lookup per death.
             MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.events.FirstKillRewardHandler());
 
+            // Soulbinding a wand with a grave's soul. Both mods must be present: the attacher and
+            // its consumer name Wizardry AND Tombstone types, so the class must not be loaded
+            // otherwise. Registering the instance as an Object keeps the verifier out of it.
+            if (Loader.isModLoaded("ebwizardry")) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.wizardry.WandSoulbindAttacher());
+                LOGGER.info("[TombstoneTweaks] Wand soulbinding armed — wands can now spend a grave's soul.");
+            }
+
             // Exact slot restore: the snapshot is taken on LivingDeathEvent, the layout is
             // reapplied on Tombstone's own RestoreInventoryEvent. Both read restoreOriginalSlots
             // live.
