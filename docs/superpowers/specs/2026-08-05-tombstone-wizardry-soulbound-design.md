@@ -91,18 +91,29 @@ is filled. No duplication, no loss.
 
 ### Contract of `WandSoulbindConsumer`
 
-- `isUsingOffhandToEnchant()` → `true`. Load-bearing: it is the grave's filter.
+- `isUsingOffhandToEnchant()` → true **only while the feature is actually operating**: the master
+  switch and this section are enabled, and the configured upgrade item resolves. Load-bearing, and
+  more than a constant: this is the grave's filter, and returning true commits the grave to the
+  soul-consumer branch and swallows the click. Anything meaning "not operating" has to be answered
+  here, or a disabled feature would still take the interaction away from Tombstone.
 - `isEnchanted(stack)` → true when the wand already has the upgrade
   (`WandHelper.getUpgradeLevel(stack, upgradeItem) > 0`).
-- `canEnchant(world, pos, player, stack)` → false unless **all** of: the feature is enabled, the
-  upgrade item exists in the registry, the main hand holds the Ankh, and the wand lacks the upgrade.
+- `canEnchant(world, pos, player, stack)` → **always true.** 🚨 Not an oversight: Tombstone discards
+  whatever reason this method computes. A false sends its own generic "not allowed" message and
+  `setEnchant` is never called, so a refusal decided here would be silently replaced by a message
+  that tells the player nothing. Every refusal must travel as a `ConsumeResult.fail` instead. This
+  is what `ItemAnkhOfPrayer` does — it does not override `canEnchant` at all.
 - `setEnchant(World, BlockPos, EntityPlayerMP, ItemStack, int soulStrength)` → applies the upgrade
   and returns `ConsumeResult.success(...)`, or `ConsumeResult.fail(<reason>)`.
 - `getKnowledge()` → `0`. The soul is the whole price; a knowledge cost was considered and rejected.
 
-The grave calls **`canEnchant` immediately before `setEnchant`** and skips the whole block on false,
-so a refusal there costs the player nothing. `canEnchant` is the gate; `setEnchant` re-checks only
-what it must.
+The grave calls `canEnchant` immediately before `setEnchant`, but the gate is **not** where it looks
+like it is. On false the grave sends `LangKey.MESSAGE_ENCHANT_ITEM_NOT_ALLOWED` and never calls
+`setEnchant`, so the reason is thrown away; on true it calls `setEnchant` and spends the soul only
+when the returned `ConsumeResult.result().success()`. Refusing from `setEnchant` therefore costs the
+player exactly as little as refusing from `canEnchant`, and is the only way they learn why. So the
+real division is: `isUsingOffhandToEnchant` decides whether this feature is involved at all, and
+`setEnchant` decides and explains everything else.
 
 `soulStrength` is Tombstone's own: `hasStrongSoul() ? 2 : 1`, and `0` when the grave has no tile
 entity — the blue orb is 1, the pink one 2. v1 **ignores it**. It is noted because it is the obvious
@@ -138,9 +149,19 @@ is refused. The feature grants convenience, not power.
 
 ### Error handling
 
-Every failure returns `ConsumeResult.fail` with a player-visible reason and leaves the soul intact:
-no Wizardry installed, no wand in the off hand, no Ankh in the main hand, upgrade item unknown,
-wand already soulbound, wand at its upgrade limit.
+Failures split by where they can be answered, and the split is not cosmetic — only the second kind
+can be explained to the player.
+
+**Answered by stepping aside** (`isUsingOffhandToEnchant` returns false, Tombstone carries on as if
+this mod were not installed): the feature is switched off, or the configured upgrade item is not
+registered — which is also what happens with no Ancient Spellcraft. No message, by design; the
+player sees stock behaviour.
+
+**Answered by refusing** (`ConsumeResult.fail`, soul intact, reason shown): no Ankh in the main
+hand, no wand in the targeted hand, wand already at its upgrade limit.
+
+**Cannot arise:** the wand already soulbound — Tombstone checks `isEnchanted` first and answers with
+its own message. The check stays as an honest precondition for any other caller.
 
 ### Verification
 
