@@ -2,6 +2,8 @@ package com.spege.insanetweaks.sanctuary;
 
 import com.spege.insanetweaks.config.ModConfig;
 
+import net.minecraft.entity.EntityList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -89,6 +91,43 @@ public final class SanctuaryRegionHelper {
      */
     public static boolean isSrpParasite(net.minecraft.entity.Entity e) {
         return e != null && SRP_PARASITE_CLASS != null && SRP_PARASITE_CLASS.isInstance(e);
+    }
+
+    /**
+     * Config escape hatch for anything that must not be removed by a sanctuary, e.g. to keep a boss
+     * fight from being trivialised by a nearby dome. A bare entry with no namespace matches that
+     * path in any namespace, so {@code overseer} covers the SRParasites, SRPExtra and SW: Parasites
+     * variants at once.
+     *
+     * <p>Shared by the two mechanisms that make a parasite disappear outright: dwell execution
+     * ({@code SanctuaryPurgeFireHandler}) and the join veto ({@code SanctuarySpawnVetoHandler}).
+     * One list rather than two, because the intent is identical - "never delete this entity".
+     * Purge fire itself is not gated on it: an exempt boss still burns, it just cannot be deleted.
+     */
+    public static boolean isExemptEntity(net.minecraft.entity.Entity e) {
+        String[] ids = ModConfig.sanctuary.dwellExecutionExemptIds;
+        if (ids == null || ids.length == 0) {
+            return false;
+        }
+        ResourceLocation key = EntityList.getKey(e);
+        if (key == null) {
+            return false;
+        }
+        String full = key.toString();
+        String path = key.getResourcePath();
+        for (String raw : ids) {
+            if (raw == null) {
+                continue;
+            }
+            String id = raw.trim();
+            if (id.isEmpty()) {
+                continue;
+            }
+            if (id.indexOf(':') < 0 ? path.equals(id) : full.equals(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** True when (x,z) is inside any active sanctuary within min(regionRadius, purgeFireRadiusCap). */

@@ -3,10 +3,8 @@ package com.spege.insanetweaks.sanctuary;
 import com.spege.insanetweaks.config.ModConfig;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -98,7 +96,7 @@ public class SanctuaryPurgeFireHandler {
             data.setInteger(DWELL_KEY, dwell);
             return false;
         }
-        if (isExecutionExempt(e)) {
+        if (SanctuaryRegionHelper.isExemptEntity(e)) {
             // Park at the threshold instead of letting the counter run away, so flipping the
             // exemption off later takes effect on the next tick rather than after another 2 min.
             data.setInteger(DWELL_KEY, threshold);
@@ -123,34 +121,7 @@ public class SanctuaryPurgeFireHandler {
         return true;
     }
 
-    /**
-     * Config escape hatch, e.g. to keep a boss fight from being trivialised by a nearby dome.
-     * A bare entry with no namespace matches that path in any namespace, so {@code overseer}
-     * covers the SRParasites, SRPExtra and SW: Parasites variants at once.
-     */
-    private static boolean isExecutionExempt(EntityLivingBase e) {
-        String[] ids = ModConfig.sanctuary.dwellExecutionExemptIds;
-        if (ids == null || ids.length == 0) {
-            return false;
-        }
-        ResourceLocation key = EntityList.getKey(e);
-        if (key == null) {
-            return false;
-        }
-        String full = key.toString();
-        String path = key.getResourcePath();
-        for (String raw : ids) {
-            if (raw == null) {
-                continue;
-            }
-            String id = raw.trim();
-            if (id.isEmpty()) {
-                continue;
-            }
-            if (id.indexOf(':') < 0 ? path.equals(id) : full.equals(id)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // isExecutionExempt moved to SanctuaryRegionHelper.isExemptEntity on 2026-08-04: the join veto
+    // in SanctuarySpawnVetoHandler needs the same list, and it is the same question either way -
+    // "may a sanctuary delete this entity outright?"
 }

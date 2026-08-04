@@ -155,11 +155,27 @@ public class SanctuaryCategory {
     @Config.RangeInt(min = 1, max = 200)
     public int dwellDecayInterval = 20;
 
-    @Config.Comment({"Entity ids exempt from dwell execution, e.g. 'srparasites:overseer'. A bare entry with",
-            "no namespace matches that path in ANY namespace, so 'overseer' covers the SRParasites,",
-            "SRPExtra and SW: Parasites variants at once. Empty = nothing is exempt. Read live."})
+    @Config.Comment({"Entity ids a sanctuary may never delete outright, e.g. 'srparasites:overseer'. A bare",
+            "entry with no namespace matches that path in ANY namespace, so 'overseer' covers the",
+            "SRParasites, SRPExtra and SW: Parasites variants at once.",
+            "Covers BOTH dwell execution and the join veto below - the question is the same either way.",
+            "An exempt parasite still burns from purge fire, it just cannot be removed outright.",
+            "Empty = nothing is exempt. Read live."})
     @Config.Name("Dwell Execution Exempt Entities")
     public String[] dwellExecutionExemptIds = {};
+
+    @Config.Comment({"Remove parasites that JOIN the world inside a dome, instead of waiting for purge fire.",
+            "'Veto Natural Spawn' only covers the vanilla natural-spawn path. SRP places most of its",
+            "parasites with its own spawner - node relays, world events, summons from other parasites -",
+            "and none of that goes through it. This catches those.",
+            "TRADE-OFF: Forge 1.12.2 cannot tell a fresh spawn from a chunk being loaded, so this also",
+            "removes parasites that already existed when their chunk loads inside the dome, rather than",
+            "letting them burn. In-zone parasites already drop nothing, so the outcome is the same one",
+            "purge fire would reach - just without hundreds of entities ticking first. Entities on the",
+            "exempt list above are never removed this way.",
+            "Turn this OFF if you would rather watch them burn. Read live."})
+    @Config.Name("Veto Parasite Join In Zone")
+    public boolean vetoParasiteJoin = true;
 
     @Config.Comment("Purge Fire: an active sanctuary ignites/damages parasites inside it. Read live.")
     @Config.Name("Enable Purge Fire")
