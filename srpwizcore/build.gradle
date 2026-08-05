@@ -51,6 +51,15 @@ dependencies {
     // 1.9.0 because Enigmatic Legacy 2.7.0 rewrote the search itself (see MixinElItemTheCube in
     // git history). BaublesEX went with it — it was only on the classpath so javac could resolve
     // ItemSpellstoneBauble's IBauble while completing the ItemTheCube symbol.
+    // WorseHurtTimer compileOnly, NOT deobf — the four mixin targets (Events.getHurtTime,
+    // Events.getHurtResistantTime, Events.onAttackEntityFromPre, BHTAPI.get) and the
+    // HurtSourceInfo$HurtSourceData handler parameter are all plain mod members. Their
+    // descriptors carry MC *class* names only, which SRG never renames, so nothing needs
+    // remapping. PreLivingAttackEvent extends Forge's Event directly, not LivingEvent.
+    compileOnly files(rootProject.file('libs/WorseHurtTimer-1.12.2-1.5.0.3.jar'))
+    // BaublesEX compileOnly, NOT deobf — only BaublesApi.isBaubleEquipped(EntityPlayer, Item)
+    // is called; a Baubles method name with MC class names in its descriptor, nothing to remap.
+    compileOnly files(rootProject.file('libs/BaublesEX-1.12.2-2.3.6.jar'))
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
