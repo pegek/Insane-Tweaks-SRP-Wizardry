@@ -214,9 +214,11 @@ None of these needs a separate code path beyond one `if`.
 
 ## Verification
 
-- **Unit:** `WhtIFrames` — product of several providers, clamping at `maxMultiplier`, empty list
-  returns exactly `1.0f`, a provider returning a value below 1.0 cannot drag the result under 1.0.
-  Pure logic, no Minecraft classes needed.
+- **No unit tests.** `CLAUDE.md` records that this workspace has no test suite and verifies through
+  build → jar swap → log inspection. Adding a JUnit source set for one class is not worth breaking
+  that convention, so `WhtIFrames`' contract — product of several providers, clamping at
+  `maxMultiplier`, empty list returning exactly `1.0f`, a provider below 1.0 unable to drag the
+  result under 1.0 — is verified by the measured numbers below rather than by assertions.
 - **Runtime, melee:** set `B:doLogging=true` in the instance's `betterhurttimer.cfg`. WHT then logs
   `Threshold is {}` and `ticksSinceLastHurt: {}` per attack. Compare with and without the amulet,
   against one bare-handed and one armed mob, against the table above. Turn logging back off
