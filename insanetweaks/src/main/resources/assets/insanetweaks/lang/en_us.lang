@@ -393,3 +393,9 @@ tooltip.insanetweaks.auto_lock_picker.strength=Strength: %s (beaten by higher Co
 tooltip.insanetweaks.auto_lock_picker.timing=Wood lock %ss - Diamond lock %ss
 tooltip.insanetweaks.auto_lock_picker.no_locks=Requires the Locks mod.
 tooltip.insanetweaks.auto_lock_picker.disabled=Disabled in the config (modules.enableAutoLockPicker).
+
+# --- Dragonsteel Nunchaku (Better Survival x RLDragonsteel) ---
+# Klucze wynikaja z ItemNunchaku: setUnlocalizedName(material.name().toLowerCase() + "nunchaku").
+item.dragonsteelfirenunchaku.name=Flamed Dragonsteel Nunchaku
+item.dragonsteelicenunchaku.name=Iced Dragonsteel Nunchaku
+item.dragonsteellightningnunchaku.name=Shocked Dragonsteel Nunchaku
