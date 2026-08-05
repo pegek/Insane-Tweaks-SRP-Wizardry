@@ -47,7 +47,9 @@ import java.util.List;
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
         dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
-        "after:srpextra;after:baubles;after:potioncore;after:locks;before:reskillable")
+        "after:srpextra;after:baubles;after:potioncore;after:locks;before:reskillable;"
+        +
+        "after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
 public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
     /**
