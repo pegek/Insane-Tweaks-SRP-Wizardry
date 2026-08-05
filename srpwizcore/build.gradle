@@ -37,6 +37,9 @@ dependencies {
     // Spartan Weaponry deobf — MixinSwItemCrossbow targets ItemCrossbow by class and the
     // shoot helper calls vanilla-inherited methods on EntityBolt (reobf remaps them).
     implementation fg.deobf(files(rootProject.file('libs/SpartanWeaponry-1.12.2-1.6.1.jar')))
+    // Spartan Fire deobf — the findAmmo mixins call ItemDragonBolt.findDragonBoneBolt and read
+    // EntityDragonBolt's type; both signatures carry MC types, so SRG names have to be remapped.
+    implementation fg.deobf(files(rootProject.file('libs/spartanfire_rlcraft-1.4.0.jar')))
     // CQR compileOnly, NOT deobf — only the IRangedWeapon interface is referenced (its
     // descriptors contain class names only, which SRG never renames). The gear-swap mixin
     // still targets CQR by string.

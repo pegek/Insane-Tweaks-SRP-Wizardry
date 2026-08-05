@@ -1,5 +1,7 @@
 package com.spege.srpwizcore.dragonranged;
 
+import java.lang.reflect.Method;
+
 import com.github.alexthe666.iceandfire.entity.projectile.EntityDragonArrow;
 import com.spege.srpwizcore.SrpWizCore;
 import com.spege.srpwizcore.config.SrpWizCoreConfig;
@@ -47,6 +49,48 @@ public class DragonRangedHandler {
         }
     }
 
+    /** {@code EntityDragonBolt.getType()}, resolved reflectively for the same reason as the class. */
+    private static final Method DRAGON_BOLT_GET_TYPE = resolveGetType(DRAGON_BOLT);
+
+    private static Method resolveGetType(Class<?> owner) {
+        if (owner == null) {
+            return null;
+        }
+        try {
+            return owner.getMethod("getType");
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Ice and Fire and Spartan Fire put an element on their own projectiles from the ammunition
+     * item or from the WEAPON MATERIAL — and their weapon-material branch knows dragonbone only.
+     * So a dragon projectile that came out as {@code DEFAULT} was fired by a dragonsteel weapon
+     * and still needs us; one carrying a real type is already handled and must not be tagged
+     * again, or the effect lands twice.
+     *
+     * <p>Both failure paths below answer "yes, already handled". When the type cannot be read we
+     * would rather lose an effect than apply one twice: a missing effect looks like a weak shot,
+     * a doubled one looks like a damage bug.
+     */
+    private static boolean carriesOwnElement(Entity entity) {
+        if (entity instanceof EntityDragonArrow) {
+            return ((EntityDragonArrow) entity).getType() != EntityDragonArrow.Type.DEFAULT;
+        }
+        if (DRAGON_BOLT != null && DRAGON_BOLT.isInstance(entity)) {
+            if (DRAGON_BOLT_GET_TYPE == null) {
+                return true;
+            }
+            try {
+                return DRAGON_BOLT_GET_TYPE.invoke(entity) != EntityDragonArrow.Type.DEFAULT;
+            } catch (Exception e) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public DragonRangedHandler() {
         if (DRAGON_BOLT == null && Loader.isModLoaded("spartanfire")) {
             SrpWizCore.LOGGER.warn("[srpwizcore] dragon ranged: Spartan Fire is loaded but {} did not"
@@ -64,12 +108,7 @@ public class DragonRangedHandler {
             if (!(entity instanceof EntityArrow)) {
                 return;
             }
-            // Ice and Fire and Spartan Fire already put an element on their own projectiles;
-            // tagging one again would apply the effect twice.
-            if (entity instanceof EntityDragonArrow) {
-                return;
-            }
-            if (DRAGON_BOLT != null && DRAGON_BOLT.isInstance(entity)) {
+            if (carriesOwnElement(entity)) {
                 return;
             }
             Entity shooter = ((EntityArrow) entity).shootingEntity;
