@@ -42,8 +42,12 @@ public final class DragonWeaponRegistry {
         put("iceandfire:dragonbone_bow_fire", DragonElement.FIRE);
         put("iceandfire:dragonbone_bow_ice", DragonElement.ICE);
         put("iceandfire:dragonbone_bow_lightning", DragonElement.LIGHTNING);
-        SrpWizCore.LOGGER.info("[srpwizcore] dragon ranged: {} of 15 elemental weapons resolved",
-                Integer.valueOf(WEAPONS.size()));
+        // Derived, not hardcoded: this line is the only signal a human gets that the feature
+        // loaded, so adding a material must not silently turn it into a lie. The trailing +3 is
+        // Ice and Fire's three dragonbone bows above.
+        int expected = materials.length * kinds.length * 3 + 3;
+        SrpWizCore.LOGGER.info("[srpwizcore] dragon ranged: {} of {} elemental weapons resolved",
+                Integer.valueOf(WEAPONS.size()), Integer.valueOf(expected));
     }
 
     private static void put(String id, DragonElement element) {

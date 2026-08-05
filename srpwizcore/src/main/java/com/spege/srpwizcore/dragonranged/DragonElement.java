@@ -27,33 +27,44 @@ import net.minecraft.world.WorldServer;
  */
 public enum DragonElement {
 
-    FIRE,
-    ICE,
-    LIGHTNING;
+    FIRE((byte) 1),
+    ICE((byte) 2),
+    LIGHTNING((byte) 3);
 
-    /** Element id as stored on the projectile. 0 means "no element", so ids start at 1. */
-    public byte id() {
-        return (byte) (ordinal() + 1);
+    /** Reserved: a missing NBT key reads back as 0, so no element may use it. */
+    public static final byte ID_NONE = 0;
+
+    private final byte nbtId;
+
+    private DragonElement(byte nbtId) {
+        this.nbtId = nbtId;
     }
 
-    /** @return the element for a stored id, or null for 0 / anything unrecognised. */
-    public static DragonElement byId(byte id) {
-        switch (id) {
-            case 1:
-                return FIRE;
-            case 2:
-                return ICE;
-            case 3:
-                return LIGHTNING;
-            default:
-                return null;
+    /** @return the value persisted on the projectile. Stable across reordering of the constants. */
+    public byte nbtId() {
+        return this.nbtId;
+    }
+
+    /** @return the element for a persisted id, or null for {@link #ID_NONE} and anything unknown. */
+    public static DragonElement byNbtId(byte id) {
+        if (id == ID_NONE) {
+            return null;
         }
+        DragonElement[] all = values();
+        for (int i = 0; i < all.length; i++) {
+            if (all[i].nbtId == id) {
+                return all[i];
+            }
+        }
+        return null;
     }
 
     /**
      * Applies this element to a target that was just hit. Server side only.
      *
-     * @param shooter whoever fired the projectile; may be null (chain lightning accepts it)
+     * @param shooter whoever fired the projectile; must NOT be null — chain lightning builds an
+     *                {@code EntityDamageSourceIndirect} out of it and a null there dereferences on
+     *                the death message. A caller without a real shooter passes the projectile itself.
      */
     public void applyOnHit(EntityLivingBase target, Entity shooter) {
         switch (this) {
