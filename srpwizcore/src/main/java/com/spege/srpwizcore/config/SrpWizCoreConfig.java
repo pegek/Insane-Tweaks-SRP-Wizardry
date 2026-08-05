@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import com.spege.srpwizcore.SrpWizCore;
 import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
+import com.spege.srpwizcore.config.categories.DragonRangedCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
 import com.spege.srpwizcore.config.categories.OtgCompatCategory;
 import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
@@ -51,6 +52,10 @@ public class SrpWizCoreConfig {
     @Config.Name("dormantWaystones")
     @Config.Comment("Rare surface waystones that carry you to another dimension and back. Off by default.")
     public static final DormantWaystonesCategory dormantWaystones = new DormantWaystonesCategory();
+
+    @Config.Name("dragonRanged")
+    @Config.Comment("Let the elemental dragon longbows, crossbows and bows apply their element to any ammunition, not only to dragonbone arrows and bolts.")
+    public static final DragonRangedCategory dragonRanged = new DragonRangedCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {
