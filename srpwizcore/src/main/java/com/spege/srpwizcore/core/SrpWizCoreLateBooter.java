@@ -53,6 +53,13 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
         if (Loader.isModLoaded("setbonus")) {
             configs.add("mixins.srpwizcore.setbonus.json");
         }
+        if (Loader.isModLoaded("betterhurttimer")) {
+            // Invincibility-frame compatibility layer. Queued whenever WorseHurtTimer is
+            // present; the master switch lives in the config and is checked inside each
+            // handler, because gating the queue would mean reading the config before Forge
+            // has injected it.
+            configs.add("mixins.srpwizcore.betterhurttimer.json");
+        }
         return configs;
     }
 
