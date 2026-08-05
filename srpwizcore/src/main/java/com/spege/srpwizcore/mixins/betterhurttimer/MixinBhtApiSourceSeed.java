@@ -26,7 +26,17 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
  * multiplier land on a random base.
  *
  * <p>Sources that <em>are</em> configured were inserted by {@code BHTAPI.addSource} at config
- * load, so {@code computeIfAbsent} never fires for them and their tuning is untouched.
+ * load, so {@code computeIfAbsent} never fires for them and their tuning is untouched. That is
+ * worth spelling out, because the keys look incompatible at a glance: {@code addSource} stores
+ * entries under a {@code HurtSourceInfo$HurtType}, whose {@code equals} is a regex match but
+ * whose {@code hashCode} is the hash of the regex text ({@code "^inFire$"}), while the lookup
+ * key here is the plain damage type ({@code "inFire"}). In a hashed map those would never meet.
+ * They do meet because {@code DAMAGE_SOURCE_INFO_MAP} is a
+ * {@code it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap} — a linear-scan map that never
+ * calls {@code hashCode} and compares stored-key {@code .equals(lookupKey)}, which is exactly
+ * the direction that makes the regex fire. If a future WorseHurtTimer swaps that field for a
+ * hashed map, this mixin starts overriding configured sources too, and the whole damageSource
+ * table silently reverts to the base value.
  *
  * <p>The redirect targets the {@code computeIfAbsent} call rather than the seeding lambda: the
  * lambda would have to be named {@code lambda$null$0}, which is a compiler-generated name.
