@@ -64,7 +64,7 @@ public final class CrossNecklaceProvider implements WhtIFrames.Provider {
         if (!(victim instanceof EntityPlayer)) {
             return 1.0F;
         }
-        if (BaublesApi.isBaubleEquipped((EntityPlayer) victim, this.amuletCross) == -1) {
+        if (!BaublesApi.isBaubleEquipped(victim, this.amuletCross)) {
             return 1.0F;
         }
         return (float) SrpWizCoreConfig.whtCompat.crossNecklaceMultiplier;
