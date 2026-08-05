@@ -7,10 +7,10 @@ package com.spege.insanetweaks.items.nunchaku;
 public enum ParasiteTier {
 
     /** Bezpieczny stopień: Bleeding do amplifiera 1, bez Indeaf, bez Prey. */
-    LIVING(1.0D, 1, false, false),
+    LIVING(1.10D, 1, false, false),
 
     /** Ewolucja: Bleeding do 2, Indeaf, i cena w postaci Prey (calling=true jak w SRP). */
-    SENTIENT(0.778D, 2, true, true);
+    SENTIENT(0.90D, 2, true, true);
 
     private final double speedMultiplier;
     private final int bleedMaxAmplifier;
@@ -26,8 +26,9 @@ public enum ParasiteTier {
 
     /**
      * Mnożnik nakładany NA prędkość wyliczoną przez Better Survival (−2,4 × 0,36 → 3,14 ataku/s).
-     * SENTIENT ma 0,778, bo SRP zwalnia swojego Sentienta dokładnie w tej proporcji (0,90 → 0,70),
-     * a my musimy to powtórzyć, żeby przy podwojonych obrażeniach DPS został na parytecie.
+     * Obie wartości podniesiono na życzenie usera: Living 1,00 → 1,10 (3,45 ataku/s),
+     * Sentient 0,778 → 0,90 (2,82/s). Sentient dalej jest wolniejszy od Livinga, bo tak robi
+     * cała rodzina SRP, ale różnica jest już mniejsza niż kanoniczne 22%.
      */
     public double getSpeedMultiplier() {
         return speedMultiplier;

@@ -49,8 +49,15 @@ import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
  */
 public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
 
-    /** Zasięg jak u miecza SRP ({@code addReach = 1} w konstruktorze WeaponMeleeSword). */
-    private static final float ADDED_REACH = 1.0F;
+    /**
+     * Dodatkowe kratki zasięgu. Miecz SRP ma {@code addReach = 1}; my mamy 1,5 i to jest
+     * świadoma przewaga, opłacona niższymi obrażeniami (7,5 zamiast 8,0 dla Sentienta).
+     *
+     * <p>Konsumuje to {@code SRPEventHandlerBus}: czyta {@code getReach()} z broni w GŁÓWNEJ ręce
+     * i podaje wartość do {@code getMouseOverExtended(float)}, czyli wydłużonego raytrace'u.
+     * W drugiej ręce zasięg nie działa - tak działa tamten hak, nie nasze niedopatrzenie.
+     */
+    private static final float ADDED_REACH = 1.5F;
 
     /** Odstęp między sprawdzeniami ewolucji. Tyle samo, ile ma natywne WeaponToolMeleeBase. */
     private static final int EVOLUTION_CHECK_INTERVAL = 80;
@@ -298,10 +305,6 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
         if (tier.appliesIndeaf()) {
             addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "indeaf"));
         }
-        if (tier.isCalling() && ModConfig.interactions.enableParasiteNunchakuPrey) {
-            addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "prey"));
-        }
-
         if (tier == ParasiteTier.LIVING) {
             NBTTagCompound tag = stack.getTagCompound();
             int kills = tag == null ? 0 : tag.getInteger("srpkills");
