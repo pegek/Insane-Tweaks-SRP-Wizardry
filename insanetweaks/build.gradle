@@ -46,10 +46,11 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
-    // IceAndFire and Doomlike Dungeons are srpwizcore-only compile dependencies (per-dim worldgen
-    // mixin / Builder null-map guard) — content has no integration with either, so keep them off
-    // this classpath.
-    implementation fg.deobf(fileTree(dir: rootProject.file('libs'), include: '*.jar', exclude: ['ElectroblobsWizardry-*.jar', 'IceAndFire-*.jar', 'dldungeonsjbg-*.jar']))
+    // Doomlike Dungeons stays srpwizcore-only (Builder null-map guard). Ice and Fire USED to be
+    // excluded here for the same reason, but the dragonsteel nunchaku need it: CompatLoadUtil
+    // comes from Ice and Fire and RLDragonsteel's DragonsteelHitEffect references its dragon
+    // entity types.
+    implementation fg.deobf(fileTree(dir: rootProject.file('libs'), include: '*.jar', exclude: ['ElectroblobsWizardry-*.jar', 'dldungeonsjbg-*.jar']))
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
 
     implementation 'zone.rong:mixinbooter:7.1'
