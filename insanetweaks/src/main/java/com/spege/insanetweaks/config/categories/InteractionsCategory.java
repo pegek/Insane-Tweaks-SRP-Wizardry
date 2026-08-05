@@ -50,6 +50,17 @@ public class InteractionsCategory {
     public boolean enableDragonsteelHitEffects = true;
 
     @Config.Comment({
+            "Whether a Sentient Nunchaku calls parasites to its wielder. This mirrors what SRParasites",
+            "does with its own Sentient weapons: while the infestation is developed enough, holding one",
+            "periodically inflicts Prey on you. The Living tier never does this - the price arrives",
+            "together with the power.",
+            "Turning this off keeps the weapon's strength and drops its drawback, so leave it on unless",
+            "you are deliberately making the line easier.",
+            "Read live - no restart needed. Default ON." })
+    @Config.Name("Enable Parasite Nunchaku Prey")
+    public boolean enableParasiteNunchakuPrey = true;
+
+    @Config.Comment({
             "Second-opinion check for NPC spell casts vetoed via SpellCastEvent.Pre.",
             "Some mods (notably Ars Magica 2's EB Wizardry compat) blanket-cancel NPC casts",
             "for reasons that cannot apply to this mod's casters (AM2 burnout/mana). When ON,",

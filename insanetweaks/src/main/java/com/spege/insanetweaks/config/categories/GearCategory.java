@@ -298,7 +298,8 @@ public class GearCategory {
 
         @Config.Name("Attack Damage Multiplier")
         @Config.Comment({
-                "Scales the melee damage of all three dragonsteel nunchaku. What it scales is whatever",
+                "Scales the melee damage of every nunchaku this mod adds - the three dragonsteel ones",
+                "and both parasite ones. What it scales is whatever",
                 "Better Survival's nunchaku formula produces from the RLDragonsteel material, so the",
                 "fire / ice / lightning tiers keep their order relative to each other and to every other",
                 "Better Survival weapon made of the same metal.",
@@ -310,7 +311,8 @@ public class GearCategory {
 
         @Config.Name("Attack Speed Multiplier")
         @Config.Comment({
-                "Scales how fast the dragonsteel nunchaku swing, measured in attacks per second.",
+                "Scales how fast this mod's nunchaku swing, measured in attacks per second. Covers the",
+                "dragonsteel and the parasite lines alike.",
                 "ABOVE 1.0 IS FASTER: 1.5 makes a 2.4 attacks/second weapon swing at 3.6, and 0.5 drops",
                 "it to 1.2.",
                 "Worth knowing why that needs saying: Minecraft does not store attack speed, it stores a",
@@ -323,8 +325,9 @@ public class GearCategory {
 
         @Config.Name("Durability Multiplier")
         @Config.Comment({
-                "Scales the durability the dragonsteel nunchaku inherit from their RLDragonsteel",
-                "material. Never falls below 1 use, however low this is set.",
+                "Scales the durability this mod's nunchaku inherit from their material - RLDragonsteel",
+                "for the dragonsteel line, a 1000-use parasite material for the Living and Sentient",
+                "ones. Never falls below 1 use, however low this is set.",
                 "It is applied once, while the weapons are being built, which is why it needs a restart.",
                 "Durability is a property of the item and not of the individual weapon, so the new value",
                 "then covers every nunchaku - including ones already lying in a chest.",
@@ -332,6 +335,69 @@ public class GearCategory {
         @Config.RangeDouble(min = 0.0D, max = 10.0D)
         @Config.RequiresMcRestart
         public double durabilityMultiplier = 1.0D;
+
+        // =============================================================
+        // Ponizsze dotycza WYLACZNIE pasozytniczych nunchaku (Living / Sentient).
+        // Trzy mnozniki powyzej obejmuja cala rodzine nunchaku - dragonsteelowe i pasozytnicze.
+        // =============================================================
+
+        @Config.Name("Parasite Viral Chance")
+        @Config.Comment({
+                "Chance per qualifying hit that a parasite nunchaku raises Viral on its target.",
+                "Viral is a DAMAGE AMPLIFIER, not a damage-over-time: SRParasites multiplies incoming",
+                "damage by 0.5 per amplifier level, so a target at Viral II takes double damage from",
+                "EVERY source - including your other weapons and your allies.",
+                "Read live - no restart needed. Default 0.35." })
+        @Config.RangeDouble(min = 0.0D, max = 1.0D)
+        public double parasiteViralChance = 0.35D;
+
+        @Config.Name("Parasite Viral Duration")
+        @Config.Comment({
+                "How long Viral lasts, in ticks (20 ticks = 1 second).",
+                "Read live - no restart needed. Default 100 (5 seconds)." })
+        @Config.RangeInt(min = 1, max = 12000)
+        public int parasiteViralDurationTicks = 100;
+
+        @Config.Name("Parasite Needler Chance")
+        @Config.Comment({
+                "Chance per qualifying hit that a SENTIENT nunchaku raises Needler on its target.",
+                "The Living tier never applies it, whatever this is set to.",
+                "Needler stacks toward the terminal amplifier set in SRParasites' own config, at which",
+                "point the victim explodes for a percentage of its TOTAL health. That makes it stronger",
+                "the bigger the target - the opposite of ordinary damage. Lower this first if bosses",
+                "start melting.",
+                "Read live - no restart needed. Default 0.20." })
+        @Config.RangeDouble(min = 0.0D, max = 1.0D)
+        public double parasiteNeedlerChance = 0.20D;
+
+        @Config.Name("Parasite Needler Duration")
+        @Config.Comment({
+                "How long Needler lasts, in ticks (20 ticks = 1 second). Short durations make the",
+                "stack decay before it can reach the terminal amplifier, which is a second brake on",
+                "top of the chance roll.",
+                "Read live - no restart needed. Default 200 (10 seconds)." })
+        @Config.RangeInt(min = 1, max = 12000)
+        public int parasiteNeedlerDurationTicks = 200;
+
+        @Config.Name("Parasite Needler Max Amplifier")
+        @Config.Comment({
+                "Highest Needler amplifier a nunchaku will push a target to. SRParasites detonates at",
+                "its own 'Needler Terminal Amplifier' (7 by default), so leaving this at or above that",
+                "number lets the weapon reach the explosion, and setting it lower stops it short.",
+                "Read live - no restart needed. Default 7." })
+        @Config.RangeInt(min = 0, max = 100)
+        public int parasiteNeedlerMaxAmplifier = 7;
+
+        @Config.Name("Parasite Effect Cooldown")
+        @Config.Comment({
+                "Minimum ticks between two effect applications ON THE SAME TARGET (20 ticks = 1 second).",
+                "THIS IS THE MAIN BALANCE BRAKE. A nunchaku swings about 3.1 times per second, so",
+                "without a cooldown every single hit would raise the stacks and the chance rolls above",
+                "would stop meaning anything. 0 disables the brake entirely - do that only to see how",
+                "bad it gets.",
+                "Read live - no restart needed. Default 20 (once per second)." })
+        @Config.RangeInt(min = 0, max = 1200)
+        public int parasiteEffectCooldownTicks = 20;
     }
 
     // =====================================================================
@@ -487,5 +553,16 @@ public class GearCategory {
                 "Requires a restart. Default ON." })
         @Config.RequiresMcRestart
         public boolean dragonsteelNunchaku = true;
+
+        @Config.Name("Living Nunchaku")
+        @Config.Comment({
+                "Whether the Living and Sentient nunchaku are obtainable. No recipe and hidden from",
+                "creative and recipe viewers when OFF; the items stay REGISTERED either way, so any",
+                "already in a world keep working. This is the save-safe way to retire the line.",
+                "Has no effect at all unless modules.enableLivingNunchaku is on - that master switch",
+                "decides whether the weapons exist in the first place.",
+                "Requires a restart. Default ON." })
+        @Config.RequiresMcRestart
+        public boolean livingNunchaku = true;
     }
 }

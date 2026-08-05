@@ -89,6 +89,24 @@ public class ModulesCategory {
     public boolean enableDragonsteelNunchaku = false;
 
     @Config.Comment({
+            "Enables the parasite nunchaku: a Living Nunchaku forged from parasite remains, which",
+            "evolves into a Sentient Nunchaku once it has killed enough. Needs Better Survival for the",
+            "weapon behaviour - does nothing without it. SRParasites is already required by this mod.",
+            "These weapons hit for very little on their own. Their damage comes from what they inflict:",
+            "Viral, which multiplies all damage the target takes, and - once evolved - Needler, which",
+            "detonates for a share of the victim's total health. Tunables live in gear.nunchaku.",
+            "This gates REGISTRATION - the master switch for the whole line. When OFF the two weapons",
+            "are never created at all.",
+            "WARNING: only turn this off on a world that has never had one. Because the items stop",
+            "being registered, any nunchaku already sitting in a save is an unknown item on the next",
+            "load and is lost. To take the line out of circulation WITHOUT that risk, leave this ON",
+            "and use gear.availability instead - that only removes the recipe and hides them.",
+            "Requires a restart. Default OFF." })
+    @Config.Name("Enable Living Nunchaku")
+    @Config.RequiresMcRestart
+    public boolean enableLivingNunchaku = false;
+
+    @Config.Comment({
             "Enables the Sanctuary Dome: a pyramid-based core block that blocks SRParasites spawning",
             "and terrain infestation in a cylindrical region, and slowly reverts existing infestation",
             "(fuel-powered cleanse). Requires SRParasites; auto-disabled if absent." })
