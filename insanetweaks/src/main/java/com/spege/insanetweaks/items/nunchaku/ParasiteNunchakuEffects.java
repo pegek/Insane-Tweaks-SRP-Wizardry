@@ -112,6 +112,23 @@ public final class ParasiteNunchakuEffects {
         PotionEffect current = target.getActivePotionEffect(potion);
         int nextAmplifier = current == null ? 0 : Math.min(current.getAmplifier() + 1, maxAmplifier);
         // ambient=false, showParticles=true - gracz MA widziec, ze cos na nim siedzi.
-        target.addPotionEffect(new PotionEffect(potion, durationTicks, nextAmplifier, false, true));
+        PotionEffect effect = new PotionEffect(potion, durationTicks, nextAmplifier, false, true);
+
+        if (!ModConfig.interactions.enableParasiteNunchakuImmunityBypass) {
+            target.addPotionEffect(effect);
+            return;
+        }
+
+        // Pasozyty sa odporne na VIRA_E i DLER_E - czyli dokladnie na to, czym ta bron wojuje.
+        // Furtka podnosi sie TYLKO na czas tego jednego wywolania; uzasadnienie w
+        // ParasiteEffectBypass i w MixinEntityParasiteBase.
+        // 🚨 try/finally jest OBOWIAZKOWE: wyjatek przy podniesionej fladze zostawilby ja
+        // podniesiona na stale dla tego watku i zdjal odpornosc calemu SRParasites.
+        ParasiteEffectBypass.begin();
+        try {
+            target.addPotionEffect(effect);
+        } finally {
+            ParasiteEffectBypass.end();
+        }
     }
 }

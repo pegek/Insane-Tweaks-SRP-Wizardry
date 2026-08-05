@@ -6,8 +6,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
+import com.spege.insanetweaks.items.nunchaku.ParasiteEffectBypass;
 
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.potion.PotionEffect;
 
 /**
  * SRP faction fix for third-party parasites (v3.2).
@@ -39,6 +41,33 @@ public abstract class MixinEntityParasiteBase {
             CallbackInfoReturnable<Boolean> cir) {
         if (cls != null && EntityParasiteBase.class.isAssignableFrom(cls)) {
             cir.setReturnValue(Boolean.FALSE);
+        }
+    }
+
+    /**
+     * Przepuszcza efekty nakładane przez pasożytnicze nunchaku mimo odporności pasożyta.
+     *
+     * <p>{@code isPotionApplicable} odrzuca w SRP dokładnie cztery efekty — {@code COTH_E},
+     * {@code VIRA_E}, {@code CORRO_E}, {@code DLER_E} — a dwa z nich (Viral i Needler) są całą
+     * wartością naszej broni. Bez tego wstrzyknięcia nunchaku wykuwane z pasożytów nie robi
+     * pasożytom nic.
+     *
+     * <p>🚨 Bramka jest CELOWO wąska. Reagujemy wyłącznie, gdy bieżący wątek stoi w środku
+     * naszego {@code addPotionEffect} — patrz {@link ParasiteEffectBypass}. Każde inne źródło,
+     * łącznie z własnymi atakami obszarowymi SRP, napotyka nietkniętą odporność, więc pasożyty
+     * dalej nie zarażają same siebie. To jest powód, dla którego blacklista prawdopodobnie
+     * istnieje, i nie chcemy go znieść.
+     *
+     * <p>Podwójna nazwa metody z tego samego powodu, co przy {@code canAttackClass} powyżej:
+     * jar w środowisku dev bywa zremapowany na nazwy MCP, produkcyjny trzyma SRG. Przy
+     * {@code defaultRequire = 1} dokładnie jedna z nich musi się dopasować.
+     */
+    @Inject(method = {"isPotionApplicable", "func_70687_e"}, at = @At("HEAD"),
+            cancellable = true, remap = false)
+    private void insanetweaks$allowOurParasiteEffects(PotionEffect effect,
+            CallbackInfoReturnable<Boolean> cir) {
+        if (ParasiteEffectBypass.isActive()) {
+            cir.setReturnValue(Boolean.TRUE);
         }
     }
 }
