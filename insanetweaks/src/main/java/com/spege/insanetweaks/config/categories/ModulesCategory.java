@@ -75,12 +75,14 @@ public class ModulesCategory {
             "Enables the dragonsteel nunchaku: three craftable weapons that put Better Survival's",
             "nunchaku on RLDragonsteel's fire, ice and lightning materials. Needs both of those mods -",
             "does nothing without them.",
-            "This gates AVAILABILITY, never registration. The three weapons stay in the registry",
-            "whatever this is set to, so switching it off can never delete one from a world that",
-            "already has it; what goes away is the ways to GET one - no recipes, hidden from the",
-            "creative menu and from recipe viewers.",
-            "Narrow it further in gear.availability, tune the stats in gear.nunchaku, and turn the",
-            "fire/freeze/lightning on-hit effects off separately in interactions.",
+            "This gates REGISTRATION - the master switch for the whole line. When OFF the three",
+            "weapons are never created at all.",
+            "WARNING: only turn this off on a world that has never had one. Because the items stop",
+            "being registered, any nunchaku already sitting in a save is an unknown item on the next",
+            "load and is lost. To take the line out of circulation WITHOUT that risk, leave this ON",
+            "and use gear.availability instead - that only removes the recipes and hides them.",
+            "Tune the stats in gear.nunchaku, and turn the fire/freeze/lightning on-hit effects off",
+            "separately in interactions.",
             "Requires a restart. Default OFF." })
     @Config.Name("Enable Dragonsteel Nunchaku")
     @Config.RequiresMcRestart

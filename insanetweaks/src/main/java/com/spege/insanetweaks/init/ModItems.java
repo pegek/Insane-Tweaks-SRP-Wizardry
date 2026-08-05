@@ -189,12 +189,13 @@ public class ModItems {
             event.getRegistry().registerAll(CORRUPTED_SEED_FRAGMENT, CORRUPTED_SEED, CORRUPTED_FRUIT);
         }
 
-        // Dragonsteelowe nunchaku - tylko gdy oba mody bazowe są obecne. Straż MUSI być tutaj,
-        // przed pierwszym dotknięciem DragonsteelNunchakuItems - patrz javadoc tamtej klasy.
+        // Dragonsteelowe nunchaku - modules.enableDragonsteelNunchaku ORAZ oba mody bazowe obecne;
+        // jedno i drugie siedzi w shouldRegister(). Straż MUSI być tutaj, przed pierwszym
+        // dotknięciem DragonsteelNunchakuItems - patrz javadoc tamtej klasy.
         // MUSI też stać PRZED applyGearAvailability(): to ono zdejmuje wyłączonym broniom zakładkę
         // kreatywną, a nie ma czego zdejmować, dopóki bronie nie powstały. Zamiana tych dwóch
         // bloków miejscami sprawia, że gear.availability.dragonsteelNunchaku po cichu nic nie robi.
-        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.available()) {
+        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.shouldRegister()) {
             com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.register(event.getRegistry());
         }
 
@@ -277,7 +278,10 @@ public class ModItems {
             registerModel(CORRUPTED_FRUIT);
         }
 
-        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.available()) {
+        // Ten sam warunek co przy rejestracji - inaczej rozjeżdżają się strony klient/serwer w
+        // czytaniu. Sama pętla w registerModels() i tak chodzi po items(), więc przy wyłączonym
+        // module byłaby pusta, ale guard ma mówić prawdę o tym, dlaczego jej nie ma.
+        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.shouldRegister()) {
             com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.registerModels();
         }
     }
@@ -340,11 +344,12 @@ public class ModItems {
                 SENTIENT_BATTLEMAGE_CHESTPLATE, SENTIENT_BATTLEMAGE_LEGGINGS,
                 SENTIENT_BATTLEMAGE_BOOTS);
 
-        // Dwa przełączniki (modules.enableDragonsteelNunchaku AND cfg.dragonsteelNunchaku), oba
-        // muszą być włączone - warunek trzyma DragonsteelNunchakuItems.enabled(), bo ta sama
-        // odpowiedź decyduje tam o nadaniu zakładki kreatywnej. Oba wołania są bezpieczne bez
-        // Better Survival i RLDragonsteel: items() zwraca wtedy pustą tablicę, a żadne z nich nie
-        // dotyka klasy z opcjonalnego moda (typ zwracany to Item[], nie ItemDragonsteelNunchaku[]).
+        // enabled() pyta WYŁĄCZNIE o cfg.dragonsteelNunchaku. modules.enableDragonsteelNunchaku
+        // rozstrzygnęło się już wyżej, przy rejestracji - gdy jest wyłączony, items() zwraca pustą
+        // tablicę i nie ma tu czego ukrywać. Nie dopisuj go z powrotem do tego warunku: to był
+        // dubel, dwa przełączniki o identycznym skutku.
+        // Oba wołania są bezpieczne bez Better Survival i RLDragonsteel - żadne nie dotyka klasy
+        // z opcjonalnego moda (typ zwracany to Item[], nie ItemDragonsteelNunchaku[]).
         hideIfDisabled(com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.enabled(),
                 com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.items());
 

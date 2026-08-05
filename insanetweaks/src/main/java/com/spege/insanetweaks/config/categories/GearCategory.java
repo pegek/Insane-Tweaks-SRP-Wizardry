@@ -480,9 +480,10 @@ public class GearCategory {
         @Config.Name("Dragonsteel Nunchaku")
         @Config.Comment({
                 "Whether the three dragonsteel nunchaku are obtainable. No recipes and hidden from",
-                "creative when OFF; the items stay registered, so any already in a world keep working.",
-                "This only NARROWS modules.enableDragonsteelNunchaku - it cannot bring the line back",
-                "when that master switch is off. Both have to be on.",
+                "creative and recipe viewers when OFF; the items stay REGISTERED either way, so any",
+                "already in a world keep working. This is the save-safe way to retire the line.",
+                "Has no effect at all unless modules.enableDragonsteelNunchaku is on - that master",
+                "switch decides whether the weapons exist in the first place.",
                 "Requires a restart. Default ON." })
         @Config.RequiresMcRestart
         public boolean dragonsteelNunchaku = true;

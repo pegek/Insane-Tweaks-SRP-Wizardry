@@ -40,6 +40,21 @@ public final class DragonsteelNunchakuItems {
     }
 
     /**
+     * Czy w ogóle TWORZYMY tę broń — jedyna brama rejestracji.
+     *
+     * <p>Master-switch {@code modules.enableDragonsteelNunchaku} sprawdzamy PIERWSZY, żeby przy
+     * wyłączonym module nie płacić nawet za dwa {@code Loader.isModLoaded}. Bezpieczne bez obu
+     * modów: czyta config i rejestr Forge'a, nie dotyka żadnej obcej klasy.
+     *
+     * <p>To pytanie jest rozłączne z {@link #enabled()} — tam chodzi o DOSTĘPNOŚĆ już istniejącej
+     * broni, tutaj o jej istnienie. Nie sklejaj ich z powrotem w jeden warunek.
+     */
+    public static boolean shouldRegister() {
+        return com.spege.insanetweaks.config.ModConfig.modules.enableDragonsteelNunchaku
+                && available();
+    }
+
+    /**
      * Zarejestrowane bronie — pusta tablica, dopóki {@link #register} nie pobiegnie.
      *
      * <p>Wołalne ZAWSZE, także bez obu modów: typ zwracany to {@code Item[]}, więc wywołanie nie
@@ -51,15 +66,18 @@ public final class DragonsteelNunchakuItems {
     }
 
     /**
-     * Czy linia jest DOSTĘPNA wg configu — dwa przełączniki, oba muszą być włączone.
+     * Czy broń jest DOSTĘPNA (recepta + zakładka kreatywna) wg {@code gear.availability}.
      *
-     * <p>To jest pytanie o DOSTĘPNOŚĆ, nigdy o rejestrację — patrz komentarz przy
-     * {@code ModItems.applyGearAvailability}. Bezpieczne do wołania bez obu modów: dotyka wyłącznie
-     * configu.
+     * <p>Master-switcha z {@code modules} tu NIE ma i nie ma go dodawać — o rejestracji decyduje
+     * wyłącznie {@link #shouldRegister()}. Przy wyłączonym module {@link #items()} zwraca pustą
+     * tablicę, więc {@code applyGearAvailability()} nie ma czego ukrywać i odpowiedź tej metody
+     * przestaje mieć znaczenie sama z siebie. Sklejenie obu flag z powrotem w AND to był dubel:
+     * dwa przełączniki, jeden identyczny skutek.
+     *
+     * <p>Bezpieczne do wołania bez obu modów: dotyka wyłącznie configu.
      */
     public static boolean enabled() {
-        return com.spege.insanetweaks.config.ModConfig.modules.enableDragonsteelNunchaku
-                && com.spege.insanetweaks.config.ModConfig.gear.availability.dragonsteelNunchaku;
+        return com.spege.insanetweaks.config.ModConfig.gear.availability.dragonsteelNunchaku;
     }
 
     /**
