@@ -61,6 +61,10 @@ public class MixinBhtApiSourceSeed {
         }
         final HurtSourceInfo info = new HurtSourceInfo((CharSequence) key, false,
                 SrpWizCoreConfig.whtCompat.baseIFrameTicks);
+        if (com.spege.srpwizcore.whtcompat.WhtDiag.ENABLED) {
+            com.spege.srpwizcore.whtcompat.WhtDiag.recordUnlistedSource(String.valueOf(key),
+                    SrpWizCoreConfig.whtCompat.baseIFrameTicks);
+        }
         map.put(key, info);
         return info;
     }

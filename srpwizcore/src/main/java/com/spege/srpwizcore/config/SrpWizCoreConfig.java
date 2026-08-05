@@ -72,6 +72,8 @@ public class SrpWizCoreConfig {
                 // itself still needs one).
                 IandfWorldgenOverrides.rebuild();
                 com.spege.srpwizcore.spawnengine.SpawnEngine.reload();
+                com.spege.srpwizcore.whtcompat.WhtDiag.syncFromConfig(
+                        whtCompat.diagEnabled, whtCompat.diagVerbose, whtCompat.diagPlayersOnly);
             }
         }
     }

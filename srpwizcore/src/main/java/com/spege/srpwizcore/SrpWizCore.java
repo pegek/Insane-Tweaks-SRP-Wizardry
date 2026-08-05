@@ -28,7 +28,7 @@ import net.minecraftforge.fml.common.Mod;
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.12.0";
+    public static final String VERSION = "1.13.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -59,6 +59,12 @@ public class SrpWizCore {
         // on at runtime did nothing until a restart. Harmless when WHT is absent — nothing reads
         // WhtIFrames then.
         com.spege.srpwizcore.whtcompat.CrossNecklaceProvider.registerIfPossible();
+        com.spege.srpwizcore.whtcompat.WhtDiag.syncFromConfig(
+                com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagEnabled,
+                com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagVerbose,
+                com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagPlayersOnly);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                new com.spege.srpwizcore.whtcompat.WhtDiagHandler());
 
         if (net.minecraftforge.fml.common.Loader.isModLoaded("cqrepoured")) {
             // Boss-room chest lock + boss-death bonus loot. All flags read live inside the
@@ -109,5 +115,10 @@ public class SrpWizCore {
         if (com.spege.srpwizcore.config.SrpWizCoreConfig.dragonRanged.enabled) {
             com.spege.srpwizcore.dragonranged.DragonWeaponRegistry.build();
         }
+    }
+
+    @Mod.EventHandler
+    public void serverStarting(net.minecraftforge.fml.common.event.FMLServerStartingEvent event) {
+        event.registerServerCommand(new com.spege.srpwizcore.whtcompat.CommandWhtDiag());
     }
 }

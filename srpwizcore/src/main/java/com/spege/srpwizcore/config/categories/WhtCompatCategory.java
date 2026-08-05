@@ -60,4 +60,39 @@ public class WhtCompatCategory {
     @Config.Name("Cross Necklace Multiplier")
     @Config.RangeDouble(min = 1.0D, max = 10.0D)
     public double crossNecklaceMultiplier = 1.8D;
+
+    @Config.Comment({
+            "Collect diagnostics about what WorseHurtTimer actually does: how often its limiter",
+            "refuses an attack, which damage sources appear, and what invincibility windows get",
+            "opened. Counts events instead of narrating them, and always records the target -",
+            "WorseHurtTimer's own logging does neither.",
+            "Costs one boolean read per attack while off. Default OFF."
+    })
+    @Config.Name("Diagnostics: Enabled")
+    public boolean diagEnabled = false;
+
+    @Config.Comment({
+            "On top of the counters, write one log line per event.",
+            "Only for short sterile tests - in a real fight this is thousands of lines a minute.",
+            "Default OFF."
+    })
+    @Config.Name("Diagnostics: Verbose")
+    public boolean diagVerbose = false;
+
+    @Config.Comment({
+            "Only record events whose target is a player. Turning this off also counts mob-on-mob",
+            "combat, which is a great deal of noise unless that is what you are investigating.",
+            "Default ON."
+    })
+    @Config.Name("Diagnostics: Players Only")
+    public boolean diagPlayersOnly = true;
+
+    @Config.Comment({
+            "Write the counters to the log every N seconds. 0 disables the interval dump and",
+            "leaves /whtdiag as the only way to see them.",
+            "Default 60."
+    })
+    @Config.Name("Diagnostics: Dump Interval Seconds")
+    @Config.RangeInt(min = 0, max = 3600)
+    public int diagDumpIntervalSeconds = 60;
 }

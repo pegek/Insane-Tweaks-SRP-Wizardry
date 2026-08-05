@@ -52,9 +52,13 @@ public class MixinBhtEventsHurtTime {
             return;
         }
         final float multiplier = WhtIFrames.getMultiplier((EntityLivingBase) target);
-        if (multiplier == 1.0F) {
-            return;
+        final int original = cir.getReturnValueI();
+        final int scaled = multiplier == 1.0F ? original : (int) (original * multiplier);
+        if (com.spege.srpwizcore.whtcompat.WhtDiag.ENABLED) {
+            com.spege.srpwizcore.whtcompat.WhtDiag.recordMelee(target, attacker, original, scaled);
         }
-        cir.setReturnValue(Integer.valueOf((int) (cir.getReturnValueI() * multiplier)));
+        if (scaled != original) {
+            cir.setReturnValue(Integer.valueOf(scaled));
+        }
     }
 }

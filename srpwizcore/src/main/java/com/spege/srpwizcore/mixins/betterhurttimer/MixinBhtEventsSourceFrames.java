@@ -46,9 +46,13 @@ public class MixinBhtEventsSourceFrames {
             return;
         }
         final float multiplier = WhtIFrames.getMultiplier(victim);
-        if (multiplier == 1.0F) {
-            return;
+        final int base = data.tick;
+        if (multiplier != 1.0F) {
+            data.tick = (int) (base * multiplier);
         }
-        data.tick = (int) (data.tick * multiplier);
+        if (com.spege.srpwizcore.whtcompat.WhtDiag.ENABLED) {
+            com.spege.srpwizcore.whtcompat.WhtDiag.recordFrames(victim,
+                    event.getSource().getDamageType(), base, data.tick);
+        }
     }
 }
