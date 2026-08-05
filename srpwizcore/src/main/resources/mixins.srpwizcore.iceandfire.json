@@ -4,7 +4,7 @@
   "package": "com.spege.srpwizcore.mixins.iceandfire",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "MixinIandfStructureGenerator", "MixinIandfWorldGenMausoleum" ],
+  "mixins": [ "MixinIandfStructureGenerator", "MixinIandfWorldGenMausoleum", "MixinIandfDragonArrowLightning" ],
   "client": [],
   "server": [],
   "injectors": { "defaultRequire": 1 }
