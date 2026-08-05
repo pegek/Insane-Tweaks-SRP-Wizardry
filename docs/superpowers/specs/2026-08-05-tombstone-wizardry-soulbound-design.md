@@ -179,13 +179,26 @@ Logs can only show that the capability attached; the behaviour is in-game:
 4. Ankh at a soulless grave → still a prayer.
 5. Die → the wand is in the inventory on respawn, not in the grave.
 
-## Known risk, to check during implementation
+## Status — shipped and verified
+
+Implemented in `tombtweaks` **1.7.0** (commits `a5d1a81..3098a74`). Verified in DEv 1.2:
+`Wand soulbinding armed` in the log, every hand/grave combination behaves as designed, Tombstone's
+own perk respec and prayer are unchanged, and **a bound wand is back in the inventory after death
+rather than in the grave** — which was the whole point.
+
+One observation worth keeping: the chat lines read exactly like Tombstone's own, because they are —
+see the styling note above. That is correct behaviour, not a lost custom string.
+
+## Known risk — narrowed, still unobserved
 
 `SlotSnapshotHandler` (ours) and Ancient Spellcraft's `storeSoulboundWands` both listen to
 `LivingDeathEvent` at NORMAL priority, so their order is decided by mod load order. If ours runs
-first it records the wand in a slot the grave will never contain — a phantom entry. Believed
-harmless because the restore only reapplies layout for items actually in the grave, but it is the
-one non-deterministic point in the feature and must be confirmed.
+first it records the wand in a slot the grave will never contain — a phantom entry.
+
+The death test above shows the **outcome** is right, so this cannot be doing visible harm today. It
+has still never been looked at directly: that needs `Slot Restore Debug Logging` on during a death
+with a bound wand, to see whether the snapshot lists a wand the grave never received. Worth one run
+if the slot-restore feature is ever touched again; not worth a run on its own.
 
 ## Out of scope
 
