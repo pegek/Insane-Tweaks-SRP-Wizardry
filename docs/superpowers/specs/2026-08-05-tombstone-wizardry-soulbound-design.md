@@ -163,6 +163,11 @@ hand, no wand in the targeted hand, wand already at its upgrade limit.
 **Cannot arise:** the wand already soulbound — Tombstone checks `isEnchanted` first and answers with
 its own message. The check stays as an honest precondition for any other caller.
 
+Do not style these messages. Tombstone takes the `ITextComponent` out of the `ConsumeResult` and
+applies its own `StyleType` — `MESSAGE_SPECIAL` on success, `COLOR_OFF` on failure — so plain
+`TextComponentString` is correct and the result reads as native Tombstone text. That is why the
+messages look identical in tone to Tombstone's own, and it is not a sign the custom text was lost.
+
 ### Verification
 
 Logs can only show that the capability attached; the behaviour is in-game:
