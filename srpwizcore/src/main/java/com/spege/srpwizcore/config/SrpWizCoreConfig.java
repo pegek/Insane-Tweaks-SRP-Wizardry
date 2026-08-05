@@ -16,6 +16,7 @@ import com.spege.srpwizcore.config.categories.FutureMcCompatCategory;
 import com.spege.srpwizcore.config.categories.PerfGlueCategory;
 import com.spege.srpwizcore.config.categories.SpawnEngineCategory;
 import com.spege.srpwizcore.config.categories.ThreadingCompatCategory;
+import com.spege.srpwizcore.config.categories.WhtCompatCategory;
 import com.spege.srpwizcore.util.IandfWorldgenOverrides;
 
 @Config(modid = SrpWizCore.MODID, name = SrpWizCore.MODID, category = "")
@@ -56,6 +57,10 @@ public class SrpWizCoreConfig {
     @Config.Name("dragonRanged")
     @Config.Comment("Let the elemental dragon longbows, crossbows and bows apply their element to any ammunition, not only to dragonbone arrows and bolts.")
     public static final DragonRangedCategory dragonRanged = new DragonRangedCategory();
+
+    @Config.Name("whtCompat")
+    @Config.Comment("Make invincibility frames under WorseHurtTimer deterministic, and let items grant longer ones. Covers the Cross Necklace.")
+    public static final WhtCompatCategory whtCompat = new WhtCompatCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {
