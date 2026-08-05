@@ -43,7 +43,7 @@ public class GearCategory {
 
     @Config.Name("nunchaku")
     @Config.LangKey("config.insanetweaks.category.gear.nunchaku")
-    @Config.Comment("Dragonsteel nunchaku: melee damage, swing speed and durability.")
+    @Config.Comment("Every nunchaku this mod adds - dragonsteel and parasite alike: melee damage, swing speed, durability, plus the parasite lines' status effects.")
     public final Nunchaku nunchaku = new Nunchaku();
 
     @Config.Name("properties")
