@@ -13,6 +13,7 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.config.categories.GearCategory;
 
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -24,7 +25,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -80,6 +80,9 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
      * podmieniaj tego na {@code world.provider.getDimension()} — rozjechałoby to nas z rodziną.
      */
     private static final int SRP_DEVELOPMENT_SAVE_ID = 222;
+
+    /** Wspólny przedrostek kluczy tooltipa w {@code .lang}. */
+    private static final String TOOLTIP_PREFIX = "tooltip.insanetweaks.parasitenunchaku.";
 
     private final ParasiteTier tier;
 
@@ -270,10 +273,17 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
     }
 
     /**
-     * Postęp do ewolucji w tooltipie.
+     * Opis klimatyczny, opis efektów i postęp ewolucji.
      *
-     * <p>Natywne {@code WeaponToolMeleeBase} pokazuje surowy licznik. My pokazujemy też próg, bo
-     * bez niego liczba nic nie mówi — gracz nie ma skąd wiedzieć, że celem jest 50 000.
+     * <p>Głos naśladuje SW:Parasites („Result of various Parasites body parts reshaped to form
+     * a Weapon"): treść kursywą na szaro, mechanicznie istotne słowo kolorowane. Teksty siedzą
+     * w {@code .lang}, żeby dało się je zmienić bez przebudowy moda.
+     *
+     * <p>Linia o słabych obrażeniach jest tu POTRZEBNA, nie ozdobna: broń celowo bije mniej niż
+     * reszta rodziny Living i bez tego zdania tooltip wygląda jak niedoróbka.
+     *
+     * <p>Natywne {@code WeaponToolMeleeBase} pokazuje surowy licznik zabójstw. My pokazujemy też
+     * próg — bez niego liczba nic nie mówi, bo gracz nie ma skąd wiedzieć, że celem jest 50 000.
      */
     @Override
     @SideOnly(Side.CLIENT)
@@ -281,13 +291,36 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
         super.addInformation(stack, world, tooltip, flag);
 
-        if (tier != ParasiteTier.LIVING) {
-            return;
+        String key = tier == ParasiteTier.LIVING ? "living" : "sentient";
+        addLines(tooltip, I18n.format(TOOLTIP_PREFIX + key + ".desc"));
+        addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "feeble"));
+        addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "viral"));
+        if (tier.appliesNeedler()) {
+            addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "needler"));
         }
-        NBTTagCompound tag = stack.getTagCompound();
-        int kills = tag == null ? 0 : tag.getInteger("srpkills");
-        tooltip.add(TextFormatting.DARK_AQUA + "---> " + kills + " / "
-                + SRPConfig.weapon_livingSentient_HP_needed);
+        if (tier.isCalling() && ModConfig.interactions.enableParasiteNunchakuPrey) {
+            addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "prey"));
+        }
+
+        if (tier == ParasiteTier.LIVING) {
+            NBTTagCompound tag = stack.getTagCompound();
+            int kills = tag == null ? 0 : tag.getInteger("srpkills");
+            tooltip.add(I18n.format(TOOLTIP_PREFIX + "progress", Integer.valueOf(kills),
+                    Integer.valueOf(SRPConfig.weapon_livingSentient_HP_needed)));
+        }
+    }
+
+    /**
+     * Rozbija wpis z {@code .lang} na linie po {@code \n}.
+     *
+     * <p>Tooltip w 1.12.2 to lista stringów, a nie jeden tekst — wstawienie surowego {@code \n}
+     * daje jedną linię z widocznym znakiem zamiast łamania. SW:Parasites łamie swoje opisy
+     * dokładnie w ten sposób, stąd ta sama obsługa u nas.
+     */
+    private static void addLines(List<String> tooltip, String formatted) {
+        for (String line : formatted.split("\\\\n|\n")) {
+            tooltip.add(line);
+        }
     }
 
     /**

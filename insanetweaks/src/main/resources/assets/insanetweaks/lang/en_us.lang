@@ -401,3 +401,14 @@ item.dragonsteelicenunchaku.name=Iced Dragonsteel Nunchaku
 item.dragonsteellightningnunchaku.name=Shocked Dragonsteel Nunchaku
 item.parasitelivingnunchaku.name=Living Nunchaku
 item.parasitesentientnunchaku.name=Sentient Nunchaku
+
+# Parasite nunchaku - flavour and effect descriptions.
+# Voice follows SW:Parasites ("Result of various Parasites body parts reshaped to form a Weapon"):
+# italic grey body text with the mechanically relevant word coloured. \n splits into lines.
+tooltip.insanetweaks.parasitenunchaku.living.desc=§fTwo lengths of hardened bone, bound by a cord of living sinew. The flame of life still gutters inside it, and it feeds on whatever you kill.
+tooltip.insanetweaks.parasitenunchaku.sentient.desc=§fThe ulterior Evolution of the Living Nunchaku. It has gained a §bMind§f - and it has learned the shape of your hands.\n§0? ? ?
+tooltip.insanetweaks.parasitenunchaku.feeble=§7§oIts own blows are feeble. The weapon is the infection, not the bone.
+tooltip.insanetweaks.parasitenunchaku.viral=§7§oEvery strike seeds a §a§oviral§7§o bloom. The infected take more damage from §f§oevery§7§o source, and worse with each bloom.
+tooltip.insanetweaks.parasitenunchaku.needler=§7§oBarbs gather beneath the skin of the struck. When they can no longer be contained, the host §c§obursts§7§o.
+tooltip.insanetweaks.parasitenunchaku.prey=§7§oThe hive can smell what you carry. Once the infestation runs deep enough, holding this marks you as §e§oPrey§7§o.
+tooltip.insanetweaks.parasitenunchaku.progress=§3---> §b%s§3 / %s
