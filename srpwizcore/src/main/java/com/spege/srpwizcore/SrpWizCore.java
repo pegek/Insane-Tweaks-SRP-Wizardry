@@ -22,7 +22,8 @@ import net.minecraftforge.fml.common.Mod;
         version = SrpWizCore.VERSION,
         dependencies = "after:openterraingenerator;after:futuremc;after:iceandfire;"
                 + "after:dldungeonsjbg;after:cqrepoured;after:raids;"
-                + "after:spartanfire;after:spartandragonsteel",
+                + "after:spartanfire;after:spartandragonsteel;"
+                + "after:betterhurttimer;after:bountifulbaubles",
         acceptableRemoteVersions = "*")
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
@@ -51,6 +52,13 @@ public class SrpWizCore {
                 new com.spege.srpwizcore.spawnengine.SpawnEngineTickHandler());
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                 new com.spege.srpwizcore.spawnengine.SpawnListFilterHandler());
+
+        // WorseHurtTimer i-frame layer. Registered unconditionally, like the SpawnEngine
+        // handlers above: every whtCompat flag is read live inside the provider and inside the
+        // mixins, so gating registration on `enabled` would only mean that switching the module
+        // on at runtime did nothing until a restart. Harmless when WHT is absent — nothing reads
+        // WhtIFrames then.
+        com.spege.srpwizcore.whtcompat.CrossNecklaceProvider.registerIfPossible();
 
         if (net.minecraftforge.fml.common.Loader.isModLoaded("cqrepoured")) {
             // Boss-room chest lock + boss-death bonus loot. All flags read live inside the
