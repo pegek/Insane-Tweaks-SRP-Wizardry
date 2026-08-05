@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "HVN",
+    "VLV",
+    "NVH"
+  ],
+  "key": {
+    "H": {
+      "item": "srparasites:hardened_bone_handle"
+    },
+    "V": {
+      "item": "srparasites:vile_shell"
+    },
+    "L": {
+      "type": "forge:ore_dict",
+      "ore": "itLivingNucleus"
+    },
+    "N": {
+      "type": "forge:ore_dict",
+      "ore": "itInfectiousLongBladeFragment"
+    }
+  },
+  "result": {
+    "item": "mujmajnkraftsbettersurvival:itemparasitelivingnunchaku",
+    "count": 1
+  }
+}
