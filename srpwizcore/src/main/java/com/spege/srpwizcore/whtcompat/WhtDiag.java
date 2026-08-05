@@ -1,5 +1,6 @@
 package com.spege.srpwizcore.whtcompat;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +12,11 @@ import com.spege.srpwizcore.SrpWizCore;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 
 /**
  * Aggregated diagnostics for WorseHurtTimer, written because WHT's own logging cannot answer the
@@ -43,6 +48,30 @@ public final class WhtDiag {
     private static final ConcurrentHashMap<String, AtomicLong> COUNTERS =
             new ConcurrentHashMap<String, AtomicLong>();
     private static volatile long startedAtMillis = 0L;
+
+    /**
+     * {@code EntityLivingBase.ticksSinceLastSwing}, resolved once for the {@code canSwing} probe.
+     *
+     * <p>Looked up ourselves rather than borrowed from {@code BHTAPI.ticksSinceLastSwingField} so
+     * this class keeps no link to WorseHurtTimer and stays loadable when the mod is absent. Both
+     * the SRG and the MCP name are tried because which one exists depends on the deobfuscation
+     * state of the runtime. A null here is not fatal — the probe reports {@code field?} and the
+     * other half of the condition is still measured.
+     */
+    private static final Field SWING_FIELD = resolveSwingField();
+
+    private static Field resolveSwingField() {
+        for (String name : new String[] { "field_184617_aD", "ticksSinceLastSwing" }) {
+            try {
+                Field f = EntityLivingBase.class.getDeclaredField(name);
+                f.setAccessible(true);
+                return f;
+            } catch (Throwable ignored) {
+                // wrong mapping for this runtime; try the other spelling
+            }
+        }
+        return null;
+    }
 
     private WhtDiag() {
     }
@@ -147,6 +176,87 @@ public final class WhtDiag {
         }
     }
 
+    /**
+     * Outcome of one attack seen on WorseHurtTimer's own {@code PreLivingAttackEvent}.
+     *
+     * <p>Exists because {@code attack|...|blocked} is structurally blind to non-melee refusals.
+     * WHT posts {@code PreLivingAttackEvent} from an {@code @Inject} at the HEAD of
+     * {@code EntityLivingBase.attackEntityFrom} — before {@code ForgeHooks.onLivingAttack} —
+     * and cancelling it sets that method's return value, so {@code LivingAttackEvent} is never
+     * posted at all. A refused non-melee attack therefore reaches <em>neither</em> counter in
+     * {@link #recordAttack}, which is why a run can show plenty of attempts and zero blocks and
+     * mean nothing. Melee is the opposite case: WHT refuses it on {@code LivingAttackEvent}
+     * itself. Both listeners are kept, under different key prefixes, because each sees a half the
+     * other cannot.
+     *
+     * <p>{@code stalled} separates WHT's two posting sites. It is counted rather than folded in so
+     * that an attack posted twice shows up as such instead of quietly inflating the attempts.
+     */
+    public static void recordPreAttack(Entity target, Entity attacker, String source,
+            boolean cancelled, boolean stalled) {
+        if (skip(target)) {
+            return;
+        }
+        inc("pre|" + source + "|attempts");
+        if (cancelled) {
+            inc("pre|" + source + "|blocked");
+        }
+        if (stalled) {
+            inc("pre|" + source + "|stalled");
+        }
+        if (VERBOSE) {
+            SrpWizCore.LOGGER.info("[srpwizcore][whtdiag] pre {} -> {} src={} {}{}",
+                    label(attacker), label(target), source, cancelled ? "BLOCKED" : "hit",
+                    stalled ? " (stalled)" : "");
+        }
+    }
+
+    /**
+     * Reconstructs both halves of WorseHurtTimer's {@code Events.canSwing(attacker)} condition.
+     *
+     * <p>{@code canSwing} decides whether melee goes through the attack-speed branch
+     * ({@code getCoolPeriod}) or the {@code getHurtResistantTime} one, and a 2026-08-05 session
+     * measured it as false 314 times out of 314 — which reading the bytecode says should not
+     * happen for an attacker holding a sword, since {@code ItemSword} publishes
+     * {@code generic.attackSpeed}. Rather than trust either side, this records the two conjuncts
+     * separately so the next run says which one actually fails, and for which item.
+     *
+     * <p>The attribute lookup allocates a Multimap per call, so this is only ever reached behind
+     * {@link #ENABLED} — acceptable for an investigation, not something to leave running.
+     */
+    public static void recordCanSwing(Entity target, Entity attacker) {
+        if (skip(target) || !(attacker instanceof EntityLivingBase)) {
+            return;
+        }
+        final EntityLivingBase living = (EntityLivingBase) attacker;
+        final ItemStack held = living.getHeldItem(EnumHand.MAIN_HAND);
+        final String item = held.isEmpty() || held.getItem().getRegistryName() == null
+                ? "empty"
+                : held.getItem().getRegistryName().toString();
+
+        String speedAttr;
+        try {
+            speedAttr = held.getItem()
+                    .getAttributeModifiers(EntityEquipmentSlot.MAINHAND, held)
+                    .containsKey(SharedMonsterAttributes.ATTACK_SPEED.getName()) ? "yes" : "no";
+        } catch (Throwable t) {
+            speedAttr = "threw";
+        }
+
+        String swing;
+        if (SWING_FIELD == null) {
+            swing = "field?";
+        } else {
+            try {
+                swing = SWING_FIELD.getInt(living) >= 0 ? "ok" : "neg";
+            } catch (Throwable t) {
+                swing = "threw";
+            }
+        }
+
+        inc("canswing|" + item + "|speedAttr=" + speedAttr + "|swingTicks=" + swing);
+    }
+
     /** Renders the counters. Returns one line per entry, already sorted, newest window first. */
     public static List<String> render() {
         List<String> keys = new ArrayList<String>(COUNTERS.keySet());
@@ -161,7 +271,7 @@ public final class WhtDiag {
         for (String k : keys) {
             AtomicLong v = COUNTERS.get(k);
             long n = v == null ? 0L : v.get();
-            if (k.startsWith("attack|") && k.endsWith("|blocked")) {
+            if (k.endsWith("|blocked")) {
                 String attempts = k.substring(0, k.length() - "blocked".length()) + "attempts";
                 AtomicLong a = COUNTERS.get(attempts);
                 long total = a == null ? 0L : a.get();

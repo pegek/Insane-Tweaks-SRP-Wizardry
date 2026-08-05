@@ -56,6 +56,7 @@ public class MixinBhtEventsHurtTime {
         final int scaled = multiplier == 1.0F ? original : (int) (original * multiplier);
         if (com.spege.srpwizcore.whtcompat.WhtDiag.ENABLED) {
             com.spege.srpwizcore.whtcompat.WhtDiag.recordMelee(target, attacker, original, scaled);
+            com.spege.srpwizcore.whtcompat.WhtDiag.recordCanSwing(target, attacker);
         }
         if (scaled != original) {
             cir.setReturnValue(Integer.valueOf(scaled));

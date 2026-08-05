@@ -47,7 +47,9 @@ public class CommandWhtDiag extends CommandBase {
         }
         if (!WhtDiag.ENABLED) {
             sender.sendMessage(new TextComponentString(
-                    "whtdiag is OFF - enable whtCompat.diagEnabled in srpwizcore.cfg"));
+                    "whtdiag is OFF - turn it on under Mods > SRP Wiz Core > Config > whtcompat "
+                            + "> Diagnostics: Enabled. Editing srpwizcore.cfg on disk while the "
+                            + "game is running does nothing."));
         }
         for (String line : WhtDiag.render()) {
             sender.sendMessage(new TextComponentString(line));

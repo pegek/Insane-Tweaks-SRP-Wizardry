@@ -65,6 +65,12 @@ public class SrpWizCore {
                 com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagPlayersOnly);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                 new com.spege.srpwizcore.whtcompat.WhtDiagHandler());
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("betterhurttimer")) {
+            // Separate class on purpose: its listener takes a WorseHurtTimer event type, and Forge
+            // reflects over parameter types at registration time.
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.whtcompat.WhtPreAttackDiagHandler());
+        }
 
         if (net.minecraftforge.fml.common.Loader.isModLoaded("cqrepoured")) {
             // Boss-room chest lock + boss-death bonus loot. All flags read live inside the
