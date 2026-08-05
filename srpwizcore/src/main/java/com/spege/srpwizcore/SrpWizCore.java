@@ -12,14 +12,17 @@ import net.minecraftforge.fml.common.Mod;
  * Ice&amp;Fire worldgen control, plus the perf-glue guards for Doomlike Dungeons (null dungeon
  * map), CQR (disabled-structure scans in OTG dims) and Raids-Backport (per-world storage).
  * Also owns a small native registry system: the configurable dormant-waystone travel
- * system (block/worldgen/teleport, see {@code com.spege.srpwizcore.dormant}). Each fix
- * config-gated in {@link com.spege.srpwizcore.config.SrpWizCoreConfig}.
+ * system (block/worldgen/teleport, see {@code com.spege.srpwizcore.dormant}), and the
+ * elemental dragon ranged weapon system that passes fire/ice/lightning to any ammunition
+ * (see {@code com.spege.srpwizcore.dragonranged}). Each fix config-gated in
+ * {@link com.spege.srpwizcore.config.SrpWizCoreConfig}.
  */
 @Mod(modid = SrpWizCore.MODID,
         name = SrpWizCore.NAME,
         version = SrpWizCore.VERSION,
         dependencies = "after:openterraingenerator;after:futuremc;after:iceandfire;"
-                + "after:dldungeonsjbg;after:cqrepoured;after:raids",
+                + "after:dldungeonsjbg;after:cqrepoured;after:raids;"
+                + "after:spartanfire;after:spartandragonsteel",
         acceptableRemoteVersions = "*")
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
@@ -77,6 +80,26 @@ public class SrpWizCore {
                     com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.keyItem,
                     com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.dimSurface,
                     com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.dimTarget);
+        }
+
+        if (com.spege.srpwizcore.config.SrpWizCoreConfig.dragonRanged.enabled
+                && net.minecraftforge.fml.common.Loader.isModLoaded("iceandfire")) {
+            // The element table calls Ice and Fire's capability and chain-lightning API, so the
+            // handler only makes sense with that mod present. The weapon map itself is built in
+            // postInit, after every mod has registered its items.
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.dragonranged.DragonRangedHandler());
+            LOGGER.info("[srpwizcore] dragon ranged elements armed");
+        }
+    }
+
+    /**
+     * Resolves the elemental dragon ranged weapons once every mod has registered its items.
+     */
+    @Mod.EventHandler
+    public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
+        if (com.spege.srpwizcore.config.SrpWizCoreConfig.dragonRanged.enabled) {
+            com.spege.srpwizcore.dragonranged.DragonWeaponRegistry.build();
         }
     }
 }
