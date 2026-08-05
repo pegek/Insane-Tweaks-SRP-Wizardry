@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05
 **Mod:** `srpwizcore`
-**Status:** design approved, not implemented
+**Status:** implemented in srpwizcore 1.12.0 and verified in-game on 2026-08-05
 **Pack-side audit this came from:** instance `notes/bb_trinket_audit_amuletcross_brokenheart_2026-08-05.md`
 
 ## Problem
@@ -45,9 +45,10 @@ WorseHurtTimer's code but does not describe this pack's runtime. It changes noth
 design: mixin 1 injects at RETURN and covers whichever branch runs.
 
 Net effect on `bountifulbaubles:amuletcross` (its whole implementation is
-`maxHurtResistantTime = 36` on equip, `20` on unequip): it works only against bare-handed melee
-(19 → 34 ticks), does nothing against armed attackers, and does nothing against arrows, magic,
-fire, explosions or environment — those run off the `S:damageSource` table instead.
+`maxHurtResistantTime = 36` on equip, `20` on unequip): it works only against melee
+(19 → 34 ticks) and does nothing against arrows, magic, fire, explosions or environment — those
+run off the `S:damageSource` table instead. On paper armed attackers are excluded too; in this
+pack's runtime they are not, per the measured correction above.
 
 **2. Per-source i-frames for unlisted sources are seeded from a random entity.**
 `BHTAPI.get(EntityLivingBase, DamageSource)` does:
