@@ -6,21 +6,21 @@ package com.spege.insanetweaks.items.nunchaku;
  */
 public enum ParasiteTier {
 
-    /** Bezpieczny stopień: Viral do amplifiera 1, bez Needlera, bez Prey. */
+    /** Bezpieczny stopień: Bleeding do amplifiera 1, bez Indeaf, bez Prey. */
     LIVING(1.0D, 1, false, false),
 
-    /** Ewolucja: Viral do 2, Needler, i cena w postaci Prey (calling=true jak w SRP). */
+    /** Ewolucja: Bleeding do 2, Indeaf, i cena w postaci Prey (calling=true jak w SRP). */
     SENTIENT(0.778D, 2, true, true);
 
     private final double speedMultiplier;
-    private final int viralMaxAmplifier;
-    private final boolean needler;
+    private final int bleedMaxAmplifier;
+    private final boolean indeaf;
     private final boolean calling;
 
-    ParasiteTier(double speedMultiplier, int viralMaxAmplifier, boolean needler, boolean calling) {
+    ParasiteTier(double speedMultiplier, int bleedMaxAmplifier, boolean indeaf, boolean calling) {
         this.speedMultiplier = speedMultiplier;
-        this.viralMaxAmplifier = viralMaxAmplifier;
-        this.needler = needler;
+        this.bleedMaxAmplifier = bleedMaxAmplifier;
+        this.indeaf = indeaf;
         this.calling = calling;
     }
 
@@ -33,12 +33,14 @@ public enum ParasiteTier {
         return speedMultiplier;
     }
 
-    public int getViralMaxAmplifier() {
-        return viralMaxAmplifier;
+    /** Sufit amplifiera Bleeding. Wyżej nie dociskamy, choćby rzut kośćmi wypadał w kółko. */
+    public int getBleedMaxAmplifier() {
+        return bleedMaxAmplifier;
     }
 
-    public boolean appliesNeedler() {
-        return needler;
+    /** Czy ten stopień zakorzenia cel (Indeaf). Tylko Sentient. */
+    public boolean appliesIndeaf() {
+        return indeaf;
     }
 
     /** Odpowiednik pola {@code calling} z {@code WeaponToolMeleeBase} — czy broń woła pasożyty. */

@@ -341,56 +341,61 @@ public class GearCategory {
         // Trzy mnozniki powyzej obejmuja cala rodzine nunchaku - dragonsteelowe i pasozytnicze.
         // =============================================================
 
-        @Config.Name("Parasite Viral Chance")
+        @Config.Name("Parasite Bleed Chance")
         @Config.Comment({
-                "Chance per qualifying hit that a parasite nunchaku raises Viral on its target.",
-                "Viral is a DAMAGE AMPLIFIER, not a damage-over-time: SRParasites multiplies incoming",
-                "damage by 0.5 per amplifier level, so a target at Viral II takes double damage from",
-                "EVERY source - including your other weapons and your allies.",
+                "Chance per qualifying hit that a parasite nunchaku raises Bleeding on its target.",
+                "Bleeding cuts for a share of the victim's TOTAL health (SRParasites' own",
+                "'Bleeding Damage', 6% by default, capped by 'Bleeding Damage Limit'), gets worse",
+                "while the victim moves, and grows with each stack. Because it scales off maximum",
+                "health it hits hardest on the biggest targets - which is what makes a fast, weak",
+                "weapon worth swinging at a boss.",
                 "Read live - no restart needed. Default 0.35." })
         @Config.RangeDouble(min = 0.0D, max = 1.0D)
-        public double parasiteViralChance = 0.35D;
+        public double parasiteBleedChance = 0.35D;
 
-        @Config.Name("Parasite Viral Duration")
+        @Config.Name("Parasite Bleed Duration")
         @Config.Comment({
-                "How long Viral lasts, in ticks (20 ticks = 1 second).",
+                "How long Bleeding lasts, in ticks (20 ticks = 1 second).",
                 "Read live - no restart needed. Default 100 (5 seconds)." })
         @Config.RangeInt(min = 1, max = 12000)
-        public int parasiteViralDurationTicks = 100;
+        public int parasiteBleedDurationTicks = 100;
 
-        @Config.Name("Parasite Needler Chance")
+        @Config.Name("Parasite Indeaf Chance")
         @Config.Comment({
-                "Chance per qualifying hit that a SENTIENT nunchaku raises Needler on its target.",
+                "Chance per qualifying hit that a SENTIENT nunchaku roots its target with Indeaf.",
                 "The Living tier never applies it, whatever this is set to.",
-                "Needler stacks toward the terminal amplifier set in SRParasites' own config, at which",
-                "point the victim explodes for a percentage of its TOTAL health. That makes it stronger",
-                "the bigger the target - the opposite of ordinary damage. Lower this first if bosses",
-                "start melting.",
-                "Read live - no restart needed. Default 0.20." })
+                "Indeaf severs movement control outright - the victim's movement inputs stop working",
+                "and its horizontal motion is cancelled every tick. On a nunchaku that also matters",
+                "because the weapon's own knockback is what usually throws a target out of combo",
+                "range; a rooted victim stays put.",
+                "Read live - no restart needed. Default 0.25." })
         @Config.RangeDouble(min = 0.0D, max = 1.0D)
-        public double parasiteNeedlerChance = 0.20D;
+        public double parasiteIndeafChance = 0.25D;
 
-        @Config.Name("Parasite Needler Duration")
+        @Config.Name("Parasite Indeaf Duration")
         @Config.Comment({
-                "How long Needler lasts, in ticks (20 ticks = 1 second). Short durations make the",
-                "stack decay before it can reach the terminal amplifier, which is a second brake on",
-                "top of the chance roll.",
-                "Read live - no restart needed. Default 200 (10 seconds)." })
-        @Config.RangeInt(min = 1, max = 12000)
-        public int parasiteNeedlerDurationTicks = 200;
+                "How long the Indeaf root lasts, in ticks (20 ticks = 1 second).",
+                "Keep this SHORT. A root is the strongest thing this weapon does and the victim can",
+                "do nothing at all while it runs.",
+                "Read live - no restart needed. Default 15 (0.75 seconds)." })
+        @Config.RangeInt(min = 1, max = 1200)
+        public int parasiteIndeafDurationTicks = 15;
 
-        @Config.Name("Parasite Needler Max Amplifier")
+        @Config.Name("Parasite Indeaf Cooldown")
         @Config.Comment({
-                "Highest Needler amplifier a nunchaku will push a target to. SRParasites detonates at",
-                "its own 'Needler Terminal Amplifier' (7 by default), so leaving this at or above that",
-                "number lets the weapon reach the explosion, and setting it lower stops it short.",
-                "Read live - no restart needed. Default 7." })
-        @Config.RangeInt(min = 0, max = 100)
-        public int parasiteNeedlerMaxAmplifier = 7;
+                "Minimum ticks between two Indeaf roots ON THE SAME TARGET (20 ticks = 1 second).",
+                "SEPARATE from the general effect cooldown below, and deliberately much longer.",
+                "A nunchaku swings about 3.1 times per second, so sharing the general cooldown would",
+                "mean re-rooting the victim before the previous root expired - a permanent lock.",
+                "At the defaults a target spends at most 0.75s rooted out of every 5s.",
+                "Read live - no restart needed. Default 100 (5 seconds)." })
+        @Config.RangeInt(min = 0, max = 6000)
+        public int parasiteIndeafCooldownTicks = 100;
 
         @Config.Name("Parasite Effect Cooldown")
         @Config.Comment({
-                "Minimum ticks between two effect applications ON THE SAME TARGET (20 ticks = 1 second).",
+                "Minimum ticks between two Bleeding applications ON THE SAME TARGET (20 ticks =",
+                "1 second). Indeaf has its own, longer cooldown above.",
                 "THIS IS THE MAIN BALANCE BRAKE. A nunchaku swings about 3.1 times per second, so",
                 "without a cooldown every single hit would raise the stacks and the chance rolls above",
                 "would stop meaning anything. 0 disables the brake entirely - do that only to see how",

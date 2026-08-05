@@ -61,20 +61,19 @@ public class InteractionsCategory {
     public boolean enableParasiteNunchakuPrey = true;
 
     @Config.Comment({
-            "Whether a parasite nunchaku can land Viral and Needler on parasites themselves.",
-            "SRParasites makes every parasite immune to exactly four effects - Call of the Hive,",
-            "Viral, Corrosion and Needler - and two of those are where this weapon's entire damage",
-            "comes from. Left off, a nunchaku forged from parasite remains does nothing to parasites",
-            "and is only useful against everything else.",
-            "The bypass is deliberately narrow: it opens only while THIS weapon is applying an effect,",
-            "so parasites still cannot infect each other with their own area attacks - which is",
-            "almost certainly why that immunity exists.",
-            "Turn this off if the line proves too strong against the infestation, or if the bypass",
-            "interacts badly with a future SRParasites update. Bleeding and Overheating are the",
-            "fallback the design notes suggest, and neither is on SRParasites' immunity list.",
-            "Read live - no restart needed. Default ON." })
+            "Whether a parasite nunchaku may force an effect past a parasite's immunity.",
+            "SRParasites makes every parasite immune to exactly four effects: Call of the Hive,",
+            "Viral, Corrosion and Needler.",
+            "THIS IS CURRENTLY DORMANT. The nunchaku inflicts Bleeding and Indeaf, and neither of",
+            "those is on that list, so the bypass has nothing to do and defaults to OFF. It is kept",
+            "wired up because Viral and Needler were the original design and may come back.",
+            "If you do switch the weapon back to a blocked effect, turn this on. The bypass is",
+            "deliberately narrow: it opens only while THIS weapon is applying an effect, so parasites",
+            "still cannot infect each other with their own area attacks - which is almost certainly",
+            "why that immunity exists in the first place.",
+            "Read live - no restart needed. Default OFF." })
     @Config.Name("Enable Parasite Nunchaku Immunity Bypass")
-    public boolean enableParasiteNunchakuImmunityBypass = true;
+    public boolean enableParasiteNunchakuImmunityBypass = false;
 
     @Config.Comment({
             "Second-opinion check for NPC spell casts vetoed via SpellCastEvent.Pre.",

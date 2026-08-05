@@ -407,8 +407,8 @@ item.parasitesentientnunchaku.name=Sentient Nunchaku
 # italic grey body text with the mechanically relevant word coloured. \n splits into lines.
 tooltip.insanetweaks.parasitenunchaku.living.desc=§fTwo lengths of hardened bone, bound by a cord of living sinew. The flame of life still gutters inside it, and it feeds on whatever you kill.
 tooltip.insanetweaks.parasitenunchaku.sentient.desc=§fThe ulterior Evolution of the Living Nunchaku. It has gained a §bMind§f - and it has learned the shape of your hands.\n§0? ? ?
-tooltip.insanetweaks.parasitenunchaku.feeble=§7§oIts own blows are feeble. The weapon is the infection, not the bone.
-tooltip.insanetweaks.parasitenunchaku.viral=§7§oEvery strike seeds a §a§oviral§7§o bloom. The infected take more damage from §f§oevery§7§o source, and worse with each bloom.
-tooltip.insanetweaks.parasitenunchaku.needler=§7§oBarbs gather beneath the skin of the struck. When they can no longer be contained, the host §c§obursts§7§o.
+tooltip.insanetweaks.parasitenunchaku.feeble=§7§oIts blows land light and often. Count the wounds, not the weight of them.
+tooltip.insanetweaks.parasitenunchaku.bleed=§7§oEvery strike opens a wound that will not close. The struck §c§obleed§7§o for a share of all the blood they have - the greater the beast, the greater the loss - and worse while they run.
+tooltip.insanetweaks.parasitenunchaku.indeaf=§7§oThe chain finds the nerve. For a moment the struck cannot command their own limbs, and the blow that would have sent them reeling only §b§oholds them in place§7§o.
 tooltip.insanetweaks.parasitenunchaku.prey=§7§oThe hive can smell what you carry. Once the infestation runs deep enough, holding this marks you as §e§oPrey§7§o.
 tooltip.insanetweaks.parasitenunchaku.progress=§3---> §b%s§3 / %s

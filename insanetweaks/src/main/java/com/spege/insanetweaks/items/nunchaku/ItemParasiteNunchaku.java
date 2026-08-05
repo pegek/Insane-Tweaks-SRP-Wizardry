@@ -279,8 +279,8 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
      * a Weapon"): treść kursywą na szaro, mechanicznie istotne słowo kolorowane. Teksty siedzą
      * w {@code .lang}, żeby dało się je zmienić bez przebudowy moda.
      *
-     * <p>Linia o słabych obrażeniach jest tu POTRZEBNA, nie ozdobna: broń celowo bije mniej niż
-     * reszta rodziny Living i bez tego zdania tooltip wygląda jak niedoróbka.
+     * <p>Linia o lekkich ciosach jest POTRZEBNA, nie ozdobna: na tooltipie broń pokazuje 5,5 obok
+     * 19 miecza Living, choć bije 3,5× częściej i ma ten sam DPS. Bez tego zdania wygląda słabo.
      *
      * <p>Natywne {@code WeaponToolMeleeBase} pokazuje surowy licznik zabójstw. My pokazujemy też
      * próg — bez niego liczba nic nie mówi, bo gracz nie ma skąd wiedzieć, że celem jest 50 000.
@@ -294,9 +294,9 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
         String key = tier == ParasiteTier.LIVING ? "living" : "sentient";
         addLines(tooltip, I18n.format(TOOLTIP_PREFIX + key + ".desc"));
         addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "feeble"));
-        addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "viral"));
-        if (tier.appliesNeedler()) {
-            addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "needler"));
+        addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "bleed"));
+        if (tier.appliesIndeaf()) {
+            addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "indeaf"));
         }
         if (tier.isCalling() && ModConfig.interactions.enableParasiteNunchakuPrey) {
             addLines(tooltip, I18n.format(TOOLTIP_PREFIX + "prey"));
