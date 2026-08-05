@@ -5,13 +5,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.potion.PotionCOTH;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.entities.SummonInfectionSafetyHelper;
 import com.spege.insanetweaks.sanctuary.SanctuaryDebug;
 import com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.PotionEffect;
 
 /**
  * Sanctuary cures an in-progress SRP infection (Call of the Hive) instead of only stopping new ones.
@@ -40,11 +42,32 @@ import net.minecraft.nbt.NBTTagCompound;
  * Nothing except when an entity actually has the COTH effect ticking, which is the whole reason this
  * is a mixin on the effect rather than a handler sweeping entities inside the dome every tick.
  *
- * <h3>The tag is permanent, deliberately</h3>
- * A cured animal keeps {@code srpcothimmunity=0} after it wanders out, so a herd walked through a
- * sanctuary once is immune for good. That was the chosen behaviour ("sanctuary = hospital") over
- * freezing the infection only while sheltered; the alternative needed a polling handler to strip the
- * tag on exit, i.e. exactly the per-tick cost this design avoids.
+ * <h3>Why NOT the permanent {@code srpcothimmunity=0} tag</h3>
+ * 🚨 The first version of this mixin wrote that tag, which is how SRP's own immunity works, and it
+ * cured correctly - but the tag is permanent and applies to <b>players too</b>. The 2026-08-05 test
+ * run logged {@code coth-cured: Issuthh}: one step inside a dome had made the player immune to Call
+ * of the Hive for the rest of the save, which quietly deletes a core SRP threat. That is not a
+ * sanctuary feature, that is a bug.
+ *
+ * <p>So this uses the pack's existing idiom instead - the one the Restoration Hourglass has always
+ * used in {@code SrpOriginSnapshotHelper.applyRestorationProtection}: clear the effect, then apply
+ * {@code SRPPotions.EPEL_E}, which blocks re-assimilation and <b>expires on its own</b>. Nothing
+ * persistent is written, so walking out of the dome ends the protection a few seconds later.
+ *
+ * <p>A mob that stays inside simply loops: re-infected, cured on the effect's first tick, protected
+ * again. Net effect is continuous protection while sheltered, with zero persistent state.
+ *
+ * <p>{@code SummonInfectionSafetyHelper} pairs EPEL_E with the permanent tag anyway, noting that
+ * "EPEL_E is sometimes bypassed by SRP". That backstop is right for our own summons and unnecessary
+ * here: {@code MixinParasiteEventEntity} refuses all four conversion entry points inside a dome, so
+ * a bypassed EPEL_E still has nowhere to go.
+ *
+ * <h3>Modifying the potion map from inside a potion tick</h3>
+ * Both the clear and the EPEL_E application mutate {@code activePotionsMap} while
+ * {@code EntityLivingBase.updatePotionEffects} is iterating it. That is safe here only because
+ * vanilla wraps that loop in {@code catch (ConcurrentModificationException) { ; }} - the entity's
+ * remaining effects skip one tick and nothing throws. SRP's own immunity branch removes COTH_E from
+ * exactly the same place, so this is its established behaviour, not a new hazard.
  *
  * <p>This does not resurrect anything already converted - by then the animal is a parasite and the
  * dome's purge fire owns it. Restoring a finished conversion is the Hourglass of Restoration's job.
@@ -52,14 +75,16 @@ import net.minecraft.nbt.NBTTagCompound;
 @Mixin(value = PotionCOTH.class, remap = false)
 public abstract class MixinPotionCothSanctuaryCure {
 
-    private static final String COTH_IMMUNITY_KEY = "srpcothimmunity";
+    /** Refresh EPEL_E when it has less than this left, so we are not re-applying it every tick. */
+    private static final int EPEL_REFRESH_THRESHOLD_TICKS = 100;
 
     /**
      * Dual selector: {@code performEffect} is a vanilla {@code Potion} method SRP overrides, so the
      * name is MCP in dev and SRG in the packaged runtime. Exactly one of the two matches per
      * environment, which is why {@code require = 0} rather than 1.
      */
-    @Inject(method = { "performEffect", "func_76394_a" }, at = @At("HEAD"), remap = false, require = 0)
+    @Inject(method = { "performEffect", "func_76394_a" }, at = @At("HEAD"), cancellable = true,
+            remap = false, require = 0)
     private void insanetweaks$cureCothInSanctuary(EntityLivingBase entity, int amplifier, CallbackInfo ci) {
         if (!ModConfig.sanctuary.cureCothInZone) {
             return;
@@ -67,16 +92,22 @@ public abstract class MixinPotionCothSanctuaryCure {
         if (entity == null || entity.world == null || entity.world.isRemote) {
             return;
         }
-        NBTTagCompound data = entity.getEntityData();
-        // Already immune - leave early so this cannot re-log once per tick for every cured animal
-        // standing in the dome.
-        if (data.hasKey(COTH_IMMUNITY_KEY) && data.getInteger(COTH_IMMUNITY_KEY) == 0) {
-            return;
-        }
         if (!SanctuaryRegionHelper.isProtected(entity.world, entity.getPosition())) {
             return;
         }
-        data.setInteger(COTH_IMMUNITY_KEY, 0);
+
+        PotionEffect repel = entity.getActivePotionEffect(SRPPotions.EPEL_E);
+        if (repel == null || repel.getDuration() < EPEL_REFRESH_THRESHOLD_TICKS) {
+            entity.addPotionEffect(new PotionEffect(SRPPotions.EPEL_E,
+                    ModConfig.sanctuary.cothImmunityTicks, 0, false, false));
+        }
+        SummonInfectionSafetyHelper.clearCoth(entity);
+
+        // Cancel rather than fall through: SRP's own "immune" branch is keyed on the NBT tag we
+        // deliberately do not write, so without this the rest of performEffect would keep running
+        // the conversion logic on an entity we just cured.
+        ci.cancel();
+
         SanctuaryDebug.log("coth-cured", entity.getName() + " @(" + ((int) Math.floor(entity.posX)) + ","
                 + ((int) Math.floor(entity.posY)) + "," + ((int) Math.floor(entity.posZ)) + ")");
     }

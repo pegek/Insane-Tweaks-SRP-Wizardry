@@ -104,14 +104,24 @@ public class SanctuaryCategory {
     @Config.Name("Block CotH Conversion In Zone")
     public boolean blockCothConversion = true;
 
-    @Config.Comment({"CURE: clear an in-progress CotH infection on mobs inside the dome by writing SRP's own",
-            "'srpcothimmunity' tag to 0, which makes SRP strip its Call of the Hive effect itself.",
-            "Costs nothing except while a mob actually carries the effect - there is no per-tick sweep.",
-            "The tag is PERMANENT: a cured animal stays immune after it leaves, so a herd walked through",
-            "a sanctuary once is safe for good. Turn this off if you would rather the infection only be",
-            "suspended while sheltered. Read live."})
+    @Config.Comment({"CURE: clear an in-progress CotH infection on mobs inside the dome and grant short",
+            "anti-reassimilation protection (SRP's own EPEL_E), the same way the Restoration Hourglass",
+            "does. TEMPORARY by design - nothing is written to the mob, so protection lapses a few",
+            "seconds after it leaves the dome. A mob that stays inside is simply re-cured on the next",
+            "tick of the effect, so it is protected continuously while sheltered.",
+            "Applies to PLAYERS too, which is the reason this is not permanent: an earlier version wrote",
+            "SRP's permanent immunity tag and made the player immune to Call of the Hive for the rest of",
+            "the save after one step inside a dome. Costs nothing except while a mob actually carries",
+            "the effect - there is no per-tick sweep. Read live."})
     @Config.Name("Cure CotH In Zone")
     public boolean cureCothInZone = true;
+
+    @Config.Comment({"How long the anti-reassimilation protection lasts, in ticks (600 = 30s, matching the",
+            "Restoration Hourglass). Only matters after a mob LEAVES the dome - inside, it is refreshed.",
+            "Read live."})
+    @Config.Name("CotH Immunity Ticks")
+    @Config.RangeInt(min = 20, max = 12000)
+    public int cothImmunityTicks = 600;
 
     @Config.Comment("Client: render the translucent protection dome (full sphere) around active cores. Read live.")
     @Config.Name("Render Dome")
@@ -141,6 +151,15 @@ public class SanctuaryCategory {
     @Config.Name("Debug Repeat Seconds")
     @Config.RangeInt(min = 0, max = 3600)
     public int debugRepeatSeconds = 300;
+
+    @Config.Comment({"Most debug lines of one category to print per 10 seconds.",
+            "Deduplication above only silences a line that repeats verbatim; a horde joining the dome",
+            "at once is a hundred DIFFERENT lines and slips straight past it. This caps that burst.",
+            "Nothing is hidden silently - hitting the cap logs that it was hit, and the next line of",
+            "that category reports how many were suppressed. 0 disables the cap. Read live (no restart)."})
+    @Config.Name("Debug Burst Limit")
+    @Config.RangeInt(min = 0, max = 1000)
+    public int debugBurstLimit = 10;
 
     @Config.Comment({"Drain SRP's 'dead blood' fluid (srparasites:deadblood) inside the dome, turning it to",
             "air. Neither SRP's own PurifyMappings nor our block heuristic recognise it - its registry",
