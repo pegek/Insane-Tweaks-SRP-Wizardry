@@ -399,8 +399,3 @@ tooltip.insanetweaks.auto_lock_picker.disabled=Disabled in the config (modules.e
 item.dragonsteelfirenunchaku.name=Flamed Dragonsteel Nunchaku
 item.dragonsteelicenunchaku.name=Iced Dragonsteel Nunchaku
 item.dragonsteellightningnunchaku.name=Shocked Dragonsteel Nunchaku
-
-# --- Creative tabs ---
-# 1.12.2 sklada klucz jako "itemGroup." + etykieta zakladki - BEZ koncowki .name (ta jest od 1.14).
-# Vanilla ma dokladnie itemGroup.combat=Combat. Etykieta pochodzi z ModCreativeTabs.
-itemGroup.insanetweaks_weapons=InsaneTweaks Weapons
