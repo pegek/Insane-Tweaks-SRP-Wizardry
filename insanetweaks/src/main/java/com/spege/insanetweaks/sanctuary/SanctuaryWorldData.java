@@ -52,17 +52,114 @@ public class SanctuaryWorldData extends WorldSavedData {
     public SanctuaryWorldData() { super(NAME); }
     public SanctuaryWorldData(String name) { super(name); }
 
+    /**
+     * Resolved instance per dimension. The {@code world} field is what makes the entry safe rather
+     * than merely fast: a dimension can be unloaded and loaded again, which produces a new
+     * {@code World} with a new {@code MapStorage}, and an entry that only matched on dimension id
+     * would then hand out data belonging to a world that no longer exists.
+     *
+     * <p>Both fields are final, so publishing the entry through the map publishes them with it.
+     */
+    private static final class Resolved {
+        final World world;
+        final SanctuaryWorldData data;
+
+        Resolved(World world, SanctuaryWorldData data) {
+            this.world = world;
+            this.data = data;
+        }
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, Resolved> RESOLVED =
+            new java.util.concurrent.ConcurrentHashMap<Integer, Resolved>();
+
+    /**
+     * 🚨 The side has to be part of the key, not just the dimension id. In single player the client
+     * world and the integrated server's world are both dimension 0 but are different objects with
+     * different {@code MapStorage}s. Keyed on the id alone they would evict each other on every
+     * alternating call, the identity check would miss every time, and the lock would be taken on
+     * every call again - the optimisation would silently do nothing in exactly the environment it
+     * is developed in. Reskillable's {@code PlayerDataHandler.getKey} splits its cache the same way.
+     */
+    private static Integer cacheKey(World world) {
+        return Integer.valueOf((world.provider.getDimension() << 1) | (world.isRemote ? 1 : 0));
+    }
+
+    /**
+     * 🚨 This is one of the hottest paths in the mod and it used to take a GLOBAL static lock on
+     * every single call.
+     *
+     * <p>{@link #CREATE_LOCK} exists for one reason - {@code MapStorage} does no locking of its own,
+     * so the check-then-create has to be atomic or a race loses every region registered so far
+     * (that is a real bug, fixed 2026-07-26, see the class javadoc). But after the first successful
+     * resolution there is nothing left to protect, and every later call was paying for it anyway.
+     *
+     * <p>Who was paying: {@code SanctuaryPurgeFireHandler} reaches here for EVERY SRP parasite on
+     * EVERY tick - note that {@code isInPurgeRange} resolves the data before it checks whether the
+     * position is even inside a dome, so distance from a sanctuary buys nothing - plus
+     * {@code MixinBeckonBlockInfestation} (~1100 calls/s at a large node area),
+     * {@code SanctuarySpawnVetoHandler} on both {@code CheckSpawn} and, since 1.9.13,
+     * {@code EntityJoinWorldEvent} for every entity entering the world. The last three run on
+     * EntityThreading worker threads, so this was a single global monitor contended between the
+     * server thread and the workers - and a sampling profiler under-reports that, because time
+     * blocked on a monitor is not CPU time.
+     *
+     * <p>Now: a lock-free {@code ConcurrentHashMap} read on the hot path, and the synchronized block
+     * only on a miss, with the check repeated inside it so two threads racing on a cold cache still
+     * cannot both create. Identical guarantees, paid once per dimension instead of once per call.
+     */
     public static SanctuaryWorldData get(World world) {
-        // Serialized in full: MapStorage does no locking of its own, so the check-then-create
-        // has to be atomic or a race loses every region registered so far.
+        Integer key = cacheKey(world);
+
+        Resolved cached = RESOLVED.get(key);
+        if (cached != null && cached.world == world) {
+            return cached.data;
+        }
+
         synchronized (CREATE_LOCK) {
+            // Re-check inside the lock: another thread may have resolved this dimension between our
+            // miss above and acquiring the monitor.
+            cached = RESOLVED.get(key);
+            if (cached != null && cached.world == world) {
+                return cached.data;
+            }
+
             MapStorage storage = world.getPerWorldStorage();
             SanctuaryWorldData data = (SanctuaryWorldData) storage.getOrLoadData(SanctuaryWorldData.class, NAME);
             if (data == null) {
                 data = new SanctuaryWorldData();
                 storage.setData(NAME, data);
             }
+            RESOLVED.put(key, new Resolved(world, data));
             return data;
+        }
+    }
+
+    /**
+     * Drops the cached entry when a dimension unloads.
+     *
+     * <p>The identity check in {@link #get} already makes a stale entry harmless - a reloaded
+     * dimension is a different {@code World} object, so it misses and re-resolves. This exists to
+     * stop the map holding a dead {@code World} alive, which would pin that dimension's entire
+     * object graph for the rest of the session.
+     */
+    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.spege.insanetweaks.InsaneTweaksMod.MODID)
+    public static final class CacheInvalidator {
+
+        private CacheInvalidator() {}
+
+        @net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+        public static void onWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
+            World world = event.getWorld();
+            if (world == null || world.provider == null) {
+                return;
+            }
+            Integer key = cacheKey(world);
+            Resolved cached = RESOLVED.get(key);
+            // Only drop OUR entry: on a dimension swap the map may already hold the replacement.
+            if (cached != null && cached.world == world) {
+                RESOLVED.remove(key, cached);
+            }
         }
     }
 

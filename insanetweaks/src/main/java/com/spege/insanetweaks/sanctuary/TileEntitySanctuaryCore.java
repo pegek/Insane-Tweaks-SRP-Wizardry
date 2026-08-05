@@ -299,8 +299,12 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                                 return com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isSrpParasite(ent);
                             }
                         });
+        // The core position is part of the line on purpose: this logs once per core, so with two
+        // domes loaded at the same time the numbers are otherwise unattributable - and it is also
+        // the only place any sanctuary reports where it actually is.
         com.spege.insanetweaks.sanctuary.SanctuaryDebug.log("in-zone",
-                "parasitesInZone=" + parasites.size() + " tier=" + tier + " r=" + effectiveRadius
+                "@(" + pos.getX() + "," + pos.getY() + "," + pos.getZ() + ")"
+                + " parasitesInZone=" + parasites.size() + " tier=" + tier + " r=" + effectiveRadius
                 + " purgeFire=" + (com.spege.insanetweaks.config.ModConfig.sanctuary.enablePurgeFire ? "on" : "off"));
     }
 
