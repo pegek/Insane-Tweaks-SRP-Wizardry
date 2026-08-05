@@ -299,7 +299,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                                 return com.spege.insanetweaks.sanctuary.SanctuaryRegionHelper.isSrpParasite(ent);
                             }
                         });
-        com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "in-zone",
+        com.spege.insanetweaks.sanctuary.SanctuaryDebug.log("in-zone",
                 "parasitesInZone=" + parasites.size() + " tier=" + tier + " r=" + effectiveRadius
                 + " purgeFire=" + (com.spege.insanetweaks.config.ModConfig.sanctuary.enablePurgeFire ? "on" : "off"));
     }
@@ -639,7 +639,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
                 int drained = com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.drainDeadBlood(world, p,
                         com.spege.insanetweaks.config.ModConfig.sanctuary.deadBloodDrainPerTick);
                 if (drained > 0) {
-                    com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "drained-deadblood",
+                    com.spege.insanetweaks.sanctuary.SanctuaryDebug.log("drained-deadblood",
                             drained + " cells from @(" + p.getX() + "," + p.getY() + "," + p.getZ() + ")");
                     return;
                 }
@@ -647,7 +647,7 @@ public class TileEntitySanctuaryCore extends TileEntity implements ITickable {
             }
             if (com.spege.insanetweaks.sanctuary.SanctuaryCleanseHelper.tryCleanse(world, p)) {
                 converted++;
-                com.spege.insanetweaks.sanctuary.SanctuaryDebug.log(world.getTotalWorldTime(), "cleansed",
+                com.spege.insanetweaks.sanctuary.SanctuaryDebug.log("cleansed",
                         "@(" + p.getX() + "," + p.getY() + "," + p.getZ() + ") " + cleansedId);
             }
         }

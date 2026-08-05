@@ -52,7 +52,7 @@ public class SanctuaryPurgeFireHandler {
             float dmg = (float) (ModConfig.sanctuary.purgeFireDamage
                     + e.getMaxHealth() * ModConfig.sanctuary.purgeFirePercentDamage / 100.0D);
             e.attackEntityFrom(DamageSource.IN_FIRE, dmg);
-            SanctuaryDebug.log(world.getTotalWorldTime(), "purge-fire",
+            SanctuaryDebug.log("purge-fire",
                     e.getName() + " dmg=" + ((int) dmg) + " hp=" + ((int) e.getHealth())
                     + " @(" + x + "," + ((int) Math.floor(e.posY)) + "," + z + ")");
         }
@@ -115,7 +115,7 @@ public class SanctuaryPurgeFireHandler {
         if (e.isEntityAlive()) {
             e.setDead(); // last resort for anything that refuses damage outright
         }
-        SanctuaryDebug.log(world.getTotalWorldTime(), "dwell-execute",
+        SanctuaryDebug.log("dwell-execute",
                 e.getName() + " after " + threshold + "t @(" + ((int) Math.floor(e.posX)) + ","
                         + ((int) Math.floor(e.posY)) + "," + ((int) Math.floor(e.posZ)) + ")");
         return true;

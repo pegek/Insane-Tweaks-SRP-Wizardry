@@ -30,7 +30,7 @@ public class SanctuaryBlockBreakVetoHandler {
         BlockPos pos = event.getPos();
         if (SanctuaryRegionHelper.isProtected(e.world, pos)) {
             event.setCanceled(true);
-            SanctuaryDebug.log(e.world.getTotalWorldTime(), "grief-vetoed",
+            SanctuaryDebug.log("grief-vetoed",
                     e.getName() + " break @(" + pos.getX() + "," + pos.getY() + "," + pos.getZ() + ")");
         }
     }

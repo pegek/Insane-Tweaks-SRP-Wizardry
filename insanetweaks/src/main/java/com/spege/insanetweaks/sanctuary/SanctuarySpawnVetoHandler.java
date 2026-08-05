@@ -26,7 +26,7 @@ public class SanctuarySpawnVetoHandler {
         if (SanctuaryRegionHelper.isProtected(event.getWorld(),
                 (int) Math.floor(event.getX()), (int) Math.floor(event.getZ()))) {
             event.setResult(Event.Result.DENY);
-            SanctuaryDebug.log(event.getWorld().getTotalWorldTime(), "spawn-vetoed",
+            SanctuaryDebug.log("spawn-vetoed",
                     e.getName() + " @(" + ((int) Math.floor(event.getX())) + ","
                     + ((int) Math.floor(event.getY())) + "," + ((int) Math.floor(event.getZ())) + ")");
         }
@@ -82,7 +82,7 @@ public class SanctuarySpawnVetoHandler {
             return;
         }
         event.setCanceled(true);
-        SanctuaryDebug.log(world.getTotalWorldTime(), "join-vetoed",
+        SanctuaryDebug.log("join-vetoed",
                 e.getName() + " @(" + x + "," + ((int) Math.floor(e.posY)) + "," + z + ")");
     }
 }
