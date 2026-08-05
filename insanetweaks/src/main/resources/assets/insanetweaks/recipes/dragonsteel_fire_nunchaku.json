@@ -1,0 +1,23 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    " S ",
+    "I I"
+  ],
+  "key": {
+    "I": {
+      "type": "forge:ore_dict",
+      "ore": "ingotFireDragonsteel"
+    },
+    "S": {
+      "item": "iceandfire:chain"
+    }
+  },
+  "result": {
+    "item": "mujmajnkraftsbettersurvival:itemdragonsteelfirenunchaku"
+  },
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "rldragonsteel" },
+    { "type": "forge:mod_loaded", "modid": "mujmajnkraftsbettersurvival" }
+  ]
+}
