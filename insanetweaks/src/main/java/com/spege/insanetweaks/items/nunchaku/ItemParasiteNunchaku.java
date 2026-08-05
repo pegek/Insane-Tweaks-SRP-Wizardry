@@ -50,14 +50,27 @@ import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
 public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
 
     /**
-     * Dodatkowe kratki zasięgu. Miecz SRP ma {@code addReach = 1}; my mamy 1,5 i to jest
-     * świadoma przewaga, opłacona niższymi obrażeniami (7,5 zamiast 8,0 dla Sentienta).
+     * CAŁKOWITY zasięg ataku w kratkach — NIE dodatek do waniliowego.
      *
-     * <p>Konsumuje to {@code SRPEventHandlerBus}: czyta {@code getReach()} z broni w GŁÓWNEJ ręce
-     * i podaje wartość do {@code getMouseOverExtended(float)}, czyli wydłużonego raytrace'u.
-     * W drugiej ręce zasięg nie działa - tak działa tamten hak, nie nasze niedopatrzenie.
+     * <p>🚨 To jest pułapka, na którą już raz wpadliśmy. {@code WeaponToolMeleeBase.getReach()}
+     * zwraca surowe pole {@code addReach}, a {@code SRPEventHandlerBus} podaje je jako PIERWSZY
+     * argument {@code Entity.rayTrace(dystans, partialTicks)} — czyli jako pełny dystans, a nie
+     * przyrost. Mylącą nazwę pola w SRP potwierdza ich własny config: „Range for the Living
+     * Sword = 4.5", „Range for the Sentient Sword = 6.0".
+     *
+     * <p>Waniliowy zasięg ataku na encję to 3,0. Ustawienie tu 1,5 (co zrobiliśmy najpierw,
+     * czytając nazwę jako „+1,5") daje zasięg KRÓTSZY od waniliowego: rozszerzony raytrace nic
+     * nie znajduje, atak leci normalną ścieżką i wygląda to jak brak jakiejkolwiek zmiany.
+     *
+     * <p>3,5 to waniliowe 3,0 plus pół kratki. Dla porównania miecze SRP mają 4,5 i 6,0 —
+     * jesteśmy więc wyraźnie poniżej nich, co jest zamierzone dla broni tak szybkiej.
+     *
+     * <p>Działa WYŁĄCZNIE w głównej ręce i tylko po stronie klienta: SRP przechwytuje kliknięcie
+     * w {@code onEvent(MouseEvent)}, robi wydłużony raytrace i wysyła własny pakiet. Całość jest
+     * bramkowana configiem SRP {@code Weapon Packet Cancel} — gdy stoi na {@code true}, ta liczba
+     * nie robi nic, a zasięg bierze się z atrybutu gracza.
      */
-    private static final float ADDED_REACH = 1.5F;
+    private static final float TOTAL_REACH = 3.5F;
 
     /** Odstęp między sprawdzeniami ewolucji. Tyle samo, ile ma natywne WeaponToolMeleeBase. */
     private static final int EVOLUTION_CHECK_INTERVAL = 80;
@@ -109,7 +122,7 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
     /** Konsumowane przez {@code SRPEventHandlerBus} — sprawdzone, działa dla dowolnego itemu. */
     @Override
     public float getReach() {
-        return ADDED_REACH;
+        return TOTAL_REACH;
     }
 
     /**

@@ -16,7 +16,7 @@ import net.minecraftforge.common.util.EnumHelper;
  *
  * <p>🚨 To jest ŚWIADOMIE PONIŻEJ parytetu DPS rodziny. Living robi 3,75 × 3,45 ataku/s = 12,9,
  * Sentient 7,5 × 2,82/s = 21,2 — wobec 17,1 i 26,6 miecza Living/Sentient SRP, czyli ok. 76-80%.
- * Zapłatą za tę różnicę jest {@code ADDED_REACH = 1,5} zamiast 1,0 miecza: pół kratki zasięgu
+ * Zapłatą za tę różnicę jest {@code TOTAL_REACH = 3,5} wobec waniliowych 3,0: pół kratki zasięgu
  * więcej kosztowało 8,0 → 7,5 obrażeń na Sentiencie. Nie „naprawiaj" tego z powrotem do parytetu
  * bez cofnięcia zasięgu — to jedna decyzja, nie dwie.
  *
