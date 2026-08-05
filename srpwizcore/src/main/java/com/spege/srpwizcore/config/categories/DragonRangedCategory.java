@@ -4,8 +4,8 @@ import net.minecraftforge.common.config.Config;
 
 /**
  * Elemental dragon ranged weapons (2026-08-05): the fire/ice/lightning longbows and crossbows
- * from Spartan Fire and Ice and Fire pass their element to <i>any</i> ammunition, not only to
- * Ice and Fire's dragonbone arrows and Spartan Fire's dragonbone bolts.
+ * added by Spartan Fire, and Ice and Fire's own dragonbone bows, pass their element to
+ * <i>any</i> ammunition — not only to the dragon arrows and bolts those mods ship.
  *
  * <p>Spartan Weaponry has no weapon-property mechanism for ranged weapons at all
  * ({@code SpartanWeaponryAPI.createLongbow} takes an {@code IWeaponCallback}, and Spartan Fire
@@ -25,7 +25,9 @@ public class DragonRangedCategory {
             "arrows and Spartan Fire's dragonbone bolts carry an element, and the dragonsteel",
             "tier has no working ammunition at all.",
             "The arrow itself is not changed: damage, speed and shield behaviour stay whatever the",
-            "ammunition already gave. Needs Ice and Fire. Default ON."
+            "ammunition already gave. Needs Ice and Fire - without it this does nothing. Spartan Fire",
+            "(and Spartan Dragonsteel for the dragonsteel tier) is only needed if you also want its",
+            "longbows and crossbows covered. Default ON."
     })
     @Config.Name("Enabled")
     @Config.RequiresMcRestart
