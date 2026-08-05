@@ -69,7 +69,12 @@ cp "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/WorseHurtTimer-1.
 - [ ] **Step 2: Verify it landed**
 
 Run: `ls -l /e/Isuth/modDev/libs/WorseHurtTimer-1.12.2-1.5.0.3.jar`
-Expected: one file, roughly 133 KB.
+Expected: one file, 68249 bytes.
+
+`libs/` is in `.gitignore` (line 50) and no jar in it has ever been tracked, so this file stays out
+of git — same as every other dependency jar in there. On a fresh clone the copy in Step 1 has to be
+repeated by hand before the build resolves. The commit in Step 5 therefore contains `build.gradle`
+only.
 
 - [ ] **Step 3: Add both compile-only dependencies**
 
@@ -97,7 +102,7 @@ Expected: `BUILD SUCCESSFUL`. No source changed yet, so this only proves the two
 
 ```bash
 cd /e/Isuth/modDev
-git add libs/WorseHurtTimer-1.12.2-1.5.0.3.jar srpwizcore/build.gradle
+git add srpwizcore/build.gradle
 git commit -m "srpwizcore: WHT + BaublesEX na compile classpath (compileOnly, bez deobf)"
 ```
 
@@ -335,7 +340,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 /**
  * Grants the Cross Necklace ({@code bountifulbaubles:amuletcross}) its advertised effect.
@@ -388,13 +393,24 @@ public final class CrossNecklaceProvider implements WhtIFrames.Provider {
         if (!(victim instanceof EntityPlayer)) {
             return 1.0F;
         }
-        if (BaublesApi.isBaubleEquipped((EntityPlayer) victim, this.amuletCross) == -1) {
+        if (!BaublesApi.isBaubleEquipped(victim, this.amuletCross)) {
             return 1.0F;
         }
         return (float) SrpWizCoreConfig.whtCompat.crossNecklaceMultiplier;
     }
 }
 ```
+
+Two details that cost a compile cycle if you get them wrong:
+
+- On Forge 1.12.2 `ForgeRegistries` lives in `net.minecraftforge.fml.common.registry`, **not**
+  `net.minecraftforge.registries`. `DragonWeaponRegistry` in this same module imports it the
+  correct way — follow that.
+- `BaublesApi` has two `isBaubleEquipped` overloads. `(EntityPlayer, Item)` returning the slot
+  index is **deprecated**; `(EntityLivingBase, Object)` returning boolean is not, and both delegate
+  to the same `getIndexInBaubles`. Use the boolean one. The `instanceof EntityPlayer` guard above
+  still stays — it is the design contract and the cheap early-out for the mob case, which is the
+  common one on this path.
 
 No result cache on purpose. `isBaubleEquipped` is a loop of `getItem()` comparisons over roughly
 twenty slots and runs per incoming hit, not per tick. Add a cache only if a flare profile shows it.
@@ -552,9 +568,12 @@ Expected: `BUILD SUCCESSFUL`, jar at `srpwizcore/build/libs/srpwizcore-1.11.0.ja
 - [ ] **Step 5: Smoke-test in the instance**
 
 ```bash
-rm "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/srpwizcore-1.9.1.jar"
 cp /e/Isuth/modDev/srpwizcore/build/libs/srpwizcore-1.11.0.jar "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/"
+ls "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/" | grep srpwizcore
 ```
+
+The instance already runs `srpwizcore-1.11.0.jar`, so this overwrites in place — same filename, no
+stale second copy. Expected: exactly one `srpwizcore-*.jar`.
 
 Then ask the user to launch the game and load a world. Afterwards:
 
@@ -879,7 +898,6 @@ Expected: `BUILD SUCCESSFUL`, jar at `srpwizcore/build/libs/srpwizcore-1.12.0.ja
 
 ```bash
 rm -f "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/srpwizcore-1.11.0.jar"
-rm -f "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/srpwizcore-1.9.1.jar"
 cp /e/Isuth/modDev/srpwizcore/build/libs/srpwizcore-1.12.0.jar "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/"
 ls "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/" | grep srpwizcore
 ```
