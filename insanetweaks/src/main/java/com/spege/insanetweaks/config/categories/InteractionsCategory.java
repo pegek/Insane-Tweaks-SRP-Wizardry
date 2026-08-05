@@ -39,6 +39,17 @@ public class InteractionsCategory {
     public int infernalDustMax = 2;
 
     @Config.Comment({
+            "Whether the dragonsteel nunchaku carry RLDragonsteel's on-hit effects: setting the target",
+            "alight, freezing it, or arcing lightning off it, depending on the weapon.",
+            "Turning this OFF changes nothing else about the weapons - they still exist, still spin,",
+            "still build combo and keep every one of their stats. They just land as plain hits.",
+            "Does nothing while RLCombat is installed: under RLCombat no dragonsteel weapon fires its",
+            "effects here, they all go through that mod's own damage modifier instead.",
+            "Read live - no restart needed. Default ON." })
+    @Config.Name("Enable Dragonsteel Nunchaku Hit Effects")
+    public boolean enableDragonsteelHitEffects = true;
+
+    @Config.Comment({
             "Second-opinion check for NPC spell casts vetoed via SpellCastEvent.Pre.",
             "Some mods (notably Ars Magica 2's EB Wizardry compat) blanket-cancel NPC casts",
             "for reasons that cannot apply to this mod's casters (AM2 burnout/mana). When ON,",

@@ -72,6 +72,21 @@ public class ModulesCategory {
     public boolean enableAutoLockPicker = true;
 
     @Config.Comment({
+            "Enables the dragonsteel nunchaku: three craftable weapons that put Better Survival's",
+            "nunchaku on RLDragonsteel's fire, ice and lightning materials. Needs both of those mods -",
+            "does nothing without them.",
+            "This gates AVAILABILITY, never registration. The three weapons stay in the registry",
+            "whatever this is set to, so switching it off can never delete one from a world that",
+            "already has it; what goes away is the ways to GET one - no recipes, hidden from the",
+            "creative menu and from recipe viewers.",
+            "Narrow it further in gear.availability, tune the stats in gear.nunchaku, and turn the",
+            "fire/freeze/lightning on-hit effects off separately in interactions.",
+            "Requires a restart. Default OFF." })
+    @Config.Name("Enable Dragonsteel Nunchaku")
+    @Config.RequiresMcRestart
+    public boolean enableDragonsteelNunchaku = false;
+
+    @Config.Comment({
             "Enables the Sanctuary Dome: a pyramid-based core block that blocks SRParasites spawning",
             "and terrain infestation in a cylindrical region, and slowly reverts existing infestation",
             "(fuel-powered cleanse). Requires SRParasites; auto-disabled if absent." })

@@ -40,6 +40,39 @@ public final class DragonsteelNunchakuItems {
     }
 
     /**
+     * Zarejestrowane bronie — pusta tablica, dopóki {@link #register} nie pobiegnie.
+     *
+     * <p>Wołalne ZAWSZE, także bez obu modów: typ zwracany to {@code Item[]}, więc wywołanie nie
+     * ładuje żadnej klasy z opcjonalnego moda. Dzięki temu {@code ModItems.applyGearAvailability()},
+     * które biegnie bezwarunkowo, może po prostu przekazać wynik dalej.
+     */
+    public static Item[] items() {
+        return items.clone();
+    }
+
+    /** Ikona zakładki kreatywnej: nunchaku ogniste. Null, dopóki bronie nie są zbudowane. */
+    public static Item icon() {
+        return items.length > 0 ? items[0] : null;
+    }
+
+    /**
+     * Czy linia jest DOSTĘPNA wg configu — dwa przełączniki, oba muszą być włączone.
+     *
+     * <p>Jedno źródło prawdy dla dwóch decyzji: czy nadać broniom zakładkę kreatywną (tutaj,
+     * w {@link #register}) i czy zdjąć im recepturę (w {@code ModItems.applyGearAvailability}).
+     * Rozjechanie się tych dwóch miejsc dałoby albo pustą zakładkę w GUI, albo broń w kreatywce
+     * bez receptury.
+     *
+     * <p>To jest pytanie o DOSTĘPNOŚĆ, nigdy o rejestrację — patrz komentarz przy
+     * {@code ModItems.applyGearAvailability}. Bezpieczne do wołania bez obu modów: dotyka wyłącznie
+     * configu.
+     */
+    public static boolean enabled() {
+        return com.spege.insanetweaks.config.ModConfig.modules.enableDragonsteelNunchaku
+                && com.spege.insanetweaks.config.ModConfig.gear.availability.dragonsteelNunchaku;
+    }
+
+    /**
      * Buduje i rejestruje trzy bronie.
      *
      * <p>Nazwy rejestrowe wychodzą w domenie Better Survival
@@ -47,6 +80,16 @@ public final class DragonsteelNunchakuItems {
      * {@code ItemNunchaku} ustawia je na sztywno, a Forge rzuca IllegalStateException przy drugiej
      * próbie ustawienia nazwy. To świadoma decyzja z speca, nie przeoczenie — item i tak nie
      * istnieje bez Better Survival.
+     *
+     * <p>Zakładkę kreatywną nadajemy TUTAJ, a nie w konstruktorze itemu, bo dopiero tu tablica
+     * {@code items} jest wypełniona i zakładka ma z czego wziąć ikonę. Musi się to zdarzyć przed
+     * {@code ModItems.applyGearAvailability()} — ono tę zakładkę zeruje dla broni wyłączonych
+     * w configu i nie miałoby czego zerować, gdyby kolejność była odwrotna.
+     *
+     * <p>Przy wyłączonej linii zakładki nie nadajemy w ogóle, zamiast nadać ją i zaraz zdjąć:
+     * konstruktor {@code CreativeTabs} dopisuje się do globalnej tablicy zakładek, więc samo
+     * dotknięcie {@code ModCreativeTabs} zostawiłoby w GUI PUSTĄ zakładkę. A że master-switch
+     * domyślnie stoi na OFF, byłby to stan domyślny paczki.
      */
     public static void register(IForgeRegistry<Item> registry) {
         items = new Item[] {
@@ -54,7 +97,11 @@ public final class DragonsteelNunchakuItems {
             new ItemDragonsteelNunchaku(ModItems.dragonsteel_ice_tools),
             new ItemDragonsteelNunchaku(ModItems.dragonsteel_lightning_tools),
         };
+        boolean lineEnabled = enabled();
         for (Item item : items) {
+            if (lineEnabled) {
+                item.setCreativeTab(com.spege.insanetweaks.init.ModCreativeTabs.BETTER_SURVIVAL_WEAPONS);
+            }
             registry.register(item);
         }
         InsaneTweaksMod.LOGGER.info("[InsaneTweaks] dragonsteel nunchaku: registered {} weapons",

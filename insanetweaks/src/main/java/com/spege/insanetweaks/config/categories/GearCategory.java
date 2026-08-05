@@ -41,6 +41,11 @@ public class GearCategory {
     @Config.Comment("Living and Sentient Wand: spell power and the bonuses that grow as the wand evolves.")
     public final Wands wands = new Wands();
 
+    @Config.Name("nunchaku")
+    @Config.LangKey("config.insanetweaks.category.gear.nunchaku")
+    @Config.Comment("Dragonsteel nunchaku: melee damage, swing speed and durability.")
+    public final Nunchaku nunchaku = new Nunchaku();
+
     @Config.Name("properties")
     @Config.LangKey("config.insanetweaks.category.gear.properties")
     @Config.Comment("Switch individual advanced properties off across the whole mod.")
@@ -289,6 +294,47 @@ public class GearCategory {
     }
 
     // =====================================================================
+    public static class Nunchaku {
+
+        @Config.Name("Attack Damage Multiplier")
+        @Config.Comment({
+                "Scales the melee damage of all three dragonsteel nunchaku. What it scales is whatever",
+                "Better Survival's nunchaku formula produces from the RLDragonsteel material, so the",
+                "fire / ice / lightning tiers keep their order relative to each other and to every other",
+                "Better Survival weapon made of the same metal.",
+                "0 leaves them doing bare-fist damage. Lower this first if the line outclasses the rest",
+                "of your pack.",
+                "Read live - no restart needed. Default 1.0 (unchanged)." })
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double attackDamageMultiplier = 1.0D;
+
+        @Config.Name("Attack Speed Multiplier")
+        @Config.Comment({
+                "Scales how fast the dragonsteel nunchaku swing, measured in attacks per second.",
+                "ABOVE 1.0 IS FASTER: 1.5 makes a 2.4 attacks/second weapon swing at 3.6, and 0.5 drops",
+                "it to 1.2.",
+                "Worth knowing why that needs saying: Minecraft does not store attack speed, it stores a",
+                "NEGATIVE offset from the base 4.0 attacks/second (a 2.4/s weapon is written as -1.6).",
+                "This multiplier is applied to the speed that comes out of that, not to the offset -",
+                "scaling the offset instead would make every number above 1.0 SLOWER.",
+                "Read live - no restart needed. Default 1.0 (unchanged)." })
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double attackSpeedMultiplier = 1.0D;
+
+        @Config.Name("Durability Multiplier")
+        @Config.Comment({
+                "Scales the durability the dragonsteel nunchaku inherit from their RLDragonsteel",
+                "material. Never falls below 1 use, however low this is set.",
+                "It is applied once, while the weapons are being built, which is why it needs a restart.",
+                "Durability is a property of the item and not of the individual weapon, so the new value",
+                "then covers every nunchaku - including ones already lying in a chest.",
+                "Requires a restart. Default 1.0 (unchanged)." })
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        @Config.RequiresMcRestart
+        public double durabilityMultiplier = 1.0D;
+    }
+
+    // =====================================================================
     public static class Properties {
 
         @Config.Name("Ashen Legacy")
@@ -430,5 +476,15 @@ public class GearCategory {
                 "Requires a restart. Default ON." })
         @Config.RequiresMcRestart
         public boolean sentientWand = true;
+
+        @Config.Name("Dragonsteel Nunchaku")
+        @Config.Comment({
+                "Whether the three dragonsteel nunchaku are obtainable. No recipes and hidden from",
+                "creative when OFF; the items stay registered, so any already in a world keep working.",
+                "This only NARROWS modules.enableDragonsteelNunchaku - it cannot bring the line back",
+                "when that master switch is off. Both have to be on.",
+                "Requires a restart. Default ON." })
+        @Config.RequiresMcRestart
+        public boolean dragonsteelNunchaku = true;
     }
 }
