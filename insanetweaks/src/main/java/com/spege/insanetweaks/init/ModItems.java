@@ -196,6 +196,12 @@ public class ModItems {
         // null (its Register<Item> may run after ours even with 'after:swparasites'). It is done
         // in ModRecipes at Register<IRecipe> instead, which is guaranteed to run after every
         // mod's Register<Item> completes. See ModRecipes.registerOreEntries.
+
+        // Dragonsteelowe nunchaku - tylko gdy oba mody bazowe są obecne. Straż MUSI być tutaj,
+        // przed pierwszym dotknięciem DragonsteelNunchakuItems - patrz javadoc tamtej klasy.
+        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.available()) {
+            com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.register(event.getRegistry());
+        }
     }
 
     @SubscribeEvent
@@ -266,6 +272,10 @@ public class ModItems {
             registerModel(CORRUPTED_SEED_FRAGMENT);
             registerModel(CORRUPTED_SEED);
             registerModel(CORRUPTED_FRUIT);
+        }
+
+        if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.available()) {
+            com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.registerModels();
         }
     }
 
