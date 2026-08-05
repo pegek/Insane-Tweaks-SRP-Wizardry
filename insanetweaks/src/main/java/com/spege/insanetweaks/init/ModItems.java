@@ -199,6 +199,13 @@ public class ModItems {
             com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.register(event.getRegistry());
         }
 
+        // Pasozytnicze nunchaku - ten sam uklad co wyzej i z tego samego powodu: MUSI stac PRZED
+        // applyGearAvailability(), bo to ono zdejmuje wylaczonym broniom zakladke kreatywna, a nie
+        // ma czego zdejmowac, dopoki bronie nie powstaly.
+        if (com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.shouldRegister()) {
+            com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.register(event.getRegistry());
+        }
+
         applyGearAvailability();
 
         // NOTE: OreDictionary bridge registration is NOT done here. During the Item event the
@@ -284,6 +291,10 @@ public class ModItems {
         if (com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.shouldRegister()) {
             com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.registerModels();
         }
+
+        if (com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.shouldRegister()) {
+            com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.registerModels();
+        }
     }
 
     /**
@@ -352,6 +363,9 @@ public class ModItems {
         // z opcjonalnego moda (typ zwracany to Item[], nie ItemDragonsteelNunchaku[]).
         hideIfDisabled(com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.enabled(),
                 com.spege.insanetweaks.items.nunchaku.DragonsteelNunchakuItems.items());
+
+        hideIfDisabled(com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.enabled(),
+                com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.items());
 
         if (!DISABLED_GEAR.isEmpty()) {
             InsaneTweaksMod.LOGGER.info(
