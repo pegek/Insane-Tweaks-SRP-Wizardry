@@ -1,8 +1,10 @@
 package com.spege.insanetweaks.items.nunchaku;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -11,16 +13,21 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.config.categories.GearCategory;
 
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.item.tool.IHaveReach;
@@ -54,8 +61,15 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
     /** Czas trwania Prey w tickach — natywna wartość. */
     private static final int PREY_DURATION = 1200;
 
-    /** Szansa (na 100) na Prey przy każdej próbie — natywna wartość. */
-    private static final int PREY_CHANCE_PERCENT = 100;
+    /**
+     * Mianownik rzutu na Prey: trafienie zachodzi przy {@code nextInt(N) == 0}, czyli z szansą
+     * 1/N — tu <b>1%</b>, nie 100%. Natywna wartość z {@code WeaponToolMeleeBase}.
+     *
+     * <p>🚨 Nazwa mówi „ONE_IN" celowo. Poprzednia (`PREY_CHANCE_PERCENT = 100`) zapraszała do
+     * „poprawienia" warunku na {@code nextInt(100) < 100}, co dałoby Prey w KAŻDEJ próbie, czyli
+     * co 2 sekundy zamiast raz na ~3,3 minuty.
+     */
+    private static final int PREY_ONE_IN = 100;
 
     /**
      * Wymiar, z którego SRP czyta poziom rozwoju zarazy.
@@ -112,9 +126,12 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
                 stack.setTagCompound(tag);
             }
             long current = tag.getInteger("srpkills");
-            long added = current + (long) target.getMaxHealth();
-            // Clamp: przy odpornym na sensownosc maks. HP (mody potrafia dac Float.MAX_VALUE)
-            // przepelnienie int zrobiloby z licznika liczbe ujemna i ewolucja nigdy by nie zaszla.
+            // Maks. HP przycinamy PRZED dodaniem, nie po. Rzutowanie (long) Float.MAX_VALUE
+            // saturuje sie do Long.MAX_VALUE, wiec przy niepustym liczniku samo dodawanie
+            // przekreca sie na ujemne i Math.min przepuszcza smiec - ewolucja nie zaszlaby nigdy.
+            // Mody uzywaja Float.MAX_VALUE jako pseudo-niesmiertelnosci, wiec to nie jest teoria.
+            long gained = (long) Math.min(target.getMaxHealth(), (float) Integer.MAX_VALUE);
+            long added = current + gained;
             tag.setInteger("srpkills", (int) Math.min(added, (long) Integer.MAX_VALUE));
         }
 
@@ -151,7 +168,7 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
         if (!ModConfig.interactions.enableParasiteNunchakuPrey || !SRPConfigSystems.useScent) {
             return;
         }
-        if (world.rand.nextInt(PREY_CHANCE_PERCENT) != 0) {
+        if (world.rand.nextInt(PREY_ONE_IN) != 0) {
             return;
         }
         SRPSaveData data = SRPSaveData.get(world, SRP_DEVELOPMENT_SAVE_ID);
@@ -193,21 +210,84 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
             evolvedStack.setItemDamage((int) (wear * evolvedStack.getMaxDamage()));
         }
 
+        int targetSlot = resolveInventorySlot(living, stack, itemSlot);
+        if (targetSlot < 0) {
+            // Nie potrafimy wskazac slotu na pewno - zostawiamy Living w spokoju. Sprobujemy
+            // ponownie za 80 tickow, a do tego czasu gracz nic nie traci.
+            return;
+        }
+
         // 🚨 NIE wolno tu wolac stack.shrink(1) przed podmiana. replaceItemInInventory NADPISUJE
-        // slot, wiec kasowanie starego stacka byloby zbedne - a gdyby podmiana sie nie powiodla
-        // (EntityLivingBase obsluguje tylko sloty rak i zbroi; pelne 0-35 dopiero EntityPlayer),
+        // slot, wiec kasowanie starego stacka byloby zbedne - a gdyby podmiana sie nie powiodla,
         // gracz zostalby z pusta reka i strata broni. Kasujemy WYLACZNIE po potwierdzeniu.
-        if (!living.replaceItemInInventory(itemSlot, evolvedStack)) {
+        if (!living.replaceItemInInventory(targetSlot, evolvedStack)) {
             InsaneTweaksMod.LOGGER.warn(
                     "[InsaneTweaks] parasite nunchaku: could not place the evolved weapon in slot {} "
                             + "of {} - leaving the Living one alone",
-                    Integer.valueOf(itemSlot), living.getName());
+                    Integer.valueOf(targetSlot), living.getName());
             return;
         }
 
         InsaneTweaksMod.LOGGER.info(
                 "[InsaneTweaks] parasite nunchaku: evolved into Sentient for {}",
                 living.getName());
+    }
+
+    /**
+     * Zamienia {@code itemSlot} z {@code onUpdate} na indeks, który rozumie
+     * {@code replaceItemInInventory} — albo −1, gdy nie da się tego zrobić bezpiecznie.
+     *
+     * <p>🚨 TO NIE JEST NADGORLIWOSC. {@code itemSlot} z {@code onUpdate} NIE jest jednoznacznym
+     * indeksem: {@code InventoryPlayer.decrementAnimations} iteruje TRZY osobne listy
+     * (główna 36, zbroja 4, offhand 1) i licznik {@code i} startuje od zera dla każdej z nich.
+     * Broń leżąca w offhandzie dostaje więc {@code itemSlot = 0} — a
+     * {@code EntityPlayer.replaceItemInInventory(0, …)} pisze do slotu 0 HOTBARU.
+     *
+     * <p>Bez tego rozstrzygnięcia ewolucja w offhandzie kasowała zawartość slotu 0, zostawiała
+     * Living tam, gdzie był (z nietkniętym licznikiem, bo zerowana jest kopia NBT) i powtarzała
+     * się co 80 ticków, produkując Sentienta w nieskończoność.
+     *
+     * <p>Rozpoznajemy po TOŻSAMOŚCI referencji — {@code onUpdate} dostaje ten sam obiekt stacka,
+     * który leży w slocie, więc {@code ==} jest tu właściwym narzędziem, nie {@code equals}.
+     */
+    private static int resolveInventorySlot(EntityLivingBase living, ItemStack stack, int itemSlot) {
+        // 98/99 to sloty rak w konwencji replaceItemInInventory - rozumie je zarowno
+        // EntityLivingBase, jak i EntityPlayer, wiec dziala tez dla mobow trzymajacych bron.
+        if (living.getHeldItemMainhand() == stack) {
+            return 98;
+        }
+        if (living.getHeldItemOffhand() == stack) {
+            return 99;
+        }
+        if (living instanceof EntityPlayer) {
+            EntityPlayer player = (EntityPlayer) living;
+            if (itemSlot >= 0 && itemSlot < player.inventory.mainInventory.size()
+                    && player.inventory.mainInventory.get(itemSlot) == stack) {
+                return itemSlot;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Postęp do ewolucji w tooltipie.
+     *
+     * <p>Natywne {@code WeaponToolMeleeBase} pokazuje surowy licznik. My pokazujemy też próg, bo
+     * bez niego liczba nic nie mówi — gracz nie ma skąd wiedzieć, że celem jest 50 000.
+     */
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void addInformation(@Nonnull ItemStack stack, @Nullable World world,
+            @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
+        super.addInformation(stack, world, tooltip, flag);
+
+        if (tier != ParasiteTier.LIVING) {
+            return;
+        }
+        NBTTagCompound tag = stack.getTagCompound();
+        int kills = tag == null ? 0 : tag.getInteger("srpkills");
+        tooltip.add(TextFormatting.DARK_AQUA + "---> " + kills + " / "
+                + SRPConfig.weapon_livingSentient_HP_needed);
     }
 
     /**
