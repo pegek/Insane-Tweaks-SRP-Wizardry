@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.10.0'
+version = '1.11.0'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 
@@ -59,7 +59,7 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.10.0",
+            "Specification-Version": "1.11.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
