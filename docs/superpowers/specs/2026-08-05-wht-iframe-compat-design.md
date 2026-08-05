@@ -34,6 +34,16 @@ public static int getHurtTime(Entity target, Entity attacker) {
 `canSwing(attacker)` is true when the attacker's main-hand item carries a `generic.attackSpeed`
 modifier. So an armed attacker takes the first branch and the victim's field is ignored entirely.
 
+**Measured correction (2026-08-05).** In this pack `canSwing` never returns true — 314 `false`,
+zero `true` across a full test session, a sword-wielding zombie included — so the attack-speed
+branch never executes and every melee cooldown, armed or not, comes from
+`getHurtResistantTime(target)`. The reflection lookup behind `canSwing` succeeds (WHT logs
+`No try catch error` on every call), so this is a real attribute-lookup result rather than a
+swallowed exception; the cause is unidentified and most likely another mod rewriting weapon
+attributes. The "armed attackers are a hole" framing below is therefore correct as a reading of
+WorseHurtTimer's code but does not describe this pack's runtime. It changes nothing about the
+design: mixin 1 injects at RETURN and covers whichever branch runs.
+
 Net effect on `bountifulbaubles:amuletcross` (its whole implementation is
 `maxHurtResistantTime = 36` on equip, `20` on unequip): it works only against bare-handed melee
 (19 → 34 ticks), does nothing against armed attackers, and does nothing against arrows, magic,
@@ -196,9 +206,12 @@ today: an unarmed mob hitting a player still faces 20 × 0.96 × 1.0 = 19 ticks 
 | Situation | today | after, no amulet | after, with amulet (×1.8) |
 |---|---|---|---|
 | bare-handed mob melee | 19 ticks | 19 ticks | 34 ticks |
-| zombie with iron sword (AS 1.6) | 12 ticks | 12 ticks | 22 ticks |
+| zombie with iron sword | 19 ticks | 19 ticks | 34 ticks |
 | arrow (`^arrow$:true:10`) | 10 ticks | 10 ticks | 18 ticks |
 | source outside `S:damageSource` | whatever entity was hit first | 20 ticks | 36 ticks |
+
+The sword row is not a typo: with the attack-speed branch dead, an armed zombie produces exactly
+the same numbers as a bare-handed one. All four rows were confirmed in-game on 2026-08-05.
 
 ## Edge cases
 

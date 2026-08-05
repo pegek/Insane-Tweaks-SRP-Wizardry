@@ -931,15 +931,15 @@ one (a zombie holding an iron sword), with no Cross Necklace equipped.
 
 Run: `grep "ticksSinceLastHurt" "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/logs/latest.log" | tail -20`
 
-Expected: **19** for the bare-handed mob, **12** for the sword zombie. These must match today's
-values — this is the no-regression check.
+Expected: **19** for the bare-handed mob, and **19** for the sword zombie too. These must match
+today's values — this is the no-regression check.
 
 - [ ] **Step 8: Measure melee, with the amulet**
 
 Same two mobs, Cross Necklace in a baubles slot.
 
-Expected: **34** for the bare-handed mob, **22** for the sword zombie. The second number is the
-whole point: plain WorseHurtTimer leaves it at 12.
+Expected: **34** for both. Measured 2026-08-05: `canSwing` never returns true in this pack, so an
+armed attacker uses the same branch as a bare-handed one.
 
 - [ ] **Step 9: Measure the mob regression and the non-melee paths**
 
@@ -969,7 +969,7 @@ git commit -m "srpwizcore 1.12.0: warstwa kompatybilnosci i-frame WHT"
 |---|---|
 | Bare-handed reads 34 without the amulet | `CrossNecklaceProvider.multiplier` is not checking `isBaubleEquipped`, or the item resolved to the wrong id |
 | Bare-handed reads 64 with the amulet | Mixin 2 did not apply — WHT is still reading the field Bountiful Baubles set to 36 |
-| Armed zombie unchanged at 12 with the amulet | Mixin 1 injected into only one branch; confirm `@At("RETURN")`, not `@At("HEAD")` |
+| Armed zombie differs from bare-handed | `canSwing` started returning true — the attack-speed branch is live again; re-measure both branches |
 | Baby wither skeleton drops to 19 | Mixin 2 is missing its `instanceof EntityPlayer` guard |
 | Fire unchanged at 10 with the amulet | Mixin 3 did not apply, or `onAttackEntityFromPre` gained a second `trigger()` call |
 | Everything unchanged | `whtCompat.enabled` is false, or the old jar is still in `mods/` |

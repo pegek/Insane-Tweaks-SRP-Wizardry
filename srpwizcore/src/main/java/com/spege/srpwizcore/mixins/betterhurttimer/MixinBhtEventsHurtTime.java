@@ -16,10 +16,20 @@ import net.minecraft.entity.EntityLivingBase;
  *
  * <p>{@code Events.getHurtTime(target, attacker)} returns how many ticks the attacker must wait
  * before it may hit this target again; {@code Events.onEntityAttack} cancels the
- * {@code LivingAttackEvent} until then. Injecting at RETURN covers both of its branches — the
- * attack-speed one taken when the attacker holds a weapon, and the
- * {@code maxHurtResistantTime} one taken when it does not. Scaling only the second branch would
- * leave armed attackers as a hole, which is exactly the hole the Cross Necklace has today.
+ * {@code LivingAttackEvent} until then. Injecting at RETURN covers both of its branches: the
+ * attack-speed one ({@code getCoolPeriod}) taken when {@code canSwing(attacker)} holds, and the
+ * {@code getHurtResistantTime(target)} one taken otherwise.
+ *
+ * <p>Measured in this pack on 2026-08-05: {@code canSwing} returned {@code false} 314 times and
+ * {@code true} never, a zombie holding an iron sword included, and WorseHurtTimer's
+ * {@code "Checking the Cooldown Period"} line — logged only inside the {@code canSwing} branch —
+ * never appeared. Its {@code "No try catch error"} line appeared on every call, so the
+ * {@code ticksSinceLastSwing} reflection lookup succeeds and this is not a swallowed exception.
+ * The attack-speed branch is therefore dead here and all melee flows through
+ * {@code getHurtResistantTime}. Why a sword fails the {@code generic.attackSpeed} check is
+ * unresolved — some other mod in the pack most likely rewrites weapon attributes. RETURN stays
+ * the right injection point precisely because it does not care which branch ran: if that ever
+ * flips, this mixin keeps working unchanged.
  *
  * <p>The multiplier is computed from the <em>target</em>, so the call from
  * {@code Events.lambda$onPlayerAttack$3}, which passes (mob, player), correctly gives a player
