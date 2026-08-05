@@ -35,6 +35,12 @@ public class SrpWizCoreLateBooter implements ILateMixinLoader {
                 configs.add("mixins.srpwizcore.cqrspartan.json");
             }
         }
+        // Dragonsteel ranged weapons loading dragon ammunition: the mixins target Spartan
+        // Weaponry, the ammunition lookups come from Spartan Fire and Ice and Fire.
+        if (Loader.isModLoaded("spartanweaponry") && Loader.isModLoaded("spartanfire")
+                && Loader.isModLoaded("iceandfire")) {
+            configs.add("mixins.srpwizcore.spartanfire.json");
+        }
         if (Loader.isModLoaded("raids")) {
             configs.add("mixins.srpwizcore.raids.json");
         }
