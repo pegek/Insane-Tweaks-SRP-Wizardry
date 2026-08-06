@@ -30,7 +30,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import com.dhanantry.scapeandrunparasites.init.SRPPotions;
-import com.dhanantry.scapeandrunparasites.item.tool.IHaveReach;
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfig;
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
@@ -47,30 +46,7 @@ import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
  * <p><b>Progi czytamy z configu SRParasites</b> ({@code SRPConfig}, {@code SRPConfigSystems}),
  * nie duplikujemy ich u siebie — inaczej przekręcenie balansu SRP odkleiłoby tę broń od rodziny.
  */
-public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
-
-    /**
-     * CAŁKOWITY zasięg ataku w kratkach — NIE dodatek do waniliowego.
-     *
-     * <p>🚨 To jest pułapka, na którą już raz wpadliśmy. {@code WeaponToolMeleeBase.getReach()}
-     * zwraca surowe pole {@code addReach}, a {@code SRPEventHandlerBus} podaje je jako PIERWSZY
-     * argument {@code Entity.rayTrace(dystans, partialTicks)} — czyli jako pełny dystans, a nie
-     * przyrost. Mylącą nazwę pola w SRP potwierdza ich własny config: „Range for the Living
-     * Sword = 4.5", „Range for the Sentient Sword = 6.0".
-     *
-     * <p>Waniliowy zasięg ataku na encję to 3,0. Ustawienie tu 1,5 (co zrobiliśmy najpierw,
-     * czytając nazwę jako „+1,5") daje zasięg KRÓTSZY od waniliowego: rozszerzony raytrace nic
-     * nie znajduje, atak leci normalną ścieżką i wygląda to jak brak jakiejkolwiek zmiany.
-     *
-     * <p>3,5 to waniliowe 3,0 plus pół kratki. Dla porównania miecze SRP mają 4,5 i 6,0 —
-     * jesteśmy więc wyraźnie poniżej nich, co jest zamierzone dla broni tak szybkiej.
-     *
-     * <p>Działa WYŁĄCZNIE w głównej ręce i tylko po stronie klienta: SRP przechwytuje kliknięcie
-     * w {@code onEvent(MouseEvent)}, robi wydłużony raytrace i wysyła własny pakiet. Całość jest
-     * bramkowana configiem SRP {@code Weapon Packet Cancel} — gdy stoi na {@code true}, ta liczba
-     * nie robi nic, a zasięg bierze się z atrybutu gracza.
-     */
-    private static final float TOTAL_REACH = 3.5F;
+public class ItemParasiteNunchaku extends ItemNunchaku {
 
     /** Odstęp między sprawdzeniami ewolucji. Tyle samo, ile ma natywne WeaponToolMeleeBase. */
     private static final int EVOLUTION_CHECK_INTERVAL = 80;
@@ -117,12 +93,6 @@ public class ItemParasiteNunchaku extends ItemNunchaku implements IHaveReach {
 
     public ParasiteTier getTier() {
         return tier;
-    }
-
-    /** Konsumowane przez {@code SRPEventHandlerBus} — sprawdzone, działa dla dowolnego itemu. */
-    @Override
-    public float getReach() {
-        return TOTAL_REACH;
     }
 
     /**
