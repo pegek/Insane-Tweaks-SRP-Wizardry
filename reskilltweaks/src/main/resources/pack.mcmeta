@@ -1,0 +1,7 @@
+{
+    "pack": {
+        "description": "reskilltweaks resources",
+        "pack_format": 3,
+        "_comment": "Load-bearing, not boilerplate: without this file the jar's assets/ never becomes a resource domain, so assets/reskilltweaks/lang/en_us.lang is never read and every key falls through to its own name - silently, with nothing in any log. Three of the four earlier extractions from insanetweaks forgot it (fixed 2026-08-04), so this one ships it from the first commit. Here it would have shown as all 21 trait names rendering as 'reskillable.unlock.compatskills.fast_learner' in the skill tree. pack_format 3 is the 1.11+ value and is what makes lowercase en_us.lang correct; 2 would route through LegacyV2Adapter and demand en_US.lang."
+    }
+}

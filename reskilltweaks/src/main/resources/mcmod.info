@@ -1,0 +1,11 @@
+[
+{
+  "modid": "reskilltweaks",
+  "name": "Reskill Tweaks",
+  "description": "The Reskillable integration for Insane Tweaks, split out so the core mod no longer requires Reskillable to boot. Adds 20 custom traits across all eight skill trees (Fast Learner, Assimilated Warfare, Spider's Grace, Iron Stomach, Scarred Flesh, Double Loot, Enchant Fishing, Astral Prospector, Stone Fists, Supreme Enchanter, Bob the Builder, Angry Farmer, Adapted Vegetation, Meditation, Coiled Spring, Arcane Mastery, the three magic schools and Archmage), rewrites the descriptions of two native traits, deploys a tuned reskillable.cfg with a backup and preserved custom skill locks, and adds a middle-click fallback for refunding an unlocked trait. Every trait's cost, parent tree and requirements are configurable, and each can be switched off individually.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["Isuthhh"],
+  "dependencies": ["insanetweaks", "reskillable"]
+}
+]

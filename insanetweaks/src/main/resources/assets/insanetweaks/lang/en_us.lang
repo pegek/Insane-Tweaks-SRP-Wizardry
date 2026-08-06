@@ -138,54 +138,7 @@ potion.insanetweaks.cleanse=§eCleanse
 potion.insanetweaks.gilded_stasis=§6Gilded Stasis
 potion.insanetweaks.nourished=§aNourished
 
-# CompatSkills / Reskillable Custom Traits
-# Format: reskillable.unlock.<modid>.<traitid> (name), reskillable.unlock.<modid>.<traitid>.desc (desc)
-reskillable.unlock.compatskills.fast_learner=§aFast Learner
-reskillable.unlock.compatskills.fast_learner.desc=Mobs drop 15%% more experience.
-reskillable.unlock.compatskills.assimilated_warfare=§cAssimilated Warfare
-reskillable.unlock.compatskills.assimilated_warfare.desc=Parasites you kill drop fallback XP even when SRP evolution would suppress it. From SRP stage 5 onward, each parasite kill also removes 1 evolution point.
-reskillable.unlock.compatskills.spiders_grace=§fSpider's Grace
-reskillable.unlock.compatskills.spiders_grace.desc=Move almost freely through cobwebs.
-reskillable.unlock.compatskills.scarred_flesh=§2Scarred Flesh
-reskillable.unlock.compatskills.scarred_flesh.desc=Flesh colonised often enough runs out of room to react. You can only carry so much affliction at once: every parasitic effect weighs as much as its level, and together they can never exceed fifteen. An affliction arriving with no room left takes hold only as far as the space allows - Needler III lands as Needler I when just one is free - and once nothing is free at all, it fails to take hold. Effects that help you, such as The Sign, are never counted.
-reskillable.unlock.compatskills.iron_stomach=§6Iron Stomach
-reskillable.unlock.compatskills.iron_stomach.desc=Food is eaten 15%% faster, and harmful effects it inflicts last half as long.
-reskillable.unlock.compatskills.double_loot=§eDouble Hooks
-reskillable.unlock.compatskills.double_loot.desc=6%% chance to catch double loot while fishing.
-reskillable.unlock.compatskills.enchant_fishing=§bEnchant Fishing
-reskillable.unlock.compatskills.enchant_fishing.desc=0.5%% chance to catch an enchanted treasure book, including Advanced or Supreme variants when supported.
-reskillable.unlock.compatskills.astral_prospector=§dAstral Prospector
-reskillable.unlock.compatskills.astral_prospector.desc=10%% chance to duplicate ore drops.
-reskillable.unlock.compatskills.stone_fists=§7Stone Fists
-reskillable.unlock.compatskills.stone_fists.desc=With an empty main hand you break and harvest blocks as if you were holding the matching stone tool.
-reskillable.unlock.compatskills.angry_farmer=§aAngry Farmer
-reskillable.unlock.compatskills.angry_farmer.desc=Gain +5 Attack Damage while wielding any scythe, hoe, or shears.
-reskillable.unlock.compatskills.supreme_enchanter=§dSupreme Enchanter
-reskillable.unlock.compatskills.supreme_enchanter.desc=Grants +5 enchanting power at the enchanting table and +10 item enchantability.
-reskillable.unlock.compatskills.bob_the_builder=§eBob the Builder
-reskillable.unlock.compatskills.bob_the_builder.desc=Gain +2 block reach distance while holding any block in your main hand.
-reskillable.unlock.compatskills.coiled_spring=§aCoiled Spring
-reskillable.unlock.compatskills.coiled_spring.desc=Hold Sneak and Jump together while standing on the ground to coil. A meter above the hotbar fills over about a second and a half; releasing Sneak launches you upward, reaching roughly 10 blocks at full charge. Fall damage from the landing is waived in proportion to the charge you spent, so a fully charged leap costs you nothing. Partial charges give a smaller hop and a smaller waiver.
-reskillable.unlock.compatskills.meditation=§aMeditation
-reskillable.unlock.compatskills.meditation.desc=Recharges mana in worn wizard armor and offhand casting gear while standing still.
-reskillable.unlock.compatskills.arcane_mastery=§bArcane Mastery
-reskillable.unlock.compatskills.arcane_mastery.desc=Decrease all spell mana costs by 10%%.
-reskillable.unlock.compatskills.school_of_alteration=§eSchool of Alteration
-reskillable.unlock.compatskills.school_of_alteration.desc=Buff and alteration spells receive +15%% duration.
-reskillable.unlock.compatskills.school_of_conjuration=§dSchool of Conjuration
-reskillable.unlock.compatskills.school_of_conjuration.desc=Summoning and minion spells receive +20%% duration.
-reskillable.unlock.compatskills.school_of_destruction=§cSchool of Destruction
-reskillable.unlock.compatskills.school_of_destruction.desc=Attack and projectile spells receive +10%% potency.
-reskillable.unlock.compatskills.archmage=§bArchmage
-reskillable.unlock.compatskills.archmage.desc=Gain +7%% magic damage and +5%% spell potency. Without PotionCore, this falls back to +15%% spell potency.
-reskillable.unlock.compatskills.adapted_vegetation=§aAdapted Vegetation
-reskillable.unlock.compatskills.adapted_vegetation.desc=Protects crops around the player within 8 blocks while holding a Living or Sentient Scythe.
 
-# Reskillable overridden skills mixins
-reskillable.unlock.compatskills.golden_osmosis=§eGolden Osmosis
-reskillable.unlock.compatskills.golden_osmosis.desc=Golden tools, while being held or worn, extract XP from the user to repair themselves at a fast rate. §6Additionally:§r Gain +1 Armor and +0.5 Armor Toughness for each piece of golden armor worn. Golden tools and weapons grant +25%% Attack Speed.
-reskillable.unlock.compatskills.safe_port=§aSafe Port
-reskillable.unlock.compatskills.safe_port.desc=§cEnder pearls no longer hurt you and gain 30%% increased velocity and range.
 
 # EBWizardry Spells
 spell.insanetweaks:summon_wizard=Summon Wizard
@@ -238,7 +191,6 @@ entity.sentinel.name=Sentinel
 entity.insanetweaks.sentinel.bound=Sentinel bound
 entity.insanetweaks.sentinel.mode.follow=Sentinel set to Follow
 entity.insanetweaks.sentinel.mode.guard=Sentinel set to Guard
-insanetweaks.reskillable.lock_fallback=Refund trait: Ctrl + Click or Middle Click
 insanetweaks.element.abomination=Abomination
 item.arcane_adapted_fruit.name=Arcane Adapted Fruit
 item.adaptation_upgrade.name=Adaptation Upgrade
@@ -322,9 +274,7 @@ config.insanetweaks.category.baubleFruits=Bauble Fruits
 config.insanetweaks.category.propertyBooks=Property Books
 config.insanetweaks.category.arcaneSundering=Arcane Sundering
 config.insanetweaks.category.chargeJump=Coiled Spring (Charge Jump)
-config.insanetweaks.category.scarredFlesh=Scarred Flesh
 config.insanetweaks.category.interactions=Cross-Mod Interactions
-config.insanetweaks.category.traits=Skill Traits
 config.insanetweaks.category.thrall=Thrall
 config.insanetweaks.category.entities=Entities
 config.insanetweaks.category.client=Client & Debug

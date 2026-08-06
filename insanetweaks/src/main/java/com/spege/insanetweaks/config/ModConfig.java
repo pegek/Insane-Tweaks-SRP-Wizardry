@@ -13,10 +13,8 @@ import com.spege.insanetweaks.config.categories.PropertyBooksCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
 import com.spege.insanetweaks.config.categories.ModulesCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCategory;
-import com.spege.insanetweaks.config.categories.ScarredFleshCategory;
 import com.spege.insanetweaks.config.categories.SanctuaryCostCategory;
 import com.spege.insanetweaks.config.categories.ThrallCategory;
-import com.spege.insanetweaks.config.categories.TraitsCategory;
 import com.spege.insanetweaks.config.categories.TweaksCategory;
 
 import net.minecraftforge.common.config.Config;
@@ -53,11 +51,6 @@ public class ModConfig {
     @Config.Comment("Master switches for cross-mod interactions that depend on optional mods.")
     public static final InteractionsCategory interactions = new InteractionsCategory();
 
-    @Config.Name("traits")
-    @Config.LangKey("config.insanetweaks.category.traits")
-    @Config.Comment("SP costs, parent trees and requirements for custom Reskillable traits.")
-    public static final TraitsCategory traits = new TraitsCategory();
-
     @Config.Name("thrall")
     @Config.LangKey("config.insanetweaks.category.thrall")
     @Config.Comment("The Thrall companion entity: slots, work modes, AI tunables.")
@@ -92,11 +85,6 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.chargeJump")
     @Config.Comment("Coiled Spring trait: charge time, leap power and fall-damage waiver.")
     public static final ChargeJumpCategory chargeJump = new ChargeJumpCategory();
-
-    @Config.Name("scarredFlesh")
-    @Config.LangKey("config.insanetweaks.category.scarredFlesh")
-    @Config.Comment("Scarred Flesh trait: the total parasite-affliction level budget.")
-    public static final ScarredFleshCategory scarredFlesh = new ScarredFleshCategory();
 
     @Config.Name("propertyBooks")
     @Config.LangKey("config.insanetweaks.category.propertyBooks")

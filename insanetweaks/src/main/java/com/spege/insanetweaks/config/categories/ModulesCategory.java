@@ -8,10 +8,9 @@ public class ModulesCategory {
     @Config.RequiresMcRestart
     public boolean enableSrpEbWizardryBridge = true;
 
-    @Config.Comment("Enables the custom Reskillable trait module. Requires Reskillable. The mod preserves the legacy compatskills namespace for save compatibility and may update reskillable.cfg with an automatic backup.")
-    @Config.Name("Enable Skills Module")
-    @Config.RequiresMcRestart
-    public boolean enableSkillsModule = false;
+    // 'Enable Skills Module' moved to reskilltweaks.cfg (category 'modules', same flag name) when
+    // the Reskillable integration was split out on 2026-08-06. Copy the value across; nothing here
+    // reads it any more.
 
     @Config.Comment("Registers Cost, Potency and Speedcast Core items for use with Electroblob's Wizardry armor upgrades. Disable if you don't use EBWizardry.")
     @Config.Name("Enable Custom Cores (EBWizardry)")

@@ -4,8 +4,8 @@ import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.network.InsaneTweaksNetwork;
 import com.spege.insanetweaks.network.PacketChargeJump;
-import com.spege.insanetweaks.skills.ChargeJumpHandler;
-import com.spege.insanetweaks.skills.TraitHandle;
+import com.spege.insanetweaks.api.TraitGate;
+import com.spege.insanetweaks.events.ChargeJumpHandler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -94,7 +94,7 @@ public class ChargeJumpClientHandler {
             return;
         }
 
-        if (!ModConfig.modules.enableSkillsModule || !TraitHandle.COILED_SPRING.has(player)) {
+        if (!TraitGate.has(player, TraitGate.COILED_SPRING)) {
             reset();
             return;
         }
@@ -185,7 +185,7 @@ public class ChargeJumpClientHandler {
         if (player == null || event.getEntity() != player) {
             return;
         }
-        if (!ModConfig.modules.enableSkillsModule || !TraitHandle.COILED_SPRING.has(player)) {
+        if (!TraitGate.has(player, TraitGate.COILED_SPRING)) {
             return;
         }
 
@@ -211,8 +211,9 @@ public class ChargeJumpClientHandler {
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
+        // No trait check here: charge only ever leaves zero past the gate in onClientTick, which
+        // also resets it the moment the trait goes away.
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL
-                || !ModConfig.modules.enableSkillsModule
                 || !ModConfig.chargeJump.showChargeBar
                 || this.charge <= 0) {
             return;

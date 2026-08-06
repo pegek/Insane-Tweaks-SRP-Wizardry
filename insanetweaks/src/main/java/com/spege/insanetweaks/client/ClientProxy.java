@@ -58,6 +58,10 @@ public class ClientProxy extends CommonProxy {
         // handler re-checks it when the menu actually opens. It is a client-only class, so this is
         // the only place it may be constructed - see CommonProxy.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.TombstoneSplitNoticeHandler());
+        // The same for the Reskillable traits (moved to Reskill Tweaks in 1.13.0). Both handlers can
+        // be armed on one launch; they chain instead of fighting over the screen - see
+        // ReskillableSplitNoticeHandler.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.ReskillableSplitNoticeHandler());
 
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSanctuary) {
             net.minecraftforge.fml.client.registry.ClientRegistry.bindTileEntitySpecialRenderer(

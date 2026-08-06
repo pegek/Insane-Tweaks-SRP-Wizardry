@@ -45,7 +45,7 @@ import java.util.List;
 
 /*
  * reskillable i mujmajnkraftsbettersurvival byly tu zadeklarowane jako OPCJONALNE
- * ('before:' / 'after:' = tylko kolejnosc ladowania), a kod uzywa ich klas bezwarunkowo.
+ * ('before:' / 'after:' = tylko kolejnosc ladowania), a kod uzywal ich klas bezwarunkowo.
  * Na serwerze bez tych modow (2026-08-06) konczylo sie to nie komunikatem o brakujacej
  * zaleznosci, tylko wybuchem w srodku rejestracji, po minucie ladowania:
  *
@@ -57,18 +57,24 @@ import java.util.List;
  *       ItemParasiteNunchaku DZIEDZICZY po tej klasie - bez BetterSurvival nie da sie jej
  *       nawet wczytac, wiec zadne 'isModLoaded' w ciele metody by nie pomoglo
  *
- * 'required-BEFORE:reskillable', nie 'required-after' - zachowuje dotychczasowa kolejnosc
- * (ladujemy sie PRZED Reskillable), zmienia sie wylacznie wymagalnosc. Odwrocenie
- * kolejnosci przy okazji wymuszania obecnosci byloby cicha zmiana zachowania.
+ * RESKILLABLE: zalatwione na dobre. 1.12.1 zadeklarowalo 'required-before:reskillable',
+ * co usuwalo mylacy objaw, ale podnosilo wymagania - kazdy, kto chcial ten mod, musial
+ * miec Reskillable. Cala integracja wyjechala wiec do osobnego moda 'reskilltweaks'
+ * (piata ekstrakcja, 2026-08-06) i deklaracji tu juz nie ma. Zadnego typu Reskillable
+ * nie ma juz w tym jarze - jedyne, co zostalo, to api/TraitGate: fasada na stringach,
+ * ktora reskilltweaks wypelnia w swoim init, bo charge jump (pakiet o dyskryminatorze 5
+ * na kanale 'insanetweaks') i poprawka XP z parazytow musialy zostac tutaj.
  *
- * Lagodne dzialanie bez tych modow jest mozliwe, ale to osobna robota: trzeba warunkowo
- * pominac rejestracje nunchaku i caly modul skilli, bo obie klasy sa nieladowalne.
+ * BETTERSURVIVAL: 'required-after' zostaje na razie. Statycznie brama w
+ * ParasiteNunchakuItems wyglada kompletnie, ale log, ktory rozstrzygnalby, ktora sciezka
+ * doszlo do zaladowania ItemParasiteNunchaku, przepadl. Do rozstrzygniecia przy okazji
+ * 'latest.log' z serwera bez BetterSurvival - nie zgadywac.
  */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
         dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
-        "after:srpextra;after:baubles;after:potioncore;after:locks;required-before:reskillable;"
+        "after:srpextra;after:baubles;after:potioncore;after:locks;"
         +
         "required-after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
 public class InsaneTweaksMod implements IGuiHandler {
@@ -80,7 +86,16 @@ public class InsaneTweaksMod implements IGuiHandler {
      */
     public static final String SRP_MODID = "srparasites";
     public static final String NAME  = "Insane Tweaks";
-    public static final String VERSION = "1.11.0";
+    /**
+     * 🚨 Trzymaj to zgodne z 'version' w insanetweaks/build.gradle. To jest wartosc, ktora
+     * Forge pokazuje w liscie modow - i wlasnie ona rozjechala sie wczesniej: stala na
+     * 1.11.0, gdy build.gradle byl juz na 1.12.1, wiec jar meldowal sie w logu jako
+     * insanetweaks{1.11.0}. Commit 73f0704 wyprowadzil z 'version' mcmod.info oraz
+     * Specification-Version, ale ta stala zostala pominieta. Manifest jara nie jest
+     * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
+     * recznie, ale co najmniej w jednym pliku z reszta metadanych.
+     */
+    public static final String VERSION = "1.13.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -111,14 +126,12 @@ public class InsaneTweaksMod implements IGuiHandler {
     // Set in preInit after version check; consumed in init.
     private static boolean warnSrparasitesOldVersion = false;
     private static boolean wantsBaubleFruitsWarning = false;
-    private static boolean wantsSkillsModuleWarning = false;
 
     // -----------------------------------------------------------------------
     // CurseForge URLs — update if any link changes
     // -----------------------------------------------------------------------
     private static final String URL_BAUBLES_EX = "https://www.curseforge.com/minecraft/mc-mods/baublesex";
     private static final String URL_SRPEXTRA = "https://www.curseforge.com/minecraft/mc-mods/scape-and-run-parasites-extra";
-    private static final String URL_RESKILLABLE = "https://www.curseforge.com/minecraft/mc-mods/reskillable-fork";
     private static final String URL_SOME_ENCHANTMENTS = "https://www.curseforge.com/minecraft/mc-mods/so-many-enchantments";
     private static final String URL_POTIONCORE = "https://www.curseforge.com/minecraft/mc-mods/potion-core";
 
@@ -134,6 +147,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         // "tombstone" category this mod stopped writing in 1.9.0. Must come second: the pre-rework
         // file is only at its backup name once OldConfigBackup has moved it there.
         com.spege.insanetweaks.config.TombstoneSplitNotice.scan();
+        // Same again for the Reskillable trait module, which left in 1.13.0. Independent of the
+        // Tombstone scan: a pack can be behind on one split and not the other.
+        com.spege.insanetweaks.config.ReskillableSplitNotice.scan();
     }
 
     // -------------------------------------------------------------------------
@@ -152,6 +168,11 @@ public class InsaneTweaksMod implements IGuiHandler {
         // registered in ClientProxy. Only fires when there is something at stake - see
         // TombstoneSplitNotice.
         com.spege.insanetweaks.config.TombstoneSplitNotice.logIfNeeded();
+
+        // The Reskillable trait module left in 1.13.0. Worth reading even if the Tombstone notice
+        // above is familiar: that one is backed by a Forge missing-registry screen, this one is not
+        // - Reskillable drops an unresolvable unlock in complete silence.
+        com.spege.insanetweaks.config.ReskillableSplitNotice.logIfNeeded();
 
         com.spege.insanetweaks.network.InsaneTweaksNetwork.init();
 
@@ -189,23 +210,6 @@ public class InsaneTweaksMod implements IGuiHandler {
             }
         }
 
-        boolean wantsSkillsModule = com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule;
-
-        // Auto-detect Reskillable. CompatSkills itself is optional here; we only keep
-        // its domain string for save/config compatibility.
-        if (!Loader.isModLoaded("reskillable")) {
-            if (wantsSkillsModule) {
-                LOGGER.info(
-                        "[InsaneTweaks] Reskillable missing. Automatically disabling Skills Module.");
-                wantsSkillsModuleWarning = true;
-                com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule = false;
-            }
-        } else {
-            // ONLY execute config swap if the module is manually enabled
-            if (wantsSkillsModule) {
-                com.spege.insanetweaks.config.ReskillableConfigSwapper.processConfig(event);
-            }
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -479,7 +483,6 @@ public class InsaneTweaksMod implements IGuiHandler {
         // srpextra version check retired -- see logCompatibilityReport() comment for rationale.
 
         boolean hasSomeEnch = Loader.isModLoaded("somanyenchantments");
-        boolean hasReskillable = Loader.isModLoaded("reskillable");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
 
         // Each entry: { display name, reason, url }
@@ -509,14 +512,6 @@ public class InsaneTweaksMod implements IGuiHandler {
             });
         }
         
-        if (wantsSkillsModuleWarning) {
-            if (!hasReskillable) {
-                recommendations.add(new String[] {
-                        "Reskillable", "Required for the skill tree and trait system.", URL_RESKILLABLE
-                });
-            }
-        }
-
         // Ars Magica 2's EBW compat layer gates NPC spellcasting behind AM2 burnout/mana
         // (our sim wizard and sentinel lose everything above the cheapest novice spells)
         // and despawns EBW summons over AM2's own summon cap. Diagnosed 2026-07-17 from
@@ -566,26 +561,25 @@ public class InsaneTweaksMod implements IGuiHandler {
             }
         }
 
-        if (hasReskillable && com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.EventHandlerSkills());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.AdaptedVegetationSkill());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.StoneFistsHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ChargeJumpHandler());
-            if (Loader.isModLoaded(SRP_MODID)) {
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.skills.ScarredFleshHandler());
-                // Assimilated Warfare reads SRPPotions/SRPConfigSystems/SRPSaveData. Those sit in
-                // method bodies (lazy resolution), so registering without SRP would not crash - but
-                // the handler cannot fire either, since it bails on any non-srparasites entity.
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
-            }
-            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.ChargeJumpClientHandler());
-            }
-            LOGGER.info("[InsaneTweaks] Reskillable traits module enabled.");
+        // Two mechanics stayed behind when the Reskillable integration moved out to reskilltweaks
+        // (2026-08-06): the charge jump, because PacketChargeJump is discriminator 5 on THIS mod's
+        // network channel and moving it would mean a second channel, and the parasite XP fallback,
+        // because it is SRP logic that merely gates on a trait. Both ask
+        // com.spege.insanetweaks.api.TraitGate, which answers false while no integration has
+        // registered a provider — so they register unconditionally and cost nothing on their own.
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ChargeJumpHandler());
+
+        if (Loader.isModLoaded(SRP_MODID)) {
+            // Assimilated Warfare reads SRPPotions/SRPConfigSystems/SRPSaveData. Those sit in
+            // method bodies (lazy resolution), so registering without SRP would not crash - but
+            // the handler cannot fire either, since it bails on any non-srparasites entity.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
         }
 
-        if (hasReskillable && event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ReskillableGuiHandler());
+        // 🚨 ChargeJumpClientHandler carries a CLASS-level @SideOnly(Side.CLIENT): SideTransformer
+        // makes the constructor fatal on a dedicated server whatever the body says. Load-bearing.
+        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.client.ChargeJumpClientHandler());
         }
 
         // SRP second layer for invariant B: append the thrall's registry name to SRP's public
@@ -631,18 +625,10 @@ public class InsaneTweaksMod implements IGuiHandler {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // postInit
-    // -------------------------------------------------------------------------
-
-    /**
-     * Cross-mod reaching-in goes here, not in init: postInit is the first phase where every other
-     * mod has finished its own init, so foreign singletons are fully built.
-     */
-    @Mod.EventHandler
-    public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
-        com.spege.insanetweaks.skills.EffectTwistPairs.install();
-    }
+    // postInit used to live here for the single purpose of calling EffectTwistPairs.install(),
+    // which reaches into Reskillable's native Effect Twist trait by reflection. That went to
+    // reskilltweaks with the rest of the integration on 2026-08-06, and with it the last reason
+    // for this mod to have a postInit phase at all.
 
     // -------------------------------------------------------------------------
     // serverStarting
@@ -821,8 +807,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         boolean hasBaubles = Loader.isModLoaded("baubles");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
         boolean hasPlayerMana = Loader.isModLoaded("player_mana");
-        boolean hasReskillable = Loader.isModLoaded("reskillable");
-        boolean hasCompatSkills = Loader.isModLoaded("compatskills");
+        boolean hasReskillTweaks = Loader.isModLoaded("reskilltweaks");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
 
         // Check srparasites version.
@@ -869,12 +854,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         LOGGER.info("  player_mana         ... {}", status(hasPlayerMana));
         if (hasPlayerMana)
             LOGGER.info("   -> Wand evolution and spellblade mana checks use player_mana compat.");
-        LOGGER.info("  reskillable         ... {}", status(hasReskillable));
-        LOGGER.info("  compatskills        ... {}", status(hasCompatSkills));
-        if (!hasReskillable) {
-            LOGGER.info("   -> Skills Module disabled (requires reskillable).");
-        } else if (!hasCompatSkills) {
-            LOGGER.info("   -> CompatSkills not installed; custom traits still use its domain for save compatibility.");
+        // Reskillable itself is no longer this mod's business — the whole integration lives in
+        // reskilltweaks, which is what actually needs it. Reported by presence rather than by
+        // TraitGate.isArmed(): reskilltweaks declares required-after:insanetweaks, so it arms the
+        // gate in ITS init, which runs after this report.
+        LOGGER.info("  reskilltweaks       ... {}", status(hasReskillTweaks));
+        if (!hasReskillTweaks) {
+            LOGGER.info("   -> No Reskillable traits. Coiled Spring and the parasite XP fallback stay inert.");
         }
         LOGGER.info("================================================");
     }

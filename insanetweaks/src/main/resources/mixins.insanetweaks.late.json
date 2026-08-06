@@ -10,15 +10,13 @@
     "MixinParasiteEventEntity",
     "MixinRayOfPurification",
     "MixinSpell",
-    "MixinSpellMinion",
-    "MixinUnlockableReskillable"
+    "MixinSpellMinion"
   ],
   "client": [
     "MixinGuiSpellDisplay",
     "MixinGuiSpellInfo",
     "MixinItemSpellBook",
-    "MixinItemScroll",
-    "MixinGuiSkillInfoReskillable"
+    "MixinItemScroll"
   ],
   "server": [],
   "injectors": {

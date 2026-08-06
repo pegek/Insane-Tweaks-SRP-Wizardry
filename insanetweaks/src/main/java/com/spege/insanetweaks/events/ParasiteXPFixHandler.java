@@ -3,7 +3,7 @@ package com.spege.insanetweaks.events;
 import com.dhanantry.scapeandrunparasites.init.SRPPotions;
 import com.dhanantry.scapeandrunparasites.util.config.SRPConfigSystems;
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
-import com.spege.insanetweaks.skills.TraitHandle;
+import com.spege.insanetweaks.api.TraitGate;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -50,10 +50,6 @@ public class ParasiteXPFixHandler {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onParasiteDeath(LivingDeathEvent event) {
-        if (!com.spege.insanetweaks.config.ModConfig.modules.enableSkillsModule) {
-            return;
-        }
-
         EntityLivingBase entity = event.getEntityLiving();
         if (entity == null || entity.world.isRemote) {
             return;
@@ -70,7 +66,10 @@ public class ParasiteXPFixHandler {
         }
 
         EntityPlayer killer = (EntityPlayer) trueSource;
-        if (!TraitHandle.ASSIMILATED_WARFARE.has(killer)) {
+        // The trait itself lives in reskilltweaks; this asks across the jar boundary and gets
+        // false when that mod is absent or its module is off. The old enableSkillsModule check
+        // at the top of this method went with it.
+        if (!TraitGate.has(killer, TraitGate.ASSIMILATED_WARFARE)) {
             return;
         }
 

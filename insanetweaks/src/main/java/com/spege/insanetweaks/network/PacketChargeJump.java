@@ -1,8 +1,7 @@
 package com.spege.insanetweaks.network;
 
-import com.spege.insanetweaks.config.ModConfig;
-import com.spege.insanetweaks.skills.ChargeJumpHandler;
-import com.spege.insanetweaks.skills.TraitHandle;
+import com.spege.insanetweaks.api.TraitGate;
+import com.spege.insanetweaks.events.ChargeJumpHandler;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -49,10 +48,10 @@ public class PacketChargeJump implements IMessage {
         }
 
         private void handle(EntityPlayerMP player, PacketChargeJump message) {
-            if (!ModConfig.modules.enableSkillsModule) {
-                return;
-            }
-            if (!TraitHandle.COILED_SPRING.has(player)) {
+            // One check where there used to be two: the module flag moved to reskilltweaks along
+            // with the trait, and that mod only registers a provider when the flag is on. Without
+            // it installed the gate answers false, exactly as the disabled module used to.
+            if (!TraitGate.has(player, TraitGate.COILED_SPRING)) {
                 return;
             }
 

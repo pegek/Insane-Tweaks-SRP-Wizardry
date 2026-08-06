@@ -32,13 +32,17 @@ import net.minecraftforge.fml.common.Loader;
  * this mod wrote it — the current schema does not declare that category, so a clean install never
  * has one.
  *
- * <p>🚨 That trace only survives one launch. Forge drops categories it does not recognise the
- * first time it rewrites the file, which happens seconds after this class reads it. A notice that
- * relied on the raw file alone would therefore appear exactly once and then go quiet, which is no
- * use to a player who closed the game and came back the next day. So the first sighting is made
- * durable: the block is copied to its own file, and from then on that file <em>is</em> the trace.
- * It also happens to be the thing the player needs in order to migrate their settings, so it earns
- * its place twice.
+ * <p>The first sighting is made durable: the block is copied to its own file, and from then on that
+ * file <em>is</em> the trace. It also happens to be the thing the player needs in order to migrate
+ * their settings, so it earns its place twice.
+ *
+ * <p>🚨 This used to say the raw trace survives only one launch, because Forge supposedly drops
+ * categories it does not recognise the first time it rewrites the file. <b>It does not.</b>
+ * Measured 2026-08-06: {@code insanetweaks.cfg} was rewritten by Forge under a build whose schema
+ * declares neither {@code traits} nor {@code scarredflesh}, and both blocks survived intact — as did
+ * individual unknown keys inside categories that <em>are</em> declared. Forge only ever adds what is
+ * missing; it never prunes. The durable copy is therefore belt-and-braces rather than load-bearing.
+ * Nothing about the code changes, but do not build anything new on the pruning assumption.
  *
  * <p>Three things must be true before anyone is bothered:
  * <ol>
@@ -124,7 +128,7 @@ public final class TombstoneSplitNotice {
                     continue;
                 }
                 String content = new String(Files.readAllBytes(cfg.toPath()), StandardCharsets.UTF_8);
-                String block = extractCategory(content);
+                String block = CfgCategoryExtractor.extractCategory(content, CATEGORY);
                 if (block == null) {
                     continue;
                 }
@@ -137,68 +141,6 @@ public final class TombstoneSplitNotice {
             LOGGER.warn("[InsaneTweaks] Could not scan the config for the old Tombstone module: {}",
                     e.toString());
         }
-    }
-
-    /**
-     * Returns the whole {@code tombstone { ... }} block including its braces, or null if the file
-     * has no such root-level category.
-     *
-     * <p>Matching is done on brace depth rather than with a regex so that nested sub-categories
-     * ({@code effectpools}, {@code raideralignment}, the ten {@code Perk: ...} blocks) cannot end
-     * the block early. Only depth 0 is considered, so a category of the same name nested inside
-     * another one — which cannot happen today, but costs nothing to rule out — is ignored.
-     */
-    private static String extractCategory(String content) {
-        String[] lines = content.split("\r\n|\r|\n", -1);
-        int depth = 0;
-        for (int i = 0; i < lines.length; i++) {
-            String trimmed = lines[i].trim();
-            if (depth == 0 && isCategoryOpen(trimmed)) {
-                StringBuilder block = new StringBuilder();
-                int innerDepth = 0;
-                for (int j = i; j < lines.length; j++) {
-                    block.append(lines[j]).append('\n');
-                    innerDepth += countUnquoted(lines[j], '{') - countUnquoted(lines[j], '}');
-                    if (innerDepth <= 0) {
-                        return block.toString();
-                    }
-                }
-                // Truncated file: still a valid witness, just hand back what there is.
-                return block.toString();
-            }
-            depth += countUnquoted(lines[i], '{') - countUnquoted(lines[i], '}');
-            if (depth < 0) {
-                depth = 0;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * True for the two forms Forge writes for a category header: the bare name followed by an
-     * opening brace, and the same thing double-quoted.
-     */
-    private static boolean isCategoryOpen(String trimmed) {
-        return trimmed.equals(CATEGORY + " {") || trimmed.equals("\"" + CATEGORY + "\" {");
-    }
-
-    /**
-     * Counts a brace character outside of double quotes. Forge quotes any key containing a space,
-     * and several of this category's keys do ({@code B:"Enable Tombstone Tweaks"}), so a naive
-     * {@code indexOf} would be wrong the moment someone puts a brace in a string list entry.
-     */
-    private static int countUnquoted(String line, char target) {
-        int count = 0;
-        boolean inQuotes = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (c == '"') {
-                inQuotes = !inQuotes;
-            } else if (!inQuotes && c == target) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /**

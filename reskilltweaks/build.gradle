@@ -1,0 +1,101 @@
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+
+// Ten dodatek JAKO JEDYNY w repo kompiluje sie przeciw contentowi - patrz komentarz przy
+// 'compileOnly' nizej. evaluationDependsOn jest potrzebne, zeby siegnac do jego sourceSets.
+evaluationDependsOn(':insanetweaks')
+
+repositories {
+    maven { url = 'https://maven.cleanroommc.com' }
+    maven { url = 'https://www.cursemaven.com' }
+}
+
+version = '1.0.0'
+group = 'com.spege.reskilltweaks'
+archivesBaseName = 'reskilltweaks'
+
+// mcmod.info bierze wersje z 'version' powyzej zamiast miec ja wklepana na sztywno.
+// W insanetweaks wklepana wersja zamarzla na 1.11.0 i jar 1.12.0 meldowal sie w logu
+// jako insanetweaks{1.11.0} - po wersji z logu NIE DALO SIE stwierdzic, co ktos ma
+// naprawde zainstalowane. Jedno zrodlo prawdy od pierwszego dnia.
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-proc:none"
+    options.compilerArgs << "-Xlint:all"
+}
+
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
+
+    // Reskillable - caly powod istnienia tego moda. Trait, Unlockable, Skill, PlayerData,
+    // GuiSkillInfo, MessageLockUnlockable: typy stoja w sygnaturach, wiec musza byc deobf.
+    implementation fg.deobf(files(rootProject.file('libs/Reskillable-1.12.2-1.13.1.jar')))
+
+    // Electroblob's Wizardry - traity magiczne (SpellCastEvent, Spell, SpellModifiers,
+    // SpellType, ItemWizardArmour, IManaStoringItem) plus SummonDurationStat.
+    // Ciagniete z CurseMaven dokladnie tak, jak robi to content; ten jar jest w calym repo
+    // celowo wykluczony z libs/, wiec NIE dodawac go tam.
+    implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
+
+    // 🚨 Jedyne w repo odstepstwo od reguly "zero zaleznosci od contentu" - patrz CLAUDE.md.
+    // Powod: charge jump zostaje w insanetweaks (PacketChargeJump to dyskryminator 5 na
+    // kanale 'insanetweaks', przeniesienie = nowy kanal), ale bramkuje sie na tracie
+    // Coiled Spring, ktory jest tutaj. Content wystawia wiec fasade api/TraitGate bez ani
+    // jednego typu Reskillable, a ten mod ja wypelnia w init.
+    //
+    // 'sourceSets.main.output', NIE 'project(":insanetweaks")': content ma
+    // jar.finalizedBy('reobfJar'), wiec jego JAR jest przemapowany na nazwy SRG.
+    // Kompilacja przeciw niemu dalaby TraitGate.has(EntityPlayer) z argumentem o nazwie
+    // SRG i nie zlinkowalaby sie w dev. Katalog z klasami nie jest nigdy reobfuskowany.
+    compileOnly project(':insanetweaks').sourceSets.main.output
+
+    implementation 'zone.rong:mixinbooter:7.1'
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "Reskill Tweaks",
+            "Specification-Vendor": "spege",
+            // Wyprowadzona, nie literal - w tombtweaks wklepana na sztywno rozjechala sie z 'version'.
+            "Specification-Version": "${version}",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor": "spege",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+
+            // ZADNEGO 'MixinConfigs' tutaj. Oba mixiny celuja w klasy Reskillable, wiec sa
+            // POZNE i ida przez ILateMixinLoader (ReskillTweaksLateBooter). Gdyby kiedys
+            // doszedl mixin na klase vanilla, trzeba bedzie dopisac 'MixinConfigs' RAZEM z
+            // 'FMLCorePlugin' + 'FMLCorePluginContainsFMLMod' - inaczej na czystym Forge
+            // leci DuplicateModsFoundException (pelne uzasadnienie: insanetweaks
+            // EarlyMixinBooter, commit e7718ca).
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications { mavenJava(MavenPublication) { artifact jar } }
+    repositories { maven { url "file:///${rootProject.projectDir}/mcmodsrepo" } }
+}

@@ -1,0 +1,17 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.reskilltweaks.mixins",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinUnlockableReskillable"
+  ],
+  "client": [
+    "MixinGuiSkillInfoReskillable"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

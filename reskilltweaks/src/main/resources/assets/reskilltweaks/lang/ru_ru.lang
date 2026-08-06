@@ -1,0 +1,55 @@
+# Reskill Tweaks — the Reskillable integration split out of Insane Tweaks.
+# Keys stay under reskillable.unlock.compatskills.* : that is the domain the traits have
+# always registered in and what player saves contain. Lang keys are global across all
+# resource domains, so shipping them from assets/reskilltweaks/ works identically —
+# PROVIDED pack.mcmeta exists. Without it none of this file is ever read.
+
+# Custom traits
+reskillable.unlock.compatskills.fast_learner=§aБыстрая обучаемость
+reskillable.unlock.compatskills.fast_learner.desc=Мобы дают на 15%% больше опыта.
+reskillable.unlock.compatskills.assimilated_warfare=§cАссимилированная война
+reskillable.unlock.compatskills.assimilated_warfare.desc=Убитые вами паразиты дают резервный опыт, даже если эволюция SRP подавляет его. С 5-й стадии SRP убийство каждого паразита также удаляет 1 очко эволюции.
+reskillable.unlock.compatskills.spiders_grace=§fПаучья грация
+reskillable.unlock.compatskills.spiders_grace.desc=Почти беспрепятственно перемещайтесь по паутине.
+reskillable.unlock.compatskills.iron_stomach=§6Железный желудок
+reskillable.unlock.compatskills.iron_stomach.desc=Еда съедается на 15%% быстрее, а вредные эффекты от неё длятся вдвое меньше.
+reskillable.unlock.compatskills.double_loot=§eДвойная добыча
+reskillable.unlock.compatskills.double_loot.desc=6%% шанс поймать двойную добычу во время рыбалки.
+reskillable.unlock.compatskills.enchant_fishing=§bЗачарованная рыбалка
+reskillable.unlock.compatskills.enchant_fishing.desc=0.5%% шанс поймать зачарованную книгу с сокровищами, включая расширенные (Advanced) или высшие (Supreme) варианты, если они поддерживаются.
+reskillable.unlock.compatskills.astral_prospector=§dАстральный разведчик
+reskillable.unlock.compatskills.astral_prospector.desc=10%% шанс удвоить выпадение руды.
+reskillable.unlock.compatskills.angry_farmer=§aЗлой фермер
+reskillable.unlock.compatskills.angry_farmer.desc=Получите +5 к урону в ближнем бою, используя любую косу, тяпку или ножницы.
+reskillable.unlock.compatskills.supreme_enchanter=§dВерховный заклинатель
+reskillable.unlock.compatskills.supreme_enchanter.desc=Даёт +5 силы зачарования за столом и +10 зачаровываемости предметов.
+reskillable.unlock.compatskills.bob_the_builder=§eБоб-строитель
+reskillable.unlock.compatskills.bob_the_builder.desc=Получите +2 радиуса доставания блоков, держа любой блок в основной руке.
+reskillable.unlock.compatskills.meditation=§aМедитация
+reskillable.unlock.compatskills.meditation.desc=Восстанавливает ману в носимой магической броне и инструментах для чар в неосновной руке, когда вы стоите неподвижно.
+reskillable.unlock.compatskills.arcane_mastery=§bМастерство тайной магии
+reskillable.unlock.compatskills.arcane_mastery.desc=Уменьшает стоимость маны всех заклинаний на 10%%.
+reskillable.unlock.compatskills.school_of_alteration=§eШкола изменения
+reskillable.unlock.compatskills.school_of_alteration.desc=Усиливающие и изменяющие заклинания получают +15%% длительности.
+reskillable.unlock.compatskills.school_of_conjuration=§dШкола призыва
+reskillable.unlock.compatskills.school_of_conjuration.desc=Заклинания призыва и миньонов получают +20%% длительности.
+reskillable.unlock.compatskills.school_of_destruction=§cШкола разрушения
+reskillable.unlock.compatskills.school_of_destruction.desc=Атакующие и снарядные заклинания получают +10%% силы.
+reskillable.unlock.compatskills.archmage=§bАрхимаг
+reskillable.unlock.compatskills.archmage.desc=Даёт +7%% магического урона и +5%% силы заклинаний. Без PotionCore заменяется на +15%% силы заклинаний.
+reskillable.unlock.compatskills.adapted_vegetation=§aАдаптированная растительность
+reskillable.unlock.compatskills.adapted_vegetation.desc=Защищает посевы в радиусе 8 блоков вокруг игрока, пока он держит Живую или Разумную косу.
+
+# Native Reskillable traits, rewritten by MixinUnlockableReskillable (and, for the skill
+# tree list, by MixinLocale — which deliberately stayed in Insane Tweaks: it touches no
+# Reskillable type, only string values in the vanilla Locale dictionary).
+reskillable.unlock.compatskills.golden_osmosis=§eЗолотой осмос
+reskillable.unlock.compatskills.golden_osmosis.desc=Золотые инструменты, находясь в руке или броне, извлекают опыт из владельца, чтобы быстро восстанавливаться. §6Дополнительно:§r +1 брони и +0.5 стойкости к броне за каждый надетый золотой предмет брони. Золотые инструменты и оружие дают +25%% скорости атаки.
+reskillable.unlock.compatskills.safe_port=§aБезопасный порт
+reskillable.unlock.compatskills.safe_port.desc=§cЖемчуга Края больше не причиняют вам вреда и получают +30%% скорости и дальности полёта.
+
+# GUI
+reskilltweaks.reskillable.lock_fallback=Откатить умение: Ctrl + ПКМ или Средняя кнопка
+
+# Config
+config.reskilltweaks.category.modules=Модули
