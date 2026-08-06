@@ -15,9 +15,28 @@ repositories {
     }
 }
 
-version = '1.12.0'
+version = '1.12.1'
 group = 'com.spege.insanetweaks'
 archivesBaseName = 'insanetweaks'
+
+// mcmod.info niesie wersje, ktora Forge pokazuje w liscie modow i wpisuje do logow.
+// Byla tam wklepana na sztywno i zamarzla na 1.11.0 - jar 1.12.0 meldowal sie
+// w logu serwera jako "insanetweaks{1.11.0}", wiec po wersji z logu NIE DALO SIE
+// stwierdzic, czy ktos ma poprawiony plik. Dokladnie tak samo wczesniej rozjechalo sie
+// Specification-Version (stalo na 1.9.4 przy wersji 1.9.5).
+// Jedno zrodlo prawdy: 'version' powyzej.
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 tasks.withType(JavaCompile) {

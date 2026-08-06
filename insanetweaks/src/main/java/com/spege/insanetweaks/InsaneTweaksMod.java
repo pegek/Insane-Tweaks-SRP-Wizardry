@@ -43,13 +43,34 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * reskillable i mujmajnkraftsbettersurvival byly tu zadeklarowane jako OPCJONALNE
+ * ('before:' / 'after:' = tylko kolejnosc ladowania), a kod uzywa ich klas bezwarunkowo.
+ * Na serwerze bez tych modow (2026-08-06) konczylo sie to nie komunikatem o brakujacej
+ * zaleznosci, tylko wybuchem w srodku rejestracji, po minucie ladowania:
+ *
+ *   TypeNotPresentException: codersafterdark.reskillable.api.unlockable.Unlockable
+ *       w SkillsModule$RegistryHandler.registerUnlockables - typ jest w SYGNATURZE metody,
+ *       wiec sama rejestracja handlera nie ma prawa sie udac
+ *
+ *   NoClassDefFoundError: com/mujmajnkraft/bettersurvival/items/ItemNunchaku
+ *       ItemParasiteNunchaku DZIEDZICZY po tej klasie - bez BetterSurvival nie da sie jej
+ *       nawet wczytac, wiec zadne 'isModLoaded' w ciele metody by nie pomoglo
+ *
+ * 'required-BEFORE:reskillable', nie 'required-after' - zachowuje dotychczasowa kolejnosc
+ * (ladujemy sie PRZED Reskillable), zmienia sie wylacznie wymagalnosc. Odwrocenie
+ * kolejnosci przy okazji wymuszania obecnosci byloby cicha zmiana zachowania.
+ *
+ * Lagodne dzialanie bez tych modow jest mozliwe, ale to osobna robota: trzeba warunkowo
+ * pominac rejestracje nunchaku i caly modul skilli, bo obie klasy sa nieladowalne.
+ */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
         dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
         +
-        "after:srpextra;after:baubles;after:potioncore;after:locks;before:reskillable;"
+        "after:srpextra;after:baubles;after:potioncore;after:locks;required-before:reskillable;"
         +
-        "after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
+        "required-after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
 public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
     /**
