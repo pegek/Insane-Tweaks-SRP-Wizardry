@@ -20,16 +20,16 @@ import net.minecraft.entity.EntityLivingBase;
  * attack-speed one ({@code getCoolPeriod}) taken when {@code canSwing(attacker)} holds, and the
  * {@code getHurtResistantTime(target)} one taken otherwise.
  *
- * <p>Measured in this pack on 2026-08-05: {@code canSwing} returned {@code false} 314 times and
- * {@code true} never, a zombie holding an iron sword included, and WorseHurtTimer's
- * {@code "Checking the Cooldown Period"} line — logged only inside the {@code canSwing} branch —
- * never appeared. Its {@code "No try catch error"} line appeared on every call, so the
- * {@code ticksSinceLastSwing} reflection lookup succeeds and this is not a swallowed exception.
- * The attack-speed branch is therefore dead here and all melee flows through
- * {@code getHurtResistantTime}. Why a sword fails the {@code generic.attackSpeed} check is
- * unresolved — some other mod in the pack most likely rewrites weapon attributes. RETURN stays
- * the right injection point precisely because it does not care which branch ran: if that ever
- * flips, this mixin keeps working unchanged.
+ * <p>Measured 2026-08-06 with the {@code canswing|} probe: for an attacking mob the held item is
+ * irrelevant — an iron sword reports {@code speedAttr=yes} and bare hands {@code speedAttr=no},
+ * yet both give {@code swingTicks=neg} and both produce the same cooldown (19). The failing
+ * conjunct is {@code ticksSinceLastSwing >= 0}: only {@code EntityPlayer} maintains that counter
+ * in 1.12.2, so {@code canSwing} is in effect a disguised "is this a player" test and the
+ * attack-speed branch is meant for a <em>player</em> attacking. Incoming melee therefore always
+ * takes {@code getHurtResistantTime(target)} — there is no path by which an armed attacker could
+ * slip past this mixin. (An earlier note here called the branch outright dead in this pack; that
+ * over-generalised from a sample containing only mob-on-player hits.) RETURN remains the right
+ * injection point regardless: it does not care which branch ran.
  *
  * <p>The multiplier is computed from the <em>target</em>, so the call from
  * {@code Events.lambda$onPlayerAttack$3}, which passes (mob, player), correctly gives a player
