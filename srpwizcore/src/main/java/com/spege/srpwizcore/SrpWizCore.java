@@ -23,12 +23,12 @@ import net.minecraftforge.fml.common.Mod;
         dependencies = "after:openterraingenerator;after:futuremc;after:iceandfire;"
                 + "after:dldungeonsjbg;after:cqrepoured;after:raids;"
                 + "after:spartanfire;after:spartandragonsteel;"
-                + "after:betterhurttimer;after:bountifulbaubles",
+                + "after:betterhurttimer;after:bountifulbaubles;after:firstaid",
         acceptableRemoteVersions = "*")
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.13.0";
+    public static final String VERSION = "1.15.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -59,6 +59,12 @@ public class SrpWizCore {
         // on at runtime did nothing until a restart. Harmless when WHT is absent — nothing reads
         // WhtIFrames then.
         com.spege.srpwizcore.whtcompat.CrossNecklaceProvider.registerIfPossible();
+
+        // Bountiful Baubles trinket repairs. Resolves the item now that item registration is
+        // over. The mixin behind it is early and vanilla-targeted, so it always applies and
+        // self-gates on whether this arming found the item and the mods it needs.
+        com.spege.srpwizcore.bbcompat.BrokenHeartProvider.arm();
+
         com.spege.srpwizcore.whtcompat.WhtDiag.syncFromConfig(
                 com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagEnabled,
                 com.spege.srpwizcore.config.SrpWizCoreConfig.whtCompat.diagVerbose,

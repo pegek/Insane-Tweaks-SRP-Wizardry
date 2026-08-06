@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import com.spege.srpwizcore.SrpWizCore;
+import com.spege.srpwizcore.config.categories.BbCompatCategory;
 import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.DragonRangedCategory;
@@ -61,6 +62,10 @@ public class SrpWizCoreConfig {
     @Config.Name("whtCompat")
     @Config.Comment("Make invincibility frames under WorseHurtTimer deterministic, and let items grant longer ones. Covers the Cross Necklace.")
     public static final WhtCompatCategory whtCompat = new WhtCompatCategory();
+
+    @Config.Name("bbCompat")
+    @Config.Comment("Put back Bountiful Baubles trinkets that another mod silently disabled. Covers the Broken Heart, which FirstAid makes completely inert.")
+    public static final BbCompatCategory bbCompat = new BbCompatCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {
