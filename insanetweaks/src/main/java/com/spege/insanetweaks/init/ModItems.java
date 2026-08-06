@@ -202,6 +202,10 @@ public class ModItems {
         // Pasozytnicze nunchaku - ten sam uklad co wyzej i z tego samego powodu: MUSI stac PRZED
         // applyGearAvailability(), bo to ono zdejmuje wylaczonym broniom zakladke kreatywna, a nie
         // ma czego zdejmowac, dopoki bronie nie powstaly.
+        // Loguje werdykt bramy TAKZE przy odmowie - bez tego brak Better Survival nie zostawia
+        // w logu ani jednej linii, a to jest dokladnie ten przypadek, ktorego 2026-08-06 nie dalo
+        // sie zdiagnozowac. Szczegoly w javadocu logVerdict().
+        com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.logVerdict();
         if (com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.shouldRegister()) {
             com.spege.insanetweaks.items.nunchaku.ParasiteNunchakuItems.register(event.getRegistry());
         }

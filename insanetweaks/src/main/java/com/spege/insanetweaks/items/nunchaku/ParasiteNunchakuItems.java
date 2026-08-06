@@ -48,6 +48,41 @@ public final class ParasiteNunchakuItems {
         return com.spege.insanetweaks.config.ModConfig.modules.enableLivingNunchaku && available();
     }
 
+    /** Jednorazowo, bo {@link #shouldRegister()} jest pytane i przy itemach, i przy modelach. */
+    private static boolean verdictLogged = false;
+
+    /**
+     * Mówi w logu, jak rozstrzygnęła się brama — <b>także wtedy, gdy odmówiła</b>.
+     *
+     * <p>🚨 To nie jest ozdobnik. Na cudzym serwerze bez Better Survival (2026-08-06) poleciało
+     * {@code ClassNotFoundException: ItemParasiteNunchaku} spowodowane
+     * {@code NoClassDefFoundError: ItemNunchaku}, a log nie zawierał ANI JEDNEJ linii o tej linii
+     * broni — bo {@link #register} loguje wyłącznie sukces. Nie dało się więc odróżnić dwóch
+     * zupełnie różnych diagnoz: „brama zadziałała, klasę załadowało coś innego" od „brama
+     * przeciekła". Ramki stosu, które by to rozstrzygnęły, przepadły między
+     * {@code Exception caught during firing event} a {@code Caused by}.
+     *
+     * <p>Ta linia rozstrzyga to bez stack trace'u. Nie dotyka {@code ItemParasiteNunchaku} — mówi
+     * wyłącznie o flagach, więc jest bezpieczna dokładnie tam, gdzie jest potrzebna.
+     */
+    public static void logVerdict() {
+        if (verdictLogged) {
+            return;
+        }
+        verdictLogged = true;
+
+        if (shouldRegister()) {
+            return; // register() zaraz zaloguje sukces sam.
+        }
+        InsaneTweaksMod.LOGGER.info(
+                "[InsaneTweaks] parasite nunchaku: NIE rejestruje (bettersurvival={}, "
+                        + "modules.enableLivingNunchaku={}). Klasa ItemParasiteNunchaku nie powinna "
+                        + "byc w ogole ladowana - jesli mimo to widzisz na nia NoClassDefFoundError, "
+                        + "zaladowalo ja cos poza tym modem.",
+                Boolean.valueOf(available()),
+                Boolean.valueOf(com.spege.insanetweaks.config.ModConfig.modules.enableLivingNunchaku));
+    }
+
     /**
      * Czy linia jest DOSTĘPNA wg {@code gear.availability} — recepta i zakładka kreatywna.
      *
