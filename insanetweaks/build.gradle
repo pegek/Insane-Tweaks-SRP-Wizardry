@@ -15,7 +15,7 @@ repositories {
     }
 }
 
-version = '1.11.0'
+version = '1.12.0'
 group = 'com.spege.insanetweaks'
 archivesBaseName = 'insanetweaks'
 
@@ -67,7 +67,18 @@ jar {
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "mixins.insanetweaks.json,mixins.insanetweaks.compat.json,mixins.insanetweaks.early.json"
+            "MixinConfigs": "mixins.insanetweaks.json,mixins.insanetweaks.compat.json,mixins.insanetweaks.early.json",
+
+            // Deklaracja coremodu. BEZ NIEJ jar wywala start serwera na czystym Forge
+            // (DuplicateModsFoundException) - pelne uzasadnienie w EarlyMixinBooter.
+            // Skrocone: 'MixinConfigs' powoduje, ze MixinBooter dokłada jar na classloader,
+            // a Forge znajduje go wtedy dwa razy - w mods/ i na classpath. Pomija tylko to,
+            // co jest w getIgnoredMods()/getReparseableCoremods(), a tam trafiaja wylacznie
+            // coremody. 'ContainsFMLMod' kieruje jar do candidateModFiles zamiast
+            // ignoredModFiles, wiec @Mod laduje sie normalnie.
+            // ZADNEGO TweakClass obok - Forge pomija wtedy coremod.
+            "FMLCorePlugin": "com.spege.insanetweaks.core.EarlyMixinBooter",
+            "FMLCorePluginContainsFMLMod": "true"
         ])
     }
 }
