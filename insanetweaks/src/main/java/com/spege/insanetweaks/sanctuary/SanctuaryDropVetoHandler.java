@@ -32,12 +32,18 @@ public class SanctuaryDropVetoHandler {
         }
     }
 
+    /**
+     * Routed through {@link SanctuaryDebug} rather than straight to the logger.
+     *
+     * <p>It used to call {@code LOGGER.info} directly behind the same {@code debugLogging} flag, so
+     * it was gated but not deduplicated and not burst-limited. A Flare profile on 2026-08-07 caught
+     * 666 lines of "vetoed parasite drops: Buglin" inside a single 287 s window, while everything
+     * going through {@code SanctuaryDebug} cost 0 ms in the same profile - log4j flushes
+     * synchronously on the server thread, so log volume is not free.
+     */
     private static void logVeto(EntityLivingBase e, String what) {
-        if (ModConfig.sanctuary.debugLogging) {
-            com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info(
-                    "[InsaneTweaks] Sanctuary vetoed parasite " + what + ": " + e.getName()
-                    + " @(" + ((int) Math.floor(e.posX)) + "," + ((int) Math.floor(e.posZ)) + ")");
-        }
+        SanctuaryDebug.log("drop-vetoed", what + ": " + e.getName()
+                + " @(" + ((int) Math.floor(e.posX)) + "," + ((int) Math.floor(e.posZ)) + ")");
     }
 
     /** True when this is an SRP parasite dying inside an active sanctuary region. */
