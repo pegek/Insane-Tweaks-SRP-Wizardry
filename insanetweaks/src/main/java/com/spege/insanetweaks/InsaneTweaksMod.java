@@ -65,10 +65,21 @@ import java.util.List;
  * ktora reskilltweaks wypelnia w swoim init, bo charge jump (pakiet o dyskryminatorze 5
  * na kanale 'insanetweaks') i poprawka XP z parazytow musialy zostac tutaj.
  *
- * BETTERSURVIVAL: 'required-after' zostaje na razie. Statycznie brama w
- * ParasiteNunchakuItems wyglada kompletnie, ale log, ktory rozstrzygnalby, ktora sciezka
- * doszlo do zaladowania ItemParasiteNunchaku, przepadl. Do rozstrzygniecia przy okazji
- * 'latest.log' z serwera bez BetterSurvival - nie zgadywac.
+ * BETTERSURVIVAL: z powrotem 'after:' (opcjonalne) od 1.13.1. 1.12.1 podnioslo to do
+ * 'required-after' po crashu na cudzym serwerze, ale bez ramek stosu - a te przepadly.
+ * Podstawa cofniecia:
+ *   - brama w ParasiteNunchakuItems przeczytana ponownie i jest szczelna: pola typu
+ *     Item[]/Item (nigdy ItemParasiteNunchaku[]), available() sprawdzane jako pierwsze,
+ *     jedyne 'new' siedzi w register() za shouldRegister()
+ *   - zadne skrypty ani zasoby paczki nie nazywaja tej klasy
+ *   - oba wczorajsze bledy byly na TYM SAMYM starcie, w tej samej fazie firowania
+ *     RegistryEvent.Register, a Reskillable byl pierwszy - zaladowanie nunchaku moglo
+ *     byc skutkiem przerwanej rejestracji, nie osobnym wyciekiem. Ta przyczyna zniknela
+ *     razem z wydzieleniem reskilltweaks.
+ * Siatka bezpieczenstwa: ParasiteNunchakuItems.logVerdict() mowi teraz w logu, ze brama
+ * ODMOWILA - czego 2026-08-06 zabraklo i przez co sprawy nie dalo sie rozstrzygnac.
+ * Jesli NoClassDefFoundError na ItemNunchaku wroci MIMO tej linii, to dowod, ze klase
+ * laduje cos poza tym modem, i dopiero wtedy warto szukac wyciekow.
  */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
@@ -76,7 +87,7 @@ import java.util.List;
         +
         "after:srpextra;after:baubles;after:potioncore;after:locks;"
         +
-        "required-after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
+        "after:mujmajnkraftsbettersurvival;after:rldragonsteel;")
 public class InsaneTweaksMod implements IGuiHandler {
     public static final String MODID = "insanetweaks";
     /**
@@ -95,7 +106,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.13.0";
+    public static final String VERSION = "1.13.1";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;

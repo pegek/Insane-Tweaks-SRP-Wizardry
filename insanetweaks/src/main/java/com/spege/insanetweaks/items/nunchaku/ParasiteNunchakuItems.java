@@ -27,8 +27,8 @@ public final class ParasiteNunchakuItems {
      */
     private static Item[] items = new Item[0];
 
-    /** Osobno, bo ewolucja musi umieć wskazać konkretnie ten item. Też jako {@code Item}. */
-    private static Item sentient = null;
+    /** Pozycja Sentient w {@link #items}. Patrz {@link #sentient()}. */
+    private static final int SENTIENT_INDEX = 1;
 
     private ParasiteNunchakuItems() {
     }
@@ -99,9 +99,14 @@ public final class ParasiteNunchakuItems {
         return items.clone();
     }
 
-    /** Cel ewolucji. {@code null}, dopóki {@link #register} nie pobiegnie. */
+    /**
+     * Cel ewolucji. {@code null}, dopóki {@link #register} nie pobiegnie.
+     *
+     * <p>Czytane z tablicy, a NIE z osobnego pola — patrz {@link #register}. {@code aaload} oddaje
+     * typ komponentu ({@code Item}), więc weryfikator nie ma czego sprawdzać.
+     */
     public static Item sentient() {
-        return sentient;
+        return items.length > SENTIENT_INDEX ? items[SENTIENT_INDEX] : null;
     }
 
     /**
@@ -116,9 +121,28 @@ public final class ParasiteNunchakuItems {
      * {@code CreativeTabs.COMBAT} razem z resztą broni Better Survival i tak ma zostać.
      */
     public static void register(IForgeRegistry<Item> registry) {
-        Item living = new ItemParasiteNunchaku(ParasiteNunchakuMaterials.LIVING, ParasiteTier.LIVING);
-        sentient = new ItemParasiteNunchaku(ParasiteNunchakuMaterials.SENTIENT, ParasiteTier.SENTIENT);
-        items = new Item[] { living, sentient };
+        // 🚨 KAZDY 'new ItemParasiteNunchaku' MUSI trafiac PROSTO do inicjalizatora tablicy, i do
+        // niczego innego. Ani zmiennej lokalnej typu Item, ani pola typu Item.
+        //
+        // Powod (crash 2026-08-06, zdiagnozowany 2026-08-07 na czystym Forge): weryfikator
+        // bajtkodu sprawdza przypisywalnosc przy 'astore' i 'putstatic', wiec 'Item x = new
+        // ItemParasiteNunchaku(...)' zmusza go do ZALADOWANIA tej klasy - a ta dziedziczy po
+        // ItemNunchaku z Better Survival. Weryfikacja leci przy LINKOWANIU calej klasy, czyli przy
+        // pierwszym dotknieciu ParasiteNunchakuItems z zewnatrz, WCZESNIEJ niz jakakolwiek metoda
+        // zdazy sie wykonac. available() nie ma wiec szans zwrocic false: NoClassDefFoundError leci
+        // z linii, ktora tylko wola statyczna metode tej klasy.
+        //
+        // 'aastore' jest wyjatkiem - skladowanie do tablicy weryfikator POMIJA (sprawdza je runtime
+        // przez ArrayStoreException). Dlatego blizniacza linia dragonsteelowa, ktora wrzuca swoje
+        // obiekty wprost do tablicy, przezywa brak swojego moda, a ta nie przezywala.
+        //
+        // To jest dokladnie powod, dla ktorego pole 'items' ma typ Item[], a nie
+        // ItemParasiteNunchaku[] - ta czesc byla poprawna od poczatku, brakowalo tylko tego, ze
+        // 'astore' i 'putstatic' licza sie tak samo jak 'anewarray'.
+        items = new Item[] {
+                new ItemParasiteNunchaku(ParasiteNunchakuMaterials.LIVING, ParasiteTier.LIVING),
+                new ItemParasiteNunchaku(ParasiteNunchakuMaterials.SENTIENT, ParasiteTier.SENTIENT)
+        };
         for (Item item : items) {
             registry.register(item);
         }
