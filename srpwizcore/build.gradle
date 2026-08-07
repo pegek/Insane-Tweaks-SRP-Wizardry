@@ -7,9 +7,25 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.15.0'
+version = '1.15.1'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
+
+// mcmod.info takes its version from build.gradle instead of a literal. A hand-typed one froze
+// twice already (insanetweaks 1.12.0 reported itself as 1.11.0 in the log), which is exactly the
+// kind of drift that makes a support log unreadable. Same shape as insanetweaks (commit 73f0704).
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 tasks.withType(JavaCompile) {
@@ -68,12 +84,19 @@ jar {
         attributes([
             "Specification-Title": "SRP&WIZ Core",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.15.0",
+            "Specification-Version": "${version}",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "mixins.srpwizcore.early.json,mixins.srpwizcore.intcache.json"
+            "MixinConfigs": "mixins.srpwizcore.early.json,mixins.srpwizcore.intcache.json",
+            // Short version: 'MixinConfigs' makes MixinBooter add the jar to the classloader,
+            // Forge then finds it twice (classpath + mods/) and throws
+            // DuplicateModsFoundException on plain Forge. Declaring the jar a coremod puts its
+            // name on the list both mechanisms consult. Full account in SrpWizCoreEarlyBooter.
+            // NO TweakClass beside this - Forge skips a coremod that declares both.
+            "FMLCorePlugin": "com.spege.srpwizcore.core.SrpWizCoreEarlyBooter",
+            "FMLCorePluginContainsFMLMod": "true"
         ])
     }
 }
