@@ -234,7 +234,6 @@ public class InsaneTweaksMod implements IGuiHandler {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        com.spege.insanetweaks.init.ModElements.installReceptacleColours();
         // Register Internal Entities
         // Other entities if any...
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "fer_cow_minion"),
