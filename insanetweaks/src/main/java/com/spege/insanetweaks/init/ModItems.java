@@ -49,6 +49,13 @@ public class ModItems {
     public static final Item INFECTIOUS_LONG_BLADE_FRAGMENT = new Item()
             .setRegistryName("insanetweaks", "infectious_long_blade_fragment")
             .setUnlocalizedName("infectious_long_blade_fragment").setCreativeTab(CreativeTabs.MISC);
+    /**
+     * The magical half of the crafting economy. Unlike {@link #LIVING_NUCLEUS} this has no
+     * swparasites counterpart, so it is registered unconditionally and its ore name resolves to
+     * exactly one item - the ore entry exists so an addon could substitute one later.
+     */
+    public static final Item MAGIC_NUCLEUS = new Item().setRegistryName("insanetweaks", "magic_nucleus")
+            .setUnlocalizedName("magic_nucleus").setCreativeTab(CreativeTabs.MISC);
     public static final Item LIVING_SPELLBLADE = new LivingSpellblade();
     public static final Item SENTIENT_SPELLBLADE = new SentientSpellblade();
     public static final Item LIVING_WAND = new com.spege.insanetweaks.items.wand.LivingWandItem();
@@ -160,7 +167,7 @@ public class ModItems {
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge) {
             event.getRegistry().registerAll(LIVING_SPELLBLADE, SENTIENT_SPELLBLADE);
             event.getRegistry().registerAll(LIVING_WAND, SENTIENT_WAND);
-            event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT);
+            event.getRegistry().registerAll(ADAPTATION_UPGRADE, ARCANE_ADAPTED_FRUIT, MAGIC_NUCLEUS);
             event.getRegistry().registerAll(GOLDEN_BOOK, RUPTER_SOLIED, LIVING_AEGIS, SENTIENT_AEGIS, INFERNAL_CROWN, ZHONYAS_HOURGLASS);
 
             // Crafting-component clones: only register when swparasites is NOT present, so the
@@ -239,6 +246,7 @@ public class ModItems {
             registerModel(SENTIENT_WAND);
             registerModel(ADAPTATION_UPGRADE);
             registerModel(ARCANE_ADAPTED_FRUIT);
+            registerModel(MAGIC_NUCLEUS);
 
             // Armor Models
             registerModel(SENTIENT_WARLOCK_HELMET);

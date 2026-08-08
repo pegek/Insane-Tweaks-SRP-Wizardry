@@ -28,6 +28,7 @@ public final class ModOreDict {
 
     public static final String ORE_LIVING_NUCLEUS = "itLivingNucleus";
     public static final String ORE_INFECTIOUS_LONG_BLADE_FRAGMENT = "itInfectiousLongBladeFragment";
+    public static final String ORE_MAGIC_NUCLEUS = "itMagicNucleus";
 
     private ModOreDict() {
     }
@@ -40,6 +41,10 @@ public final class ModOreDict {
         registerComponent(ORE_INFECTIOUS_LONG_BLADE_FRAGMENT,
                 swp ? foreign("swparasites", "infectious_long_blade_fragment")
                         : ModItems.INFECTIOUS_LONG_BLADE_FRAGMENT);
+
+        // No swparasites counterpart exists, so this always resolves to our own item. The ore entry
+        // is here for symmetry and so an addon can add a second source without touching our recipes.
+        registerComponent(ORE_MAGIC_NUCLEUS, ModItems.MAGIC_NUCLEUS);
     }
 
     private static void registerComponent(String oreName, Item item) {
