@@ -273,8 +273,14 @@ git commit -m "feat(insanetweaks): declare all 14 spells as element abomination"
 ### Task 4: Fallback guard so a failed registration degrades instead of crashing
 
 `SpellProperties` parses the JSON element with the one-argument `Element.fromName(String)`, which
-throws `IllegalArgumentException` for an unknown name. Without this task, `EXTENDED == false` would
-abort spell loading rather than fall back.
+throws `IllegalArgumentException` for an unknown name.
+
+This is not a crash — verified on bytecode: the `SpellProperties` constructor catches that exception
+and rethrows `JsonSyntaxException`, and each loader catches `JsonParseException` and logs
+`"Parsing error loading spell property file for …"`. What actually happens with `EXTENDED == false`
+and no mixin is quieter and worse: all fourteen spells load **without properties**, so
+`Spell.getElement()` returns `MAGIC` permanently and tier, cost, cooldown and the `enabled` flags
+come from nothing. The mod boots and the spells are hollow.
 
 **Files:**
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinElementFromName.java`

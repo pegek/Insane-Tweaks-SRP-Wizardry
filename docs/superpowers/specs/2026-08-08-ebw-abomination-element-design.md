@@ -147,11 +147,22 @@ unadapted wand — a regression relative to the current behaviour. So `isAbomina
 Degraded mode is then exactly the pre-change behaviour. `NativeElements` (§9) is gated on the same
 flag, so all exclusion mixins become no-ops too.
 
-🚨 **The fallback needs one mixin of its own, or it is a crash rather than a degradation.**
+🚨 **The fallback needs one mixin of its own, or degraded mode silently guts all fourteen spells.**
 `SpellProperties` parses the JSON element with the **one-argument** `Element.fromName(String)`, and
 that overload ends in `throw new IllegalArgumentException("No such element with unlocalised name: …")`
-— it is the two-argument overload that takes a default. So with `EXTENDED = false`, our fourteen
-spell JSONs saying `"element": "abomination"` would abort spell-property loading outright.
+— it is the two-argument overload that takes a default.
+
+It is **not** a crash, and an earlier draft of this spec was wrong to call it one. Verified on
+bytecode: `SpellProperties`' constructor has an exception-table entry catching
+`IllegalArgumentException` across the tier/element/type parse and rethrows it as
+`JsonSyntaxException`, and each loader (`loadSpellPropertiesFromDir` and its config/built-in
+siblings) catches `JsonParseException` and logs `"Parsing error loading spell property file for …"`,
+finishing with `"N spells that are missing properties files!"`.
+
+The real failure mode is worse than a crash in one respect: with `EXTENDED = false` and no mixin, all
+fourteen spells load **without properties**. `Spell.getElement()` then returns `MAGIC` permanently,
+and tier, cost, cooldown and the per-source `enabled` flags come from nothing at all — a broken mod
+that still boots, reported only in a line most players never read.
 
 `MixinElementFromName` closes it: `@Inject` at `HEAD`, `cancellable = true`, on
 `Element.fromName(Ljava/lang/String;)`; when `!ModElements.EXTENDED` **and** the argument equals
