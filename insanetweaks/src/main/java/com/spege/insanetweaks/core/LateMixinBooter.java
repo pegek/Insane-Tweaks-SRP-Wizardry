@@ -39,6 +39,14 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("chancecubes")) {
             configs.add("mixins.insanetweaks.chancecubes.json");
         }
+        // EBW's JEI integration builds its ingredient stacks from Element.values() directly, so the
+        // getSubItems redirects never reach it. Targets exist only with JEI installed, hence a config
+        // of its own instead of the unconditional late one. The id is "jei" for BOTH JEI 4.16 and
+        // HadEnoughItems 4.34 (the pack's fork) - verified on the @Mod annotation in each jar, not on
+        // mcmod.info.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("jei")) {
+            configs.add("mixins.insanetweaks.jei.json");
+        }
         return configs;
     }
 

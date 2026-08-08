@@ -106,7 +106,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.13.1";
+    public static final String VERSION = "1.15.2";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -151,6 +151,11 @@ public class InsaneTweaksMod implements IGuiHandler {
     // -------------------------------------------------------------------------
 
     public InsaneTweaksMod() {
+        // FIRST. Appends the Abomination constant to Wizardry's Element enum. Must precede both our
+        // own ModItems.<clinit> and EBW's RegistryEvent.Register<Block>, because BlockCrystal's
+        // <clinit> runs PropertyEnum.create(Element.class), which snapshots values() - an element
+        // added after that snapshot is not a legal blockstate value.
+        com.spege.insanetweaks.init.ModElements.init();
         // Must run before FML's first ConfigManager.sync (which fires later inside
         // FMLModContainer.constructMod) - see OldConfigBackup.
         com.spege.insanetweaks.config.OldConfigBackup.backupOldConfigIfPresent();
@@ -313,16 +318,19 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CoreTooltipHandler());
         }
 
-        // Sentient Codex enchantment runtime (boost recompute, owner-binding, anvil lock).
+        // Sentient Codex enchantment runtime (feeding, growth, starvation, repair, anvil lock).
         // The enchantment itself registers on the MOD bus in ModEnchantments under the same flag.
         // Drop protection is conferred via the Ashen Legacy property (LegendaryDropHelper +
-        // the always-on IndestructibleDropHandler above). There used to be a dedicated client
-        // tooltip handler here to surface that property on enchanted vanilla items, because the
-        // generic one was gated on ITweaksPropertyHolder and could not see it; GlobalPropertyTooltip-
-        // Handler now goes through AdvPropertyResolver, which covers the enchant case, so the
-        // duplicate was deleted.
+        // the always-on IndestructibleDropHandler above). The Properties: line for it comes from
+        // GlobalPropertyTooltipHandler via AdvPropertyResolver; SentientCodexTooltipHandler below is
+        // a separate thing - it shows the feeding STATUS, which no property block can express.
         if (com.spege.insanetweaks.config.ModConfig.modules.enableSentientCodex) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.enchant.SentientCodexHandler());
+            // 🚨 Class-level @SideOnly(Side.CLIENT): the `new` is fatal on a dedicated server.
+            if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
+                MinecraftForge.EVENT_BUS.register(
+                        new com.spege.insanetweaks.events.SentientCodexTooltipHandler());
+            }
         }
 
         // One-shot per-player migration for the 1.4.21 Ashen Legacy / Sentient Codex split.
@@ -408,6 +416,17 @@ public class InsaneTweaksMod implements IGuiHandler {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.GlobalPropertyTooltipHandler());
         }
 
+        // Fleshbound status lines (regrowth countdown, rip-out state). Gated on the same two flags
+        // that decide whether FleshboundEventHandler exists at all - otherwise the tooltip would
+        // report recovery charges for a mechanic nothing is enforcing. 🚨 Class-level
+        // @SideOnly(Side.CLIENT), so the `new` itself is fatal on a dedicated server - the side
+        // guard is what keeps it from executing, exactly as for the tooltip handlers above.
+        if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT
+                && (com.spege.insanetweaks.config.ModConfig.modules.enableSrpEbWizardryBridge
+                        || com.spege.insanetweaks.config.ModConfig.modules.enablePropertyBooks)) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.FleshboundTooltipHandler());
+        }
+
         // Property Books: the anvil recipe that grants a property to one particular item.
         // The book ITEM registers unconditionally in ModItems (a registry object behind a config
         // flag vanishes from existing worlds); this flag gates the recipe handler only.
@@ -474,11 +493,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         // happened this launch, and must not be suppressible by a setting that itself just got reset.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             // Client half of the enchant quest-gate; the server-side veto is registered
             // unconditionally above. Both flags it reads are live, so no config gate here.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
@@ -585,6 +602,13 @@ public class InsaneTweaksMod implements IGuiHandler {
             // method bodies (lazy resolution), so registering without SRP would not crash - but
             // the handler cannot fire either, since it bails on any non-srparasites entity.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
+        }
+
+        // Sanctuaries are off-limits to the parasite meteor. srpwizmixins owns the meteor hook and
+        // exposes a provider interface built from nothing but vanilla types; the class below is the
+        // only thing in this mod that names it, and it is unreachable unless that mod is present.
+        if (Loader.isModLoaded("srpwizmixins")) {
+            com.spege.insanetweaks.integration.srpwizmixins.MeteorSanctuaryProtection.register();
         }
 
         // 🚨 ChargeJumpClientHandler carries a CLASS-level @SideOnly(Side.CLIENT): SideTransformer

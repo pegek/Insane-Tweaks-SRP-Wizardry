@@ -12,9 +12,15 @@
     "MixinSrpSaveDataThreadSafety",
     "MixinSrpSaveDataGetRace",
     "MixinSrpMobCapMulti",
-    "MixinSrpInfestationSpreadThrottle"
+    "MixinSrpInfestationSpreadThrottle",
+    "MixinSrpNeedlerPlayerKey",
+    "MixinSrpMeteorTriggerPersist",
+    "MixinSrpMeteorPlacement",
+    "MixinSrpMeteorAnnounce"
   ],
-  "client": [],
+  "client": [
+    "MixinSrpDistortionTooltipThread"
+  ],
   "server": [],
   "injectors": { "defaultRequire": 1 }
 }

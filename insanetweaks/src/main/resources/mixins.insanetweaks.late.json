@@ -5,19 +5,24 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinBlockCrystalElements",
+    "MixinBlockPedestalElements",
+    "MixinBlockRunestoneElements",
+    "MixinEntityEvilWizardElements",
     "MixinEntityParasiteBase",
+    "MixinEntityRemnantElements",
     "MixinEntitySummonedCreature",
+    "MixinEntityWizardElements",
+    "MixinItemCrystalElements",
+    "MixinItemSpectralDustElements",
     "MixinParasiteEventEntity",
     "MixinRayOfPurification",
     "MixinSpell",
-    "MixinSpellMinion"
+    "MixinSpellMinion",
+    "MixinWorldGenObeliskElements",
+    "MixinWorldGenShrineElements"
   ],
-  "client": [
-    "MixinGuiSpellDisplay",
-    "MixinGuiSpellInfo",
-    "MixinItemSpellBook",
-    "MixinItemScroll"
-  ],
+  "client": [],
   "server": [],
   "injectors": {
     "defaultRequire": 1

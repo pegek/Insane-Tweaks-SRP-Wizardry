@@ -17,36 +17,28 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  *
  * <h3>What it does (port of UniqueEnchantments' Ambrosia)</h3>
  * <ol>
- * <li>Refills the hunger bar - at the top tier outright, {@code addStats(2000, 0)}, i.e. food to 20
- *     with no saturation of its own. This lands <i>after</i> the food's normal healing, because
+ * <li>Refills the hunger bar outright, {@code addStats(2000, 0)}, i.e. food to 20 with no saturation
+ *     of its own. This lands <i>after</i> the food's normal healing, because
  *     {@code LivingEntityUseItemEvent.Finish} fires at the end of {@code onItemUseFinish}.</li>
- * <li>Applies {@code insanetweaks:nourished} for a duration driven by the eater's XP level, which
- *     keeps saturation pinned so hunger never starts draining again until it runs out.</li>
+ * <li>Applies {@code insanetweaks:nourished} for a short duration, which keeps saturation pinned so
+ *     hunger does not start draining again until it runs out.</li>
  * </ol>
  *
- * <h3>The duration formula</h3>
- * Upstream computes {@code BASE + ln(5^(1 + xpLevel * level)) * MULTIPLIER} through a cached
- * power-of-five table. This port evaluates the algebraically identical
- * {@code BASE + (1 + xpLevel * power) * ln(5) * MULTIPLIER} instead: same numbers, and it cannot
- * overflow. Raising 5 to the power of a large XP level produces {@code Double.POSITIVE_INFINITY}
- * long before anything is logged, which would come out of the {@code int} cast as
- * {@link Integer#MAX_VALUE}; the linear form just keeps scaling.
+ * <h3>The duration, and what used to be here</h3>
+ * {@code duration = baseDurationTicks + (level - 1) * durationPerLevelTicks}, and the amplifier is
+ * {@code level - 1}. Both depend on the enchantment level and on nothing else; at the defaults that
+ * is Nourished I for 10 seconds at level I and Nourished II for 15 at level II.
  *
- * <h3>How the two tiers differ</h3>
- * "Power" plays two roles, on purpose:
- * <ul>
- * <li>the Nourished <b>amplifier</b> uses this stack's own {@code level * powerPerLevel}, so it steps
- *     down per tier - level II gets amplifier 2, level I amplifier 1;</li>
- * <li>the <b>duration curve</b> is evaluated once at the top tier's power,
- *     {@code maxLevel * powerPerLevel}, so it has the same shape at every level, and the tiers are
- *     separated there by {@link #tierStrength} alone.</li>
- * </ul>
- * Without that split the two nerfs would compound and a lower tier would come out far weaker than
- * {@code lowerTierStrength} advertises. The same strength also scales the hunger refill.
+ * <p>🚨 This deliberately drops upstream's curve. Ambrosia computes
+ * {@code BASE + ln(5^(1 + xpLevel * level)) * MULTIPLIER}, i.e. the duration grows linearly and
+ * without bound in the <i>eater's XP level</i> - the port inherited that along with the tier-strength
+ * machinery that only existed to soften it, and it meant a level-30 player stayed sated for nearly
+ * four minutes and a level-100 player for eleven. Nothing about this enchantment is supposed to care
+ * how much XP the eater happens to be carrying. Do not put an XP term back in.
  *
- * <p>At the defaults ({@code maxLevel} 2, {@code powerPerLevel} 1, base 600, multiplier 40, strength
- * 0.65) a level-30 player gets roughly 4500 ticks from level II - about three and three-quarter
- * minutes, i.e. exactly what the old single tier gave - and about 2950 from level I.
+ * <p>Vanilla draws a potion amplifier one higher than its value, so amplifier {@code level - 1} is
+ * what makes level I read "Nourished I". Anything at or above 0 already pins saturation to the cap;
+ * the amplifier only changes how fast it tops back up, and the roman numeral in the HUD.
  *
  * <p>Registered unconditionally in {@code InsaneTweaksMod#init} and gated live on
  * {@code modules.enableMmmm} below, so the flag can be flipped without a restart. The enchantment
@@ -82,34 +74,11 @@ public class MmmmHandler {
         return EnchantmentMmmm.getLevel(stack) > 0;
     }
 
-    /** {@code ln(5)}, the closed form of upstream's power-of-five table. */
-    private static final double LN_5 = Math.log(5.0D);
-
     /** Upstream's magic "fill it completely" argument to {@code FoodStats.addStats}. */
     private static final int FILL_HUNGER = 2000;
 
-    /** A full hunger bar in food points, the base a partial refill is taken as a fraction of. */
-    private static final int FULL_HUNGER = 20;
-
     /** Vanilla refuses potion amplifiers beyond this; upstream clamps to the same value. */
     private static final int MAX_AMPLIFIER = 20;
-
-    /**
-     * How strong this tier is relative to the top one: 1.0 at (or above) {@code maxLevel}, and one
-     * factor of {@code lowerTierStrength} per step below it.
-     *
-     * <p>🚨 The {@code level >= maxLevel} clamp is load-bearing, not defensive noise. A stack can
-     * legitimately carry a level <i>above</i> the cap - Sentient Codex boosts held items past
-     * {@code getMaxLevel()}, and lowering {@code maxLevel} later leaves old stacks behind - and
-     * {@code pow(0.65, -1)} is 1.54, i.e. an unclamped result would come out <i>stronger</i> than the
-     * top tier rather than equal to it.
-     */
-    private static double tierStrength(int level, MmmmCategory cfg) {
-        if (level >= cfg.maxLevel) {
-            return 1.0D;
-        }
-        return Math.pow(cfg.lowerTierStrength, cfg.maxLevel - level);
-    }
 
     @SubscribeEvent
     public void onItemUseFinish(LivingEntityUseItemEvent.Finish event) {
@@ -142,36 +111,26 @@ public class MmmmHandler {
         }
 
         MmmmCategory cfg = ModConfig.enchantments.mmmm;
-        double strength = tierStrength(level, cfg);
-        // The curve is the top tier's, at every level - see the class javadoc. Only `strength`
-        // separates the tiers here.
-        int topPower = Math.max(1, cfg.maxLevel) * cfg.powerPerLevel;
-        double steps = 1.0D + (double) player.experienceLevel * topPower;
-        long duration = (long) ((cfg.baseDurationTicks + steps * LN_5 * cfg.durationMultiplier)
-                * strength);
-        if (cfg.maxDurationTicks > 0 && duration > cfg.maxDurationTicks) {
-            duration = cfg.maxDurationTicks;
-        }
+        // Level, and only level. A stack can legitimately carry a level above maxLevel - Sentient
+        // Codex boosts held items past getMaxLevel(), and lowering maxLevel later leaves old stacks
+        // behind - so this is written to stay sane above the cap rather than to clamp to it.
+        long duration = (long) cfg.baseDurationTicks
+                + (long) (level - 1) * cfg.durationPerLevelTicks;
         if (duration <= 0L) {
             return;
         }
+        if (duration > Integer.MAX_VALUE) {
+            duration = Integer.MAX_VALUE;
+        }
 
         if (cfg.fillHungerBar) {
-            // The top tier keeps upstream's "just fill it" magic number; a lower tier refills that
-            // fraction of a full bar instead, and vanilla clamps whatever is already there.
-            int fill = strength >= 1.0D
-                    ? FILL_HUNGER
-                    : Math.max(1, (int) Math.round(FULL_HUNGER * strength));
-            player.getFoodStats().addStats(fill, 0.0F);
+            // Upstream's "just fill it" magic number; vanilla clamps whatever is already there.
+            player.getFoodStats().addStats(FILL_HUNGER, 0.0F);
         }
         if (ModPotions.NOURISHED != null) {
-            // Amplifier is this stack's own power, matching upstream, and is NOT scaled by strength -
-            // it is an integer and already steps down per tier. Anything at or above 1 already pins
-            // saturation to the cap, so this only changes how fast it tops back up (and the roman
-            // numeral in the HUD, which vanilla draws as amplifier+1 - so at the default
-            // powerPerLevel of 1 the effect always reads one higher than the enchant level).
+            // level - 1, because vanilla draws the amplifier one higher: level I reads "Nourished I".
             player.addPotionEffect(new PotionEffect(ModPotions.NOURISHED, (int) duration,
-                    Math.min(MAX_AMPLIFIER, level * cfg.powerPerLevel)));
+                    Math.min(MAX_AMPLIFIER, Math.max(0, level - 1))));
         }
     }
 }

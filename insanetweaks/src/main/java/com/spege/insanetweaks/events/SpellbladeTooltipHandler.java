@@ -166,13 +166,8 @@ public class SpellbladeTooltipHandler {
         if (item instanceof com.spege.insanetweaks.items.spellblade.BridgeSpellblade) {
             com.spege.insanetweaks.items.spellblade.BridgeSpellblade spellblade = (com.spege.insanetweaks.items.spellblade.BridgeSpellblade) item;
             int adaptationLevel = spellblade.getArcaneAdaptationLevel(stack);
-            int penaltyPercent = spellblade.getArcaneAdaptationPenaltyPercent(stack);
-            String penaltyText = penaltyPercent > 0
-                    ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
-                    : "(No Foreign Mana Penalty)";
 
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel)
-                    + TextFormatting.RED + " " + penaltyText);
+            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel));
             if (isShiftPressed) {
                 String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {
@@ -251,35 +246,9 @@ public class SpellbladeTooltipHandler {
             }
         }
 
-        // Fleshbound property display
-        if ("insanetweaks:sentient_spellblade".equals(regName)) {
-            net.minecraft.world.World world = event.getEntityPlayer() != null ? event.getEntityPlayer().world : net.minecraft.client.Minecraft.getMinecraft().world;
-            if (world != null) {
-                // The "- Fleshbound" line and its SHIFT description are not printed here.
-                // GlobalPropertyTooltipHandler renders them from the GRIP advanced property
-                // whenever the stack carries it, so emitting them here as well would show the same
-                // property twice under the same name. This blade no longer declares GRIP itself -
-                // its 1900-kill reward is Arcane Sundering - so the block below only has anything
-                // to show once a Grip book has been applied to it.
-                //
-                // The regrowth countdown stays: it is a status ("severed, back in Xm"), not a
-                // property, and the property block has nothing to say about it. It is gated on
-                // isMechanicUnlocked, so it stays silent on a blade that was never given Grip.
-                if (!com.spege.insanetweaks.events.FleshboundEventHandler.isFleshbound(stack, world)
-                        && com.spege.insanetweaks.events.FleshboundEventHandler.isMechanicUnlocked(stack)
-                        && stack.hasTagCompound() && stack.getTagCompound().hasKey("FleshboundRegrowTime")) {
-                    NBTTagCompound tag = stack.getTagCompound();
-                    long remainingTicks = tag.getLong("FleshboundRegrowTime") - world.getTotalWorldTime();
-                    int remainingMinutes = Math.max(0, (int) Math.ceil((double) remainingTicks / 1200.0));
-                    
-                    int currentKills = tag.getInteger("SentientKills");
-                    int reqKills = tag.getInteger("FleshboundRegrowKills");
-                    int progress = Math.min(50, Math.max(0, 50 - (reqKills - currentKills)));
-                    
-                    myLines.add(TextFormatting.GRAY + "- Fleshbound Regrowth: [" + remainingMinutes + "m] / [" + progress + "/50]");
-                }
-            }
-        }
+        // The Fleshbound regrowth countdown used to be printed here, for this one blade and with the
+        // kill requirement hardcoded to 50. FleshboundTooltipHandler now renders it for every stack
+        // that actually carries the 'grip' property, reading the real config values.
 
         // Magical Adaptation (only visible if PotionCore is installed and providing
         // bonuses)

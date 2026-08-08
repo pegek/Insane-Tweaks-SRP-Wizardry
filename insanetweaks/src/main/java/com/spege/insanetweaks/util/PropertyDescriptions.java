@@ -34,9 +34,9 @@ public class PropertyDescriptions {
         DESCRIPTIONS.put("magically_adapted",
                 "The catalyst is suffused with refined arcane tissue, amplifying magic damage output beyond that of ordinary foci.");
         DESCRIPTIONS.put("arcane_adaptation",
-                "This focus has been adapted to channel Abomination magic. Higher levels reduce the mana penalty imposed on foreign spells.");
+                "This focus has been adapted to channel Abomination magic, which no ordinary wand can cast.");
         DESCRIPTIONS.put("adaptation_upgrade",
-                "Allows a focus to channel Abomination spells. Further adaptation softens, then removes, the mana backlash imposed on non-InsaneTweaks spells.");
+                "This focus has been adapted to channel Abomination magic, which no ordinary wand can cast.");
         DESCRIPTIONS.put("ashen_legacy",
                 "This relic refuses to be claimed by simple ruin. Even when discarded, it endures flame, lava, cactus and violent blasts, lingering far longer than ordinary gear.");
         DESCRIPTIONS.put("living_armor_lore",
@@ -54,7 +54,10 @@ public class PropertyDescriptions {
         // Word-for-word the line SpellbladeTooltipHandler already showed for Fleshbound, so the
         // book-granted property and the earned one read identically.
         DESCRIPTIONS.put("grip",
-                "Grafted to the wielder's flesh. Prevents drops and disarm.");
+                "Grafted to the wielder's flesh: it cannot be thrown away, dragged out of the pack "
+                        + "or knocked from the hand. Dying severs the graft, and it regrows only "
+                        + "with time and further kills. Enough disarms in quick succession can tear "
+                        + "it loose outright.");
         // Present so the substring fallback below can never reach this id, but never returned:
         // getDescription builds the real line from the configured percentages instead.
         DESCRIPTIONS.put("arcane_sundering",

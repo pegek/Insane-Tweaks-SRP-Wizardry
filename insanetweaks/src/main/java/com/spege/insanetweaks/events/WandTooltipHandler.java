@@ -111,12 +111,7 @@ public class WandTooltipHandler {
 
         int adaptationLevel = customWand.getArcaneAdaptationLevel(stack);
         if (adaptationLevel > 0) {
-            int penaltyPercent = customWand.getArcaneAdaptationPenaltyPercent(stack);
-            String penaltyText = penaltyPercent > 0
-                    ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
-                    : "(No Foreign Mana Penalty)";
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel)
-                    + TextFormatting.RED + " " + penaltyText);
+            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel));
             if (isShiftPressed) {
                 String desc = PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {
@@ -163,10 +158,6 @@ public class WandTooltipHandler {
         }
 
         boolean isShiftPressed = GuiScreen.isShiftKeyDown();
-        int penaltyPercent = AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(adaptationLevel);
-        String penaltyText = penaltyPercent > 0
-                ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
-                : "(No Foreign Mana Penalty)";
 
         int insertIdx = findInsertIndex(tooltip);
         List<String> myLines = new ArrayList<String>();
@@ -177,8 +168,7 @@ public class WandTooltipHandler {
                 : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT"
                         + TextFormatting.DARK_GRAY + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
-        myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation " + toRoman(adaptationLevel)
-                + TextFormatting.RED + " " + penaltyText);
+        myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation " + toRoman(adaptationLevel));
 
         if (isShiftPressed) {
             String desc = PropertyDescriptions.getDescription("adaptation_upgrade");

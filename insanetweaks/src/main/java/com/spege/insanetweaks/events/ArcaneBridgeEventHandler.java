@@ -1,7 +1,7 @@
 package com.spege.insanetweaks.events;
 
-import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.init.ModElements;
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 import com.spege.insanetweaks.util.ArcaneAdaptedFruitHelper;
 import com.spege.insanetweaks.util.PlayerManaCompat;
@@ -11,7 +11,6 @@ import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -32,12 +31,10 @@ public class ArcaneBridgeEventHandler {
         }
 
         EntityPlayer player = (EntityPlayer) caster;
-        ResourceLocation spellId = event.getSpell().getRegistryName();
         net.minecraft.item.ItemStack castingStack = AdaptationUpgradeHelper.findCastingItem(player, event.getSpell());
         int adaptationLevel = AdaptationUpgradeHelper.getEffectiveAdaptationLevel(castingStack);
-        boolean isInsaneTweaksSpell = spellId != null && InsaneTweaksMod.MODID.equals(spellId.getResourceDomain());
 
-        if (isInsaneTweaksSpell) {
+        if (ModElements.isAbomination(event.getSpell())) {
             if (ArcaneAdaptedFruitHelper.hasConsumedFruit(player)) {
                 ArcaneAdaptedFruitHelper.activateFruitRegen(player, ArcaneAdaptedFruitHelper.FRUIT_REGEN_DURATION_TICKS);
             }
@@ -47,14 +44,27 @@ public class ArcaneBridgeEventHandler {
                 player.sendMessage(new net.minecraft.util.text.TextComponentString(
                         net.minecraft.util.text.TextFormatting.DARK_RED
                                 + "This focus has not adapted to Abomination magic."));
+                return;
+            }
+
+            // Casting our magic from someone else's focus - one that only qualifies through an
+            // applied Adaptation upgrade, not by being our own item. Off by default: every level
+            // multiplies by 1.0 until the config says otherwise.
+            if (AdaptationUpgradeHelper.getDefaultAdaptationLevel(castingStack) == 0) {
+                float multiplier = AdaptationUpgradeHelper.getForeignFocusAbominationCostMultiplier(
+                        AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(castingStack));
+                if (multiplier != 1.0f) {
+                    event.getModifiers().set(SpellModifiers.COST,
+                            event.getModifiers().get(SpellModifiers.COST) * multiplier, false);
+                }
             }
             return;
         }
 
+        // An adapted focus no longer surcharges foreign magic - that whole mechanic went away with
+        // the real element. The early return stays because it used to shadow the fruit penalty
+        // below, and dropping it would silently start charging adapted foci.
         if (adaptationLevel > 0) {
-            float currentCost = event.getModifiers().get(SpellModifiers.COST);
-            event.getModifiers().set(SpellModifiers.COST,
-                    currentCost * AdaptationUpgradeHelper.getForeignSpellCostMultiplier(adaptationLevel), false);
             return;
         }
 

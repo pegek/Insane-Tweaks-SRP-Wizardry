@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.1.1'
+version = '1.5.0'
 group = 'com.spege.srpwizmixins'
 archivesBaseName = 'srpwizmixins'
 
@@ -26,6 +26,10 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     // SRP compile-only (deobf). Runtime uses the real SRP already in the instance.
     implementation fg.deobf(files(rootProject.file('libs/SRParasites-1.10.7.jar')))
+    // JourneyMap: only its own v2 server API is touched (waypoint push), never an inherited
+    // Minecraft method - so compiling against the production jar is safe despite fg.deobf(files)
+    // being a no-op. Optional at runtime; see compat/SrpWizJourneyMapPlugin.
+    compileOnly fg.deobf(files(rootProject.file('libs/journeymap-forge-1.12.2-6.0.2.jar')))
     implementation 'zone.rong:mixinbooter:7.1'
 }
 
@@ -34,7 +38,7 @@ jar {
         attributes([
             "Specification-Title": "SRP&Wiz mixins",
             "Specification-Vendor": "spege",
-            "Specification-Version": "1.1.1",
+            "Specification-Version": "1.5.0",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor": "spege",

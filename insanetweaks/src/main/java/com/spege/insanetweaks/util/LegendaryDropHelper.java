@@ -18,8 +18,6 @@ import net.minecraft.nbt.NBTTagCompound;
  */
 public final class LegendaryDropHelper {
 
-    public static final int LEGENDARY_DROP_LIFESPAN = 72000;
-
     private LegendaryDropHelper() {
     }
 
@@ -33,9 +31,16 @@ public final class LegendaryDropHelper {
         return AdvPropertyResolver.has(stack, AdvPropertyRegistry.ASHEN_LEGACY);
     }
 
+    /**
+     * Stretches the drop's despawn timer to {@code ashenLegacy.dropLifespanTicks}.
+     *
+     * <p>Only ever raises it: another mod that already handed this drop a longer lifespan keeps
+     * whatever it set, which is why this is a comparison and not an assignment.
+     */
     public static void applyLegendaryDropRules(EntityItem entityItem) {
-        if (entityItem.lifespan < LEGENDARY_DROP_LIFESPAN) {
-            entityItem.lifespan = LEGENDARY_DROP_LIFESPAN;
+        int lifespan = com.spege.insanetweaks.config.ModConfig.ashenLegacy.dropLifespanTicks;
+        if (entityItem.lifespan < lifespan) {
+            entityItem.lifespan = lifespan;
         }
     }
 
