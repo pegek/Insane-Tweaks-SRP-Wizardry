@@ -22,8 +22,21 @@ import electroblob.wizardry.loot.RandomSpell;
  * a registered Abomination element becomes a legitimate loot theme, and those twelve spells - most
  * of them master-tier minion summons with no other gating - surface in vanilla dungeon chests and
  * mob drops.
+ *
+ * <p>🚨 <b>Priority 1500 is required.</b> Ancient Spellcraft's
+ * {@code com.windanesz.ancientspellcraft.mixin.ebwizardry.MixinRandomSpell} replaces
+ * {@code pickRandomSpell} wholesale and merges its body at the default priority 1000. Mixin refuses
+ * to inject into a method merged by a mixin whose priority is greater than or equal to your own -
+ * at 1000 this redirect died with {@code InvalidInjectionException} at load. Raising it to 1500
+ * makes the redirect apply to ASC's replacement body, which still contains the same
+ * {@code elements.isEmpty()} -> {@code addAll(Arrays.asList(Element.values()))} fallback this
+ * targets.
+ *
+ * <p>That makes this mixin <b>dependent on ASC's implementation keeping that call</b>. An Ancient
+ * Spellcraft update is a reason to re-check it: if ASC ever drops the fallback, this redirect binds
+ * to nothing and fails at load rather than silently.
  */
-@Mixin(value = RandomSpell.class, remap = false)
+@Mixin(value = RandomSpell.class, remap = false, priority = 1500)
 public abstract class MixinRandomSpellElements {
 
     @Redirect(method = "pickRandomSpell",
