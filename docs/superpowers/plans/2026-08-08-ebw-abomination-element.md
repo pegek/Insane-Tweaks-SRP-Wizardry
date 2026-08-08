@@ -935,9 +935,12 @@ attention away from the two that matter. In these classes, do **not** redirect:
 Because each mixin below names a single method, none of this can happen by accident — but if you
 find yourself widening a selector, that is the list to re-read first.
 
-`getSubItems` and `getSubBlocks` are **not** client-only: Forge strips vanilla's
-`@SideOnly(Side.CLIENT)` from them and `CreativeTabs` is a common class. They go in the ordinary
-`mixins` list, not `client`.
+`getSubItems` and `getSubBlocks` are **not** client-only, so they go in the ordinary `mixins` list,
+not `client`. Note the reason, because an earlier draft got it wrong: it is not that Forge strips a
+`@SideOnly` from them — checked against the Forge sources, neither `Item.getSubItems` nor
+`Block.getSubBlocks` carries one in the first place. `CreativeTabs` also has no class-level
+`@SideOnly` (only some of its static instances and inner methods do), so both targets are ordinary
+common-class code that loads fine on a dedicated server.
 
 - [ ] **Step 1: Create `MixinItemCrystalElements.java`**
 
