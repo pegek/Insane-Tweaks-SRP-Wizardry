@@ -306,6 +306,8 @@ added to `mixins.insanetweaks.late.json` (the mod's existing unconditional EBW-t
 | `WorldGenObelisk` | `spawnStructure` | same |
 | `RandomSpell` | `pickRandomSpell` | falls back to `Arrays.asList(values())` when no element filter is set |
 | `BlockPedestal` | `func_149666_a` / `getSubBlocks` | third element-keyed block, same `copyOfRange` shape |
+| `BlockPedestal` | `<clinit>` (static) | **fixes a hard crash** — see §9c |
+| `BlockRunestone` | `<clinit>` (static) | keeps the blockstate set at its pre-Abomination content |
 
 🚨 **The `RandomSpell` row is the highest-stakes entry in this table, not the lowest.** An earlier
 draft justified the loot redirects with "the spell filter returns an empty set, because our spells
@@ -345,9 +347,6 @@ lookups or snapshots, not random picks, and narrowing the array would corrupt lo
 - `ItemCrystal` / `ItemSpectralDust`: `getModelName` — metadata lookup plus a clamp against
   `values().length`
 - `BlockCrystal` / `BlockRunestone` / `BlockPedestal`: `func_176203_a` (`getStateFromMeta`)
-- **`BlockRunestone.<clinit>` and `BlockPedestal.<clinit>`** — each builds its `PropertyEnum` from
-  `Arrays.copyOfRange(Element.values(), 1, Element.values().length)`. Narrowing those shrinks the
-  block's legal blockstate variant set.
 - `WizardryItems.register` and `registerBannerPatterns` — the registration loops that create the
   per-element items and banner patterns in the first place.
 
@@ -382,6 +381,57 @@ An earlier draft listed `BlockRunestone.func_180661_e` (`createBlockState`) here
 wrong twice over: the method contains **no** `Element.values()` call at all (it only reads the static
 `ELEMENT` field), and listing it drew attention away from the `<clinit>` that does the real
 snapshotting.
+
+### 9c. `BlockPedestal.<clinit>` — the real "no room for a ninth element"
+
+🚨 **This one crashed the game, and this section reverses an instruction earlier drafts gave.**
+`BlockRunestone.<clinit>` and `BlockPedestal.<clinit>` were on the do-not-touch list above, on the
+grounds that narrowing "shrinks the block's legal blockstate variant set". Both **must** be
+redirected. The reasoning was incomplete: narrowing restores each property to *exactly* its
+pre-Abomination content — the seven non-MAGIC natives — because Abomination is the only thing
+removed and no world has ever held an Abomination pedestal or runestone. It is the **un-narrowed**
+version that is new, and for the pedestal it is fatal.
+
+`BlockPedestal` is the only EBW block with two blockstate properties, `ELEMENT` and a `NATURAL`
+boolean, and it packs them like this:
+
+```java
+meta = element.ordinal() + (natural ? ELEMENT.getAllowedValues().size() : 0)
+```
+
+Note `ordinal()`, not `ordinal() - 1` — so index 0 is wasted, since the property starts at FIRE.
+With eight elements the allowed set is 7, ordinals run 1–7, and metas run 1–7 and 8–14: maximum 14,
+inside the four bits a block gets. With nine, the allowed set is 8, ordinals run 1–8, and metas run
+1–8 and 9–**16**. Forge's per-block registry array is exactly 16 long, so registration dies with
+`ArrayIndexOutOfBoundsException: Index 16 out of bounds for length 16` in
+`GameData$BlockCallbacks.onAdd`, every launch.
+
+So the folk memory this whole project started from — *"there is no room for another element, it is a
+metadata limit"* — was **right after all**, just not where anyone remembered. It is not the enum, and
+it is not the crystal's subtypes. It is this one block's arithmetic, which had exactly enough
+headroom for the elements EBW ships and not one more.
+
+The decoder is safe because it reads the same `getAllowedValues().size()`, so encode and decode stay
+symmetric under narrowing. `getStateFromMeta` therefore stays un-redirected.
+
+`BlockCrystal.<clinit>` needs nothing: it uses the two-argument `PropertyEnum.create(String, Class)`,
+makes no `Element.values()` call at all, and its nine states with `meta = ordinal()` fit.
+
+### 9d. Ancient Spellcraft outranks us on `RandomSpell`
+
+`MixinRandomSpellElements` failed to apply on the first real launch:
+
+```
+InvalidInjectionException: … cannot inject into RandomSpell::pickRandomSpell
+merged by com.windanesz.ancientspellcraft.mixin.ebwizardry.MixinRandomSpell with priority 1000
+```
+
+ASC replaces `pickRandomSpell` wholesale. Mixin refuses to inject into a method merged by a mixin
+whose priority is greater than or equal to yours — the same wall `enchanteraser`'s
+`MixinContainerRepairErase` hit against `noexpensive`. Fixed with `priority = 1500`, which is sound
+because ASC's replacement body still contains the `elements.isEmpty()` →
+`addAll(Arrays.asList(Element.values()))` fallback this redirect targets. That makes the mixin
+dependent on ASC keeping that call: **an ASC update is a reason to re-check it.**
 
 🚨 **A consequence of the ordering that nothing else in this document states.** Because
 `ModElements.init()` deliberately runs *before* the three blocks' `<clinit>`, their `PropertyEnum`
