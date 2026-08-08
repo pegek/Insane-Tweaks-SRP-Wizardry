@@ -188,7 +188,7 @@ the imbuement altar, EntityRemnant and two renderers dereference the same table.
 
 ### Task 2: Dust and crystal assets, and un-hiding them
 
-`ItemSpectralDust.getModelName` and `ItemCrystal.getModelName` already derive `ebwizardry:spectral_dust_abomination` and `ebwizardry:crystal_abomination` from the element name — those loops were never redirected. Only the files are missing, and the two `getSubItems` redirects keep the items out of creative and JEI.
+`ItemSpectralDust.getModelName` and `ItemCrystal.getModelName` derive `ebwizardry:spectral_dust_abomination` and `ebwizardry:crystal_abomination` from the element name. Model registration goes through `WizardryModels.registerMultiTexturedModel`, which iterates `getSubItems` — so while the two redirects are in place, meta 8's model is not requested at all. Removing them is what creates the demand, which is why the files and the deletions must land together.
 
 Shipping files under `assets/ebwizardry/` is safe **for names EBW does not have**: resource packs merge at file granularity, so we add without replacing.
 
@@ -237,9 +237,11 @@ def recolour(src, dst, hue_deg):
             px[x, y] = (int(r2 * 255 + 0.5), int(g2 * 255 + 0.5), int(b2 * 255 + 0.5), a)
     img.save(dst)
 
-recolour("spectral_dust_necromancy.png", "spectral_dust_abomination.png", 0)
+recolour("spectral_dust_necromancy.png", "spectral_dust_abomination.png", 348)
 recolour("crystal_necromancy.png", "crystal_abomination.png", 0)
 ```
+
+The dust uses crimson (348°) rather than pure red, deliberately. Measured over opaque pixels, `spectral_dust_fire` sits at hue 11 and our first attempt at hue 0 landed close enough that both read as red-orange flame silhouettes of identical shape at 16 px — distinguishable side by side, easy to mis-grab from a hotbar. The crystal has no such neighbour (`crystal_fire` is hue 21 but a third brighter), so it stays at 0.
 
 Run it, then copy both outputs to `insanetweaks/src/main/resources/assets/ebwizardry/textures/items/`.
 
@@ -269,7 +271,16 @@ These are derived placeholders of the same quality as the existing `element_icon
 }
 ```
 
-No lang keys are needed: `ItemSpectralDust` and `ItemCrystal` do not override `getUnlocalizedName(ItemStack)`, so every metadata shares one name and the element is conveyed by the texture.
+- [ ] **Step 3b: Add the crystal's lang key**
+
+🚨 The two items differ here and it is easy to get backwards. `ItemSpectralDust` does **not** override `getUnlocalizedName(ItemStack)`, so all eight dusts share `item.ebwizardry:spectral_dust.name` and ours needs no key. `ItemCrystal` **does** override it, as `"item." + getModelName(stack)`, so it asks for `item.ebwizardry:crystal_abomination.name` — a key EBW ships for its own eight and cannot ship for ours. Without it the item's name renders as the literal key and JEI cannot find it by search.
+
+Add to `insanetweaks/src/main/resources/assets/insanetweaks/lang/en_us.lang`, next to the existing `element.abomination` line. Lang keys are global, so our file can supply a key in EBW's namespace; escape the colon exactly as EBW does:
+
+```
+item.ebwizardry\:crystal_abomination.name=Abominable Crystal
+item.ebwizardry\:crystal_abomination.desc=A crystal the colour of clotted blood, warm to the touch and faintly moving. Whatever it holds was alive once, and has not entirely stopped.
+```
 
 - [ ] **Step 4: Delete the two mixins and de-register them**
 

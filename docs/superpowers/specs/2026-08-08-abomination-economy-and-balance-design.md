@@ -50,17 +50,27 @@ exclusion mixins stay. §4 records what would have to change if that ever happen
 
 ### 1.1 Spectral dust and crystal, metadata 8
 
-`ItemSpectralDust.getModel` and `ItemCrystal.getModel` derive
-`ebwizardry:spectral_dust_<name>` / `ebwizardry:crystal_<name>` from the element name, and their
-model-registration loops iterate the whole enum. Our mixins narrow only `getSubItems` — the model
-loops were never redirected, so EBW is *already* asking for `spectral_dust_abomination` and
-`crystal_abomination` and silently getting nothing.
+`ItemSpectralDust.getModelName` and `ItemCrystal.getModelName` derive
+`ebwizardry:spectral_dust_<name>` / `ebwizardry:crystal_<name>` from the element name. Model
+registration runs through `WizardryModels.registerMultiTexturedModel`, which **iterates
+`getSubItems`** and calls `setCustomModelResourceLocation` per returned stack — so while our two
+redirects narrow `getSubItems`, meta 8's model is not requested *at all*. That is why the log is
+silent about it today: not a swallowed error, simply no registration. Removing the redirects is what
+creates the demand, and the files must land in the same change.
 
 Ship both models and both textures **from our jar, under `assets/ebwizardry/`**. This is safe
 because they are filenames EBW does not have: resource packs merge at file granularity, so we add
 without replacing. Then delete the two `getSubItems` redirects
 (`MixinItemSpectralDustElements`, `MixinItemCrystalElements`) so the items appear in creative and
 JEI.
+
+🚨 **The crystal needs a lang key; the dust does not.** `ItemCrystal` overrides
+`getUnlocalizedName(ItemStack)` as `"item." + getModelName(stack)`, so it asks for
+`item.ebwizardry:crystal_abomination.name` — a key EBW ships for its eight elements and cannot ship
+for ours. Without it the item's name renders as the raw key, and JEI cannot find it by search.
+`ItemSpectralDust` has no such override: all eight dusts share `item.ebwizardry:spectral_dust.name`
+and the element is carried by the texture alone. Supply the crystal key from our own lang file
+(keys are global; escape the colon the way EBW does).
 
 🚨 **The crystal *block* stays hidden.** `BlockCrystal` renders through a single
 `assets/ebwizardry/blockstates/crystal_block.json` that lists every variant. Shipping our own copy
