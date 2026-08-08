@@ -227,8 +227,21 @@ assigns itself.
 
 SRP inputs chosen because a repo-wide grep found no other recipe using them:
 `srparasites:ada_yelloweye_drop` (Yelloweye Bone — we already have a `yelloweye_gland` spell and
-summon yelloweyes, so the theme is established), `srparasites:ada_burrower_drop` (Figment),
-`srparasites:ada_viscera_drop` (Chipped Motherly Membrane), `srparasites:hive_scrap`.
+summon yelloweyes, so the theme is established), `srparasites:ada_vermin_drop` (Corrosive Mucus),
+`srparasites:ada_viscera_drop` (Chipped Motherly Membrane), `srparasites:hive_scrap`,
+`srparasites:assimilated_flesh`.
+
+🚨 **`srparasites:ada_burrower_drop` does not exist, and its lang entry says otherwise.** An earlier
+draft used it, on the strength of `item.srparasites.ada_burrower_drop.name=§cFigment` sitting in
+SRP's `en_us.lang`. There is no registration, no model and no texture for it — the lang line is an
+orphan. Only ten `ada_*_drop` items actually register. The failure mode is quiet: `safeItem` records
+a miss, `registerFallback` drops the recipe, and you get an item that exists, is ore-dicted, gates
+two other recipes and is uncraftable, with one warn line to show for it.
+
+**Verify an SRP ingredient against `SRPItems` bytecode, or at minimum against
+`assets/srparasites/models/item/`, never against the lang file.** `ada_vermin_drop` replaced it:
+same `§d` tier as `ada_viscera_drop`, and both are drops SRP's own tooltips pointedly do *not*
+describe as weapon components — which is exactly the line this currency is drawn along.
 
 Concrete recipes — starting points, tunable:
 
@@ -238,7 +251,7 @@ spectral dust (abomination) x2          magic_nucleus x1
   FCF                                     DKD
    H                                       V
 
-Y srparasites:ada_yelloweye_drop        B srparasites:ada_burrower_drop
+Y srparasites:ada_yelloweye_drop        B srparasites:ada_vermin_drop
 F srparasites:assimilated_flesh         D ebwizardry:spectral_dust meta 8
 C ebwizardry:magic_crystal (meta 0)     K ebwizardry:magic_crystal meta 8
 H srparasites:hive_scrap                V srparasites:ada_viscera_drop
