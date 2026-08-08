@@ -109,8 +109,7 @@ public final class ModElements {
             // runs in EBW's FMLInitializationEvent, long before anything calls isAbomination.
             return spell.getElement() == ABOMINATION;
         }
-        // Same registry-domain test as util/SpellDisplayUtils, which Task 13 deletes. Until then the
-        // two must not drift.
+        // The registry-domain test this mod used before the element existed.
         ResourceLocation id = spell.getRegistryName();
         return id != null && InsaneTweaksMod.MODID.equals(id.getResourceDomain());
     }

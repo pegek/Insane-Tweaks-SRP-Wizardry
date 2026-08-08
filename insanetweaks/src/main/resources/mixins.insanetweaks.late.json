@@ -23,12 +23,7 @@
     "MixinWorldGenObeliskElements",
     "MixinWorldGenShrineElements"
   ],
-  "client": [
-    "MixinGuiSpellDisplay",
-    "MixinGuiSpellInfo",
-    "MixinItemSpellBook",
-    "MixinItemScroll"
-  ],
+  "client": [],
   "server": [],
   "injectors": {
     "defaultRequire": 1

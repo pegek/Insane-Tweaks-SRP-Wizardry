@@ -493,11 +493,9 @@ public class InsaneTweaksMod implements IGuiHandler {
         // happened this launch, and must not be suppressible by a setting that itself just got reset.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ConfigResetNoticeHandler());
         if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellItemTooltipHandler());
             // Client half of the enchant quest-gate; the server-side veto is registered
             // unconditionally above. Both flags it reads are live, so no config gate here.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellBookGuiHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
