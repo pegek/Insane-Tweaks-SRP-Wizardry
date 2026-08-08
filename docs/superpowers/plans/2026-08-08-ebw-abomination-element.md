@@ -4,7 +4,7 @@
 
 **Goal:** Replace the faked `Element.MAGIC` "Abomination" styling in `insanetweaks` with a real Electroblob's Wizardry element registered through `WizardryEnumHelper.addElement`, and re-key the casting gate onto that element.
 
-**Architecture:** One owner class (`init/ModElements`) adds the enum constant from the `@Mod` constructor, before EBW's blocks snapshot `Element.values()`. Spell JSONs switch to `"element": "abomination"`. The casting gate compares elements instead of registry domains. Fourteen `@Redirect`s route EBW's own random-element pickers through `util/NativeElements`, which returns the eight native elements, so EBW never generates Abomination wizards, shrines or item subtypes. Six files implementing the old fake are deleted.
+**Architecture:** One owner class (`init/ModElements`) adds the enum constant from the `@Mod` constructor, before EBW's blocks snapshot `Element.values()`. Spell JSONs switch to `"element": "abomination"`. The casting gate compares elements instead of registry domains. Thirteen `@Redirect` sites across eleven mixin classes route EBW's own random-element pickers through `util/NativeElements`, which returns the eight native elements, so EBW never generates Abomination wizards, shrines or item subtypes. A twelfth mixin keeps the element name resolvable if registration ever fails. Six files implementing the old fake are deleted.
 
 **Tech Stack:** Minecraft 1.12.2, Forge 14.23.5.2860, Java 8 source level, Cleanroom MixinBooter (sponge-mixin 0.8.7), Gradle multi-project with ForgeGradle 3. Target dependency: Electroblob's Wizardry 4.3.19 (CurseMaven file id `8320066`).
 
@@ -609,6 +609,12 @@ import electroblob.wizardry.entity.living.EntityWizard;
  * {@code WizardryItems.getWand} for {@code <tier>_abomination_wand} and
  * {@code ItemWizardArmour.getArmour} for {@code <class>_abomination_<piece>} - registry names this
  * mod deliberately does not provide, because the element is not meant to generate in the world yet.
+ *
+ * <p>{@code getRandomItemOfTier} is the wizard's trade stock and contains <b>eight</b>
+ * {@code values()} calls forming four random-pick expressions - three feeding {@code getWand} and
+ * the fourth {@code getArmour}. A {@code @Redirect} with no {@code ordinal} binds to all eight,
+ * which is what keeps each expression self-consistent: the array and its {@code .length} must come
+ * from the same source.
  */
 @Mixin(value = EntityWizard.class, remap = false)
 public abstract class MixinEntityWizardElements {
@@ -821,43 +827,26 @@ git commit -m "feat(insanetweaks): keep Abomination out of shrine and obelisk wo
 ### Task 9: Exclude Abomination from loot generation
 
 **Files:**
-- Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinWizardryLootElements.java`
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinRandomSpellElements.java`
 - Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.late.json`
 
-- [ ] **Step 1: Create `MixinWizardryLootElements.java`**
+🚨 **This task originally had a second mixin, on `WizardryLoot.<clinit>`. It was removed because
+redirecting it is a bug, not a fix.** Do not re-add it.
 
-The call lives in `<clinit>`, so the handler is static.
+`WizardryLoot.<clinit>` builds `RUINED_SPELL_BOOK_LOOT_TABLES` as one `ResourceLocation` per element,
+and `TileEntityImbuementAltar` reads that array with **raw ordinal arithmetic** —
+`RUINED_SPELL_BOOK_LOOT_TABLES[element.ordinal() - 1]`, confirmed on bytecode as `ordinal`,
+`iconst_1`, `isub`, `aaload`. Narrowing the array leaves it seven entries long while ordinals still
+run to 8, so an Abomination element reaching the altar throws `ArrayIndexOutOfBoundsException` on the
+server thread inside a tile-entity tick. It is reachable, because `BlockReceptacle` bounds-checks
+incoming spectral dust against the **un-narrowed** `Element.values().length` and therefore accepts
+`/give ebwizardry:spectral_dust 1 8`.
 
-```java
-package com.spege.insanetweaks.mixins;
+Leaving it alone costs nothing. The array stays dense and its extra entry names a loot table that
+does not exist, which `LootTableManager` resolves to the empty table. A `<clinit>` redirect would
+also have been the worst possible place to depend on `ModElements` having initialised first.
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-
-import com.spege.insanetweaks.util.NativeElements;
-
-import electroblob.wizardry.constants.Element;
-import electroblob.wizardry.registry.WizardryLoot;
-
-/**
- * Keeps Abomination out of the per-element loot entries Wizardry builds in its static initialiser
- * ({@code Arrays.stream(Element.values()).filter(e -> e != MAGIC)…}).
- */
-@Mixin(value = WizardryLoot.class, remap = false)
-public abstract class MixinWizardryLootElements {
-
-    @Redirect(method = "<clinit>",
-            at = @At(value = "INVOKE",
-                     target = "Lelectroblob/wizardry/constants/Element;values()[Lelectroblob/wizardry/constants/Element;"))
-    private static Element[] insanetweaks$narrowLootElements() {
-        return NativeElements.values();
-    }
-}
-```
-
-- [ ] **Step 2: Create `MixinRandomSpellElements.java`**
+- [ ] **Step 1: Create `MixinRandomSpellElements.java`**
 
 ```java
 package com.spege.insanetweaks.mixins;
@@ -896,11 +885,11 @@ public abstract class MixinRandomSpellElements {
 }
 ```
 
-- [ ] **Step 3: Register both in the late config**
+- [ ] **Step 2: Register it in the late config**
 
-Add `"MixinWizardryLootElements"` and `"MixinRandomSpellElements"` to the `mixins` array.
+Add `"MixinRandomSpellElements"` to the `mixins` array in `mixins.insanetweaks.late.json`.
 
-- [ ] **Step 4: Build**
+- [ ] **Step 3: Build**
 
 Run:
 
@@ -910,11 +899,11 @@ Run:
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinWizardryLootElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinRandomSpellElements.java insanetweaks/src/main/resources/mixins.insanetweaks.late.json
-git commit -m "feat(insanetweaks): keep Abomination out of Wizardry loot generation"
+git add -- insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinRandomSpellElements.java
+git commit -m "feat(insanetweaks): keep Abomination out of Wizardry loot generation" -- insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinRandomSpellElements.java insanetweaks/src/main/resources/mixins.insanetweaks.late.json
 ```
 
 ---
@@ -926,10 +915,25 @@ git commit -m "feat(insanetweaks): keep Abomination out of Wizardry loot generat
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemSpectralDustElements.java`
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockCrystalElements.java`
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockRunestoneElements.java`
+- Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockPedestalElements.java`
 - Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.late.json`
 
-These four target `getSubItems` / `getSubBlocks` only. Redirecting `getModelName`,
-`getStateFromMeta` or `createBlockState` in the same classes would corrupt block and item loading.
+These five target `getSubItems` / `getSubBlocks` **only**.
+
+🚨 **The dangerous neighbours, corrected.** An earlier draft of this plan warned against redirecting
+`createBlockState`. That was the wrong method on both counts: `BlockRunestone.func_180661_e` contains
+no `Element.values()` call at all (it just reads the static `ELEMENT` field), and naming it drew
+attention away from the two that matter. In these classes, do **not** redirect:
+
+- `getModelName` (`ItemCrystal`, `ItemSpectralDust`) — metadata lookup with a clamp against
+  `values().length`
+- `func_176203_a` / `getStateFromMeta` (all three blocks) — indexed by the meta parameter
+- **`BlockRunestone.<clinit>` and `BlockPedestal.<clinit>`** — each builds its `PropertyEnum` from
+  `Arrays.copyOfRange(Element.values(), 1, Element.values().length)`. Narrowing those shrinks the
+  block's legal blockstate variants, which is metadata corruption rather than a cosmetic fix.
+
+Because each mixin below names a single method, none of this can happen by accident — but if you
+find yourself widening a selector, that is the list to re-read first.
 
 `getSubItems` and `getSubBlocks` are **not** client-only: Forge strips vanilla's
 `@SideOnly(Side.CLIENT)` from them and `CreativeTabs` is a common class. They go in the ordinary
@@ -1059,10 +1063,48 @@ public abstract class MixinBlockRunestoneElements {
 }
 ```
 
-- [ ] **Step 5: Register all four in the late config**
+- [ ] **Step 4b: Create `MixinBlockPedestalElements.java`**
 
-Add `"MixinItemCrystalElements"`, `"MixinItemSpectralDustElements"`, `"MixinBlockCrystalElements"`
-and `"MixinBlockRunestoneElements"` to the `mixins` array.
+The pedestal is the third element-keyed block and was missed by the first sweep of this plan. Its
+`getSubBlocks` has the same `Arrays.copyOfRange(Element.values(), 1, Element.values().length)` shape
+as the runestone's — two `values()` calls in one expression, both redirected by a selector with no
+`ordinal`, which is what keeps the array and its length consistent.
+
+```java
+package com.spege.insanetweaks.mixins;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+import com.spege.insanetweaks.util.NativeElements;
+
+import electroblob.wizardry.block.BlockPedestal;
+import electroblob.wizardry.constants.Element;
+
+/**
+ * Same reasoning as {@code MixinBlockCrystalElements}, for imbuement pedestals.
+ *
+ * <p>{@code <clinit>} and {@code getStateFromMeta} are deliberately untouched: the former builds the
+ * {@code PropertyEnum} from the full enum and narrowing it would shrink the block's legal
+ * blockstate variants.
+ */
+@Mixin(value = BlockPedestal.class, remap = false)
+public abstract class MixinBlockPedestalElements {
+
+    @Redirect(method = { "func_149666_a", "getSubBlocks" },
+            at = @At(value = "INVOKE",
+                     target = "Lelectroblob/wizardry/constants/Element;values()[Lelectroblob/wizardry/constants/Element;"))
+    private Element[] insanetweaks$narrowPedestalSubtypes() {
+        return NativeElements.values();
+    }
+}
+```
+
+- [ ] **Step 5: Register all five in the late config**
+
+Add `"MixinItemCrystalElements"`, `"MixinItemSpectralDustElements"`, `"MixinBlockCrystalElements"`,
+`"MixinBlockRunestoneElements"` and `"MixinBlockPedestalElements"` to the `mixins` array.
 
 - [ ] **Step 6: Build**
 
@@ -1077,8 +1119,8 @@ Expected: `BUILD SUCCESSFUL`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemCrystalElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemSpectralDustElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockCrystalElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockRunestoneElements.java insanetweaks/src/main/resources/mixins.insanetweaks.late.json
-git commit -m "feat(insanetweaks): hide the Abomination crystal, dust, crystal block and runestone subtypes"
+git add -- insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemCrystalElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemSpectralDustElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockCrystalElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockRunestoneElements.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockPedestalElements.java
+git commit -m "feat(insanetweaks): hide the Abomination crystal, dust and the three element-keyed blocks" -- insanetweaks/src/main/java/com/spege/insanetweaks/mixins insanetweaks/src/main/resources/mixins.insanetweaks.late.json
 ```
 
 ---
@@ -1665,8 +1707,15 @@ Each of these must show a red **Abomination**, not a grey "None":
 
 - [ ] **Step 6: Check the ninth subtype is gone**
 
-In creative and in JEI, search `magic crystal`, `spectral dust`, `crystal block` and `runestone`.
-Expected: eight variants each, no Abomination one, no missing-model placeholder.
+In creative and in JEI, search `magic crystal`, `spectral dust`, `crystal block`, `runestone` and
+`pedestal`. Expected: no Abomination variant of any of them, and no missing-model placeholder.
+
+Then check the one place a narrowed array could have gone wrong rather than merely quiet: put a
+spectral dust of each element into an imbuement altar's receptacles and run it. The altar indexes its
+ruined-spell-book loot tables by raw ordinal, which is exactly why `WizardryLoot.<clinit>` is **not**
+redirected. Fetch an Abomination dust explicitly with `/give ebwizardry:spectral_dust 1 8` — it is
+hidden from creative and JEI but still obtainable — and confirm the altar consumes it without an
+`ArrayIndexOutOfBoundsException` in the log.
 
 - [ ] **Step 7: Check worldgen and spawning**
 

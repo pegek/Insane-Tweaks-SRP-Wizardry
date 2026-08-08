@@ -290,36 +290,68 @@ added to `mixins.insanetweaks.late.json` (the mod's existing unconditional EBW-t
 | target class | method | failure being prevented |
 |---|---|---|
 | `EntityWizard` | `func_180482_a` / `onInitialSpawn` | `values()[rand.nextInt(len-1)+1]` — random wizard element |
-| `EntityWizard` | `getRandomItemOfTier` | `values()[rand.nextInt(len)]` feeding `WizardryItems.getWand`, for trades and gear |
+| `EntityWizard` | `getRandomItemOfTier` | **eight** `values()` calls forming four `values()[rand.nextInt(len)]` expressions — three feed `WizardryItems.getWand`, the fourth feeds `getArmour`; this is the wizard's trade stock, wands **and armour** |
 | `EntityWizard` | `populateSpells` (static) | when the passed element is MAGIC, picks a random one |
 | `EntityEvilWizard` | `func_180482_a` / `onInitialSpawn` | random wizard element |
 | `EntityRemnant` | `func_180482_a` / `onInitialSpawn` | random remnant element |
 | `WorldGenShrine` | `spawnStructure` | random structure element → Abomination runestones with no model |
 | `WorldGenObelisk` | `spawnStructure` | same |
-| `WizardryLoot` | `<clinit>` (static) | `Arrays.stream(values()).filter(e != MAGIC)…` builds per-element loot entries |
 | `RandomSpell` | `pickRandomSpell` | falls back to `Arrays.asList(values())` when no element filter is set |
+| `BlockPedestal` | `func_149666_a` / `getSubBlocks` | third element-keyed block, same `copyOfRange` shape |
 
-🚨 **The two loot rows are the highest-stakes entries in this table, not the lowest.** An earlier
-draft justified them with "the spell filter returns an empty set, because our spells are
-`treasure: false`". That is false, and measured: only **two** of the fourteen spell JSONs
+🚨 **The `RandomSpell` row is the highest-stakes entry in this table, not the lowest.** An earlier
+draft justified the loot redirects with "the spell filter returns an empty set, because our spells
+are `treasure: false`". That is false, and measured: only **two** of the fourteen spell JSONs
 (`call_of_demise` and the disabled `test_projectile`) close `treasure`/`trades`/`looting`. The other
-twelve leave all three open. So a registered Abomination element without these redirects becomes a
-legitimate loot and trade theme, and those twelve spells — mostly master-tier minion summons with no
-other gating — appear in vanilla dungeon chests, wizard trades and mob drops. Closing the flags in
-the JSONs would be an alternative, but it would also disable the same spells for any future
-deliberate loot placement; the redirects keep that door available.
+twelve leave all three open. So a registered Abomination element without this redirect becomes a
+legitimate loot theme, and those twelve spells — mostly master-tier minion summons with no other
+gating — appear in vanilla dungeon chests and mob drops. Closing the flags in the JSONs would be an
+alternative, but it would also disable the same spells for any future deliberate loot placement; the
+redirect keeps that door available.
+
+🚨 **`WizardryLoot.<clinit>` was in this table and has been removed — redirecting it is a bug.** It
+builds `RUINED_SPELL_BOOK_LOOT_TABLES` as one `ResourceLocation` per element, and
+`TileEntityImbuementAltar` reads it with **raw ordinal arithmetic**:
+`RUINED_SPELL_BOOK_LOOT_TABLES[element.ordinal() - 1]` (verified on bytecode: `ordinal`, `iconst_1`,
+`isub`, `aaload`). Narrowing the array shrinks it from eight entries to seven while ordinals still
+run to 8, so an Abomination element reaching the altar throws `ArrayIndexOutOfBoundsException` on the
+server thread inside a tile-entity tick. It is reachable — the receptacle bounds-checks incoming dust
+against the *un-narrowed* `Element.values().length`, so `/give ebwizardry:spectral_dust 1 8` gets in.
+
+Leaving it alone costs nothing: the array stays dense, and the extra entry names a loot table that
+does not exist, which `LootTableManager` resolves to the empty table. A `<clinit>` redirect would
+also have been the least forgiving possible place to depend on `ModElements` having initialised
+first. If Abomination ruined spell books ever need suppressing, the hook is the altar or the
+receptacle, never the shared array.
 | `ItemCrystal` | `func_150895_a` / `getSubItems` | ninth subtype with no model, in creative and JEI |
 | `ItemSpectralDust` | `func_150895_a` / `getSubItems` | same |
 | `BlockCrystal` | `func_149666_a` / `getSubBlocks` | same, for the block |
 | `BlockRunestone` | `func_149666_a` / `getSubBlocks` | same |
 
 🚨 **Do NOT redirect these**, even though they call `Element.values()` in the same classes — they are
-lookups, not random picks, and narrowing the array would corrupt loading:
+lookups or snapshots, not random picks, and narrowing the array would corrupt loading:
 
-`EntityWizard`/`EntityEvilWizard`/`EntityRemnant`.`getElement()` and `func_70037_a`
-(`readEntityFromNBT`, `values()[nbt.getInteger("element")]`); `ItemCrystal`/`ItemSpectralDust`.`getModelName`;
-`BlockCrystal`/`BlockRunestone`.`func_176203_a` (`getStateFromMeta`);
-`BlockRunestone.func_180661_e` (`createBlockState`).
+- `EntityWizard` / `EntityEvilWizard` / `EntityRemnant`: `getElement()` (data-manager int) and
+  `func_70037_a` (`readEntityFromNBT`, `values()[nbt.getInteger(…)]` — note `EntityRemnant` spells
+  the NBT key `"Element"` with a capital E, unlike the two wizards)
+- `ItemCrystal` / `ItemSpectralDust`: `getModelName` — metadata lookup plus a clamp against
+  `values().length`
+- `BlockCrystal` / `BlockRunestone` / `BlockPedestal`: `func_176203_a` (`getStateFromMeta`)
+- **`BlockRunestone.<clinit>` and `BlockPedestal.<clinit>`** — each builds its `PropertyEnum` from
+  `Arrays.copyOfRange(Element.values(), 1, Element.values().length)`. Narrowing those shrinks the
+  block's legal blockstate variant set.
+- `WizardryItems.register` and `registerBannerPatterns` — the registration loops that create the
+  per-element items and banner patterns in the first place.
+
+An earlier draft listed `BlockRunestone.func_180661_e` (`createBlockState`) here instead. That was
+wrong twice over: the method contains **no** `Element.values()` call at all (it only reads the static
+`ELEMENT` field), and listing it drew attention away from the `<clinit>` that does the real
+snapshotting.
+
+Note that `BlockCrystal.<clinit>` is the odd one out: it uses the two-argument
+`PropertyEnum.create(String, Class)`, which snapshots through `clazz.getEnumConstants()` rather than
+through `Element.values()`. It is therefore invisible to a `values()` sweep while still binding the
+ordering constraint in §2 — a reminder that "no `values()` call" does not mean "no snapshot".
 
 Trimming is safe by construction because **Abomination is appended, so it always holds the last
 ordinal** — `NativeElements.values()` drops the tail and every pre-existing index is unchanged.
