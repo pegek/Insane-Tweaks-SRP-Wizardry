@@ -32,6 +32,18 @@ content mod's Java root is `insanetweaks/src/main/java/com/spege/insanetweaks/`.
 
 Work on a branch. Commit after each task.
 
+🚨 **Commit hygiene — this bit us once already.** `git commit` commits the whole **index**, not just
+what you personally staged, so if anything else is staged (another agent, an editor, an earlier
+aborted step) it silently rides along in your commit. Every commit in this plan must name its paths:
+
+```bash
+git commit -m "your message" -- path/one path/two
+```
+
+Note the order: `-m` and its message come **before** `--`. Writing `git commit -- <paths> -m "msg"`
+makes git read `-m` and the message as further pathspecs and fail. Run `git status --short` before
+and after every commit and confirm only what you intended moved.
+
 ---
 
 ### Task 1: Register the Abomination element
