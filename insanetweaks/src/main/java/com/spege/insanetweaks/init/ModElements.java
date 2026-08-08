@@ -31,10 +31,10 @@ import javax.annotation.Nullable;
  * {@code InsaneTweaksMod}'s own static initialisers never reach back into {@code init/}. {@code MODID}
  * is a compile-time constant and gets folded in, so referencing it triggers nothing; {@code LOGGER} is
  * a real {@code getstatic} and is guaranteed assigned before this runs, because the JVM completes
- * {@code InsaneTweaksMod.<clinit>} before {@code InsaneTweaksMod.<init>} and {@link #init()} is only
- * ever called from the latter. If a future static field on {@code InsaneTweaksMod} ever touched this
- * class transitively, that cycle would leave {@code LOGGER} null here and surface as an
- * {@code ExceptionInInitializerError} during mod construction with no obvious link back to this file.
+ * {@code InsaneTweaksMod.<clinit>} before any code that reads {@code LOGGER} can execute. If a future
+ * static field on {@code InsaneTweaksMod} ever touched this class transitively, that cycle would leave
+ * {@code LOGGER} null here and surface as an {@code ExceptionInInitializerError} during mod
+ * construction with no obvious link back to this file.
  */
 public final class ModElements {
 
@@ -62,8 +62,12 @@ public final class ModElements {
                     InsaneTweaksMod.MODID);
         } catch (Throwable t) {
             InsaneTweaksMod.LOGGER.error("[InsaneTweaks] Could not add the Abomination element to "
-                    + "Wizardry's Element enum. Falling back to a null element: spells keep working "
-                    + "but show as 'None', and the casting gate reverts to a registry-domain check.", t);
+                    + "Wizardry's Element enum. Spell JSONs still declare \"element\": \"abomination\"; "
+                    + "MixinElementFromName maps that to MAGIC so the spells still load, but they will "
+                    + "show as 'None' and the casting gate falls back to a registry-domain check. If "
+                    + "that mixin also failed to apply, the fourteen spells will load with no "
+                    + "properties at all - check for \"Parsing error loading spell property file\" "
+                    + "in the log.", t);
         }
 
         EXTENDED = registered != null;
@@ -72,7 +76,7 @@ public final class ModElements {
         if (EXTENDED) {
             InsaneTweaksMod.LOGGER.info(
                     "[InsaneTweaks] Abomination element registered at ordinal {}. EXTENDED=true.",
-                    Integer.valueOf(ABOMINATION.ordinal()));
+                    Integer.valueOf(registered.ordinal()));
         } else {
             InsaneTweaksMod.LOGGER.warn("[InsaneTweaks] Abomination element NOT registered. EXTENDED=false.");
         }
@@ -97,11 +101,12 @@ public final class ModElements {
         if (EXTENDED) {
             // Narrow window: Spell.getElement() reports MAGIC until SpellProperties.init() has run
             // for that spell, so between class load and that call this branch answers false for our
-            // own spells where the fallback below would answer true. Deliberately not ORing in the
-            // domain test to cover it - that would permanently re-couple this predicate to our
-            // registry domain, which is the coupling this whole change exists to remove. The window
-            // is unreachable in practice: SpellProperties.init() runs in EBW's FMLInitializationEvent,
-            // long before anything calls isAbomination.
+            // own spells where the fallback below would answer true - and permanently for any spell
+            // whose properties file fails to load, which EBW reports as an error of its own.
+            // Deliberately not ORing in the domain test to cover it - that would permanently
+            // re-couple this predicate to our registry domain, which is the coupling this whole
+            // change exists to remove. The window is unreachable in practice: SpellProperties.init()
+            // runs in EBW's FMLInitializationEvent, long before anything calls isAbomination.
             return spell.getElement() == ABOMINATION;
         }
         // Same registry-domain test as util/SpellDisplayUtils, which Task 13 deletes. Until then the
