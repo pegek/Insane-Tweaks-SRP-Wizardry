@@ -79,6 +79,14 @@ therefore stays exactly as it is. This is the one place where "add a file to the
 work, and the reason is the difference between one-file-per-name (models) and one-file-for-all
 (blockstates).
 
+🚨 **But hiding it is not the same as blocking it, and the altar does not care.**
+`getImbuementResult` accepts `Item.getItemFromBlock(crystal_block)` as well as the crystal item, so
+a player can feed nine magic crystals' worth of crystal block plus four dust into an altar and get
+`crystal_block` metadata 8 back: a block with no blockstate variant, no model, and no
+`crystal_block_to_crystals` recipe to reverse it. That is item loss, not a cosmetic gap, and it
+becomes reachable the moment §2.3 makes dust cheap. §1.4b's guard must cover this branch too —
+same key, "the result has no registered form", not "the element is Abomination".
+
 ### 1.2 Receptacle particles
 
 `BlockReceptacle.PARTICLE_COLOURS` is a `Map<Element, int[]>` populated for the eight vanilla
@@ -265,6 +273,15 @@ upgrade rather than a side attraction. Its shape mirrors `living_nucleus` (`" S 
 `ruined_spell_book`: shapeless, `minecraft:book` + 2 dust → 1 `ebwizardry:ruined_spell_book`.
 Combined with the four dust the altar consumes, one crafted spell book costs six dust.
 
+🚨 **This makes an EBW loot-only item renewable, deliberately.** EBW ships no recipe for
+`ruined_spell_book` at all — in the whole 4.3.19 jar it appears only in three loot tables. Ours
+makes it craftable, and because §1.3's altar table carries no `tiers` key, `RandomSpell` rolls over
+every tier: **master Abomination spell books become farmable**, at roughly one ruined book plus
+three magic crystals plus twelve SRP drops per roll. Reviewed and accepted on 2026-08-08 — the
+crystal-and-drop cost is the intended gate. If it ever proves too generous, the one-line lever is a
+`"tiers": ["novice", "apprentice", "advanced"]` on the altar pool, which pushes master spells back
+onto the sim-wizard drop and natural loot.
+
 `adaptation_upgrade` and `living_wand` keep their existing shapes; only the `itLivingNucleus`
 ingredient becomes `itMagicNucleus`.
 
@@ -293,6 +310,14 @@ Two sources, deliberately unequal:
    `sim_wizard_master`. `EntitySimBattlemage` inherits these through `getLootTable` and its ADEPT
    tier floor, so it needs no table of its own. The spell-book pool uses the same
    `ebwizardry:random_spell` function as §1.3, so gated spells exclude themselves.
+
+   🚨 **These three tables hard-code the dust metadata as `8`, and the recipes deliberately do not.**
+   Loot-table JSON has no way to compute `ModElements.ABOMINATION.ordinal()`; a code recipe does.
+   The asymmetry is accepted, but it has a sharp edge: if the pack ever gains a second
+   element-appending mod, the **recipes follow the new ordinal and the drops do not** — which is
+   worse than uniform hard-coding, because half the economy silently switches to another element's
+   dust. These three files are the first place to look, and the only defence is that no other mod in
+   DEv 1.2 appends an element.
 2. **A workbench recipe** turning SRP drops plus a magic crystal into dust (§2.2). Deliberately
    expensive and low-yield.
 
