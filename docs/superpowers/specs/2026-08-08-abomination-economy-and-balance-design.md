@@ -69,20 +69,46 @@ therefore stays exactly as it is. This is the one place where "add a file to the
 work, and the reason is the difference between one-file-per-name (models) and one-file-for-all
 (blockstates).
 
-### 1.2 Receptacle particles — no mixin needed
+### 1.2 Receptacle particles
 
-`BlockReceptacle.PARTICLE_COLOURS` is declared `public static final Map<Element, int[]>` and built
-with `Maps.newEnumMap(Element.class)`. The reference is final; **the map is not**. So the fix is one
-`put` of an Abomination colour triple, not an injection.
+`BlockReceptacle.PARTICLE_COLOURS` is a `Map<Element, int[]>` populated for the eight vanilla
+elements, and **five** places read it and dereference the result unchecked — `randomDisplayTick`,
+`TileEntityImbuementAltar`, `EntityRemnant.onUpdate`, `RenderImbuementAltar`, `RenderDonationPerks`.
+All five are client-side. The imbuement altar is the one a player meets first, since receptacles are
+how the altar works at all.
 
-This works because of ordering. `EnumMap`'s key universe comes from `Element.class.getEnumConstants()`
-at construction, and Forge's `EnumHelper.addEnum` clears that cache when it appends the constant. We
-register the element from the `@Mod` constructor; `BlockReceptacle.<clinit>` runs later, during block
-registration. By then the universe is nine elements wide.
+🚨 **The map cannot be written to after the fact, and the declaration hides that.** The field is
+`public static final Map`, and `<clinit>` fills a `Maps.newEnumMap(Element.class)` — but its last
+line is:
 
-Do the `put` in content's `init` phase, guarded on `ModElements.EXTENDED`. EBW is `required-after` in
-our `@Mod` dependencies, so no `Loader.isModLoaded` guard is needed. The map is a plain colour table
-with no client-only types, so this is side-safe.
+```java
+PARTICLE_COLOURS = Maps.immutableEnumMap((Map) map);
+```
+
+Guava's `ImmutableEnumMap.put` throws `UnsupportedOperationException` unconditionally. Because the
+*field* is declared as plain `java.util.Map`, a `PARTICLE_COLOURS.put(...)` call site compiles
+without a warning and dies at runtime. The first draft of this spec called for exactly that `put`; it
+would have been a hard crash on every correctly-configured launch, on both sides. Reflection is not
+an escape either — the pack runs Java 25, where the `Field.modifiers` trick no longer works.
+
+So it is a mixin, on the one writable moment: a `@Redirect` of the single `Maps.immutableEnumMap`
+invoke in `BlockReceptacle.<clinit>`, which adds Abomination to the still-mutable builder and then
+delegates. Verified descriptor:
+
+```
+Lcom/google/common/collect/Maps;immutableEnumMap(Ljava/util/Map;)Lcom/google/common/collect/ImmutableMap;
+```
+
+One occurrence in the class. Fixing it here covers all five read sites at once.
+
+The ordering reasoning that survives from the first draft: the builder is an `EnumMap`, whose key
+universe comes from `Element.class.getEnumConstants()` at construction, and Forge's
+`EnumHelper.addEnum` clears that cache when it appends a constant. We register from the `@Mod`
+constructor and `<clinit>` runs later, during block registration, so the universe is nine elements
+wide by then. That was always right — it was just attached to the wrong object.
+
+Routing: content, late config (`mixins.insanetweaks.late.json`), alongside the other EBW-targeting
+mixins. `BlockReceptacle` carries no class-level `@SideOnly`, so the mixin is side-safe.
 
 Result: the crash becomes the feature it should have been — Abomination dust glows red in a
 receptacle, like every other element glows its own colour.

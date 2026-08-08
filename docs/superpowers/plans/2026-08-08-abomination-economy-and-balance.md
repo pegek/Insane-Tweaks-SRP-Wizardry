@@ -24,7 +24,7 @@ What replaces TDD here, in order of strength:
 2. **Reading the artefact you just produced** — for JSON and asset tasks, the build cannot help you. Each such task has an explicit inspection step (parse the JSON, list the jar) instead.
 3. **A real launch of the DEv 1.2 instance** — Task 12, not optional.
 
-**This plan removes mixins and adds none.** That is unusual for this repo and it is the whole point of Task 1: the receptacle fix turned out to need a `Map.put`, not an injection. If you find yourself writing a `@Mixin` annotation, stop and re-read the task.
+**This plan removes three mixins and adds one.** Net −2. Task 1 adds `MixinBlockReceptacleColours`; Tasks 2 and 3 delete `MixinItemSpectralDustElements`, `MixinItemCrystalElements` and `MixinJeiArcaneWorkbenchElements`, and trim `MixinJeiImbuementAltarElements` to a single redirect. Outside Task 1, if you find yourself writing a `@Mixin` annotation, stop and re-read the task.
 
 Paths are relative to the repo root `E:\Isuth\modDev` unless stated otherwise. The content mod's Java root is `insanetweaks/src/main/java/com/spege/insanetweaks/`.
 
@@ -40,60 +40,118 @@ git commit -m "your message" -- path/one path/two
 
 ### Task 1: Abomination particle colours in receptacles
 
-Removes a client NPE. `BlockReceptacle.randomDisplayTick` does `int[] colours = PARTICLE_COLOURS.get(element)` and reads `colours[0]` with no null check; the map is an `EnumMap` populated for the eight vanilla elements only.
+Removes a client crash. **Five** places read `BlockReceptacle.PARTICLE_COLOURS` and dereference the result unchecked — `BlockReceptacle.randomDisplayTick`, `TileEntityImbuementAltar`, `EntityRemnant.onUpdate`, `RenderImbuementAltar`, `RenderDonationPerks` — and the map holds the eight vanilla elements only.
 
-The map is `public static final Map<Element, int[]>` — final reference, **mutable map** — so this is a `put`, not a mixin.
+🚨 **Read this before you write anything.** The first version of this task was wrong and was reverted in review; the trap is worth understanding so you do not walk back into it. The field is declared
+
+```java
+public static final Map<Element, int[]> PARTICLE_COLOURS;
+```
+
+and `<clinit>` does fill a `Maps.newEnumMap(Element.class)` — but its **last line** is `PARTICLE_COLOURS = Maps.immutableEnumMap((Map) map);`. Guava's `ImmutableEnumMap.put` throws `UnsupportedOperationException` unconditionally. Because the field's *declared* type is plain `java.util.Map`, a `PARTICLE_COLOURS.put(...)` compiles silently and then hard-crashes the game at runtime. Reflection is no escape either: the pack runs Java 25, where `Field.class.getDeclaredField("modifiers")` is filtered.
+
+The one writable moment is inside `<clinit>`, before the immutable copy is taken. So: a `@Redirect` of that single `Maps.immutableEnumMap` invoke, which adds Abomination to the still-mutable builder and delegates. Descriptor confirmed by `javap -p -c` on `ElectroblobsWizardry-4.3.19.jar`, one occurrence in the class:
+
+```
+385: invokestatic  #655  // Method com/google/common/collect/Maps.immutableEnumMap:(Ljava/util/Map;)Lcom/google/common/collect/ImmutableMap;
+388: putstatic     #428  // Field PARTICLE_COLOURS:Ljava/util/Map;
+```
 
 **Files:**
 - Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/init/ModElements.java`
-- Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java` (the `init(FMLInitializationEvent)` method, which begins at line 236)
+- Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java`
+- Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockReceptacleColours.java`
+- Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.late.json`
 
-- [ ] **Step 1: Add the colour table and installer to `ModElements`**
+- [ ] **Step 1: Undo the `init`-phase call**
 
-Append these members inside the `ModElements` class, after the existing `init()` method:
+Commit `5c14dd4` added `ModElements.installReceptacleColours()` and a call to it from `InsaneTweaksMod.init(FMLInitializationEvent)`. **Delete the call site entirely** and **delete the `installReceptacleColours()` method**, including its javadoc — its central claim ("the map itself is a mutable `EnumMap`") is false and must not survive.
+
+**Keep** the `RECEPTACLE_COLOURS` field, and move it up beside the other static fields at the top of the class rather than leaving it after the static initialiser.
+
+- [ ] **Step 2: Give `ModElements` the writer the mixin will call**
+
+Add, in place of the deleted method:
 
 ```java
     /**
-     * Flash, particle and fade colours for an Abomination receptacle, in EBW's own
-     * {@code {flash, particle, fade}} order. Deep red to match the element's {@code TextFormatting.RED}.
+     * Adds Abomination's colours to a receptacle colour table that is still being built.
+     *
+     * <p>Called from {@code MixinBlockReceptacleColours} during {@code BlockReceptacle.<clinit>},
+     * which is the only moment the table is writable: its final act is to wrap itself in a Guava
+     * {@code ImmutableEnumMap}, whose {@code put} throws. Five client-side call sites read that
+     * table and dereference the result without a null check, so an element missing from it is a
+     * crash, not a cosmetic gap.
+     *
+     * <p>Ordering is sound: the builder is an {@code EnumMap}, whose key universe comes from
+     * {@code Element.class.getEnumConstants()} at construction; Forge's {@code EnumHelper.addEnum}
+     * clears that cache when it appends a constant; and we append from the {@code @Mod} constructor,
+     * long before block registration runs this {@code <clinit>}.
      */
-    private static final int[] RECEPTACLE_COLOURS = { 0xD42A2A, 0xFF9090, 0x6E0B0B };
-
-    /**
-     * Adds Abomination to {@code BlockReceptacle.PARTICLE_COLOURS}.
-     *
-     * <p>Without this, {@code randomDisplayTick} NPEs on the client the moment Abomination dust
-     * sits in a receptacle: it calls {@code PARTICLE_COLOURS.get(element)} and dereferences the
-     * result unchecked.
-     *
-     * <p>No mixin is involved and none is needed. The field is {@code public static final}, but
-     * only the <em>reference</em> is final - the map itself is a mutable {@code EnumMap}. The
-     * ordering works out because {@code EnumMap} captures its key universe from
-     * {@code Element.class.getEnumConstants()} at construction, Forge's {@code EnumHelper.addEnum}
-     * clears that cache when it appends a constant, and we append from the {@code @Mod}
-     * constructor - long before {@code BlockReceptacle.<clinit>} runs during block registration.
-     *
-     * <p>Call from the FML init phase. Calling it earlier would force
-     * {@code BlockReceptacle.<clinit>} before EBW is ready.
-     */
-    public static void installReceptacleColours() {
+    public static void addReceptacleColour(java.util.Map<Element, int[]> colours) {
         if (!EXTENDED) {
             return;
         }
-        electroblob.wizardry.block.BlockReceptacle.PARTICLE_COLOURS.put(ABOMINATION, RECEPTACLE_COLOURS);
-        InsaneTweaksMod.LOGGER.info("[InsaneTweaks] Abomination receptacle particle colours installed.");
+        colours.put(ABOMINATION, RECEPTACLE_COLOURS);
     }
 ```
 
-- [ ] **Step 2: Call it from the init phase**
+- [ ] **Step 3: Write the mixin**
 
-In `InsaneTweaksMod.java`, inside `public void init(FMLInitializationEvent event)`, add as the **first** statement of the method body, before the `EntityRegistry.registerModEntity` calls:
+Create `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockReceptacleColours.java`:
 
 ```java
-        com.spege.insanetweaks.init.ModElements.installReceptacleColours();
+package com.spege.insanetweaks.mixins;
+
+import java.util.Map;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.spege.insanetweaks.init.ModElements;
+
+import electroblob.wizardry.block.BlockReceptacle;
+import electroblob.wizardry.constants.Element;
+
+/**
+ * Puts Abomination into {@code BlockReceptacle.PARTICLE_COLOURS} at the only moment that table can
+ * still be written to.
+ *
+ * <p>The field looks writable - it is declared as a plain {@code java.util.Map} - but
+ * {@code <clinit>} ends with {@code PARTICLE_COLOURS = Maps.immutableEnumMap(map)}, and Guava's
+ * {@code ImmutableEnumMap.put} throws unconditionally. A {@code put} call site therefore compiles
+ * without a warning and crashes the game. Redirecting the wrap itself is the only route.
+ *
+ * <p>Worth the injection because five client-side sites read this table and dereference the result
+ * unchecked - {@code randomDisplayTick}, {@code TileEntityImbuementAltar},
+ * {@code EntityRemnant.onUpdate}, {@code RenderImbuementAltar} and {@code RenderDonationPerks} -
+ * and one redirect covers all five.
+ */
+@Mixin(value = BlockReceptacle.class, remap = false)
+public abstract class MixinBlockReceptacleColours {
+
+    @Redirect(method = "<clinit>",
+            at = @At(value = "INVOKE",
+                     target = "Lcom/google/common/collect/Maps;immutableEnumMap(Ljava/util/Map;)Lcom/google/common/collect/ImmutableMap;"))
+    private static ImmutableMap<Element, int[]> insanetweaks$addAbominationColour(Map<Element, int[]> colours) {
+        ModElements.addReceptacleColour(colours);
+        return Maps.immutableEnumMap(colours);
+    }
+}
 ```
 
-- [ ] **Step 3: Build**
+Note there is **no static field** on this mixin — the colour array lives in `ModElements`, a plain class. A `private static final` initialiser on a mixin class fails verification when the merged `<clinit>` is built; `CLAUDE.md` documents that as a hard rule.
+
+- [ ] **Step 4: Register the mixin**
+
+Add `"MixinBlockReceptacleColours"` to the `mixins` array in `insanetweaks/src/main/resources/mixins.insanetweaks.late.json`, keeping the array alphabetically sorted — it goes first, before `"MixinBlockCrystalElements"`.
+
+This is a late config because `BlockReceptacle` is a mod class. That config has `"injectors": {"defaultRequire": 1}`, so a selector mistake is a load-time crash rather than a silent no-op — which is what we want here.
+
+- [ ] **Step 5: Build**
 
 ```bash
 ./gradlew :insanetweaks:build
@@ -101,16 +159,29 @@ In `InsaneTweaksMod.java`, inside `public void init(FMLInitializationEvent event
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 6: Verify the mixin will find its target**
+
+The compiler cannot check a mixin selector. Confirm the invoke still exists, exactly once, in the jar the mod is compiled against:
 
 ```bash
-git commit -m "feat(insanetweaks): Abomination receptacles get their own particle colours
+mkdir -p /c/Users/spege/AppData/Local/Temp/claude/E--Isuth-modDev/47d29113-de9e-4698-852f-8ca0056a95d8/scratchpad/verify && cd /c/Users/spege/AppData/Local/Temp/claude/E--Isuth-modDev/47d29113-de9e-4698-852f-8ca0056a95d8/scratchpad/verify && unzip -o -q /e/Isuth/modDev/notes/decompiled_mods/ebwizardry_source/ElectroblobsWizardry-4.3.19.jar "electroblob/wizardry/block/BlockReceptacle.class" && javap -p -c electroblob/wizardry/block/BlockReceptacle.class | grep -c "immutableEnumMap"
+```
 
-BlockReceptacle.randomDisplayTick dereferences PARTICLE_COLOURS.get(element)
-unchecked, so Abomination dust in a receptacle was a guaranteed client NPE.
-The map is a mutable EnumMap behind a final reference, so one put fixes it -
-no mixin. Works because EnumHelper.addEnum clears the enum-constant cache
-before EBW's <clinit> builds the map." -- insanetweaks/src/main/java/com/spege/insanetweaks/init/ModElements.java insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java
+Expected: `1`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git commit -m "fix(insanetweaks): write the receptacle colours where the map is still mutable
+
+The previous commit put Abomination straight into BlockReceptacle.PARTICLE_COLOURS
+from the init phase. That was a guaranteed startup crash: the field is declared as
+a plain java.util.Map, so the call compiled clean, but <clinit> ends with
+Maps.immutableEnumMap(...) and Guava's put throws unconditionally.
+
+The only writable moment is inside that <clinit>, before the wrap - so redirect the
+wrap. One injection covers all five unchecked read sites, not just randomDisplayTick:
+the imbuement altar, EntityRemnant and two renderers dereference the same table." -- insanetweaks/src/main/java/com/spege/insanetweaks/init/ModElements.java insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinBlockReceptacleColours.java insanetweaks/src/main/resources/mixins.insanetweaks.late.json
 ```
 
 ---
@@ -221,7 +292,7 @@ Leave `MixinBlockCrystalElements` alone — the crystal **block** stays hidden, 
 python -c "import json; d=json.load(open('insanetweaks/src/main/resources/mixins.insanetweaks.late.json')); print(len(d['mixins'])); print([m for m in d['mixins'] if 'Item' in m])"
 ```
 
-Expected: `14` and `[]`.
+Expected: `15` and `[]`. Fifteen, not fourteen: the array started at sixteen, Task 1 added `MixinBlockReceptacleColours`, and this task removes two.
 
 - [ ] **Step 6: Build**
 
@@ -1206,7 +1277,15 @@ Copy `insanetweaks/build/libs/insanetweaks-1.16.0.jar` into `C:\Users\spege\curs
 grep -nE "InvalidInjectionException|Scanned 0|VerifyError" "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/logs/cleanmix.log"
 ```
 
-Expected: no output. This plan removes three mixins and adds none, so the only expected change in that file is three fewer `APPLY` lines.
+Expected: no output.
+
+Then confirm the one **new** mixin actually applied — a missing `APPLY` line here is not "lazy loading", because `BlockReceptacle` is loaded during block registration on every launch:
+
+```bash
+grep -n "MixinBlockReceptacleColours" "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/logs/cleanmix.log"
+```
+
+Expected: an `APPLY … -> electroblob.wizardry.block.BlockReceptacle` line. Net across the plan: three mixins gone, one added.
 
 ```bash
 grep -nE "ruined_spell_book_abomination|Unable to load model.*(spectral_dust_abomination|crystal_abomination)|receptacle particle colours" "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/logs/latest.log"
