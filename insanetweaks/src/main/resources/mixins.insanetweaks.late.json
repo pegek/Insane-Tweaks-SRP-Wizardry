@@ -14,8 +14,6 @@
     "MixinEntityRemnantElements",
     "MixinEntitySummonedCreature",
     "MixinEntityWizardElements",
-    "MixinItemCrystalElements",
-    "MixinItemSpectralDustElements",
     "MixinParasiteEventEntity",
     "MixinRayOfPurification",
     "MixinSpell",
