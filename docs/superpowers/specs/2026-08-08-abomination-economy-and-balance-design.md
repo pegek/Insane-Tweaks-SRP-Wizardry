@@ -69,17 +69,23 @@ therefore stays exactly as it is. This is the one place where "add a file to the
 work, and the reason is the difference between one-file-per-name (models) and one-file-for-all
 (blockstates).
 
-### 1.2 Receptacle particles
+### 1.2 Receptacle particles — no mixin needed
 
-Fix the NPE by `@Redirect`ing the `Map.get` invoke inside
-`BlockReceptacle.func_180655_c` (`randomDisplayTick`) rather than guarding the method. When the
-lookup returns null, substitute an Abomination colour triple. This turns a crash into the feature
-it should have been: the dust glows red in a receptacle like every other element glows its own
-colour.
+`BlockReceptacle.PARTICLE_COLOURS` is declared `public static final Map<Element, int[]>` and built
+with `Maps.newEnumMap(Element.class)`. The reference is final; **the map is not**. So the fix is one
+`put` of an Abomination colour triple, not an injection.
 
-The method is `@SideOnly(Side.CLIENT)` in effect (it is a display tick), but the *class* is not, so
-the mixin loads on a server harmlessly. Put it in the existing early/compat config alongside the
-other EBW-targeting mixins.
+This works because of ordering. `EnumMap`'s key universe comes from `Element.class.getEnumConstants()`
+at construction, and Forge's `EnumHelper.addEnum` clears that cache when it appends the constant. We
+register the element from the `@Mod` constructor; `BlockReceptacle.<clinit>` runs later, during block
+registration. By then the universe is nine elements wide.
+
+Do the `put` in content's `init` phase, guarded on `ModElements.EXTENDED`. EBW is `required-after` in
+our `@Mod` dependencies, so no `Loader.isModLoaded` guard is needed. The map is a plain colour table
+with no client-only types, so this is side-safe.
+
+Result: the crash becomes the feature it should have been — Abomination dust glows red in a
+receptacle, like every other element glows its own colour.
 
 ### 1.3 The ruined spell book loot table
 
@@ -380,8 +386,8 @@ version nobody is running.
 
 ### 5.5 Verification checklist
 
-- Fresh launch, `logs/cleanmix.log`: the new receptacle mixin shows an `APPLY` line; no
-  `InvalidInjectionException`, `Scanned 0`, or `VerifyError`.
+- Fresh launch, `logs/cleanmix.log`: no `InvalidInjectionException`, `Scanned 0`, or `VerifyError`.
+  This spec removes mixins and adds none, so the only expected change is three fewer `APPLY` lines.
 - `logs/latest.log`: the `ruined_spell_book_abomination` WARN is gone.
 - No `Unable to load model` for `spectral_dust_abomination` / `crystal_abomination`.
 - Creative and JEI show the dust and the crystal item; the crystal **block** still shows eight
