@@ -312,7 +312,14 @@ come from nothing. The mod boots and the spells are hollow.
 
 **Files:**
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinElementFromName.java`
-- Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.early.json`
+- Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.compat.json`
+
+🚨 **Which early config.** This mod has two configs on the jar-manifest (early) route and they are
+split by target, not by timing: `mixins.insanetweaks.early.json` holds **vanilla**-class targets (the
+three `enchant.*` mixins), `mixins.insanetweaks.compat.json` holds early mixins whose target is a
+**mod** class (today `MixinTileEntityImbuementAltar`, targeting EBW). `Element` is a mod class, so
+this belongs in `compat.json`. Both are installed identically, so the early-vs-late argument below is
+unaffected by the choice.
 
 - [ ] **Step 1: Create the mixin**
 
@@ -356,10 +363,19 @@ public abstract class MixinElementFromName {
 }
 ```
 
-- [ ] **Step 2: Register it in the early config**
+- [ ] **Step 2: Register it in the early mod-target config**
 
-`insanetweaks/src/main/resources/mixins.insanetweaks.early.json` — add `"MixinElementFromName"` to
-the `mixins` array, so the file reads:
+`insanetweaks/src/main/resources/mixins.insanetweaks.compat.json` — add `"MixinElementFromName"` to
+the `mixins` array, alongside the existing `MixinTileEntityImbuementAltar`. Leave `"required"`,
+`"client"`, `"injectors"`, `"package"` and everything else in that file untouched, and do not touch
+`mixins.insanetweaks.early.json` at all.
+
+Before editing, confirm `compat.json` really is an early config whose `package` is
+`com.spege.insanetweaks.mixins`. A package mismatch would leave the entry unresolvable and the mixin
+would silently never apply — which, for a fallback that only runs after another failure has already
+happened, nobody would notice.
+
+For reference, `early.json` should remain exactly as it was:
 
 ```json
 {
@@ -369,7 +385,6 @@ the `mixins` array, so the file reads:
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinElementFromName",
     "enchant.MixinEnchantRandomly",
     "enchant.MixinEnchantmentHelperNaturalDiscovery",
     "enchant.MixinVillagerEnchantedBookTrade"

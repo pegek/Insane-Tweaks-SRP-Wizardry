@@ -168,12 +168,22 @@ that still boots, reported only in a line most players never read.
 `Element.fromName(Ljava/lang/String;)`; when `!ModElements.EXTENDED` **and** the argument equals
 `"abomination"`, it returns `Element.MAGIC`. It costs one boolean test on the normal path.
 
-It belongs in `mixins.insanetweaks.early.json` (the manifest route), not the late config: early
-configs are installed at coremod time, so the transformer is guaranteed to be in place before
-anything loads `Element` — whereas our own `@Mod` constructor loads `Element` during mod
-construction, in the same phase in which late configs are queued. Targeting a mod class from the
-early config is safe because Mixin resolves targets lazily, and `ebwizardry` is `required-after`
-anyway.
+It belongs on the **manifest (early) route**, not the late one: early configs are installed at
+coremod time, so the transformer is guaranteed to be in place before anything loads `Element` —
+whereas our own `@Mod` constructor loads `Element` during mod construction, the same phase in which
+late configs are queued. Confirmed against the pack's own `cleanmix.log`: early configs are prepared
+on the main thread ~14 s before `LateMixinBooter` logs its first "Queued late mixin config" line.
+
+Specifically it goes in **`mixins.insanetweaks.compat.json`**, not `mixins.insanetweaks.early.json`.
+This mod's two early configs are split by target, not by timing: `early.json` holds vanilla-class
+targets, `compat.json` holds early mixins aimed at a **mod** class — today
+`MixinTileEntityImbuementAltar`, whose target is EBW's `TileEntityImbuementAltar`. That existing
+entry is also the proof that an early config can carry an EBW target: the log shows it prepared at
+coremod time and applied normally.
+
+Note what degraded mode then widens: with `EXTENDED == false`, `SpellPredicate` and
+`RandomSpell$Serializer` also resolve `"abomination"` to `MAGIC`, so an advancement or loot entry
+written against the element would match EBW's own MAGIC spells. Nothing in the pack does that today.
 
 ### 4. Assets and lang
 
