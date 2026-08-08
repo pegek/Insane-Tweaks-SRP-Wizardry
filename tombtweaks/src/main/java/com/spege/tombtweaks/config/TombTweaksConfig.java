@@ -38,6 +38,8 @@ public class TombTweaksConfig {
                 com.spege.tombtweaks.effects.EffectPoolRegistry.invalidate();
                 // Same reason for the first-kill list: it is parsed once and cached per death.
                 com.spege.tombtweaks.util.FirstKillRewardRegistry.invalidate();
+                // And for the grave-decay protection lists, parsed once and consulted per stack.
+                com.spege.tombtweaks.util.GraveDecayProtection.invalidate();
             }
         }
     }

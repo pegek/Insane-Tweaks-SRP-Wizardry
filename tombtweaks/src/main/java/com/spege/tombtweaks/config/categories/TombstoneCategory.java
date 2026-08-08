@@ -95,6 +95,57 @@ public class TombstoneCategory {
     @Config.RangeInt(min = 1, max = 50)
     public int graveDecayMaxHistory = 10;
 
+    @Config.Comment({
+            "Stacks that grave decay treats as protected, matched on their root NBT.",
+            "Format: 'tag=value' matches a stack whose root NBT has a string tag named 'tag' equal to",
+            "'value', OR a list-of-strings tag named 'tag' that contains 'value'. A bare 'tag' with no",
+            "'=' matches on the tag merely being present.",
+            "The default names Insane Tweaks' 'Ashen Legacy' property - gear meant to survive being",
+            "dropped. A name no installed mod writes simply never matches and costs nothing.",
+            "NOTE: this only catches Ashen Legacy that was granted PER STACK (by a Property Book).",
+            "That mod also confers it from an item's class and from an enchantment, neither of which",
+            "writes any NBT - those two are covered by the item-prefix and enchantment lists below.",
+            "Empty = nothing is protected this way. Read live."
+    })
+    @Config.Name("Grave Decay Protected NBT")
+    public String[] graveDecayProtectedNbtStrings = { "insanetweaks_properties=ashen_legacy" };
+
+    @Config.Comment({
+            "Stacks carrying any of these enchantments are treated as protected, by registry name.",
+            "Both the applied 'ench' list and an enchanted book's 'StoredEnchantments' are checked.",
+            "The default is Insane Tweaks' Sentient Codex, which confers Ashen Legacy through the",
+            "enchantment rather than through NBT. Read live."
+    })
+    @Config.Name("Grave Decay Protected Enchantments")
+    public String[] graveDecayProtectedEnchantments = { "insanetweaks:sentientcodex" };
+
+    @Config.Comment({
+            "Items treated as protected, by exact registry name (e.g. 'minecraft:elytra').",
+            "Empty by default. Read live."
+    })
+    @Config.Name("Grave Decay Protected Items")
+    public String[] graveDecayProtectedItems = {};
+
+    @Config.Comment({
+            "Items treated as protected when their registry name STARTS WITH one of these, e.g.",
+            "'insanetweaks:living_' covers living_aegis, living_wand and the living armour set.",
+            "This is how gear that carries Ashen Legacy from its own item class is matched - such",
+            "gear has no marker NBT to look for, and listing every piece by hand ages badly.",
+            "A prefix nothing registers never matches. Read live."
+    })
+    @Config.Name("Grave Decay Protected Item Prefixes")
+    public String[] graveDecayProtectedItemPrefixes = {
+            "insanetweaks:living_", "insanetweaks:sentient_"
+    };
+
+    @Config.Comment({
+            "What protection above actually buys. ON: a protected stack never decays, so a grave can",
+            "sit forever holding nothing but protected gear. OFF: protection is only an ordering, and",
+            "protected stacks start decaying once every unprotected one is gone. Read live."
+    })
+    @Config.Name("Protected Items Never Decay")
+    public boolean graveDecayProtectedNeverDecay = true;
+
     // ----------------------------------------------------------------
     // MECHANICS NERFS
     // ----------------------------------------------------------------

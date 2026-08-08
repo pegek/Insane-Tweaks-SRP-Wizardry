@@ -1,6 +1,7 @@
 package com.spege.tombtweaks.events;
 
 import com.spege.tombtweaks.config.TombTweaksConfig;
+import com.spege.tombtweaks.util.GraveDecayProtection;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.InventoryHelper;
@@ -101,15 +102,31 @@ public class GraveDecayHandler {
             IItemHandler inv = (IItemHandler) getInventoryMethod.invoke(grave);
             if (inv == null) return;
 
+            // Two candidate lists, not one. Unprotected stacks are eaten first; protected ones are
+            // only reached once nothing else is left, and only when the config says protection is an
+            // ordering rather than an exemption.
             List<Integer> validSlots = new ArrayList<>();
+            List<Integer> protectedSlots = new ArrayList<>();
             for (int i = 0; i < inv.getSlots(); i++) {
-                if (!inv.getStackInSlot(i).isEmpty()) {
+                ItemStack inSlot = inv.getStackInSlot(i);
+                if (inSlot.isEmpty()) {
+                    continue;
+                }
+                if (GraveDecayProtection.isProtected(inSlot)) {
+                    protectedSlots.add(i);
+                } else {
                     validSlots.add(i);
                 }
             }
 
             if (validSlots.isEmpty()) {
-                return; // Grave is empty
+                if (protectedSlots.isEmpty()) {
+                    return; // Grave is empty
+                }
+                if (TombTweaksConfig.tombstone.graveDecayProtectedNeverDecay) {
+                    return; // Only protected stacks left, and they are exempt outright
+                }
+                validSlots = protectedSlots;
             }
 
             int selectedSlot = validSlots.get(world.rand.nextInt(validSlots.size()));
