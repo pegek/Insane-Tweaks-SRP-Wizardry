@@ -17,7 +17,7 @@
     },
     "N": {
       "type": "forge:ore_dict",
-      "ore": "itLivingNucleus"
+      "ore": "itMagicNucleus"
     }
   },
   "result": {

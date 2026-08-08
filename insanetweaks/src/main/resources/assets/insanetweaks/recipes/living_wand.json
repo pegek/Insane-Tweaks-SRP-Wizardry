@@ -8,7 +8,7 @@
   "key": {
     "N": {
       "type": "forge:ore_dict",
-      "ore": "itLivingNucleus"
+      "ore": "itMagicNucleus"
     },
     "V": {
       "item": "srparasites:vile_shell"
