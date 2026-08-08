@@ -8,7 +8,7 @@ public class SentientWandItem extends BaseCustomWandItem {
     @SuppressWarnings("null")
     public SentientWandItem() {
         super(Tier.MASTER, null, 0.80f, 1);
-        setMaxDamage(6500);
+        // Mana capacity comes from gear.wands (BaseCustomWandItem#getMaxDamage), not from here.
         this.setRegistryName("insanetweaks", "sentient_wand");
         this.setUnlocalizedName("sentient_wand");
         CreativeTabs tab = CreativeTabs.COMBAT;

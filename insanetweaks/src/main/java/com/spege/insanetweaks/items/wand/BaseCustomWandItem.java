@@ -13,11 +13,13 @@ import electroblob.wizardry.constants.Tier;
 import electroblob.wizardry.item.ItemWand;
 import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.SpellModifiers;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.Loader;
 import java.util.Arrays;
 import java.util.List;
@@ -166,6 +168,25 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
             }
         }
         return 0;
+    }
+
+    /**
+     * Insurance against a config lowered under a wand that already has more mana spent than the
+     * new capacity allows. EBW stores mana as {@code capacity - damage} with nothing clamping the
+     * result, so a wand can otherwise read a negative value, which {@code isManaEmpty} (an exact
+     * {@code == 0} check) does not recognise as empty - the wand then keeps its melee bonuses and
+     * refuses every spell instead of just being empty.
+     *
+     * <p>Our shipped defaults no longer cause this (they match what these wands have always held),
+     * but a pack author is free to set the config lower on a live world, and this is what keeps
+     * that from corrupting the wand's apparent state instead of just being restrictive.
+     */
+    @Override
+    public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+        super.onUpdate(stack, world, entity, itemSlot, isSelected);
+        if (this.getMana(stack) < 0) {
+            this.setMana(stack, 0);
+        }
     }
 
     public int getArcaneAdaptationLevel(ItemStack stack) {

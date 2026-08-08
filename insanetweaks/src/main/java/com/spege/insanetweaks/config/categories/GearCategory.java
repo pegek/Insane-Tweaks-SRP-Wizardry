@@ -294,20 +294,31 @@ public class GearCategory {
 
         @Config.Name("Living Wand Mana Capacity")
         @Config.Comment({
-                "How much mana a Living Wand holds before storage upgrades. EBW's own master wands",
-                "hold 2500, so this is where our wands earn the right to carry the big rituals.",
-                "Storage upgrades still multiply on top of it exactly as they do for any wand.",
-                "Read live - no restart needed. Default 3200." })
+                "How much mana a Living Wand holds before storage upgrades. This is the wand's",
+                "long-standing capacity - it used to be a hardcoded setMaxDamage(4000) in the item's",
+                "constructor and is now just exposed here instead. Storage upgrades still multiply on",
+                "top of it exactly as they do for any wand.",
+                "Mana is stored as (capacity - damage) with nothing clamping the result, so setting",
+                "this BELOW what a wand in an existing world already holds drives its stored mana",
+                "negative - the wand then reads as never-empty, keeps its melee bonuses and refuses",
+                "every spell. Lower it only with that in mind.",
+                "Read live - no restart needed. Default 4000." })
         @Config.RangeInt(min = 100, max = 100000)
-        public int livingManaCapacity = 3200;
+        public int livingManaCapacity = 4000;
 
         @Config.Name("Sentient Wand Mana Capacity")
         @Config.Comment({
-                "How much mana a Sentient Wand holds before storage upgrades. This is the endgame",
-                "wand, so it is the one that can afford Call of Demise without being emptied.",
-                "Read live - no restart needed. Default 4400." })
+                "How much mana a Sentient Wand holds before storage upgrades. This is the wand's",
+                "long-standing capacity - it used to be a hardcoded setMaxDamage(6500) in the item's",
+                "constructor and is now just exposed here instead. This is the endgame wand, the one",
+                "meant to afford Call of Demise without being emptied.",
+                "Mana is stored as (capacity - damage) with nothing clamping the result, so setting",
+                "this BELOW what a wand in an existing world already holds drives its stored mana",
+                "negative - the wand then reads as never-empty, keeps its melee bonuses and refuses",
+                "every spell. Lower it only with that in mind.",
+                "Read live - no restart needed. Default 6500." })
         @Config.RangeInt(min = 100, max = 100000)
-        public int sentientManaCapacity = 4400;
+        public int sentientManaCapacity = 6500;
 
         @Config.Name("Foreign Focus Abomination Cost (Adaptation I)")
         @Config.Comment({
