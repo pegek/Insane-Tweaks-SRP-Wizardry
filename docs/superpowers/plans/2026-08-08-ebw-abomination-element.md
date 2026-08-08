@@ -1343,10 +1343,15 @@ Expected from that grep once finished: no output.
 
 - [ ] **Step 8: Commit Tasks 11 and 12 together**
 
+Stage the six touched files explicitly — never a whole directory, this repo's working tree usually
+carries unrelated in-progress work:
+
 ```bash
-git add insanetweaks/src/main/java/com/spege/insanetweaks
+git add insanetweaks/src/main/java/com/spege/insanetweaks/events/ArcaneBridgeEventHandler.java insanetweaks/src/main/java/com/spege/insanetweaks/util/AdaptationUpgradeHelper.java insanetweaks/src/main/java/com/spege/insanetweaks/config/categories/GearCategory.java insanetweaks/src/main/java/com/spege/insanetweaks/items/wand/BaseCustomWandItem.java insanetweaks/src/main/java/com/spege/insanetweaks/items/spellblade/BridgeSpellblade.java insanetweaks/src/main/java/com/spege/insanetweaks/events/WandTooltipHandler.java insanetweaks/src/main/java/com/spege/insanetweaks/events/SpellbladeTooltipHandler.java insanetweaks/src/main/java/com/spege/insanetweaks/util/PropertyDescriptions.java
 git commit -m "feat(insanetweaks): gate casting on the Abomination element and drop the foreign-spell mana penalty"
 ```
+
+Then run `git status --short` and confirm nothing unexpected is staged.
 
 ---
 
@@ -1460,10 +1465,16 @@ Expected: `BUILD SUCCESSFUL`.
 
 - [ ] **Step 8: Commit**
 
+🚨 Never `git add -A` in this repo — the working tree routinely carries unrelated in-progress work
+across all six mods. Stage exactly these paths (the four deletions are already staged by `git rm` in
+Step 1):
+
 ```bash
-git add -A insanetweaks/src/main
+git add insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinSpell.java insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java insanetweaks/src/main/resources/mixins.insanetweaks.late.json insanetweaks/src/main/resources/assets/insanetweaks/lang/en_us.lang
 git commit -m "refactor(insanetweaks): delete the faked-element display layer, superseded by the real element"
 ```
+
+Before committing, run `git status --short` and confirm nothing unexpected is staged.
 
 ---
 
@@ -1473,46 +1484,35 @@ Both places, because this pair is the one that drifts: `build.gradle` feeds the 
 `mcmod.info`, while `VERSION` is what `@Mod` reports in the mod list.
 
 **Files:**
-- Modify: `insanetweaks/build.gradle:18`
-- Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java:109`
+- Modify: `insanetweaks/build.gradle` (the `version = '…'` line)
+- Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java` (the `VERSION` constant)
 
-- [ ] **Step 1: Bump `build.gradle`**
+🚨 Do not trust a line number or a base version written here — this repo's working tree is often
+mid-edit and both values move. Read them first.
 
-Change line 18 from:
-
-```groovy
-version = '1.14.1'
-```
-
-to:
-
-```groovy
-version = '1.15.0'
-```
-
-- [ ] **Step 2: Bump `VERSION`**
-
-Change line 109 from:
-
-```java
-    public static final String VERSION = "1.14.1";
-```
-
-to:
-
-```java
-    public static final String VERSION = "1.15.0";
-```
-
-- [ ] **Step 3: Verify they agree**
-
-Run:
+- [ ] **Step 1: Read the current version from both places**
 
 ```bash
 grep -n "^version" insanetweaks/build.gradle; grep -n 'VERSION = ' insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java
 ```
 
-Expected: both read `1.15.0`.
+Expected: two lines quoting the **same** version string. If they disagree, that drift is a
+pre-existing bug — fix it to the higher of the two as part of this step and say so in the commit
+message.
+
+- [ ] **Step 2: Bump the minor, reset the patch**
+
+This change adds a feature, so `1.14.2` becomes `1.15.0`, `1.15.3` becomes `1.16.0`, and so on. Edit
+both places to the new value: the `version = '…'` assignment in `insanetweaks/build.gradle` and the
+`public static final String VERSION = "…";` constant in `InsaneTweaksMod.java`.
+
+- [ ] **Step 3: Verify they agree**
+
+```bash
+grep -n "^version" insanetweaks/build.gradle; grep -n 'VERSION = ' insanetweaks/src/main/java/com/spege/insanetweaks/InsaneTweaksMod.java
+```
+
+Expected: both quote the new version, identically.
 
 - [ ] **Step 4: Build and commit**
 
@@ -1533,12 +1533,12 @@ This is where the work is actually proven. Nothing before this point can show th
 - [ ] **Step 1: Install the jar**
 
 ```bash
-ls insanetweaks/build/libs/
+ls insanetweaks/build/libs/; ls "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/mods/" | grep insanetweaks
 ```
 
-Copy `insanetweaks-1.15.0.jar` into
-`C:\Users\spege\curseforge\minecraft\Instances\DEv 1.2\mods\` and **delete the old
-`insanetweaks-1.14.1.jar`**. Two jars of one modid is a duplicate-mod crash.
+Copy the freshly built `insanetweaks-<new version>.jar` into
+`C:\Users\spege\curseforge\minecraft\Instances\DEv 1.2\mods\` and **delete the older
+`insanetweaks-*.jar` the second command listed**. Two jars of one modid is a duplicate-mod crash.
 
 - [ ] **Step 2: Launch the client and check the element registered**
 
