@@ -41,8 +41,17 @@ git commit -m "your message" -- path/one path/two
 ```
 
 Note the order: `-m` and its message come **before** `--`. Writing `git commit -- <paths> -m "msg"`
-makes git read `-m` and the message as further pathspecs and fail. Run `git status --short` before
-and after every commit and confirm only what you intended moved.
+makes git read `-m` and the message as further pathspecs and fail.
+
+One limit of the path-limited form: it only works for files git already tracks. A **new** file must
+be `git add`-ed first, by its exact path, and then it can be named on the commit like the rest:
+
+```bash
+git add -- path/to/new/File.java
+git commit -m "your message" -- path/to/new/File.java path/to/existing.json
+```
+
+Run `git status --short` before and after every commit and confirm only what you intended moved.
 
 ---
 
