@@ -196,16 +196,24 @@ public class ModRecipes {
         // methods: PENDING_MISSING is cleared by each registerFallback(), so a hoisted local would
         // record its miss once, lose it to the first recipe, and let the LATER recipes register
         // with an AIR ingredient.
+        //
+        // Our OWN magic_nucleus goes through safeItem() too, rather than naming ModItems.MAGIC_NUCLEUS
+        // directly, because the field exists whether or not the item was registered: it is created at
+        // class load but only enters the registry when modules.enableSrpEbWizardryBridge is on, and
+        // THIS method is not gated on that flag. With the bridge off, naming the field would register
+        // a recipe whose result has a null registry name - which JEI dereferences in
+        // getUniqueIdentifierForStack, and which packs as item id -1 and reads back as EMPTY over the
+        // wire. Via safeItem() the lookup simply misses and the recipe is dropped with a warn line.
         // ---------------------------------------------------------------------
         if (ModElements.EXTENDED) {
-            final int dustMeta = ModElements.ABOMINATION.ordinal();
+            final int elementMeta = ModElements.ABOMINATION.ordinal();
 
             // Dust from SRP leftovers. Deliberately expensive and low-yield: this is the fallback
             // for a supply that is meant to come from sim wizards, not the main road.
             registerFallback(event, "abomination_spectral_dust",
                     new ShapedOreRecipe(
                             new ResourceLocation(InsaneTweaksMod.MODID, "abomination_spectral_dust"),
-                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 2, dustMeta),
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 2, elementMeta),
                             " Y ",
                             "FCF",
                             " H ",
@@ -228,13 +236,13 @@ public class ModRecipes {
             registerFallback(event, "magic_nucleus",
                     new ShapedOreRecipe(
                             new ResourceLocation(InsaneTweaksMod.MODID, "magic_nucleus"),
-                            new ItemStack(ModItems.MAGIC_NUCLEUS),
+                            new ItemStack(safeItem(InsaneTweaksMod.MODID, "magic_nucleus")),
                             " B ",
                             "DKD",
                             " V ",
                             'B', new ItemStack(safeItem("srparasites", "ada_vermin_drop")),
-                            'D', new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta),
-                            'K', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, dustMeta),
+                            'D', new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                            'K', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, elementMeta),
                             'V', new ItemStack(safeItem("srparasites", "ada_viscera_drop"))));
 
             // Ruined spell books, so the altar has steady fuel and the spell path does not depend
@@ -245,8 +253,22 @@ public class ModRecipes {
                             new ResourceLocation(InsaneTweaksMod.MODID, "ruined_spell_book"),
                             new ItemStack(safeItem("ebwizardry", "ruined_spell_book")),
                             new ItemStack(net.minecraft.init.Items.BOOK),
-                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta),
-                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta)));
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta)));
+        } else {
+            // Say what the skip cost. logMissingSummary() cannot: nothing above ran, so no id was
+            // recorded and skippedRecipes stays 0, and the player would meet this as two recipes
+            // that quietly do not exist. magic_nucleus has no other acquisition path anywhere - no
+            // loot table, no drop, no second recipe - so losing its only one makes adaptation_upgrade
+            // and living_wand flatly uncraftable. Same reasoning as ParasiteNunchakuItems.logVerdict:
+            // a gate that declines in silence is a gate nobody can diagnose.
+            InsaneTweaksMod.LOGGER.warn(
+                    "[InsaneTweaks] ModRecipes: the Abomination element is not registered "
+                            + "(ModElements.EXTENDED=false), so its 3 recipes were skipped: there is no "
+                            + "Abomination spectral dust to build them from. magic_nucleus therefore has "
+                            + "NO way to be crafted, which in turn leaves adaptation_upgrade and "
+                            + "living_wand uncraftable. Look further up the log for the error from "
+                            + "ModElements explaining why the element could not be added.");
         }
 
         // ---------------------------------------------------------------------
