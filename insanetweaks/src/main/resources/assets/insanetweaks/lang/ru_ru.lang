@@ -159,6 +159,6 @@ entity.beckon_siv_minion.name=Миньон гибели
 element.abomination=Мерзость
 item.arcane_adapted_fruit.name=Тайно-адаптированный плод
 item.adaptation_upgrade.name=Улучшение адаптации
-item.insanetweaks:adaptation_upgrade.desc=Позволяет палочке использовать заклинания мерзости. Суммируется до III уровня; более высокие уровни снижают штраф к мане, налагаемый на не-InsaneTweaks заклинания.
+item.insanetweaks:adaptation_upgrade.desc=Адаптирует фокус для использования магии Мерзости, недоступной обычным палочкам. Суммируется до III уровня.
 advancement.insanetweaks:obtain_living_sentient_gear=Получите живое/разумное магическое снаряжение
 advancement.insanetweaks:obtain_living_sentient_gear.desc=Завладейте одной из затронутых паразитами реликвий искажённой магии.
