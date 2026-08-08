@@ -76,6 +76,15 @@ public final class BaublesSlotCompat {
         if (player == null) {
             return null;
         }
-        return baubles.api.BaublesApi.getBaublesHandler((EntityLivingBase) player);
+        // No cast to EntityLivingBase here, ever. BaublesEX overloads getBaublesHandler on both
+        // EntityLivingBase and EntityPlayer; original Baubles (<= 1.5.2) only has the EntityPlayer
+        // one, and both ship under modid "baubles", so isLoaded() cannot tell them apart. A cast
+        // pins the call to the BaublesEX-only descriptor and every invocation on original Baubles
+        // dies with NoSuchMethodError - here that is LivingDeathEvent, i.e. a server crash on the
+        // first death, taking the grave with it. Passing the EntityPlayer picks the overload both
+        // mods have, and under BaublesEX the two are bytecode-identical (same capability lookup).
+        //
+        // isItemValidForSlot below keeps its cast: that parameter is EntityLivingBase in both.
+        return baubles.api.BaublesApi.getBaublesHandler(player);
     }
 }

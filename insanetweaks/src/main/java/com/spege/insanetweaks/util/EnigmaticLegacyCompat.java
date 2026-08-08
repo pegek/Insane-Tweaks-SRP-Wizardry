@@ -51,8 +51,15 @@ public final class EnigmaticLegacyCompat {
         if (blessedRing == null && cursedRing == null) {
             return false;
         }
+        // No cast to EntityLivingBase here, ever. BaublesEX overloads getBaublesHandler on both
+        // EntityLivingBase and EntityPlayer; original Baubles (<= 1.5.2) only has the EntityPlayer
+        // one, and both ship under modid "baubles", so the Loader check above cannot tell them
+        // apart. A cast pins the call to the BaublesEX-only descriptor and every invocation on
+        // original Baubles dies with NoSuchMethodError - here, that meant a server crash on every
+        // parasite a player killed. Passing the EntityPlayer picks the overload both mods have,
+        // and under BaublesEX the two are bytecode-identical anyway (same capability lookup).
         baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi
-                .getBaublesHandler((net.minecraft.entity.EntityLivingBase) player);
+                .getBaublesHandler(player);
         if (handler == null) {
             return false;
         }
