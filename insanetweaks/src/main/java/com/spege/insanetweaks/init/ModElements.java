@@ -90,6 +90,37 @@ public final class ModElements {
     }
 
     /**
+     * Flash, particle and fade colours for an Abomination receptacle, in EBW's own
+     * {@code {flash, particle, fade}} order. Deep red to match the element's {@code TextFormatting.RED}.
+     */
+    private static final int[] RECEPTACLE_COLOURS = { 0xD42A2A, 0xFF9090, 0x6E0B0B };
+
+    /**
+     * Adds Abomination to {@code BlockReceptacle.PARTICLE_COLOURS}.
+     *
+     * <p>Without this, {@code randomDisplayTick} NPEs on the client the moment Abomination dust
+     * sits in a receptacle: it calls {@code PARTICLE_COLOURS.get(element)} and dereferences the
+     * result unchecked.
+     *
+     * <p>No mixin is involved and none is needed. The field is {@code public static final}, but
+     * only the <em>reference</em> is final - the map itself is a mutable {@code EnumMap}. The
+     * ordering works out because {@code EnumMap} captures its key universe from
+     * {@code Element.class.getEnumConstants()} at construction, Forge's {@code EnumHelper.addEnum}
+     * clears that cache when it appends a constant, and we append from the {@code @Mod}
+     * constructor - long before {@code BlockReceptacle.<clinit>} runs during block registration.
+     *
+     * <p>Call from the FML init phase. Calling it earlier would force
+     * {@code BlockReceptacle.<clinit>} before EBW is ready.
+     */
+    public static void installReceptacleColours() {
+        if (!EXTENDED) {
+            return;
+        }
+        electroblob.wizardry.block.BlockReceptacle.PARTICLE_COLOURS.put(ABOMINATION, RECEPTACLE_COLOURS);
+        InsaneTweaksMod.LOGGER.info("[InsaneTweaks] Abomination receptacle particle colours installed.");
+    }
+
+    /**
      * Whether the given spell belongs to this mod's magic.
      *
      * @param spell may be null
