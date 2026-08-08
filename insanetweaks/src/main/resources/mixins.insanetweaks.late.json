@@ -11,9 +11,12 @@
     "MixinEntitySummonedCreature",
     "MixinEntityWizardElements",
     "MixinParasiteEventEntity",
+    "MixinRandomSpellElements",
     "MixinRayOfPurification",
     "MixinSpell",
-    "MixinSpellMinion"
+    "MixinSpellMinion",
+    "MixinWorldGenObeliskElements",
+    "MixinWorldGenShrineElements"
   ],
   "client": [
     "MixinGuiSpellDisplay",
