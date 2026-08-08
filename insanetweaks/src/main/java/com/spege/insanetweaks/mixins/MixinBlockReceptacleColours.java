@@ -22,10 +22,15 @@ import electroblob.wizardry.constants.Element;
  * {@code ImmutableEnumMap.put} throws unconditionally. A {@code put} call site therefore compiles
  * without a warning and crashes the game. Redirecting the wrap itself is the only route.
  *
- * <p>Worth the injection because five client-side sites read this table and dereference the result
- * unchecked - {@code randomDisplayTick}, {@code TileEntityImbuementAltar},
- * {@code EntityRemnant.onUpdate}, {@code RenderImbuementAltar} and {@code RenderDonationPerks} -
- * and one redirect covers all five.
+ * <p>Five client-side sites read this table and dereference the result unchecked -
+ * {@code randomDisplayTick}, {@code TileEntityImbuementAltar}, {@code RenderImbuementAltar},
+ * {@code EntityRemnant.onUpdate} and {@code RenderDonationPerks} - and one redirect covers all five.
+ * Only three are reachable with Abomination today: the receptacle display tick and the two
+ * imbuement-altar paths. The other two are closed off by our own element exclusions -
+ * {@code EntityRemnant.onUpdate} is fed by {@code onInitialSpawn}, whose {@code Element.values()}
+ * {@code MixinEntityRemnantElements} already redirects to {@code NativeElements}, and
+ * {@code RenderDonationPerks} keys off EBW's own donation data. Covering all five costs nothing and
+ * stops being a question if either exclusion ever changes.
  */
 @Mixin(value = BlockReceptacle.class, remap = false)
 public abstract class MixinBlockReceptacleColours {
