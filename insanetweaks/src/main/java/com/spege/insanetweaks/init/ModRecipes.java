@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.ShapedOreRecipe;
+import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 /**
  * Registers fallback crafting recipes for all items dependent on srpextra.
@@ -177,6 +178,75 @@ public class ModRecipes {
                             "H",
                             'B', new ItemStack(safeItem("srparasites", "infectious_blade_fragment")),
                             'H', new ItemStack(safeItem("srparasites", "hardened_bone_handle"))));
+        }
+
+        // ---------------------------------------------------------------------
+        // Abomination dust economy. Registered in code rather than JSON because every one of these
+        // references the dust's METADATA, which is ModElements.ABOMINATION.ordinal() - a number a
+        // JSON file would have to hard-code. It happens to be 8 today only because nothing else in
+        // the pack adds an element.
+        //
+        // Skipped entirely in degraded mode: with no element there is no dust, and every recipe
+        // below would silently mean "necromancy dust" or worse. EXTENDED also implies Wizardry is
+        // present at all - the element is appended to ITS enum - so the ebwizardry lookups below
+        // need no separate Loader guard.
+        //
+        // Every safeItem() call is written out at its use site rather than hoisted into a local.
+        // That is deliberate and load-bearing, for the same reason bladeFrag()/hiveScrap() are
+        // methods: PENDING_MISSING is cleared by each registerFallback(), so a hoisted local would
+        // record its miss once, lose it to the first recipe, and let the LATER recipes register
+        // with an AIR ingredient.
+        // ---------------------------------------------------------------------
+        if (ModElements.EXTENDED) {
+            final int dustMeta = ModElements.ABOMINATION.ordinal();
+
+            // Dust from SRP leftovers. Deliberately expensive and low-yield: this is the fallback
+            // for a supply that is meant to come from sim wizards, not the main road.
+            registerFallback(event, "abomination_spectral_dust",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "abomination_spectral_dust"),
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 2, dustMeta),
+                            " Y ",
+                            "FCF",
+                            " H ",
+                            'Y', new ItemStack(safeItem("srparasites", "ada_yelloweye_drop")),
+                            'F', new ItemStack(safeItem("srparasites", "assimilated_flesh")),
+                            'C', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, 0),
+                            'H', new ItemStack(safeItem("srparasites", "hive_scrap"))));
+
+            // Magic nucleus. Shape mirrors living_nucleus (" S ", "FLF", " M ") so the two read as
+            // siblings. Consuming an Abomination crystal is what gives that crystal a job and puts
+            // the imbuement altar on the road to the wand upgrade instead of beside it.
+            //
+            // 'B' is ada_vermin_drop, NOT ada_burrower_drop: SRParasites 1.10.7 ships a lang entry
+            // for srparasites:ada_burrower_drop ("Figment") but never registers the item, and there
+            // is no model for it either - verified by scanning every class in the SRP jar plus
+            // swparasites and SRPExtra. Naming it would have made safeItem() record a miss and this
+            // recipe vanish silently. Vermin pairs with viscera anyway: both are the drops SRP's own
+            // tooltips do NOT call weapon components, which is exactly the split this item exists to
+            // draw.
+            registerFallback(event, "magic_nucleus",
+                    new ShapedOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "magic_nucleus"),
+                            new ItemStack(ModItems.MAGIC_NUCLEUS),
+                            " B ",
+                            "DKD",
+                            " V ",
+                            'B', new ItemStack(safeItem("srparasites", "ada_vermin_drop")),
+                            'D', new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta),
+                            'K', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, dustMeta),
+                            'V', new ItemStack(safeItem("srparasites", "ada_viscera_drop"))));
+
+            // Ruined spell books, so the altar has steady fuel and the spell path does not depend
+            // on a rare drop either. Four more dust go into the receptacles, so one crafted book
+            // costs six dust in total.
+            registerFallback(event, "ruined_spell_book",
+                    new ShapelessOreRecipe(
+                            new ResourceLocation(InsaneTweaksMod.MODID, "ruined_spell_book"),
+                            new ItemStack(safeItem("ebwizardry", "ruined_spell_book")),
+                            new ItemStack(net.minecraft.init.Items.BOOK),
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta),
+                            new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, dustMeta)));
         }
 
         // ---------------------------------------------------------------------
@@ -530,9 +600,14 @@ public class ModRecipes {
      *
      * <p>Using a unique name per recipe is mandatory in 1.12.2; duplicate names cause
      * silent overwrite or FMLMissingMappingsEvent warnings.
+     *
+     * <p>Takes {@link IRecipe} rather than {@code ShapedOreRecipe} so shapeless recipes get the
+     * same missing-ingredient protection. Nothing here is shape-specific - the miss check reads
+     * {@link #PENDING_MISSING}, and {@code setRegistryName} comes from {@code IForgeRegistryEntry},
+     * which {@code IRecipe} extends.
      */
     private static void registerFallback(RegistryEvent.Register<IRecipe> event,
-            String name, ShapedOreRecipe recipe) {
+            String name, IRecipe recipe) {
         if (!PENDING_MISSING.isEmpty()) {
             skippedRecipes++;
             InsaneTweaksMod.LOGGER.warn(
