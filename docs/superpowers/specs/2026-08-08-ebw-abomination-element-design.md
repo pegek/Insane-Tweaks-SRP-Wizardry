@@ -141,8 +141,25 @@ unadapted wand — a regression relative to the current behaviour. So `isAbomina
 - `EXTENDED == true` → `spell.getElement() == ABOMINATION`
 - `EXTENDED == false` → the current registry-domain test
 
-Degraded mode is then exactly the pre-change behaviour. `NativeElements` (§8) is gated on the same
+Degraded mode is then exactly the pre-change behaviour. `NativeElements` (§9) is gated on the same
 flag, so all exclusion mixins become no-ops too.
+
+🚨 **The fallback needs one mixin of its own, or it is a crash rather than a degradation.**
+`SpellProperties` parses the JSON element with the **one-argument** `Element.fromName(String)`, and
+that overload ends in `throw new IllegalArgumentException("No such element with unlocalised name: …")`
+— it is the two-argument overload that takes a default. So with `EXTENDED = false`, our fourteen
+spell JSONs saying `"element": "abomination"` would abort spell-property loading outright.
+
+`MixinElementFromName` closes it: `@Inject` at `HEAD`, `cancellable = true`, on
+`Element.fromName(Ljava/lang/String;)`; when `!ModElements.EXTENDED` **and** the argument equals
+`"abomination"`, it returns `Element.MAGIC`. It costs one boolean test on the normal path.
+
+It belongs in `mixins.insanetweaks.early.json` (the manifest route), not the late config: early
+configs are installed at coremod time, so the transformer is guaranteed to be in place before
+anything loads `Element` — whereas our own `@Mod` constructor loads `Element` during mod
+construction, in the same phase in which late configs are queued. Targeting a mod class from the
+early config is safe because Mixin resolves targets lazily, and `ebwizardry` is `required-after`
+anyway.
 
 ### 4. Assets and lang
 
@@ -155,7 +172,7 @@ flag, so all exclusion mixins become no-ops too.
     workbench call even though no Abomination wizard spawns. Purely cosmetic; change the string, not
     the key.
 - Removed: `insanetweaks.element.abomination` (the hack's private key).
-- **Nothing is shipped under the `ebwizardry` namespace.** See §8 for why the blockstate route does
+- **Nothing is shipped under the `ebwizardry` namespace.** See §9 for why the blockstate route does
   not work.
 
 ### 5. Spell migration
@@ -212,23 +229,30 @@ rather than one array: they read better in the config GUI, and they sidestep the
 entirely — Forge's `category = ""` rule only bans plain values on the *root*, but there is no reason
 to test that boundary here.
 
-### 8. Element on our own wands and armour
+### 8. Our wands and armour keep `element = null` — deliberately
 
-`LivingWandItem` and `SentientWandItem` currently pass `null` as the element; the four armour
-classes pass `null` too. Pass `ModElements.ABOMINATION` instead.
+An earlier draft of this spec proposed setting `ModElements.ABOMINATION` on `LivingWandItem`,
+`SentientWandItem` and the four armour classes, to trade our removed cost penalty for EBW's native
+elemental discount. **Rejected**, on two findings and one design call.
 
-This turns on EBW's native carrot in place of our removed stick.
-`ItemWizardArmour.applySpellModifiers` does
-`if (spell.getElement() == this.element) COST × armourClass.elementalCostReduction` — with `null`
-that branch never fires, because no spell has a null element.
+The design call, from the user: our wands and armour are the pack's top-end gear, and they are meant
+to be the best choice for *every* mage, including one who never casts an Abomination spell. An
+element-gated discount contradicts that outright.
 
-Two things to check during implementation rather than assume:
+The findings that make the alternative unattractive anyway:
 
-- All four of our armour classes **override** `applySpellModifiers`. Whether the reduction actually
-  applies depends on whether they call `super`; fix if not.
-- `ItemWizardArmour.isWearingFullSet` resolves pieces by registry name in the `ebwizardry`
-  namespace, so it returns `false` for our armour. This only affects the SAGE full-set bonus, which
-  we do not use.
+- All four armour classes **fully replace** `applySpellModifiers` — their own discount, no `super`
+  call — so setting the element alone would change nothing. Adding `super` would stack two cost
+  discounts on Abomination spells *and* two cooldown reductions on everything, because EBW writes
+  cooldown into a different modifier key (`SpellModifiers.set(Item, …)`) than our
+  `modifiers.set("cooldown", …)`.
+- On a wand, a non-null element additionally engages EBW's `ELEMENTAL_PROGRESSION_MODIFIER`, which
+  would make our wands level faster on Abomination spells than on anything else — the same
+  asymmetry, by a side door.
+
+So: no change to `ModItems`, to the wand classes, or to the armour classes. The whole difference
+between our magic and foreign magic is the casting gate in §6; balance lives in plain numbers (wand
+mana capacity, per-spell `cost`).
 
 ### 9. Isolating the element from EBW's own loops
 
@@ -236,16 +260,40 @@ Two things to check during implementation rather than assume:
 when `ModElements.EXTENDED` is false. It lives in `util/`, not in `mixins.*`: referencing a
 non-mixin helper from inside the mixin package throws `IllegalClassLoadError` (repo rule).
 
-Eleven target classes, all `@Redirect` on `Element.values()`, all in `mixins.insanetweaks.json`
-behind the late loader gated on `ebwizardry`:
+Eleven target classes and **thirteen** redirect sites, all `@Redirect` on `Element.values()`, all
+added to `mixins.insanetweaks.late.json` (the mod's existing unconditional EBW-targeting config):
 
-| target | failure being prevented |
-|---|---|
-| `EntityWizard`, `EntityEvilWizard`, `EntityRemnant` | random wizard element → `ItemWand.getWand` builds `<tier>_abomination_wand`, `ItemWizardArmour.getArmour` builds `<class>_abomination_<piece>`; neither exists |
-| `WorldGenShrine`, `WorldGenObelisk` | random structure element → shrine built from Abomination runestones that have no model |
-| `WizardryLoot`, `RandomSpell` | random element in loot generation → spell filter returns an empty set |
-| `ItemCrystal`, `ItemSpectralDust` | `getSubItems` emits a ninth subtype with no model, in creative and JEI |
-| `BlockCrystal`, `BlockRunestone` | `getSubBlocks` does the same for the two blocks |
+| target class | method | failure being prevented |
+|---|---|---|
+| `EntityWizard` | `func_180482_a` / `onInitialSpawn` | `values()[rand.nextInt(len-1)+1]` — random wizard element |
+| `EntityWizard` | `getRandomItemOfTier` | `values()[rand.nextInt(len)]` feeding `WizardryItems.getWand`, for trades and gear |
+| `EntityWizard` | `populateSpells` (static) | when the passed element is MAGIC, picks a random one |
+| `EntityEvilWizard` | `func_180482_a` / `onInitialSpawn` | random wizard element |
+| `EntityRemnant` | `func_180482_a` / `onInitialSpawn` | random remnant element |
+| `WorldGenShrine` | `spawnStructure` | random structure element → Abomination runestones with no model |
+| `WorldGenObelisk` | `spawnStructure` | same |
+| `WizardryLoot` | `<clinit>` (static) | `Arrays.stream(values()).filter(e != MAGIC)…` builds per-element loot entries |
+| `RandomSpell` | `pickRandomSpell` | falls back to `Arrays.asList(values())` when no element filter is set |
+| `ItemCrystal` | `func_150895_a` / `getSubItems` | ninth subtype with no model, in creative and JEI |
+| `ItemSpectralDust` | `func_150895_a` / `getSubItems` | same |
+| `BlockCrystal` | `func_149666_a` / `getSubBlocks` | same, for the block |
+| `BlockRunestone` | `func_149666_a` / `getSubBlocks` | same |
+
+🚨 **Do NOT redirect these**, even though they call `Element.values()` in the same classes — they are
+lookups, not random picks, and narrowing the array would corrupt loading:
+
+`EntityWizard`/`EntityEvilWizard`/`EntityRemnant`.`getElement()` and `func_70037_a`
+(`readEntityFromNBT`, `values()[nbt.getInteger("element")]`); `ItemCrystal`/`ItemSpectralDust`.`getModelName`;
+`BlockCrystal`/`BlockRunestone`.`func_176203_a` (`getStateFromMeta`);
+`BlockRunestone.func_180661_e` (`createBlockState`).
+
+Trimming is safe by construction because **Abomination is appended, so it always holds the last
+ordinal** — `NativeElements.values()` drops the tail and every pre-existing index is unchanged.
+
+Injections use the config's `defaultRequire: 1` (i.e. no `require = 0`). A silently missing redirect
+here does not degrade gracefully: it produces Abomination wizards holding a null wand and Abomination
+shrines made of absent blocks, hours later, in worldgen. Failing at load is the lesser evil, and the
+`EXTENDED=false` fallback cannot help — by then the element exists.
 
 The last four cannot be solved by shipping assets instead. Item models are one file per item, so
 `assets/ebwizardry/models/item/crystal_abomination.json` would merge cleanly — but **a blockstate is
@@ -258,13 +306,35 @@ enclosing method with `javap -p -c` before writing the selector — `grep -A` sp
 boundaries and produces `Scanned 0 target(s)` at load. Where one class calls `values()` from several
 methods, write one redirect per method.
 
-### 10. Cleanup
+### 10. Cleanup — larger than first assumed
 
-Delete `mixins/MixinGuiSpellInfo.java` and `util/SpellDisplayUtils.java`, drop the mixin from
-`mixins.insanetweaks.json`, remove the `insanetweaks.element.abomination` lang key, and grep for any
-remaining `SpellDisplayUtils` callers before deleting. Incidental benefit: `SpellDisplayUtils`
-imports `net.minecraft.client.resources.I18n`, a client-only class, so its removal takes a latent
-side-safety hazard with it.
+`SpellDisplayUtils` has **seven** consumers, not one. The fake element is re-applied at every surface
+EBW draws, which is exactly the maintenance burden a real element removes.
+
+Deleted outright:
+
+| file | what it faked |
+|---|---|
+| `util/SpellDisplayUtils.java` | the whole helper |
+| `mixins/MixinGuiSpellInfo.java` | spell-info GUI title and element line |
+| `mixins/MixinGuiSpellDisplay.java` | wand HUD spell name colour |
+| `mixins/MixinItemSpellBook.java` | spell-book tooltip element line |
+| `mixins/MixinItemScroll.java` | scroll tooltip element line |
+| `events/SpellBookGuiHandler.java` | redrew title + `Element:` line over EBW's own in `GuiSpellBook` |
+| `events/SpellItemTooltipHandler.java` | item tooltip element line |
+
+Trimmed, not deleted: `mixins/MixinSpell.java` loses
+`insanetweaks$makeOwnMagicSpellsAbominationColored` (`getDisplayNameWithFormatting`) and
+`insanetweaks$makeOwnMagicSpellComponentAbominationColored` (`getNameForTranslationFormatted`), and
+**keeps** `insanetweaks$nullSafeIsEnabled` — an unrelated null-safety fix on `Spell.isEnabled`.
+
+Also: drop `MixinGuiSpellInfo`, `MixinGuiSpellDisplay`, `MixinItemSpellBook` and `MixinItemScroll`
+from the `client` list in `mixins.insanetweaks.late.json`; remove the two
+`MinecraftForge.EVENT_BUS.register(...)` calls at `InsaneTweaksMod.java:491` and `:495`; remove the
+`insanetweaks.element.abomination` lang key.
+
+Incidental benefit: `SpellDisplayUtils` imports `net.minecraft.client.resources.I18n`, a client-only
+class, so its removal takes a latent side-safety hazard with it.
 
 ## Out of scope / future work
 
