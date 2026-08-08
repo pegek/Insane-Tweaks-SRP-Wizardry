@@ -11,7 +11,7 @@
     "looting": false
   },
   "tier": "apprentice",
-  "element": "magic",
+  "element": "abomination",
   "type": "attack",
   "cost": 15,
   "chargeup": 5,

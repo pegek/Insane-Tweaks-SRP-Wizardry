@@ -11,7 +11,7 @@
     "looting": true
   },
   "tier": "master",
-  "element": "magic",
+  "element": "abomination",
   "type": "minion",
   "cost": 120,
   "chargeup": 40,

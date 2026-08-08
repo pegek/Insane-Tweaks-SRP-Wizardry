@@ -11,7 +11,7 @@
     "looting": true
   },
   "tier": "master",
-  "element": "magic",
+  "element": "abomination",
   "type": "utility",
   "cost": 800,
   "chargeup": 100,
