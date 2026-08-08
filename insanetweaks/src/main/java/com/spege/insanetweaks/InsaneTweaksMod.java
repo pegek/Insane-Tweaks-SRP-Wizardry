@@ -151,6 +151,11 @@ public class InsaneTweaksMod implements IGuiHandler {
     // -------------------------------------------------------------------------
 
     public InsaneTweaksMod() {
+        // FIRST. Appends the Abomination constant to Wizardry's Element enum. Must precede both our
+        // own ModItems.<clinit> and EBW's RegistryEvent.Register<Block>, because BlockCrystal's
+        // <clinit> runs PropertyEnum.create(Element.class), which snapshots values() - an element
+        // added after that snapshot is not a legal blockstate value.
+        com.spege.insanetweaks.init.ModElements.init();
         // Must run before FML's first ConfigManager.sync (which fires later inside
         // FMLModContainer.constructMod) - see OldConfigBackup.
         com.spege.insanetweaks.config.OldConfigBackup.backupOldConfigIfPresent();
