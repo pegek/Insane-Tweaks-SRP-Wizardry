@@ -72,12 +72,23 @@ for ours. Without it the item's name renders as the raw key, and JEI cannot find
 and the element is carried by the texture alone. Supply the crystal key from our own lang file
 (keys are global; escape the colon the way EBW does).
 
-🚨 **The crystal *block* stays hidden.** `BlockCrystal` renders through a single
-`assets/ebwizardry/blockstates/crystal_block.json` that lists every variant. Shipping our own copy
-would *replace* EBW's file and take the other eight variants with it. `MixinBlockCrystalElements`
-therefore stays exactly as it is. This is the one place where "add a file to their domain" does not
-work, and the reason is the difference between one-file-per-name (models) and one-file-for-all
-(blockstates).
+**The crystal *block* stays hidden — by choice, not necessity.** An earlier draft claimed
+`BlockCrystal` renders from one `crystal_block.json` listing every variant, so ours would replace
+EBW's file. That is wrong. `WizardryModels` uses `new StateMap.Builder().withName(ELEMENT)
+.withSuffix("_crystal_block")`, and EBW ships **eight separate files** — `fire_crystal_block.json`,
+`ice_crystal_block.json`, and so on. A ninth would slot in beside them exactly like the item models
+in the paragraph above.
+
+Nor is the blockstate property narrowed: `MixinBlockCrystalElements` redirects `getSubBlocks` only,
+and its own javadoc explains why it must — `getStateFromMeta` has to keep seeing the whole enum or a
+blockstate round trip resolves to the wrong element. `BlockCrystal.ELEMENT` is built during block
+registration, after the `@Mod` constructor appended Abomination, so it genuinely has nine values.
+
+So un-hiding it is ordinary work, not a wall: one blockstate file, one block model, one texture, and
+a `crystal_block_to_crystals_abomination` recipe to mirror EBW's eight. It stays out of scope here
+because it is art plus a recipe for a decorative block, and §1.4b's guard is what makes leaving it
+out safe — without that guard the altar happily mints a metadata with no blockstate file behind it
+and no way back.
 
 🚨 **But hiding it is not the same as blocking it, and the altar does not care.**
 `getImbuementResult` accepts `Item.getItemFromBlock(crystal_block)` as well as the crystal item, so
@@ -156,7 +167,7 @@ it does, each is re-decided on its own merits:
 | target | verdict | why |
 |---|---|---|
 | `ImbuementAltarRecipeCategory.generateCrystalRecipes` | **remove redirect** | crystal item meta 8 now has a model; the recipe genuinely works |
-| `generateCrystalBlockRecipes` | **keep redirect** | the crystal *block* stays hidden (§1.1), so a JEI entry would show an output with no model |
+| `generateCrystalBlockRecipes` | **keep redirect** | the crystal *block* stays hidden by choice (§1.1), so a JEI entry would advertise an output we ship no blockstate for |
 | `generateArmourRecipes` | **remove redirect, but only once §1.4b lands** | it filters itself *after* the crash below is guarded |
 | `ArcaneWorkbenchRecipe.generateCrystalStacks` | **remove redirect** | Abomination crystals charge a wand like any other |
 
