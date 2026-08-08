@@ -5,8 +5,11 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinEntityEvilWizardElements",
     "MixinEntityParasiteBase",
+    "MixinEntityRemnantElements",
     "MixinEntitySummonedCreature",
+    "MixinEntityWizardElements",
     "MixinParasiteEventEntity",
     "MixinRayOfPurification",
     "MixinSpell",
