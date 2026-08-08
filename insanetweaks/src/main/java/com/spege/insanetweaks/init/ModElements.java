@@ -9,6 +9,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 
+import javax.annotation.Nullable;
+
 /**
  * Owns the Abomination element - the only place in this mod that touches Wizardry's Element enum.
  *
@@ -18,15 +20,34 @@ import net.minecraft.util.text.TextFormatting;
  * {@code PropertyEnum.create}, which runs inside {@code RegistryEvent.Register<Block>}. Hence
  * {@link #init()} from the {@code @Mod} constructor.
  *
- * <p>If the reflective add ever fails, {@link #EXTENDED} goes false and {@link #ABOMINATION} becomes
- * {@link Element#MAGIC}. {@link #isAbomination(Spell)} then falls back to the registry-domain test
- * this mod used before the element existed, so degraded mode is exactly the old behaviour rather
- * than something new. A naive {@code getElement() == ABOMINATION} would, in that state, also match
- * Wizardry's own MAGIC spells and start blocking foreign magic on unadapted wands.
+ * <p>If the reflective add ever fails, {@link #EXTENDED} goes false and {@link #ABOMINATION} stays
+ * null. {@link #isAbomination(Spell)} then falls back to the same registry-domain test this mod used
+ * before the element existed. A naive {@code getElement() == ABOMINATION} would, in that state, also
+ * match Wizardry's own MAGIC spells and start blocking foreign magic on unadapted wands - which is
+ * exactly why the field is null instead of a fallback to {@link Element#MAGIC}: a non-null impostor
+ * would be silently stored or dereferenced by later code, and this class has no way to stop that.
+ *
+ * <p>Reading {@code InsaneTweaksMod.LOGGER} from this class's static initialiser is safe only because
+ * {@code InsaneTweaksMod}'s own static initialisers never reach back into {@code init/}. {@code MODID}
+ * is a compile-time constant and gets folded in, so referencing it triggers nothing; {@code LOGGER} is
+ * a real {@code getstatic} and is guaranteed assigned before this runs, because the JVM completes
+ * {@code InsaneTweaksMod.<clinit>} before {@code InsaneTweaksMod.<init>} and {@link #init()} is only
+ * ever called from the latter. If a future static field on {@code InsaneTweaksMod} ever touched this
+ * class transitively, that cycle would leave {@code LOGGER} null here and surface as an
+ * {@code ExceptionInInitializerError} during mod construction with no obvious link back to this file.
  */
 public final class ModElements {
 
-    /** The Abomination element, or {@link Element#MAGIC} if registration failed. */
+    /**
+     * The Abomination element, or <b>null</b> when registration failed - see {@link #EXTENDED}.
+     *
+     * <p>Deliberately null rather than a fallback to {@link Element#MAGIC}: a non-null impostor would
+     * be stored or dereferenced by later code and silently behave as Wizardry's own elementless
+     * MAGIC, which reads as a content bug rather than as the degraded mode it is. Never dereference
+     * this without checking {@link #EXTENDED}; for the common question, call
+     * {@link #isAbomination(Spell)}, which is safe in both states.
+     */
+    @Nullable
     public static final Element ABOMINATION;
 
     /** True when the enum was really extended. False means every consumer must degrade. */
@@ -41,12 +62,12 @@ public final class ModElements {
                     InsaneTweaksMod.MODID);
         } catch (Throwable t) {
             InsaneTweaksMod.LOGGER.error("[InsaneTweaks] Could not add the Abomination element to "
-                    + "Wizardry's Element enum. Falling back to MAGIC: spells keep working but show "
-                    + "as 'None', and the casting gate reverts to a registry-domain check.", t);
+                    + "Wizardry's Element enum. Falling back to a null element: spells keep working "
+                    + "but show as 'None', and the casting gate reverts to a registry-domain check.", t);
         }
 
         EXTENDED = registered != null;
-        ABOMINATION = EXTENDED ? registered : Element.MAGIC;
+        ABOMINATION = registered;
 
         if (EXTENDED) {
             InsaneTweaksMod.LOGGER.info(
@@ -74,8 +95,17 @@ public final class ModElements {
             return false;
         }
         if (EXTENDED) {
+            // Narrow window: Spell.getElement() reports MAGIC until SpellProperties.init() has run
+            // for that spell, so between class load and that call this branch answers false for our
+            // own spells where the fallback below would answer true. Deliberately not ORing in the
+            // domain test to cover it - that would permanently re-couple this predicate to our
+            // registry domain, which is the coupling this whole change exists to remove. The window
+            // is unreachable in practice: SpellProperties.init() runs in EBW's FMLInitializationEvent,
+            // long before anything calls isAbomination.
             return spell.getElement() == ABOMINATION;
         }
+        // Same registry-domain test as util/SpellDisplayUtils, which Task 13 deletes. Until then the
+        // two must not drift.
         ResourceLocation id = spell.getRegistryName();
         return id != null && InsaneTweaksMod.MODID.equals(id.getResourceDomain());
     }
