@@ -116,10 +116,13 @@ current hack, so nothing changes visually on the day of the switch.
 `OldConfigBackup.backupOldConfigIfPresent()`. It must precede two things:
 
 - our own `ModItems.<clinit>`, which constructs wands through `super(tier, element)`;
-- EBW's block registration, because `BlockCrystal.<clinit>` runs
-  `PropertyEnum.create("element", Element.class)`, which **snapshots `values()`**. An element added
-  after that snapshot is not a legal blockstate value and `getStateFromMeta` would throw
-  `IllegalArgumentException`.
+- EBW's block registration, because **three** blocks run
+  `PropertyEnum.create("element", Element.class)` in their `<clinit>` — `BlockCrystal`,
+  `BlockRunestone` and `BlockPedestal` — and that call **snapshots `values()`**. An element added
+  after the snapshot is not a legal blockstate value and `getStateFromMeta` would throw
+  `IllegalArgumentException`. Each of the three also builds an `EnumMap<Element, MapColor>` in the
+  same `<clinit>`, and an `EnumMap` captures its key universe at construction too, so the constraint
+  is the same for both.
 
 The `@Mod` constructor is a safe slot, verified rather than assumed: `WizardryBlocks.<clinit>` and
 `WizardryItems.<clinit>` assign nothing but `placeholder()` results (the fields are
