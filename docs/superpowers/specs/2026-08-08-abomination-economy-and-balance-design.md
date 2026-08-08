@@ -360,14 +360,38 @@ Plus the pre-existing EBW generic loot, which stays open — the previous spec's
 
 ### 3.1 The rule
 
-The wand's full pool is the unit of measure. Two bands, and nothing between them:
+Two bands, and nothing between them:
 
-- **Tool** — cost ≤ 5% of a full wand, cooldown 5–15 s, chargeup ≤ 30 ticks. Cast several times in
-  one fight.
+- **Tool** — cost ≤ 5% of the yardstick wand, cooldown 5–15 s, chargeup ≤ 30 ticks. Cast several
+  times in one fight.
 - **Ritual** — cost ≥ 10%, cooldown ≥ 60 s, chargeup ≥ 60 ticks. Once a fight or rarer.
 
 **The 5–10% band is left empty on purpose.** A spell that lands there is not a compromise; it is a
 spell whose role we have not decided.
+
+🚨 **The yardstick is the fully-evolved Living Wand, and the percentage is of what the player
+actually pays.** Two corrections, both from a review that caught the first draft measuring against
+a number that was never real:
+
+- **Our wands hold 4000 and 6500, not EBW's stock 2500.** `LivingWandItem` and `SentientWandItem`
+  have called `setMaxDamage(4000)` / `setMaxDamage(6500)` in their constructors all along. Anything
+  in an earlier draft that reasoned from 2500 was wrong.
+- **No player ever pays the raw JSON cost on these wands.** `BaseCustomWandItem.calculateModifiers`
+  applies a cost reduction of 0.05→0.20 on the Living Wand (by evolution progress) and a flat 0.20
+  on the Sentient. Measuring the rule against the raw number describes a price nobody is charged.
+
+Taking the Living Wand at 4000 with its full 20% discount, effective cost is `raw × 0.8`, so the
+bands become arithmetic on the raw JSON number:
+
+| band | raw cost |
+|---|---|
+| tool | ≤ 250 |
+| *(deliberately empty)* | 251–499 |
+| ritual | ≥ 500 |
+
+The Living Wand is the yardstick because it is the entry-level of our two. The Sentient Wand is
+supposed to make rituals feel cheap — that is what being the endgame wand means — so measuring
+against it would collapse the distinction by design rather than by accident.
 
 ### 3.2 What the rule flags in the current numbers
 
@@ -380,31 +404,38 @@ spell whose role we have not decided.
 
 ### 3.3 Proposed values
 
-Tools:
+Tools — all comfortably under the 250 ceiling:
 
 | spell | cost | chargeup | cooldown |
 |---|---|---|---|
 | `dispatcher_grasp` | 130 | 20 | 200 (10 s) |
-| `yelloweye_gland` | 150 | 30 | 240 (12 s) |
 | `immune_bond` | 140 | 30 | 300 (15 s) |
+| `yelloweye_gland` | 150 | 30 | 240 (12 s) |
 
-Rituals:
+Rituals — every one at or above the 500 floor, and every chargeup at or above 60:
 
 | spell | cost | chargeup | cooldown |
 |---|---|---|---|
-| `summon_thrall` | 320 | 40 | 1200 (60 s) |
-| `summon_fer_cow` | 340 | 45 | 1300 |
-| `summon_wizard` | 420 | 55 | 1600 |
-| `summon_primitive_yelloweye` | 450 | 45 | 1800 |
-| `summon_light_bomber` | 500 | 45 | 1800 |
-| `summon_primitive_summoner` | 560 | 60 | 2600 |
-| `parasite_shroud` | 400 | 80 | 1800 (90 s) |
-| `cleanse` | 500 | 60 | 3600 |
-| `purifying_pulse` | 800 | 100 | 6000 |
+| `summon_thrall` | 520 | 60 | 1200 (60 s) |
+| `summon_fer_cow` | 540 | 60 | 1300 |
+| `parasite_shroud` | 600 | 80 | 1800 (90 s) |
+| `summon_wizard` | 640 | 60 | 1600 |
+| `summon_primitive_yelloweye` | 700 | 60 | 1800 |
+| `summon_light_bomber` | 760 | 60 | 1800 |
+| `cleanse` | 760 | 60 | 3600 |
+| `summon_primitive_summoner` | 850 | 60 | 2600 |
+| `purifying_pulse` | 1100 | 100 | 6000 |
 | `call_of_demise` | 1800 | 180 | 12000 |
 
-`call_of_demise` is unchanged — it is the capstone and the one number that was already right.
+`call_of_demise` is unchanged — it is the capstone and the one number that was right from the start.
 `test_projectile` is untouched (see §5.1).
+
+Two things moved from the first draft, both because that draft measured against a capacity the wands
+never had. **Every ritual under 500 went up** — the cheap summons and `parasite_shroud` were priced
+as tools by the corrected arithmetic. And **five rituals had their chargeup raised to 60**
+(`summon_thrall`, `summon_fer_cow`, `summon_primitive_yelloweye`, `summon_light_bomber`,
+`summon_wizard`, previously 40–55): the rule names three axes and the first draft only enforced two,
+so a "ritual" could be cast with a shorter wind-up than a tool.
 
 These are a starting point, not a verdict; they exist so playtesting has something coherent to
 adjust rather than a spread to untangle.
@@ -417,9 +448,21 @@ from `tier.maxCharge`, set in the constructor. So the clean override is **`setMa
 `BaseCustomWandItem`'s constructor** — not overriding `getManaCapacity`, which would bypass storage
 upgrades.
 
-EBW's stock master wand is 2500 (`Settings.masterMaxCharge`). Proposed: `LivingWandItem` 3200,
-`SentientWandItem` 4400, both config-driven under `gear.wands`. Our wands are the top-end gear every
-mage wants (the predecessor spec's §8 decision), so it is right that they carry the rituals.
+🚨 **This task is exposing existing values to config, not changing them.** EBW's stock master wand
+is 2500, but ours are **4000 and 6500** — `setMaxDamage` in each subclass's constructor, there all
+along. The config defaults must be exactly those two numbers.
+
+Lowering them is not a balance lever, it is data loss. **Mana is stored as damage**, and
+`getMana = capacity − damage`, with nothing clamping the result. Drop the Sentient Wand from 6500 to
+4400 and every existing wand below ~32% charge reports negative mana: `isManaEmpty` tests `== 0` so
+the wand claims to be *not* empty and keeps its melee attribute modifiers, `canCast` fails for every
+spell, and the durability bar renders a negative width. It is recoverable by recharging, but it
+reads as a corrupted item and it hits every wand in every existing world.
+
+So: defaults 4000 and 6500, and a clamp in `onUpdate` so that a pack author who *does* lower the
+config gets a wand pinned to zero rather than one lying about being non-empty. Once config owns the
+number, delete the `setMaxDamage` literals — two authoritative-looking constants that no longer
+decide anything are worse than none.
 
 This touches no other mod's wands and no shared config. If the unified cross-mod mana pool
 (Trinkets and Baubles + EBW) ever happens, these two numbers are the only thing to revisit — the
