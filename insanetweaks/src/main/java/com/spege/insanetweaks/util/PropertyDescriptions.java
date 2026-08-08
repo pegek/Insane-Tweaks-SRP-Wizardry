@@ -54,7 +54,10 @@ public class PropertyDescriptions {
         // Word-for-word the line SpellbladeTooltipHandler already showed for Fleshbound, so the
         // book-granted property and the earned one read identically.
         DESCRIPTIONS.put("grip",
-                "Grafted to the wielder's flesh. Prevents drops and disarm.");
+                "Grafted to the wielder's flesh: it cannot be thrown away, dragged out of the pack "
+                        + "or knocked from the hand. Dying severs the graft, and it regrows only "
+                        + "with time and further kills. Enough disarms in quick succession can tear "
+                        + "it loose outright.");
         // Present so the substring fallback below can never reach this id, but never returned:
         // getDescription builds the real line from the configured percentages instead.
         DESCRIPTIONS.put("arcane_sundering",

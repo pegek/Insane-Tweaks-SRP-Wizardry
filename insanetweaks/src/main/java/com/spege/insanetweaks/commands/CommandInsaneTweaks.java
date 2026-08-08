@@ -31,7 +31,7 @@ public class CommandInsaneTweaks extends CommandBase {
     @Override
     @Nonnull
     public String getUsage(@Nonnull ICommandSender sender) {
-        return "/itweaks <claimfruit | grantbook | propertybook>";
+        return "/itweaks <claimfruit | grantbook | propertybook | codexpool>";
     }
 
     @Override
@@ -63,6 +63,9 @@ public class CommandInsaneTweaks extends CommandBase {
             case "propertybook":
                 handlePropertyBook(server, sender, args);
                 break;
+            case "codexpool":
+                handleCodexPool(sender);
+                break;
             case "help":
             default:
                 sendHelp(sender);
@@ -76,7 +79,68 @@ public class CommandInsaneTweaks extends CommandBase {
         if (sender.canUseCommand(2, "itweaks")) { // If they have OP permissions
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks grantbook <enchantment> [level] [player]\u00A77 - Give a quest-granted enchanted book"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks propertybook <property> [player]\u00A77 - Give a Property Book (anvil onto a tool)"));
+            sender.sendMessage(new TextComponentString("\u00A7e/itweaks codexpool\u00A77 - Explain which enchantments Sentient Codex would raise on the held item"));
         }
+    }
+
+    /**
+     * Reports, for every enchantment on the held item, whether Sentient Codex will raise it and how
+     * far.
+     *
+     * <p>The pool rules are mostly derived (single-level enchantments skipped, headroom by rarity,
+     * curses last) rather than listed, which makes them impossible to check by reading the config.
+     * This is how you check them: hold the item and ask.
+     */
+    private void handleCodexPool(ICommandSender sender) throws CommandException {
+        if (!sender.canUseCommand(2, "itweaks")) {
+            sender.sendMessage(new TextComponentString("\u00A7cYou do not have permission to use this command."));
+            return;
+        }
+        EntityPlayer player = getCommandSenderAsPlayer(sender);
+        ItemStack stack = player.getHeldItemMainhand();
+        if (stack.isEmpty()) {
+            sender.sendMessage(new TextComponentString("\u00A7cHold the item you want to inspect."));
+            return;
+        }
+
+        NBTTagList ench = stack.getEnchantmentTagList();
+        if (ench.tagCount() == 0) {
+            sender.sendMessage(new TextComponentString("\u00A77That item carries no enchantments."));
+            return;
+        }
+
+        sender.sendMessage(new TextComponentString("\u00A75--- Sentient Codex pool: \u00A7e"
+                + stack.getDisplayName() + " \u00A75---"));
+        for (int i = 0; i < ench.tagCount(); i++) {
+            NBTTagCompound en = ench.getCompoundTagAt(i);
+            // getInteger, not getShort: JustEnoughIDs widens enchantment ids past 32767.
+            int id = en.getInteger("id");
+            int level = en.getShort("lvl");
+            Enchantment enchantment = Enchantment.getEnchantmentByID(id);
+            if (enchantment == null) {
+                sender.sendMessage(new TextComponentString("\u00A78  unknown enchantment id " + id));
+                continue;
+            }
+
+            ResourceLocation name = enchantment.getRegistryName();
+            String label = name == null ? enchantment.getName() : name.toString();
+            com.spege.insanetweaks.enchant.SentientCodexPool.Verdict verdict =
+                    com.spege.insanetweaks.enchant.SentientCodexPool.verdict(enchantment, stack, level);
+
+            if (verdict == com.spege.insanetweaks.enchant.SentientCodexPool.Verdict.BOOSTED) {
+                sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "  " + label
+                        + TextFormatting.GRAY + " " + level + " \u2192 cap "
+                        + com.spege.insanetweaks.enchant.SentientCodexPool.capFor(enchantment)
+                        + TextFormatting.DARK_GRAY + " (" + rarityLabel(enchantment) + ")"));
+            } else {
+                sender.sendMessage(new TextComponentString(TextFormatting.RED + "  " + label
+                        + TextFormatting.GRAY + " " + level + " \u2014 " + verdict.getReason()));
+            }
+        }
+    }
+
+    private static String rarityLabel(Enchantment enchantment) {
+        return enchantment.isCurse() ? "curse" : enchantment.getRarity().toString().toLowerCase();
     }
 
     /**

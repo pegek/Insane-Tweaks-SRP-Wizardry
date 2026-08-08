@@ -18,14 +18,13 @@ import net.minecraftforge.common.util.EnumHelper;
 /**
  * Mmmm - native 1.12.2 port of UniqueEnchantments' Ambrosia, applied to food. Eating an enchanted
  * food stack fills the hunger bar outright and grants the {@code insanetweaks:nourished} effect,
- * which pins saturation at full for a duration that scales with the eater's XP level. All the
- * runtime logic lives in {@link MmmmHandler}; this class is only the registered {@link Enchantment}.
+ * which pins saturation at full for a short, fixed duration. All the runtime logic lives in
+ * {@link MmmmHandler}; this class is only the registered {@link Enchantment}.
  *
- * <p><b>Two tiers, top-anchored.</b> {@code maxLevel} defaults to 2 and
- * {@code ModConfig.enchantments.mmmm.powerPerLevel} to 1, so our level II feeds the original's formula
- * with an effective level of 2 - i.e. the top tier here is exactly as strong as Ambrosia II upstream,
- * and level I is the weaker step below it, scaled by {@code lowerTierStrength}. See
- * {@link MmmmHandler} for how that split is applied.
+ * <p><b>Two tiers, level-driven.</b> {@code maxLevel} defaults to 2: level I is Nourished I for
+ * {@code baseDurationTicks}, level II is Nourished II for one {@code durationPerLevelTicks} longer.
+ * 🚨 Upstream's XP-level scaling and the tier-strength machinery built on top of it are gone - see
+ * {@link MmmmHandler}'s javadoc for why they must not come back.
  *
  * <p><b>Deliberate narrowing vs the original.</b> Upstream Ambrosia also accepts
  * {@code ItemPotion}/{@code ItemSplashPotion}/{@code ItemLingeringPotion}; this port is food-only,

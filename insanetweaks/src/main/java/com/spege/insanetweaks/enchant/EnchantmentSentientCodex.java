@@ -15,11 +15,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 
 /**
- * Sentient Codex - native 1.12.2 port of UniqueEnchantments' Grimoire (which only ships on
- * 1.16.5). A VERY_RARE, reward-only treasure/curse enchantment that dynamically raises the
- * level of every other enchantment on the item as the holder's XP level grows. All the
- * per-tick logic (boost recompute, owner-binding, drop protection, anvil block) lives in
- * {@link SentientCodexHandler}; this class is only the registered {@link Enchantment}.
+ * Sentient Codex - a VERY_RARE, reward-only treasure/curse enchantment that raises the level of the
+ * other enchantments on its item as its holder feeds it experience. Loosely after
+ * UniqueEnchantments' Grimoire, which only ships on 1.16.5, but the growth model is no longer
+ * theirs: 🚨 only experience earned <b>while the item is carried</b> counts, and the XP the holder
+ * already had is worth nothing. All the per-interval logic (feeding, growth, starvation, repair,
+ * anvil block) lives in {@link SentientCodexHandler}; which enchantments it may raise and how far is
+ * {@link SentientCodexPool}; this class is only the registered {@link Enchantment}.
  *
  * <p>Tunables come from {@link ModConfig#sentientCodex}; the master toggle is
  * {@code ModConfig.modules.enableSentientCodex}.
@@ -30,10 +32,14 @@ import net.minecraft.util.text.translation.I18n;
  */
 public class EnchantmentSentientCodex extends EnchantmentInsaneTweaksBase {
 
-    /** String UUID of the bound owner (owner-binding). */
-    public static final String OWNER_TAG = "sentientcodex_owner";
     /** int: cumulative growth-step count already applied to the item's live "ench" levels. */
     public static final String LAST_BOOST_TAG = "sentientcodex_boost";
+    /** long: experience points fed to this item while it was carried. */
+    public static final String FED_TAG = "sentientcodex_fed";
+    /** long: world time the item last received experience, for the starvation clock. */
+    public static final String LAST_FED_TAG = "sentientcodex_lastfed";
+    /** long: world time the item was last seen being carried, so a spell in a chest is not a fast. */
+    public static final String LAST_SEEN_TAG = "sentientcodex_lastseen";
 
     public static EnchantmentSentientCodex INSTANCE;
 
@@ -91,15 +97,21 @@ public class EnchantmentSentientCodex extends EnchantmentInsaneTweaksBase {
         return stack.isItemEnchantable() || stack.getItem() instanceof ItemEnchantedBook;
     }
 
+    /**
+     * Refuses to share an item with anything on {@code sentientCodex.excluded}.
+     *
+     * <p>That list ships with both Mending variants on it, and this is the half that makes the
+     * exclusion real: without it the anvil would happily build a Mending + Codex item that the boost
+     * logic then quietly declined to touch. Sentient Codex repairs the item it lives on, so it is
+     * meant to be an alternative to Mending, not an addition to it.
+     *
+     * <p>Reading the same config list here as the boost does is deliberate - two lists would drift.
+     */
     @Override
     protected boolean canApplyTogether(Enchantment other) {
-        // Temporarily commented out Mending exclusion
-        /*
-        if (other != null && other.getRegistryName() != null
-                && other.getRegistryName().toString().equals("minecraft:mending")) {
+        if (SentientCodexPool.isIncompatible(other)) {
             return false;
         }
-        */
         return super.canApplyTogether(other) && other != this;
     }
 

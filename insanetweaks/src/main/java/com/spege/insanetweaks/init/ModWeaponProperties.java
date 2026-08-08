@@ -17,7 +17,9 @@ import com.spege.insanetweaks.items.spellblade.property.ParasiteHeavyProperty;
  */
 public class ModWeaponProperties {
 
-    public static final WeaponProperty FLESHBOUND = new WeaponProperty("fleshbound", "insanetweaks");
+    // FLESHBOUND used to live here as a WeaponProperty. It was removed because no item ever added it
+    // to its property list, so the branch in FleshboundEventHandler that looked for it could not
+    // fire - Fleshbound has only ever reached a weapon through the 'grip' advanced property.
 
     /** 3 rolls of 25% chance to apply srparasites BLEED_E (replaces ParasiteSWProperties.BLEEDING_3). */
     public static final ParasiteBleedingProperty BLEEDING_3 = new ParasiteBleedingProperty(3);

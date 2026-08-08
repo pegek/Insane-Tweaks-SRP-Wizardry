@@ -2,12 +2,14 @@ package com.spege.insanetweaks.config;
 
 import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.config.categories.ArcaneSunderingCategory;
+import com.spege.insanetweaks.config.categories.AshenLegacyCategory;
 import com.spege.insanetweaks.config.categories.AutoLockPickerCategory;
 import com.spege.insanetweaks.config.categories.BaubleFruitsCategory;
 import com.spege.insanetweaks.config.categories.ChargeJumpCategory;
 import com.spege.insanetweaks.config.categories.ClientCategory;
 import com.spege.insanetweaks.config.categories.EnchantmentsCategory;
 import com.spege.insanetweaks.config.categories.EntitiesCategory;
+import com.spege.insanetweaks.config.categories.FleshboundCategory;
 import com.spege.insanetweaks.config.categories.GearCategory;
 import com.spege.insanetweaks.config.categories.PropertyBooksCategory;
 import com.spege.insanetweaks.config.categories.InteractionsCategory;
@@ -90,6 +92,16 @@ public class ModConfig {
     @Config.LangKey("config.insanetweaks.category.propertyBooks")
     @Config.Comment("Property Books: anvil cost and the Grip recovery fallback. Master toggle is modules.enablePropertyBooks.")
     public static final PropertyBooksCategory propertyBooks = new PropertyBooksCategory();
+
+    @Config.Name("fleshbound")
+    @Config.LangKey("config.insanetweaks.category.fleshbound")
+    @Config.Comment("Fleshbound (the 'grip' property): the sever penalty paid on death, and the optional rip-out system that lets a weapon finally be torn loose.")
+    public static final FleshboundCategory fleshbound = new FleshboundCategory();
+
+    @Config.Name("ashenLegacy")
+    @Config.LangKey("config.insanetweaks.category.ashenLegacy")
+    @Config.Comment("Ashen Legacy property: dropped-item lifespan and which damage sources it shrugs off. Whether the property exists at all is gear.properties.ashenLegacy.")
+    public static final AshenLegacyCategory ashenLegacy = new AshenLegacyCategory();
 
     @Config.Name("arcaneSundering")
     @Config.LangKey("config.insanetweaks.category.arcaneSundering")
