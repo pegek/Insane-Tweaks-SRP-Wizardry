@@ -178,7 +178,14 @@ git commit -m "feat(insanetweaks): register the Abomination element via Wizardry
 
 **Files:**
 - Modify: `insanetweaks/src/main/resources/assets/insanetweaks/lang/en_us.lang` (line 194 holds the old key)
+- Modify: `insanetweaks/src/main/resources/assets/insanetweaks/lang/ru_ru.lang` (line 159 holds the old key)
 - Create: `insanetweaks/src/main/resources/assets/insanetweaks/textures/gui/container/element_icon_abomination.png`
+
+🚨 **This mod ships two lang files.** `ru_ru.lang` carries a human-written `Мерзость` for the old key
+and must move it to `element.abomination` the same way. Do **not** invent
+`element.abomination.wizard` for Russian: a missing key falls back to `en_us`, so omitting it yields
+a visibly English "Abominator" that a Russian speaker can spot and fix, whereas a guessed agent-noun
+would read as a real translation and never be corrected.
 
 - [ ] **Step 1: Replace the lang key**
 
@@ -1434,20 +1441,15 @@ If either sits inside an `if` block that has no other statement left, remove the
 
 - [ ] **Step 5: Remove the dead lang key**
 
-In `en_us.lang`, delete the line (it was replaced by `element.abomination` in Task 2, and Task 2 may
-already have removed it — verify):
-
-```
-insanetweaks.element.abomination=Abomination
-```
-
-Run:
+Task 2 already moved this key in **both** lang files, so this step is a verification rather than an
+edit. Check both — the mod ships `en_us.lang` and `ru_ru.lang`:
 
 ```bash
-grep -n "insanetweaks.element.abomination" insanetweaks/src/main/resources/assets/insanetweaks/lang/en_us.lang
+grep -rn "insanetweaks.element.abomination" insanetweaks/src/main/resources/assets/insanetweaks/lang/
 ```
 
-Expected: no output.
+Expected: no output. If either file still has it, delete that line now — its last Java reader
+(`SpellDisplayUtils.ABOMINATION_KEY`) is being deleted in this very task.
 
 - [ ] **Step 6: Verify nothing still references the deleted helper**
 
