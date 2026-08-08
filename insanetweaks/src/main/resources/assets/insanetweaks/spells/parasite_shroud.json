@@ -13,8 +13,8 @@
   "tier": "master",
   "element": "abomination",
   "type": "utility",
-  "cost": 175,
+  "cost": 400,
   "chargeup": 80,
-  "cooldown": 3600,
+  "cooldown": 1800,
   "base_properties": {}
 }

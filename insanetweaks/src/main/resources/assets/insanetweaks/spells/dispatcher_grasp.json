@@ -13,9 +13,9 @@
   "tier": "master",
   "element": "abomination",
   "type": "attack",
-  "cost": 45,
+  "cost": 130,
   "chargeup": 20,
-  "cooldown": 240,
+  "cooldown": 200,
   "base_properties": {
     "range": 10,
     "damage": 4,

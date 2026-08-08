@@ -13,7 +13,7 @@
   "tier": "master",
   "element": "abomination",
   "type": "minion",
-  "cost": 350,
+  "cost": 450,
   "chargeup": 45,
   "cooldown": 1800,
   "base_properties": {
