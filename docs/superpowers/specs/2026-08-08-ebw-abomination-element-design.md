@@ -304,20 +304,50 @@ added to `mixins.insanetweaks.late.json` (the mod's existing unconditional EBW-t
 | `EntityRemnant` | `func_180482_a` / `onInitialSpawn` | random remnant element |
 | `WorldGenShrine` | `spawnStructure` | random structure element → Abomination runestones with no model |
 | `WorldGenObelisk` | `spawnStructure` | same |
-| `RandomSpell` | `pickRandomSpell` | falls back to `Arrays.asList(values())` when no element filter is set |
+| ~~`RandomSpell`~~ | ~~`pickRandomSpell`~~ | **removed 2026-08-08 by design decision — see §9e** |
 | `BlockPedestal` | `func_149666_a` / `getSubBlocks` | third element-keyed block, same `copyOfRange` shape |
 | `BlockPedestal` | `<clinit>` (static) | **fixes a hard crash** — see §9c |
 | `BlockRunestone` | `<clinit>` (static) | keeps the blockstate set at its pre-Abomination content |
 
-🚨 **The `RandomSpell` row is the highest-stakes entry in this table, not the lowest.** An earlier
-draft justified the loot redirects with "the spell filter returns an empty set, because our spells
-are `treasure: false`". That is false, and measured: only **two** of the fourteen spell JSONs
-(`call_of_demise` and the disabled `test_projectile`) close `treasure`/`trades`/`looting`. The other
-twelve leave all three open. So a registered Abomination element without this redirect becomes a
-legitimate loot theme, and those twelve spells — mostly master-tier minion summons with no other
-gating — appear in vanilla dungeon chests and mob drops. Closing the flags in the JSONs would be an
-alternative, but it would also disable the same spells for any future deliberate loot placement; the
-redirect keeps that door available.
+### 9e. The loot redirect was removed on purpose — natural distribution is wanted
+
+`MixinRandomSpellElements` existed to keep Abomination out of the `random_spell` loot function. It
+was **deleted on 2026-08-08**, after the feature was verified working, as a deliberate balance
+decision. This section records why, because the analysis that justified writing it is still correct
+and would otherwise argue for putting it back.
+
+**What it did.** Ancient Spellcraft replaces `RandomSpell.pickRandomSpell` wholesale, and its body
+reads:
+
+```java
+if (elements.isEmpty()) pool.addAll(Arrays.asList(Element.values()));
+else                    pool.addAll(elements);
+candidates.removeIf(spell -> !pool.contains(spell.getElement()));
+```
+
+The element pool filters candidates by `spell.getElement()`, so excluding Abomination from the pool
+removed every insanetweaks spell from every loot roll.
+
+**Why that mattered.** Only **two** of the fourteen spell JSONs (`call_of_demise` and the disabled
+`test_projectile`) close `treasure`/`trades`/`looting`; the other twelve leave all three open. So
+without the redirect, twelve spells — mostly master-tier minion summons — are reachable from vanilla
+dungeon chests and mob drops.
+
+**Why that is now acceptable.** The user's call, and it rests on gates that already exist rather than
+on scarcity: an Abomination spell cannot be cast at all except from one of this mod's own foci or a
+wand carrying the Adaptation upgrade, both expensive; and the spells themselves carry high mana
+costs, long cooldowns and long chargeups. Finding the book early is therefore a preview, not a power
+spike. Worth noting the balance argument is *checkable* rather than merely plausible — cost,
+`cooldown` and `chargeup` are per-spell fields in those same fourteen JSONs.
+
+**To restore it**, `git show 8db0cfb -- insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinRandomSpellElements.java`
+and re-add `"MixinRandomSpellElements"` to `mixins.insanetweaks.late.json`. It must keep
+`priority = 1500` — see §9d, which is retained for exactly that reason.
+
+**Still excluded, deliberately:** wizard trades and wizard spell lists, via the `populateSpells` and
+`getRandomItemOfTier` redirects in `MixinEntityWizardElements`. That is a different path from loot —
+a wizard's stock is themed by *its own* element, and no Abomination wizards spawn — so it was not
+part of this decision and can be revisited on its own.
 
 🚨 **`WizardryLoot.<clinit>` was in this table and has been removed — redirecting it is a bug.** It
 builds `RUINED_SPELL_BOOK_LOOT_TABLES` as one `ResourceLocation` per element, and
@@ -417,7 +447,7 @@ symmetric under narrowing. `getStateFromMeta` therefore stays un-redirected.
 `BlockCrystal.<clinit>` needs nothing: it uses the two-argument `PropertyEnum.create(String, Class)`,
 makes no `Element.values()` call at all, and its nine states with `meta = ordinal()` fit.
 
-### 9d. Ancient Spellcraft outranks us on `RandomSpell`
+### 9d. Ancient Spellcraft outranks us on `RandomSpell` (retained knowledge — the mixin is gone, see §9e)
 
 `MixinRandomSpellElements` failed to apply on the first real launch:
 
