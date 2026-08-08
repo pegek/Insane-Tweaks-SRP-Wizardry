@@ -14,6 +14,7 @@
     "MixinEntityRemnantElements",
     "MixinEntitySummonedCreature",
     "MixinEntityWizardElements",
+    "MixinImbuementAltarArmourGuard",
     "MixinParasiteEventEntity",
     "MixinRayOfPurification",
     "MixinSpell",
