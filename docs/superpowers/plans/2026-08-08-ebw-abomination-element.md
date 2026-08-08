@@ -4,7 +4,7 @@
 
 **Goal:** Replace the faked `Element.MAGIC` "Abomination" styling in `insanetweaks` with a real Electroblob's Wizardry element registered through `WizardryEnumHelper.addElement`, and re-key the casting gate onto that element.
 
-**Architecture:** One owner class (`init/ModElements`) adds the enum constant from the `@Mod` constructor, before EBW's blocks snapshot `Element.values()`. Spell JSONs switch to `"element": "abomination"`. The casting gate compares elements instead of registry domains. Thirteen `@Redirect` sites across eleven mixin classes route EBW's own random-element pickers through `util/NativeElements`, which returns the eight native elements, so EBW never generates Abomination wizards, shrines or item subtypes. A twelfth mixin keeps the element name resolvable if registration ever fails. Six files implementing the old fake are deleted.
+**Architecture:** One owner class (`init/ModElements`) adds the enum constant from the `@Mod` constructor, before EBW's blocks snapshot `Element.values()`. Spell JSONs switch to `"element": "abomination"`. The casting gate compares elements instead of registry domains. Thirteen `@Redirect` sites across eleven mixin classes route EBW's own random-element pickers through `util/NativeElements`, which returns the eight native elements, so EBW never generates Abomination wizards, shrines or item subtypes. Two further mixins cover EBW's JEI recipe categories, which build ingredient stacks from `Element.values()` directly and never go through `getSubItems`. One more keeps the element name resolvable if registration ever fails. Seven files implementing the old fake are deleted.
 
 **Tech Stack:** Minecraft 1.12.2, Forge 14.23.5.2860, Java 8 source level, Cleanroom MixinBooter (sponge-mixin 0.8.7), Gradle multi-project with ForgeGradle 3. Target dependency: Electroblob's Wizardry 4.3.19 (CurseMaven file id `8320066`).
 
@@ -92,7 +92,14 @@ import net.minecraft.util.text.TextFormatting;
  */
 public final class ModElements {
 
-    /** The Abomination element, or {@link Element#MAGIC} if registration failed. */
+    /**
+     * The Abomination element, or <b>null</b> when registration failed - see {@link #EXTENDED}.
+     *
+     * <p>Deliberately null rather than a fallback to {@link Element#MAGIC}: a non-null impostor
+     * would be stored or dereferenced by later code and silently behave as Wizardry's own
+     * elementless MAGIC, which reads as a content bug rather than as the degraded mode it is.
+     */
+    @Nullable
     public static final Element ABOMINATION;
 
     /** True when the enum was really extended. False means every consumer must degrade. */
@@ -112,7 +119,7 @@ public final class ModElements {
         }
 
         EXTENDED = registered != null;
-        ABOMINATION = EXTENDED ? registered : Element.MAGIC;
+        ABOMINATION = registered;
 
         if (EXTENDED) {
             InsaneTweaksMod.LOGGER.info(
@@ -449,7 +456,10 @@ import electroblob.wizardry.constants.Element;
  */
 public final class NativeElements {
 
-    private static Element[] cache;
+    // volatile for safe publication, not for mutual exclusion: racing builders compute identical
+    // arrays, so a duplicated build is harmless, but a plain field would let another thread see the
+    // reference before the element stores are visible.
+    private static volatile Element[] cache;
 
     private NativeElements() {
     }
@@ -1501,7 +1511,7 @@ finding, not cosmetic drift.
 - Modify: `insanetweaks/src/main/resources/mixins.insanetweaks.late.json`
 - Modify: `insanetweaks/src/main/resources/assets/insanetweaks/lang/en_us.lang`
 
-- [ ] **Step 1: Delete the six files**
+- [ ] **Step 1: Delete the seven files**
 
 ```bash
 git rm insanetweaks/src/main/java/com/spege/insanetweaks/util/SpellDisplayUtils.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinGuiSpellInfo.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinGuiSpellDisplay.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemSpellBook.java insanetweaks/src/main/java/com/spege/insanetweaks/mixins/MixinItemScroll.java insanetweaks/src/main/java/com/spege/insanetweaks/events/SpellBookGuiHandler.java insanetweaks/src/main/java/com/spege/insanetweaks/events/SpellItemTooltipHandler.java
@@ -1720,16 +1730,42 @@ redirected. Fetch an Abomination dust explicitly with `/give ebwizardry:spectral
 hidden from creative and JEI but still obtainable — and confirm the altar consumes it without an
 `ArrayIndexOutOfBoundsException` in the log.
 
+- [ ] **Step 6b: Check JEI's recipe categories, not just its item list**
+
+Step 6 searches the item list, which is exactly the surface `getSubItems` covers — so passing it
+proves nothing about JEI's *recipes*, which EBW builds from `Element.values()` directly. Open the
+**Imbuement Altar** category and count the crystal and crystal-block recipes: **eight of each**, not
+nine. Then open a charging recipe in the **Arcane Workbench** category and check the crystal input
+list for an Abomination entry.
+
+The pack ships HadEnoughItems, not JEI, under the same `jei` mod id — so this is also the check that
+proves the `LateMixinBooter` gate fired on the real runtime.
+
+- [ ] **Step 6c: Expect, and read, the missing-model lines**
+
+Because the element is registered before EBW's three element-keyed blocks build their `PropertyEnum`,
+those blocks gain an `abomination` variant that has no model. Grep the client log for
+`Exception loading model for variant` and `Model definition for location … not found` mentioning
+`abomination`. These lines are **expected**, not a failure — but read them, and confirm nothing else
+hides among them. If they are unacceptable, the fix is a stub blockstate variant, not a change to the
+ordering.
+
 - [ ] **Step 7: Check worldgen and spawning**
 
-Fly to unexplored terrain so fresh chunks generate, and spawn both wizard types:
+Fly to unexplored terrain so fresh chunks generate, and spawn all three entity types — the third is
+easy to forget and has a redirect of its own:
 
 ```
 /summon ebwizardry:wizard
 /summon ebwizardry:evil_wizard
+/summon ebwizardry:remnant
 ```
 
 Expected: every wizard carries a wand; none is Abomination. No Abomination shrine or obelisk.
+
+Then **right-click a wizard and read its trade offers.** The eight redirects in
+`getRandomItemOfTier` guard the merchant stock — wands *and* armour — and nothing else in this list
+exercises that path.
 
 - [ ] **Step 8: Check the casting gate**
 
@@ -1739,6 +1775,26 @@ Expected: every wizard carries a wand; none is Abomination. No Abomination shrin
 | the same spell on the Living Wand | casts |
 | the same spell on a vanilla wand with the Adaptation upgrade applied | casts |
 | a vanilla EBW spell on an adapted focus | casts at base mana cost, no surcharge |
+
+- [ ] **Step 8b: Read the Adaptation Upgrade item's own tooltip**
+
+Not the wand's — the upgrade item's. It renders `item.insanetweaks:adaptation_upgrade.desc`, a
+different string from the one the wand tooltip builds, and it was the last place still advertising
+the deleted mana penalty. Confirm it now talks about channelling Abomination magic and mentions no
+penalty.
+
+- [ ] **Step 8c: Exercise the degraded path once**
+
+This is the branch's entire safety net and nothing has ever run it. Temporarily make
+`ModElements`' registration fail — a `throw new RuntimeException("test")` at the top of the `try` —
+build, launch, and confirm: the error line appears with `EXTENDED=false`; the fourteen spells still
+load and are castable (which is `MixinElementFromName` doing its job); nothing throws a
+`NullPointerException` on the null `ABOMINATION`; and the spells simply show as "None". Then revert
+the throw.
+
+Worth the effort because the semantics of that path changed mid-implementation, from a `MAGIC`
+fallback to `null`, and because the failure it guards against is by definition one nobody will see
+coming.
 
 - [ ] **Step 9: Check the dedicated server starts**
 

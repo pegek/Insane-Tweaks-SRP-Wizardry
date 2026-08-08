@@ -78,7 +78,8 @@ Stated by the user, in priority order:
 
 ## Scope decision: minimum now, expansion left open
 
-EBW picks a random element out of the full `Element.values()` in seven places. We **exclude**
+EBW enumerates the full `Element.values()` in seventeen places that matter — thirteen picks and
+enumerations across eleven classes, plus four more in its JEI integration. We **exclude**
 Abomination from all of them rather than supplying the assets they would demand. Abomination exists
 only on insanetweaks items.
 
@@ -133,7 +134,14 @@ The `@Mod` constructor is a safe slot, verified rather than assumed: `WizardryBl
 ### 3. Failure mode: fall back to today, not to something new
 
 If `addEnum` ever breaks (a Java or Cleanroom jump), `ModElements` catches, logs an error, sets
-`EXTENDED = false` and assigns `ABOMINATION = Element.MAGIC`.
+`EXTENDED = false` and leaves `ABOMINATION` **null**.
+
+That nullability is deliberate and was tightened during implementation. A non-null impostor —
+`ABOMINATION = Element.MAGIC` — would be stored or dereferenced by later code and behave silently as
+Wizardry's own elementless MAGIC: a grey wizard, a `crystal_magic` blockstate, the wrong icon. Each
+reads as a content bug with nothing in the log at the point of failure. Null fails loudly at the
+misuse site instead, and costs nothing at the only call site that matters, because
+`isAbomination()`'s fallback branch never touches the field.
 
 The naive version of that fallback is a trap: with `ABOMINATION == Element.MAGIC`, an
 `isAbomination()` written as an element comparison would also match EBW's own MAGIC-element spells
@@ -343,10 +351,47 @@ lookups or snapshots, not random picks, and narrowing the array would corrupt lo
 - `WizardryItems.register` and `registerBannerPatterns` — the registration loops that create the
   per-element items and banner patterns in the first place.
 
+### 9b. EBW's JEI integration needs its own two mixins
+
+Found by the final review, after the eleven above were already written and verified. **EBW's JEI
+classes build their ingredient stacks straight from `Element.values()` and never go through
+`getSubItems`**, so none of the redirects above reaches them. Four more sites, in two classes, all
+`static`:
+
+| class | method |
+|---|---|
+| `integration.jei.ImbuementAltarRecipeCategory` | `generateCrystalRecipes` |
+| `integration.jei.ImbuementAltarRecipeCategory` | `generateCrystalBlockRecipes` |
+| `integration.jei.ImbuementAltarRecipeCategory` | `generateArmourRecipes` |
+| `integration.jei.ArcaneWorkbenchRecipe` | `generateCrystalStacks` |
+
+Without them the Imbuement Altar category shows a ninth crystal and crystal-block recipe pair, and
+the Arcane Workbench offers an Abomination crystal as a charging input — all with no model and no
+lang key. `generateArmourRecipes` is arguably already safe (it discards empty imbuement results, and
+there is no Abomination armour) but is redirected anyway, because three of four would be an
+inconsistency the next reader has to re-derive.
+
+These live in their own config, `mixins.insanetweaks.jei.json`, gated in `LateMixinBooter` on
+`Loader.isModLoaded("jei")` and listed under **`client`** — JEI is client-side and these classes
+implement JEI types. 🚨 Note the pack does not actually ship JEI: it ships **HadEnoughItems 4.34**,
+which keeps both the `mezz.jei` package and `modid = "jei"`, so the gate fires. Verified on the
+`@Mod` annotation of both jars, not on `mcmod.info` — the same trap that once made an Infernal Mobs
+gate silently never fire.
+
 An earlier draft listed `BlockRunestone.func_180661_e` (`createBlockState`) here instead. That was
 wrong twice over: the method contains **no** `Element.values()` call at all (it only reads the static
 `ELEMENT` field), and listing it drew attention away from the `<clinit>` that does the real
 snapshotting.
+
+🚨 **A consequence of the ordering that nothing else in this document states.** Because
+`ModElements.init()` deliberately runs *before* the three blocks' `<clinit>`, their `PropertyEnum`
+gains an `abomination` variant, and `WizardryItems.register` builds a nine-entry subtype-name array
+for `crystal_block`, `runestone` and `runestone_pedestal`. The client will therefore log
+missing-variant and missing-model-definition errors for `element=abomination` at resource load. It is
+log noise, not a crash, and it is the price of the ordering — but the verification list below must
+expect those lines rather than treat them as a failure. Related and unreachable in normal play:
+`BlockCrystal.getMapColor` reads a hand-built `EnumMap` of eight constants, so an Abomination
+crystal-block state would return `null`.
 
 Note that `BlockCrystal.<clinit>` is the odd one out: it uses the two-argument
 `PropertyEnum.create(String, Class)`, which snapshots through `clazz.getEnumConstants()` rather than
