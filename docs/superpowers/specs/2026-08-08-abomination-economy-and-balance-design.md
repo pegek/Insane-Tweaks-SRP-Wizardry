@@ -149,15 +149,47 @@ it does, each is re-decided on its own merits:
 |---|---|---|
 | `ImbuementAltarRecipeCategory.generateCrystalRecipes` | **remove redirect** | crystal item meta 8 now has a model; the recipe genuinely works |
 | `generateCrystalBlockRecipes` | **keep redirect** | the crystal *block* stays hidden (§1.1), so a JEI entry would show an output with no model |
-| `generateArmourRecipes` | **remove redirect** | it filters itself — see below |
+| `generateArmourRecipes` | **remove redirect, but only once §1.4b lands** | it filters itself *after* the crash below is guarded |
 | `ArcaneWorkbenchRecipe.generateCrystalStacks` | **remove redirect** | Abomination crystals charge a wand like any other |
 
-🚨 `generateArmourRecipes` needs no exclusion because EBW already wrote the guard: it calls
-`TileEntityImbuementAltar.getImbuementResult(...)` and then `if (output.isEmpty()) continue;`.
-`getArmour(ABOMINATION, …)` is a registry lookup that misses, returns null, and `new ItemStack(null)`
-is empty — so the Abomination rows drop out on their own. The player still sees every other
-element's armour recipe, which is how they learn the altar exists, and the Abomination row appears
-automatically the day `living_warlock_armour` is registered (§4). Do not add a mixin for this.
+### 1.4b The armour branch crashes, and it is not only a JEI problem
+
+An earlier draft of this spec said `generateArmourRecipes` needs no exclusion because EBW already
+guards it with `if (output.isEmpty()) continue;`. **That guard is never reached.** Read
+`TileEntityImbuementAltar.getImbuementResult` to the end of its armour branch:
+
+```java
+ItemStack result = new ItemStack(ItemWizardArmour.getArmour(receptacleElements[0], …));
+result.setTagCompound(input.getTagCompound());
+((IManaStoringItem) result.getItem()).setMana(result, …);
+```
+
+For Abomination the lookup misses, so `result` is empty, so `result.getItem()` is `Items.AIR`, and
+the cast to `IManaStoringItem` throws `ClassCastException` — one line before the method returns and
+long before JEI's `isEmpty` check runs.
+
+🚨 **And `getImbuementResult` is not a JEI method.** The altar's own tile entity calls it every time
+its contents change. So a player who sets up four Abomination receptacles and drops in a plain
+wizard robe crashes the server. That path has been unreachable only because the dust had no source
+at all; §1.1 and §2.2 are precisely what give it one.
+
+The fix is one guard at the source, and it must be phrased so it disappears by itself:
+
+```java
+@Inject(method = "getImbuementResult", at = @At("HEAD"), cancellable = true)
+```
+
+reproduce EBW's own branch condition, then ask whether
+`ItemWizardArmour.getArmour(element, armourClass, slot)` yields something that is actually an
+`IManaStoringItem`. If it does, return and let EBW run. If it does not, set the return value to
+`ItemStack.EMPTY`.
+
+Keying on **"the lookup produced no usable armour"** rather than on **"the element is Abomination"**
+is the whole point: the day `living_warlock_armour` is registered (§4) the guard stops firing on its
+own, with no edit. It also covers any other mod that appends an element without armour.
+
+With that guard in place the JEI armour rows genuinely do filter themselves, and the redirect on
+`generateArmourRecipes` can go. Not before.
 
 ### 1.5 Element icon
 
@@ -357,13 +389,16 @@ Recorded so a future session does not have to re-derive them.
 registry lookup for `ebwizardry:<class>_<piece>_abomination`. Nothing is registered, so it returns
 null and the altar does nothing.
 
-We are **not** closing this combination. It costs nothing to leave open: the altar silently produces
-nothing (the same as any mismatched dust), and JEI never advertises it because
-`generateArmourRecipes` skips empty outputs (§1.4). Meanwhile the player still sees every other
-element's armour recipe, which is how they learn what the altar is for. The empty slot is the
-natural hook for a future **`living_warlock_armour`** — Abomination armour of the WARLOCK class.
-Registering those four items under the `ebwizardry` namespace makes both the altar and its JEI entry
-light up with no other change anywhere.
+We are **not** closing this combination — but it does not "cost nothing" to leave open, as an
+earlier draft claimed. It costs the crash in §1.4b, and the guard there is what makes leaving it
+open safe. With that guard the altar silently produces nothing (the same as any mismatched dust) and
+JEI never advertises it, while the player still sees every other element's armour recipe, which is
+how they learn what the altar is for.
+
+The empty slot is the natural hook for a future **`living_warlock_armour`** — Abomination armour of
+the WARLOCK class. Because the guard keys on "the lookup produced no usable armour" rather than on
+the element's identity, registering those four items under the `ebwizardry` namespace makes the
+guard stop firing, and both the altar and its JEI entry light up, with no other change anywhere.
 
 **Promotion to a "full" element** (EBW wizards, shrines, obelisks, trades) needs 4 wands plus at
 least the 4 WIZARD-class armour pieces registered as `ebwizardry:` names, because `getWand` and
