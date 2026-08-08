@@ -168,6 +168,13 @@ For Abomination the lookup misses, so `result` is empty, so `result.getItem()` i
 the cast to `IManaStoringItem` throws `ClassCastException` — one line before the method returns and
 long before JEI's `isEmpty` check runs.
 
+🚨 **Do not write the guard as `getArmour(...) == null`.** What a missed lookup yields is not
+settled by reading one declaration: `Item.REGISTRY` is declared `RegistryNamespaced`, which returns
+null, but Forge substitutes a wrapper with a default key of `minecraft:air`, which returns `AIR`.
+Asking `instanceof IManaStoringItem` is false in both cases and is also exactly the question the
+crashing cast asks. A later "simplification" to a null check would silently reopen the crash on
+whichever of the two readings is wrong.
+
 🚨 **And `getImbuementResult` is not a JEI method.** The altar's own tile entity calls it every time
 its contents change. So a player who sets up four Abomination receptacles and drops in a plain
 wizard robe crashes the server. That path has been unreachable only because the dust had no source
@@ -398,7 +405,16 @@ how they learn what the altar is for.
 The empty slot is the natural hook for a future **`living_warlock_armour`** — Abomination armour of
 the WARLOCK class. Because the guard keys on "the lookup produced no usable armour" rather than on
 the element's identity, registering those four items under the `ebwizardry` namespace makes the
-guard stop firing, and both the altar and its JEI entry light up, with no other change anywhere.
+guard stop firing, and both the altar and its JEI entry light up, with no other change *to the altar
+path*. The altar reads `armourClass` off the input, so an elementless warlock hood imbues to
+`warlock_hood_abomination` and a wizard hat to `wizard_hat_abomination`.
+
+🚨 **But `ItemWizardArmour.applyUpgrade` has the same unguarded shape** — `getArmour(this.element,
+armourClass, slot)`, then a stack built straight from it, then a cast. It is unreachable today
+because it needs a piece that already carries an element whose SAGE / BATTLEMAGE / WARLOCK
+counterpart is missing, and no Abomination piece can exist at all. Registering **one** class without
+the other three would make it reachable. So: register all four classes, or extend §1.4b's guard to
+that method too.
 
 **Promotion to a "full" element** (EBW wizards, shrines, obelisks, trades) needs 4 wands plus at
 least the 4 WIZARD-class armour pieces registered as `ebwizardry:` names, because `getWand` and
