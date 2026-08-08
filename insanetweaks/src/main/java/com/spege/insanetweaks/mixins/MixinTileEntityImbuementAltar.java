@@ -20,6 +20,16 @@ import com.spege.insanetweaks.init.ModItems;
  * imbuement recipes normally.
  * This Mixin intercepts the altar's ingredients right before returning the
  * result.
+ *
+ * <p><b>Shares its target method with a twin.</b> {@code MixinImbuementAltarArmourGuard} (config
+ * {@code mixins.insanetweaks.altarguard.json}) is a second HEAD-cancellable {@code @Inject} into this
+ * same {@code getImbuementResult}, cancelling only when the input is elementless {@code
+ * ItemWizardArmour} with uniform receptacle elements that resolve to no registered armour. The two
+ * conditions are disjoint today - this class matches on {@code ebwizardry:master_*wand} /
+ * {@code insanetweaks:corrupted_fruit} input registry names, the guard matches on armour - so which one
+ * runs first does not matter. But that ordering is not actually controlled (both mixins sit at the
+ * default priority 1000, and Mixin's tie-break is "whichever config was applied later ends up first"),
+ * so widening either condition needs a re-check against the other before assuming they stay disjoint.
  */
 @Mixin(value = TileEntityImbuementAltar.class, remap = false)
 public class MixinTileEntityImbuementAltar {

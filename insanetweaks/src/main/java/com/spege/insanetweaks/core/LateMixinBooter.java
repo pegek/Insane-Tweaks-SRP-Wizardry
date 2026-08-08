@@ -18,6 +18,16 @@ public class LateMixinBooter implements ILateMixinLoader {
     public List<String> getMixinConfigs() {
         List<String> configs = new java.util.ArrayList<>();
         configs.add("mixins.insanetweaks.late.json");
+        // Split out of late.json on purpose: late.json is required:false, so a binding failure there
+        // (e.g. EBW renaming getImbuementResult) silently drops the mixin with a log line instead of
+        // throwing. That was tolerable for every other entry, but this guard is the one mixin whose
+        // silent absence is itself a crash - the imbuement altar casting AIR to IManaStoringItem, both
+        // on the server and, since 09223a2 removed the JEI redirect that used to keep Abomination out
+        // of generateArmourRecipes, on every client during JEI recipe registration too. required:true
+        // turns a future rename into a loud mixin-apply error naming this mod, not a
+        // ClassCastException surfacing somewhere else. Content declares required-after:ebwizardry, so
+        // no Loader.isModLoaded gate is needed here.
+        configs.add("mixins.insanetweaks.altarguard.json");
         if (net.minecraftforge.fml.common.Loader.isModLoaded("player_mana")) {
             configs.add("mixins.insanetweaks.playermana.json");
         }
