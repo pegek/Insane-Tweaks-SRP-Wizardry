@@ -351,10 +351,6 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
                 + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 
-    public int getArcaneAdaptationPenaltyPercent(ItemStack stack) {
-        return AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(this.getArcaneAdaptationLevel(stack));
-    }
-
     // ------------------------------------------------------------------
     // Model Registration
     // ------------------------------------------------------------------

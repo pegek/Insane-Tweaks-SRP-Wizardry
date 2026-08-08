@@ -2,6 +2,7 @@ package com.spege.insanetweaks.events;
 
 import com.dhanantry.scapeandrunparasites.world.SRPSaveData;
 import com.spege.insanetweaks.InsaneTweaksMod;
+import com.spege.insanetweaks.init.ModElements;
 
 import electroblob.wizardry.event.SpellCastEvent;
 import net.minecraft.entity.EntityList;
@@ -35,7 +36,7 @@ public class SpellRestrictionEventHandler {
             return;
         }
 
-        if (InsaneTweaksMod.MODID.equals(spellId.getResourceDomain()) && isBlockedWizardCaster(caster)) {
+        if (ModElements.isAbomination(event.getSpell()) && isBlockedWizardCaster(caster)) {
             event.setCanceled(true);
             return;
         }

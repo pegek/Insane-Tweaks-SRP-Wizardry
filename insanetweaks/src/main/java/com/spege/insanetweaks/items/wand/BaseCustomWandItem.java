@@ -135,10 +135,6 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
         return Math.min(3, this.defaultAdaptationLevel + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 
-    public int getArcaneAdaptationPenaltyPercent(ItemStack stack) {
-        return AdaptationUpgradeHelper.getForeignSpellCostPenaltyPercent(this.getArcaneAdaptationLevel(stack));
-    }
-
     /** Scaled here rather than at the call site so the tooltip and the effect cannot disagree. */
     public int getMagicDamageBonusPercent(ItemStack stack) {
         ResourceLocation reg = this.getRegistryName();

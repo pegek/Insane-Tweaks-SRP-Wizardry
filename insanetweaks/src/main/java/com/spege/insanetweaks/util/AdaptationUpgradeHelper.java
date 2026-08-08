@@ -1,5 +1,6 @@
 package com.spege.insanetweaks.util;
 
+import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
 import com.windanesz.ancientspellcraft.item.ItemBattlemageSword;
 
@@ -91,29 +92,25 @@ public final class AdaptationUpgradeHelper {
         return Math.max(0, 3 - getDefaultAdaptationLevel(stack));
     }
 
-    public static float getForeignSpellCostMultiplier(int level) {
-        switch (Math.max(0, Math.min(3, level))) {
+    /**
+     * Cost multiplier for casting an Abomination spell from a focus that is not one of ours and
+     * qualifies only through an applied Adaptation upgrade.
+     *
+     * <p>Defaults to 1.0 at every level, i.e. no surcharge. The mechanism ships switched off so the
+     * balance question can be settled with a config edit rather than a code change.
+     *
+     * @param appliedUpgradeLevel from {@link #getAppliedAdaptationUpgradeLevel(ItemStack)}
+     */
+    public static float getForeignFocusAbominationCostMultiplier(int appliedUpgradeLevel) {
+        switch (Math.max(0, Math.min(3, appliedUpgradeLevel))) {
             case 1:
-                return 2.0f;
+                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel1;
             case 2:
-                return 1.5f;
+                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel2;
             case 3:
-                return 1.0f;
+                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel3;
             default:
                 return 1.0f;
-        }
-    }
-
-    public static int getForeignSpellCostPenaltyPercent(int level) {
-        switch (Math.max(0, Math.min(3, level))) {
-            case 1:
-                return 100;
-            case 2:
-                return 50;
-            case 3:
-                return 0;
-            default:
-                return 0;
         }
     }
 }

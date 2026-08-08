@@ -166,13 +166,8 @@ public class SpellbladeTooltipHandler {
         if (item instanceof com.spege.insanetweaks.items.spellblade.BridgeSpellblade) {
             com.spege.insanetweaks.items.spellblade.BridgeSpellblade spellblade = (com.spege.insanetweaks.items.spellblade.BridgeSpellblade) item;
             int adaptationLevel = spellblade.getArcaneAdaptationLevel(stack);
-            int penaltyPercent = spellblade.getArcaneAdaptationPenaltyPercent(stack);
-            String penaltyText = penaltyPercent > 0
-                    ? "(+" + penaltyPercent + "% Foreign Mana Cost)"
-                    : "(No Foreign Mana Penalty)";
 
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel)
-                    + TextFormatting.RED + " " + penaltyText);
+            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel));
             if (isShiftPressed) {
                 String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {
