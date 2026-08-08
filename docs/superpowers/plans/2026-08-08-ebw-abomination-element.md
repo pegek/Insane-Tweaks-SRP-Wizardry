@@ -851,9 +851,14 @@ import electroblob.wizardry.loot.RandomSpell;
  * Keeps Abomination out of the {@code random_spell} loot function's default element pool.
  *
  * <p>When a loot entry names no element, {@code pickRandomSpell} falls back to
- * {@code Arrays.asList(Element.values())} and then filters spells by tier and element. Abomination
- * would contribute an element whose spells are all flagged {@code "treasure": false}, leaving an
- * empty candidate set.
+ * {@code Arrays.asList(Element.values())} and then filters spells by tier and element.
+ *
+ * <p>🚨 The candidate set is emphatically <b>not</b> empty. Twelve of this mod's fourteen spells
+ * ship {@code "treasure"}, {@code "trades"} and {@code "looting"} all {@code true} - only
+ * {@code call_of_demise} and the disabled {@code test_projectile} close them. Without this redirect
+ * a registered Abomination element becomes a legitimate loot and trade theme, and those twelve
+ * spells - most of them master-tier minion summons with no other gating - surface in vanilla
+ * dungeon chests, wizard trades and mob drops.
  */
 @Mixin(value = RandomSpell.class, remap = false)
 public abstract class MixinRandomSpellElements {
@@ -1058,6 +1063,7 @@ git commit -m "feat(insanetweaks): hide the Abomination crystal, dust, crystal b
 
 **Files:**
 - Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/events/ArcaneBridgeEventHandler.java:22-66`
+- Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/events/SpellRestrictionEventHandler.java` (the NPC-caster block, around line 38)
 - Modify: `insanetweaks/src/main/java/com/spege/insanetweaks/util/AdaptationUpgradeHelper.java:94-118`
 
 - [ ] **Step 1: Rewrite `onSpellCastPre`**
@@ -1138,6 +1144,27 @@ the only `ResourceLocation`, line 38 the only `InsaneTweaksMod`):
 import com.spege.insanetweaks.InsaneTweaksMod;
 import net.minecraft.util.ResourceLocation;
 ```
+
+- [ ] **Step 2b: Re-key the second domain proxy too**
+
+`SpellRestrictionEventHandler` carries the same registry-domain test, used for a different purpose:
+blocking this mod's spells from being cast by a vanilla `ebwizardry:wizard` or `evil_wizard`. Find:
+
+```java
+        if (InsaneTweaksMod.MODID.equals(spellId.getResourceDomain()) && isBlockedWizardCaster(caster)) {
+```
+
+and replace it with:
+
+```java
+        if (ModElements.isAbomination(event.getSpell()) && isBlockedWizardCaster(caster)) {
+```
+
+adding `import com.spege.insanetweaks.init.ModElements;`. Behaviour is identical today — every
+insanetweaks spell is an Abomination spell — so this is consolidation, not a change. Leave it and
+the whole point of the task is undermined: the rule would still be "spells from our mod" in one
+place and "spells of our element" in another. Do **not** remove the `spellId` local if the rest of
+the method still uses it for the SRP stage gate; the compiler will tell you.
 
 - [ ] **Step 3: Replace the penalty helpers in `AdaptationUpgradeHelper.java`**
 
@@ -1383,6 +1410,14 @@ Then run `git status --short` and confirm nothing unexpected is staged.
 ### Task 13: Delete the fake-element display layer
 
 Seven files implement the old hack. Six go; `MixinSpell` is trimmed.
+
+🚨 **This layer went inert the moment Task 3 landed, which makes this task pure dead-code removal.**
+`SpellDisplayUtils.usesAbominationStyling` requires `spell.getElement() == Element.MAGIC`; the
+fourteen spells now report `ABOMINATION`, so the predicate returns `false` for every one of them and
+every consumer below is already a no-op. The red label users see from here on comes from the
+element's own registered `Style`, not from the hack. Nothing behavioural should change when you
+delete these files — and if something *does* change in Task 15's visual checks, that is a real
+finding, not cosmetic drift.
 
 **Files:**
 - Delete: `insanetweaks/src/main/java/com/spege/insanetweaks/util/SpellDisplayUtils.java`

@@ -288,6 +288,16 @@ added to `mixins.insanetweaks.late.json` (the mod's existing unconditional EBW-t
 | `WorldGenObelisk` | `spawnStructure` | same |
 | `WizardryLoot` | `<clinit>` (static) | `Arrays.stream(values()).filter(e != MAGIC)…` builds per-element loot entries |
 | `RandomSpell` | `pickRandomSpell` | falls back to `Arrays.asList(values())` when no element filter is set |
+
+🚨 **The two loot rows are the highest-stakes entries in this table, not the lowest.** An earlier
+draft justified them with "the spell filter returns an empty set, because our spells are
+`treasure: false`". That is false, and measured: only **two** of the fourteen spell JSONs
+(`call_of_demise` and the disabled `test_projectile`) close `treasure`/`trades`/`looting`. The other
+twelve leave all three open. So a registered Abomination element without these redirects becomes a
+legitimate loot and trade theme, and those twelve spells — mostly master-tier minion summons with no
+other gating — appear in vanilla dungeon chests, wizard trades and mob drops. Closing the flags in
+the JSONs would be an alternative, but it would also disable the same spells for any future
+deliberate loot placement; the redirects keep that door available.
 | `ItemCrystal` | `func_150895_a` / `getSubItems` | ninth subtype with no model, in creative and JEI |
 | `ItemSpectralDust` | `func_150895_a` / `getSubItems` | same |
 | `BlockCrystal` | `func_149666_a` / `getSubBlocks` | same, for the block |
