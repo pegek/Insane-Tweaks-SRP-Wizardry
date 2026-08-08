@@ -131,6 +131,43 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
         return this.basePotencyBonus;
     }
 
+    /**
+     * Mana capacity, read from config at call time.
+     *
+     * <p>EBW routes {@code getManaCapacity} straight through {@code getMaxDamage}, whose base is
+     * {@code tier.maxCharge} fixed in the constructor. We cannot set that base from config in the
+     * constructor: {@code ModItems} is a {@code @Mod.EventBusSubscriber}, so its {@code <clinit>}
+     * can run before Forge's first {@code ConfigManager.sync}, and the read would capture the Java
+     * field default instead of the file value - silently.
+     *
+     * <p>The scaling expression is EBW's own, copied deliberately so storage upgrades keep behaving
+     * identically. If EBW ever changes it, the symptom is a different number, never a crash.
+     */
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        int base = this.getBaseManaCapacity();
+        if (base <= 0) {
+            return super.getMaxDamage(stack);
+        }
+        int storage = electroblob.wizardry.util.WandHelper.getUpgradeLevel(
+                stack, electroblob.wizardry.registry.WizardryItems.storage_upgrade);
+        return (int) (base * (1.0F + electroblob.wizardry.constants.Constants.STORAGE_INCREASE_PER_LEVEL * storage) + 0.5F);
+    }
+
+    /** Zero means "not one of ours" - fall back to whatever the tier says. */
+    private int getBaseManaCapacity() {
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_wand".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.wands.livingManaCapacity;
+            }
+            if ("sentient_wand".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.wands.sentientManaCapacity;
+            }
+        }
+        return 0;
+    }
+
     public int getArcaneAdaptationLevel(ItemStack stack) {
         return Math.min(3, this.defaultAdaptationLevel + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }

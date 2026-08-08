@@ -292,6 +292,23 @@ public class GearCategory {
                 "Read live - no restart needed. Default ON." })
         public boolean sentientExtraMinion = true;
 
+        @Config.Name("Living Wand Mana Capacity")
+        @Config.Comment({
+                "How much mana a Living Wand holds before storage upgrades. EBW's own master wands",
+                "hold 2500, so this is where our wands earn the right to carry the big rituals.",
+                "Storage upgrades still multiply on top of it exactly as they do for any wand.",
+                "Read live - no restart needed. Default 3200." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int livingManaCapacity = 3200;
+
+        @Config.Name("Sentient Wand Mana Capacity")
+        @Config.Comment({
+                "How much mana a Sentient Wand holds before storage upgrades. This is the endgame",
+                "wand, so it is the one that can afford Call of Demise without being emptied.",
+                "Read live - no restart needed. Default 4400." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int sentientManaCapacity = 4400;
+
         @Config.Name("Foreign Focus Abomination Cost (Adaptation I)")
         @Config.Comment({
                 "Mana cost multiplier when an Abomination spell is cast from a focus that is NOT one",
