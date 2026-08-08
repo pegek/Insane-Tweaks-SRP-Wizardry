@@ -220,19 +220,23 @@ public class ModRecipes {
                             'Y', new ItemStack(safeItem("srparasites", "ada_yelloweye_drop")),
                             'F', new ItemStack(safeItem("srparasites", "assimilated_flesh")),
                             'C', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, 0),
-                            'H', new ItemStack(safeItem("srparasites", "hive_scrap"))));
+                            'H', new ItemStack(safeItem(InsaneTweaksMod.MODID, "rupter_solied"))));
 
             // Magic nucleus. Shape mirrors living_nucleus (" S ", "FLF", " M ") so the two read as
             // siblings. Consuming an Abomination crystal is what gives that crystal a job and puts
             // the imbuement altar on the road to the wand upgrade instead of beside it.
             //
-            // 'B' is ada_vermin_drop, NOT ada_burrower_drop: SRParasites 1.10.7 ships a lang entry
-            // for srparasites:ada_burrower_drop ("Figment") but never registers the item, and there
-            // is no model for it either - verified by scanning every class in the SRP jar plus
-            // swparasites and SRPExtra. Naming it would have made safeItem() record a miss and this
-            // recipe vanish silently. Vermin pairs with viscera anyway: both are the drops SRP's own
-            // tooltips do NOT call weapon components, which is exactly the split this item exists to
-            // draw.
+            // Ingredients chosen for AVAILABILITY, not just theme. An earlier pass picked
+            // ada_vermin_drop and ada_viscera_drop because nothing else used them - but "unused by
+            // us" turned out to mean "barely dropped in play", which gates the whole arcane currency
+            // behind two rarities. Beckon Membrane and Arachnida Claw come off mobs a player
+            // actually meets.
+            //
+            // 🚨 Neither is ada_burrower_drop, and that is deliberate: SRParasites 1.10.7 ships a
+            // lang entry for srparasites:ada_burrower_drop ("Figment") but never registers the item
+            // and ships no model for it. Naming it would have made safeItem() record a miss and this
+            // recipe vanish with one warn line. Verify an SRP ingredient against models/item/, never
+            // against the lang file.
             registerFallback(event, "magic_nucleus",
                     new ShapedOreRecipe(
                             new ResourceLocation(InsaneTweaksMod.MODID, "magic_nucleus"),
@@ -240,10 +244,10 @@ public class ModRecipes {
                             " B ",
                             "DKD",
                             " V ",
-                            'B', new ItemStack(safeItem("srparasites", "ada_vermin_drop")),
+                            'B', new ItemStack(safeItem("srparasites", "beckon_drop")),
                             'D', new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
                             'K', new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, elementMeta),
-                            'V', new ItemStack(safeItem("srparasites", "ada_viscera_drop"))));
+                            'V', new ItemStack(safeItem("srparasites", "ada_arachnida_drop"))));
 
             // Ruined spell books, so the altar has steady fuel and the spell path does not depend
             // on a rare drop either. Four more dust go into the receptacles, so one crafted book

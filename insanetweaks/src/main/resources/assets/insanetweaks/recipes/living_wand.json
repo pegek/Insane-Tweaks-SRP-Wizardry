@@ -6,10 +6,16 @@
     "GR "
   ],
   "key": {
-    "N": {
-      "type": "forge:ore_dict",
-      "ore": "itMagicNucleus"
-    },
+    "N": [
+      {
+        "type": "forge:ore_dict",
+        "ore": "itMagicNucleus"
+      },
+      {
+        "type": "forge:ore_dict",
+        "ore": "itLivingNucleus"
+      }
+    ],
     "V": {
       "item": "srparasites:vile_shell"
     },
