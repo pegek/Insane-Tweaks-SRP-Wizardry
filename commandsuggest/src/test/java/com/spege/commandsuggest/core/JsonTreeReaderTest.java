@@ -100,16 +100,20 @@ public class JsonTreeReaderTest {
     }
 
     @Test
-    public void subBezLitJestPomijanyZamiastWymyslacToken() {
-        // Wezel bez 'lit' nie ma jak byc trafiony przez gracza - pomijamy caly ten wezel
-        // (i jego poddrzewo), zamiast wstawiac zmyslony token "?" albo wywalac caly plik.
-        CommandTree t = JsonTreeReader.read(
-                "{\"command\":\"x\",\"sub\":["
-                + "{\"exec\":true},"
-                + "{\"lit\":\"ok\",\"exec\":true}"
-                + "]}");
-        assertEquals(1, t.getRoot().getSub().size());
-        assertEquals("ok", t.getRoot().getSub().get(0).getLiteral());
+    public void subBezLitOdrzucaCalyPlikZCzytelnymKomunikatem() {
+        // Wezel bez 'lit' nie ma jak byc trafiony przez gracza - to WYMAGANY klucz routingu,
+        // tak samo jak 'command' na korzeniu, wiec rzucamy zamiast po cichu gubic podkomende
+        // (co byloby niewidoczne az do porownania JSON-a z popupem) albo zmyslac token "?".
+        try {
+            JsonTreeReader.read(
+                    "{\"command\":\"x\",\"sub\":["
+                    + "{\"exec\":true},"
+                    + "{\"lit\":\"ok\",\"exec\":true}"
+                    + "]}");
+            fail("mialo rzucic");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("lit"));
+        }
     }
 
     @Test

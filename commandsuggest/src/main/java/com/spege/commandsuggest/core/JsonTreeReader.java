@@ -25,7 +25,14 @@ public final class JsonTreeReader {
     }
 
     /**
-     * @throws IllegalArgumentException gdy to nie jest obiekt JSON albo brak pola {@code command}
+     * Regula formatu: brakujacy WYMAGANY klucz odrzuca caly plik z komunikatem (tak {@code command}
+     * przy korzeniu, jak {@code lit} przy kazdym wpisie w {@code sub}); nierozpoznana WARTOSC
+     * degraduje sie w milczeniu do defaultu (nieznany {@code type} -> {@link ArgType#UNKNOWN},
+     * niepoprawny {@code exec} -> {@code false}). Cicha porazka jest dla pliku edytowanego recznie
+     * gorsza niz glosna — patrz uzasadnienie w {@link #readNode}.
+     *
+     * @throws IllegalArgumentException gdy to nie jest obiekt JSON, brak pola {@code command},
+     *         albo ktorykolwiek wpis w {@code sub} nie ma pola {@code lit}
      */
     public static CommandTree read(String json) {
         JsonObject o;
@@ -71,7 +78,18 @@ public final class JsonTreeReader {
         return o.get("command").getAsString();
     }
 
-    /** {@code literal == null} tylko dla korzenia. */
+    /**
+     * {@code literal == null} tylko dla korzenia.
+     *
+     * <p>Brak {@code lit} we wpisie {@code sub} rzuca, zamiast po cichu pominac wezel albo
+     * zmyslic token "?". 'lit' to klucz routingu (to, co gracz faktycznie wpisuje i po czym
+     * wezel jest wybierany) — analogicznie do {@code CommandTree.name}, a nie etykieta jak
+     * {@code CmdArg.name}. Pominiecie wezla byloby niewidoczne: komenda ladowalaby sie normalnie
+     * i po prostu nigdy nie podpowiadalaby tej jednej podkomendy, bez ani jednej linii w zadnym
+     * logu — autor musialby zauwazyc roznice miedzy swoim JSON-em a popupem sam. Rzucenie tutaj
+     * gubi podpowiedzi tej JEDNEJ komendy na sesje, ale daje {@code DescriptorLoader} (zadanie 10)
+     * cos do zalogowania z nazwa pliku, co author moze od razu naprawic.
+     */
     private static CmdNode readNode(JsonObject o, String literal) {
         List<CmdArg> args = new ArrayList<CmdArg>();
         if (o.has("args") && o.get("args").isJsonArray()) {
@@ -84,13 +102,8 @@ public final class JsonTreeReader {
             for (JsonElement e : o.getAsJsonArray("sub")) {
                 JsonObject so = e.getAsJsonObject();
                 if (!so.has("lit") || !so.get("lit").isJsonPrimitive()) {
-                    // Brak 'lit' (albo zly typ) to nie kosmetyczna literowka jak nieznany typ
-                    // argumentu — 'lit' to klucz routingu (to, co gracz faktycznie wpisuje i po
-                    // czym wezel jest wybierany), analogicznie do CommandTree.name, a nie etykieta
-                    // jak CmdArg.name. Zmyslanie tokenu "?" wstawiloby do popupu podpowiedz, ktorej
-                    // zadna komenda nie przyjmie. Pomijamy caly ten wezel (i jego poddrzewo) zamiast
-                    // zgadywac albo wywalac caly plik za jeden zle opisany podwezel.
-                    continue;
+                    throw new IllegalArgumentException("wpis w 'sub' pod '"
+                            + (literal != null ? literal : "korzeniem") + "' nie ma pola 'lit'");
                 }
                 String lit = so.get("lit").getAsString();
                 sub.add(readNode(so, lit));
