@@ -1,0 +1,74 @@
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+
+repositories {
+    maven { url = 'https://maven.cleanroommc.com' }
+    mavenCentral()
+}
+
+version = '1.0.0'
+group = 'com.spege.commandsuggest'
+archivesBaseName = 'commandsuggest'
+
+// Jedno zrodlo prawdy dla wersji: mcmod.info i manifest bierza ja z 'version' powyzej.
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', '1.12.2'
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': '1.12.2'
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-proc:none"
+    options.compilerArgs << "-Xlint:all"
+}
+
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
+
+    // ZADNEGO fg.deobf i zadnego mixinbootera. Ten mod nie linkuje sie do zadnego moda
+    // i nie ma ani jednego mixina - patrz spec 3.
+    testImplementation 'junit:junit:4.12'
+}
+
+// Pakiet core nie zna ani jednej klasy Minecrafta, wiec chodzi na zwyklej JVM.
+// To JEDYNY podprojekt w repo z testami - patrz zadanie 19 (aktualizacja CLAUDE.md).
+test {
+    useJUnit()
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "Command Suggest",
+            "Specification-Vendor": "spege",
+            "Specification-Version": "${version}",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor": "spege",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            // Zadnego 'MixinConfigs' - ten mod nie ma mixinow i miec nie ma.
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications { mavenJava(MavenPublication) { artifact jar } }
+    repositories { maven { url "file:///${rootProject.projectDir}/mcmodsrepo" } }
+}

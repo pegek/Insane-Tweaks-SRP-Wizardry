@@ -1,0 +1,11 @@
+[
+{
+  "modid": "commandsuggest",
+  "name": "Command Suggest",
+  "description": "A command suggestion popup for the chat box. Shows matching commands and their arguments as you type, with argument types coloured and a usage line underneath. The server sends a permission-filtered command tree at login; without it the mod falls back to vanilla tab-completion, so it degrades cleanly on any server. Command descriptions are data-driven JSON in config/commandsuggest/commands, so covering a new mod's commands needs no code. No mixins, no ASM.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["Isuthhh"],
+  "dependencies": []
+}
+]
