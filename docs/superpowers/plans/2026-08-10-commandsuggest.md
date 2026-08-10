@@ -326,6 +326,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.EnumSet;
 import org.junit.Test;
 
 public class ArgTypeTest {
@@ -343,14 +344,20 @@ public class ArgTypeTest {
         assertEquals(ArgType.UNKNOWN, ArgType.byId(null));
     }
 
+    /**
+     * Wyczerpujaco po values(), nie na probce: kazda nowa stala bedzie MUSIALA sie zadeklarowac,
+     * zamiast po cichu przejsc z domyslna flaga.
+     */
     @Test
     public void serverResolvedTylkoDlaTrzechTypow() {
-        assertTrue(ArgType.WORD.isServerResolved());
-        assertTrue(ArgType.GREEDY.isServerResolved());
-        assertTrue(ArgType.UNKNOWN.isServerResolved());
-        assertFalse(ArgType.PLAYER.isServerResolved());
-        assertFalse(ArgType.ITEM.isServerResolved());
-        assertFalse(ArgType.INT.isServerResolved());
+        EnumSet<ArgType> serverResolved = EnumSet.of(ArgType.WORD, ArgType.GREEDY, ArgType.UNKNOWN);
+        for (ArgType t : ArgType.values()) {
+            if (serverResolved.contains(t)) {
+                assertTrue(t.name(), t.isServerResolved());
+            } else {
+                assertFalse(t.name(), t.isServerResolved());
+            }
+        }
     }
 
     @Test
@@ -375,7 +382,6 @@ Oczekiwane: `FAILED`, błąd kompilacji `cannot find symbol: class ArgType`.
 ```java
 package com.spege.commandsuggest.core;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -386,7 +392,7 @@ import java.util.Map;
  * z linijka smiecia na czacie.
  *
  * <p>{@code id} jest kluczem w plikach JSON — jest danymi na dysku, nie nazwa w kodzie.
- * Zmiana ktoregokolwiek unieważnia opisy, ktore ludzie maja w {@code config/}.
+ * Zmiana ktoregokolwiek uniewaznia opisy, ktore ludzie maja w {@code config/}.
  */
 public enum ArgType {
 
@@ -416,7 +422,7 @@ public enum ArgType {
         for (ArgType t : values()) {
             m.put(t.id, t);
         }
-        BY_ID = Collections.unmodifiableMap(m);
+        BY_ID = m;
     }
 
     private final String id;
@@ -436,7 +442,14 @@ public enum ArgType {
         return this.serverResolved;
     }
 
-    /** Nieznany identyfikator daje {@link #UNKNOWN}, nigdy wyjatku — opisy pisza ludzie. */
+    /**
+     * Nieznany identyfikator daje {@link #UNKNOWN}, nigdy wyjatku — opisy pisza ludzie.
+     *
+     * <p>Uwaga: wlasny id {@link #UNKNOWN} to string {@code "unknown"}, wiec
+     * {@code byId("unknown")} i {@code byId("literowka")} zwracaja to samo — zeby odroznic
+     * literowke od jawnego "unknown" w JSON-ie, wywolujacy musi sam porownac surowy string
+     * z {@code ArgType.UNKNOWN.getId()} przed wywolaniem tej metody.
+     */
     public static ArgType byId(String id) {
         if (id == null) {
             return UNKNOWN;
