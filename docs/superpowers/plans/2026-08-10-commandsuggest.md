@@ -621,9 +621,14 @@ public final class ParsedInput {
         return this.editIndex;
     }
 
-    /** Tresc edytowanego tokenu — to ona filtruje liste. */
+    /**
+     * Tresc edytowanego tokenu — to ona filtruje liste. Dla {@link #NOT_A_COMMAND} zwraca pusty
+     * string, a nie wyjatek: ten obiekt czyta petla rysujaca popup, wolana co klatke, a najczestsze
+     * wejscie w czacie to zwykly tekst bez ukosnika. Wyjatek w tym miejscu bylby crashem renderu
+     * za to, ze gracz cos napisal.
+     */
     public String getPrefix() {
-        return this.tokens[this.editIndex];
+        return this.editIndex < this.tokens.length ? this.tokens[this.editIndex] : "";
     }
 
     /** Offset w ORYGINALNEJ linii, pod ktorym zaczyna sie edytowany token. Potrzebny przy podmianie. */
@@ -658,10 +663,11 @@ public final class InputParser {
      *                  {@code TabCompleter.complete()}
      */
     public static ParsedInput parse(String raw, int cursorPos) {
-        if (raw == null || cursorPos <= 0 || cursorPos > raw.length()) {
-            if (raw == null || cursorPos <= 0) {
-                return ParsedInput.NOT_A_COMMAND;
-            }
+        if (raw == null || cursorPos <= 0) {
+            return ParsedInput.NOT_A_COMMAND;
+        }
+        if (cursorPos > raw.length()) {
+            // pole moglo sie skurczyc miedzy odczytem tekstu a odczytem kursora (wklejka, historia)
             cursorPos = raw.length();
         }
         String upToCursor = raw.substring(0, cursorPos);
@@ -696,6 +702,12 @@ Oczekiwane: `BUILD SUCCESSFUL`, dziewięć testów `passed`.
 git add commandsuggest/src/main/java/com/spege/commandsuggest/core/ParsedInput.java commandsuggest/src/main/java/com/spege/commandsuggest/core/InputParser.java commandsuggest/src/test/java/com/spege/commandsuggest/core/InputParserTest.java
 git commit -m "feat(commandsuggest): InputParser - podzial linii identyczny z waniliowym"
 ```
+
+> **Po recenzji (2026-08-11).** Doszły dwa testy ponad dziewięć powyżej — łącznie 11: `parse(null, …)`
+> (guard był, testu nie było, i żadna z pięciu mutacji by go nie złapała) oraz kursor stojący
+> **dokładnie na spacji**, który musi należeć do tokenu przed nią. Ten drugi przeszedł od pierwszego
+> uruchomienia. Mutacje sprawdzone i wszystkie złapane: `split(" ")` bez `-1`, `prefixStart`
+> startujący od 0, `+0` zamiast `+1`, `i <= editIndex`, parsowanie całego `raw` zamiast `upToCursor`.
 
 ---
 
