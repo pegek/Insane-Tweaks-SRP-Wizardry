@@ -11,6 +11,13 @@ import java.util.List;
  * wlasciwosci to trzy pozycje i nie ma po co ich pakowac ani rzutowac. {@code min}/{@code max}
  * sa {@code Double} takze dla {@link ArgType#INT} — jedna para pol obsluguje oba typy liczbowe,
  * a wartosc calkowita miesci sie w double bez straty do 2^53.
+ *
+ * <p>{@code name} tutaj cicho przyjmuje default {@code "arg"} na {@code null}, w odroznieniu od
+ * {@link CommandTree}, ktory na {@code null} rzuca. To nie przeoczenie: nazwa argumentu to
+ * <b>etykieta do wyswietlenia</b> — pojawia sie jako {@code <name>} w zsyntetyzowanej linii usage
+ * i nigdzie indziej — podczas gdy nazwa komendy to <b>klucz wyszukiwania</b> w mapie
+ * {@link CommandIndex} i w sortowanym {@code TreeSet}. Brakujaca etykieta psuje jedna linijke
+ * podpowiedzi; brakujacy klucz wywala renderer.
  */
 public final class CmdArg {
 
