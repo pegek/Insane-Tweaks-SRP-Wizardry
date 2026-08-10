@@ -13,6 +13,7 @@ public class InputParserTest {
     public void zwyklyTekstToNieKomenda() {
         assertFalse(InputParser.parse("czesc", 5).isCommand());
         assertFalse(InputParser.parse("", 0).isCommand());
+        assertFalse(InputParser.parse(null, 5).isCommand());
     }
 
     @Test
@@ -86,5 +87,14 @@ public class InputParserTest {
         // czytane z petli rysujacej, wiec musi byc totalne - patrz javadoc getPrefix
         assertEquals("", InputParser.parse("czesc", 5).getPrefix());
         assertEquals("", ParsedInput.NOT_A_COMMAND.getPrefix());
+    }
+
+    @Test
+    public void kursorNaSpacjiNalezyDoTokenuPrzedNia() {
+        // indeks 4 to spacja; substring(0, 4) jej nie obejmuje, wiec edytowany jest wciaz "cmd"
+        ParsedInput in = InputParser.parse("/cmd next", 4);
+        assertArrayEquals(new String[] { "cmd" }, in.getTokens());
+        assertEquals(0, in.getEditIndex());
+        assertEquals("cmd", in.getPrefix());
     }
 }

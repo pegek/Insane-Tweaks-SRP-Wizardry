@@ -22,7 +22,10 @@ public final class ParsedInput {
         return this.command;
     }
 
-    /** {@code tokens[0]} to nazwa komendy bez ukosnika. Kopia — wolno modyfikowac. */
+    /**
+     * {@code tokens[0]} to nazwa komendy bez ukosnika. Defensywna kopia — wywolujacy moze ja
+     * zatrzymac bez aliasowania stanu parsera.
+     */
     public String[] getTokens() {
         return this.tokens.clone();
     }
@@ -42,7 +45,10 @@ public final class ParsedInput {
         return this.editIndex < this.tokens.length ? this.tokens[this.editIndex] : "";
     }
 
-    /** Offset w ORYGINALNEJ linii, pod ktorym zaczyna sie edytowany token. Potrzebny przy podmianie. */
+    /**
+     * Offset w ORYGINALNEJ linii, pod ktorym zaczyna sie edytowany token. Potrzebny przy podmianie.
+     * Dla {@link #NOT_A_COMMAND} zwraca {@code 0}.
+     */
     public int getPrefixStart() {
         return this.prefixStart;
     }

@@ -15,6 +15,10 @@ public final class InputParser {
     }
 
     /**
+     * Dzieli {@code raw} na tokeny wzgledem {@code cursorPos} i zwraca, ktory z nich jest wlasnie
+     * edytowany. Zwraca {@link ParsedInput#NOT_A_COMMAND}, gdy {@code raw} jest {@code null},
+     * {@code cursorPos} jest niedodatni, albo tekst przed kursorem nie zaczyna sie od ukosnika.
+     *
      * @param raw       cala tresc pola czatu
      * @param cursorPos pozycja kursora; tekst za kursorem jest ignorowany, tak jak w
      *                  {@code TabCompleter.complete()}. Wartosc wieksza niz dlugosc {@code raw}
