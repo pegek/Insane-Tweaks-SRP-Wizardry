@@ -76,7 +76,44 @@ public final class TreeCodec {
      */
     private static final int MAX_DEPTH = 32;
 
+    /**
+     * Globalny budzet wezlow ({@link CmdNode} + {@link CmdArg} razem) na CALE wywolanie
+     * {@code decode()}. Kazdy limit powyzej (poolSize, commandCount, aliasCount, argCount,
+     * subCount, choicesCount, depth) trzyma sie z osobna, ale bez tego budzetu ich iloczyn i
+     * tak eksploduje.
+     *
+     * <p>🚨 Bez gzipa surowy rozmiar pakietu jest naturalna gorna granica: kazdy wezel kosztuje
+     * na drucie co najmniej pare bajtow, a {@code SPacketCustomPayload} ogranicza pakiet
+     * client-bound do 1 MiB, wiec dobrze uformowany pakiet fizycznie nie moze opisac wiecej niz
+     * kilkaset tysiecy wezlow. Galaz z gzipem znosi te granice: kilka kilobajtow wysoce
+     * powtarzalnych naglowkow wezlow gzipuje sie do setek megabajtow — klasyczna bomba
+     * dekompresji — a {@code GZIPInputStream} strumieniuje to bez zadnej wlasnej gornej granicy,
+     * wiec nic nie powstrzymuje alokacji jednego {@code CmdNode}/{@code CmdArg}/{@code ArrayList}
+     * na kazdy z nich, zanim zrobi to ten budzet. Bez niego kazdy limit powyzej wyglada
+     * kompletny, a caly ciag i tak ucieka w OOM na kliencie, ktory po prostu dolaczyl do serwera.
+     *
+     * <p>Realny paczek ma ~1000 komend; nawet po kilkadziesiat wezlow kazda to rzedu 10^4.
+     * 250k to trzy rzedy wielkosci zapasu, wciaz daleko od OOM.
+     */
+    private static final int MAX_TOTAL_NODES = 250_000;
+
     private TreeCodec() {
+    }
+
+    /**
+     * Licznik globalnego budzetu wezlow — osobna instancja na kazde wywolanie {@code decode()},
+     * NIGDY pole statyczne klasy: {@code decode()} musi zostac bezpieczne do wywolania z wiecej
+     * niz jednego watku naraz.
+     */
+    private static final class NodeBudget {
+        private int spent;
+
+        void spend() throws IOException {
+            this.spent++;
+            if (this.spent > MAX_TOTAL_NODES) {
+                throw new IOException("budzet wezlow drzewa komend przekroczony (limit " + MAX_TOTAL_NODES + ")");
+            }
+        }
     }
 
     public static byte[] encode(CommandIndex index) {
@@ -140,6 +177,7 @@ public final class TreeCodec {
             }
             int count = readSize(in, MAX_COMMAND_COUNT, "commandCount");
             List<CommandTree> trees = new ArrayList<CommandTree>();
+            NodeBudget budget = new NodeBudget();
             for (int i = 0; i < count; i++) {
                 String name = readPooled(in, pool, "commandName");
                 int aliasCount = readSize(in, MAX_ALIAS_COUNT, "aliasCount");
@@ -147,7 +185,7 @@ public final class TreeCodec {
                 for (int a = 0; a < aliasCount; a++) {
                     aliases.add(readPooled(in, pool, "alias"));
                 }
-                trees.add(new CommandTree(name, aliases, readNode(in, pool, 0)));
+                trees.add(new CommandTree(name, aliases, readNode(in, pool, 0, budget)));
             }
             return new CommandIndex(trees);
         } catch (IOException e) {
@@ -232,24 +270,27 @@ public final class TreeCodec {
      * {@code depth} liczy poziomy zagniezdzenia od korzenia (0). Bez tego limitu spreparowany
      * strumien z lancuchem pustych {@code sub}-ow rekurencyjnie wywolalby to na tyle glebko, ze
      * dostalibysmy {@code StackOverflowError} — {@code Error}, nie {@code Exception}, wiec
-     * przelatuje przez kazdy istniejacy {@code catch} na tej sciezce.
+     * przelatuje przez kazdy istniejacy {@code catch} na tej sciezce. {@code budget} liczy
+     * wezly na cale wywolanie {@code decode()} — patrz {@link #MAX_TOTAL_NODES}.
      */
-    private static CmdNode readNode(DataInputStream in, String[] pool, int depth) throws IOException {
+    private static CmdNode readNode(DataInputStream in, String[] pool, int depth, NodeBudget budget)
+            throws IOException {
         if (depth > MAX_DEPTH) {
             throw new IOException("drzewo komend zagniezdzone glebiej niz " + MAX_DEPTH + " poziomow");
         }
+        budget.spend();
         int flags = in.readByte();
         String literal = (flags & NODE_HAS_LITERAL) != 0 ? readPooled(in, pool, "literal") : null;
         String usage = (flags & NODE_HAS_USAGE) != 0 ? readPooled(in, pool, "usage") : null;
         int argCount = readSize(in, MAX_ARG_COUNT, "argCount");
         List<CmdArg> args = new ArrayList<CmdArg>();
         for (int i = 0; i < argCount; i++) {
-            args.add(readArg(in, pool));
+            args.add(readArg(in, pool, budget));
         }
         int subCount = readSize(in, MAX_SUB_COUNT, "subCount");
         List<CmdNode> sub = new ArrayList<CmdNode>();
         for (int i = 0; i < subCount; i++) {
-            sub.add(readNode(in, pool, depth + 1));
+            sub.add(readNode(in, pool, depth + 1, budget));
         }
         return new CmdNode(literal, args, sub, (flags & NODE_EXECUTABLE) != 0, usage);
     }
@@ -283,7 +324,8 @@ public final class TreeCodec {
         }
     }
 
-    private static CmdArg readArg(DataInputStream in, String[] pool) throws IOException {
+    private static CmdArg readArg(DataInputStream in, String[] pool, NodeBudget budget) throws IOException {
+        budget.spend();
         String name = readPooled(in, pool, "argName");
         ArgType type = ArgType.byId(readPooled(in, pool, "argType"));
         int flags = in.readByte();

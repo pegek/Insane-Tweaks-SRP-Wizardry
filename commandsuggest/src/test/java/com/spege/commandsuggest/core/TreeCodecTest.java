@@ -185,6 +185,33 @@ public class TreeCodecTest {
     }
 
     @Test
+    public void szerokieDrzewoPrzekraczaGlobalnyBudzetWezlowDajeIllegalStateException() {
+        // Kazdy pojedynczy limit (MAX_COMMAND_COUNT, MAX_SUB_COUNT, MAX_ARG_COUNT...) jest tu
+        // spelniony z osobna - o to wlasnie chodzi w globalnym budzecie: szeroko rozlozone
+        // drzewo moze przekroczyc SUME, nie lamiac ani jednego z nich pojedynczo. Budowane
+        // przez model (tanio), a nie jako prawdziwa bomba gzipowa (kilka KB -> setki MB) - test
+        // ma pokazac, ze budzet dziala, a nie demonstrowac faktyczny OOM.
+        List<CommandTree> duzo = new ArrayList<CommandTree>();
+        for (int i = 0; i < 90_000; i++) {
+            CmdArg arg = new CmdArg("a", ArgType.WORD, null, null, null);
+            CmdNode child = new CmdNode("c", Collections.singletonList(arg), null, true, null);
+            CmdNode root = new CmdNode(null, null, Collections.singletonList(child), false, null);
+            duzo.add(new CommandTree("cmd-" + i, null, root));
+        }
+        // 90 000 komend * 3 "wezly" (root + child + arg) = 270 000 > MAX_TOTAL_NODES (250 000),
+        // a kazda pojedyncza komenda ma tylko 2 CmdNode i 1 CmdArg - daleko ponizej jakiegokolwiek
+        // per-wezlowego limitu (MAX_SUB_COUNT=4096, MAX_ARG_COUNT=32, MAX_COMMAND_COUNT=100000).
+        byte[] bajty = TreeCodec.encode(new CommandIndex(duzo));
+
+        try {
+            TreeCodec.decode(bajty);
+            fail("mialo rzucic");
+        } catch (IllegalStateException expected) {
+            // ok - globalny budzet wezlow zadzialal, zanim dekodowanie przydzielilo wszystko
+        }
+    }
+
+    @Test
     public void cmdArgUsuwaNullZChoicesIRoundTripujePozostale() {
         CmdArg zNullem = new CmdArg("rule", ArgType.CHOICE, Arrays.asList("a", null, "b"), null, null);
         assertEquals(Arrays.asList("a", "b"), zNullem.getChoices());
