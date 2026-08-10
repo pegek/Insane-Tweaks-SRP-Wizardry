@@ -4,6 +4,8 @@ apply plugin: 'maven-publish'
 
 repositories {
     maven { url = 'https://maven.cleanroommc.com' }
+    // mavenCentral tylko tutaj: to jedyny podprojekt z zaleznoscia spoza CleanroomMC/CurseMaven
+    // (JUnit i Gson dla test source setu).
     mavenCentral()
 }
 
@@ -42,6 +44,12 @@ dependencies {
     // ZADNEGO fg.deobf i zadnego mixinbootera. Ten mod nie linkuje sie do zadnego moda
     // i nie ma ani jednego mixina - patrz spec 3.
     testImplementation 'junit:junit:4.12'
+
+    // Gson dostarcza Minecraft w runtime - stad compileOnly, zeby NIE wladowac go do jara.
+    // testImplementation, bo konfiguracja 'minecraft' nie jest na classpathie testow, a core
+    // ma sie testowac bez Minecrafta. Wersja rowna tej, ktora wozi MC 1.12.2.
+    compileOnly 'com.google.code.gson:gson:2.8.0'
+    testImplementation 'com.google.code.gson:gson:2.8.0'
 }
 
 // Pakiet core nie zna ani jednej klasy Minecrafta, wiec chodzi na zwyklej JVM.
