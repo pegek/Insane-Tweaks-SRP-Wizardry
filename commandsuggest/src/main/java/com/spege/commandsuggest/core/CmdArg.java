@@ -18,6 +18,10 @@ import java.util.List;
  * i nigdzie indziej — podczas gdy nazwa komendy to <b>klucz wyszukiwania</b> w mapie
  * {@link CommandIndex} i w sortowanym {@code TreeSet}. Brakujaca etykieta psuje jedna linijke
  * podpowiedzi; brakujacy klucz wywala renderer.
+ *
+ * <p>Elementy {@code null} w {@code choices} sa po cichu odrzucane, a nie tylko tolerowane —
+ * gdyby przeszly dalej, {@code TreeCodec.encode} wywalilby sie na {@code DataOutputStream.writeUTF(null)}
+ * {@code NullPointerException}-em, a nie zadeklarowanym {@code IllegalStateException}.
  */
 public final class CmdArg {
 
@@ -30,11 +34,22 @@ public final class CmdArg {
     public CmdArg(String name, ArgType type, List<String> choices, Double min, Double max) {
         this.name = name != null ? name : "arg";
         this.type = type != null ? type : ArgType.UNKNOWN;
-        this.choices = choices == null || choices.isEmpty()
-                ? Collections.<String>emptyList()
-                : Collections.unmodifiableList(new ArrayList<String>(choices));
+        this.choices = cleanChoices(choices);
         this.min = min;
         this.max = max;
+    }
+
+    private static List<String> cleanChoices(List<String> choices) {
+        if (choices == null || choices.isEmpty()) {
+            return Collections.<String>emptyList();
+        }
+        List<String> cleaned = new ArrayList<String>(choices.size());
+        for (String c : choices) {
+            if (c != null) {
+                cleaned.add(c);
+            }
+        }
+        return cleaned.isEmpty() ? Collections.<String>emptyList() : Collections.unmodifiableList(cleaned);
     }
 
     public String getName() {
