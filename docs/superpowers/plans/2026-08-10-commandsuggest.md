@@ -1794,6 +1794,28 @@ git add commandsuggest/src/main/java/com/spege/commandsuggest/core/VarInt.java c
 git commit -m "feat(commandsuggest): TreeCodec - drzewo do bajtow, pula stringow, gzip"
 ```
 
+> **Po recenzji (2026-08-11) — kod powyżej to wersja sprzed utwardzenia.** Format na drucie jest
+> ten sam co do bajtu (pilnuje tego `ponowneZakodowanieDajeIdentyczneBajty`), ale `decode()`
+> przestało ufać strumieniowi. Powód: to jedyne miejsce w modzie, które parsuje bajty z sieci,
+> a przed poprawką spreparowany pakiet dawał `NegativeArraySizeException`, `OutOfMemoryError`,
+> `ArrayIndexOutOfBoundsException` albo `StackOverflowError` — z czego dwa ostatnie to `Error`,
+> więc nie łapie ich nawet `catch (Exception)` u wołającego.
+>
+> Doszły: `readSize` z limitem na każdy licznik czytany z drutu, `readPooled` z kontrolą zakresu
+> indeksu puli, licznik głębokości rekursji w `readNode` (limit 32), zakaz pre-sizowania kolekcji
+> licznikiem z sieci, i **globalny budżet węzłów** (250 000, `NodeBudget` tworzony per wywołanie,
+> nigdy statyczny). Ten ostatni jest przeciw bombie dekompresyjnej: bez gzipa limit 1 MiB na
+> `SPacketCustomPayload` sam ogranicza liczbę węzłów, bo każdy kosztuje parę bajtów — gałąź
+> z gzipem to ograniczenie znosi, a `GZIPInputStream` strumieniuje, więc kilka kilobajtów
+> powtarzalnych nagłówków alokuje setki megabajtów obiektów, zanim którykolwiek limit per-węzeł
+> zdąży zareagować.
+>
+> Przy okazji: `CmdArg` odsiewa `null` z `choices` (inaczej `writeUTF(null)` rzucał `NPE` mijając
+> deklarowany kontrakt), a `varIntPrzezywaRoundTrip` dostał `-1` i `Integer.MIN_VALUE` — ścieżka
+> pięciobajtowa nie była pokryta ani jedną wartością.
+>
+> `TreeCodecTest` ma 13 testów. Cały `core` po zadaniu 6: **54 testy**.
+
 ---
 
 ## Task 7: `core` — `SuggestionEngine`
