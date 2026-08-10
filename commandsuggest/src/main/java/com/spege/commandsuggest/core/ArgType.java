@@ -1,6 +1,5 @@
 package com.spege.commandsuggest.core;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +40,7 @@ public enum ArgType {
         for (ArgType t : values()) {
             m.put(t.id, t);
         }
-        BY_ID = Collections.unmodifiableMap(m);
+        BY_ID = m;
     }
 
     private final String id;
@@ -61,7 +60,14 @@ public enum ArgType {
         return this.serverResolved;
     }
 
-    /** Nieznany identyfikator daje {@link #UNKNOWN}, nigdy wyjatku — opisy pisza ludzie. */
+    /**
+     * Nieznany identyfikator daje {@link #UNKNOWN}, nigdy wyjatku — opisy pisza ludzie.
+     *
+     * <p>Uwaga: wlasny id {@link #UNKNOWN} to string {@code "unknown"}, wiec
+     * {@code byId("unknown")} i {@code byId("literowka")} zwracaja to samo — zeby odroznic
+     * literowke od jawnego "unknown" w JSON-ie, wywolujacy musi sam porownac surowy string
+     * z {@code ArgType.UNKNOWN.getId()} przed wywolaniem tej metody.
+     */
     public static ArgType byId(String id) {
         if (id == null) {
             return UNKNOWN;

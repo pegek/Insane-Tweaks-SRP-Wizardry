@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.EnumSet;
 import org.junit.Test;
 
 public class ArgTypeTest {
@@ -23,12 +24,14 @@ public class ArgTypeTest {
 
     @Test
     public void serverResolvedTylkoDlaTrzechTypow() {
-        assertTrue(ArgType.WORD.isServerResolved());
-        assertTrue(ArgType.GREEDY.isServerResolved());
-        assertTrue(ArgType.UNKNOWN.isServerResolved());
-        assertFalse(ArgType.PLAYER.isServerResolved());
-        assertFalse(ArgType.ITEM.isServerResolved());
-        assertFalse(ArgType.INT.isServerResolved());
+        EnumSet<ArgType> serverResolved = EnumSet.of(ArgType.WORD, ArgType.GREEDY, ArgType.UNKNOWN);
+        for (ArgType t : ArgType.values()) {
+            if (serverResolved.contains(t)) {
+                assertTrue(t.name(), t.isServerResolved());
+            } else {
+                assertFalse(t.name(), t.isServerResolved());
+            }
+        }
     }
 
     @Test
