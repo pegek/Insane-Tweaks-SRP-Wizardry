@@ -1294,8 +1294,13 @@ public final class JsonTreeReader {
         if (o.has("sub") && o.get("sub").isJsonArray()) {
             for (JsonElement e : o.getAsJsonArray("sub")) {
                 JsonObject so = e.getAsJsonObject();
-                String lit = so.has("lit") ? so.get("lit").getAsString() : "?";
-                sub.add(readNode(so, lit));
+                // Brak 'lit' ODRZUCA plik. To klucz routingu, nie etykieta - wymyslenie tokenu
+                // wstawiloby do popupu podpowiedz, ktorej zadna komenda nie przyjmie, a ciche
+                // pominiecie wezla zgubiloby podkomende bez sladu w jakimkolwiek logu.
+                if (!so.has("lit") || !so.get("lit").isJsonPrimitive()) {
+                    throw new IllegalArgumentException("wpis w 'sub' nie ma pola 'lit'");
+                }
+                sub.add(readNode(so, so.get("lit").getAsString()));
             }
         }
         boolean exec = o.has("exec") && o.get("exec").getAsBoolean();
@@ -1335,6 +1340,21 @@ Oczekiwane: `BUILD SUCCESSFUL`, siedem testów `passed`.
 git add commandsuggest/build.gradle commandsuggest/src/main/java/com/spege/commandsuggest/core/JsonTreeReader.java commandsuggest/src/test/java/com/spege/commandsuggest/core/JsonTreeReaderTest.java
 git commit -m "feat(commandsuggest): JsonTreeReader - opis komendy z JSON"
 ```
+
+> **Po recenzji (2026-08-11).** Format dostał jedną regułę zamiast trzech przypadków szczególnych,
+> i ona jest teraz w javadocu `read()`: **brak wymaganego klucza odrzuca plik z komunikatem,
+> nierozpoznana wartość degraduje się do domyślnej.** Stąd `command` i `lit` rzucają, a nieznany
+> `type` daje `UNKNOWN` i nie-boolowski `exec` daje `false`.
+>
+> Kontrakt „rzucamy `IllegalArgumentException`" był wcześniej nieprawdziwy dla trzech wejść —
+> zły typ elementu w `aliases` dawał `UnsupportedOperationException`, a element `args`/`sub`,
+> który nie jest obiektem, `IllegalStateException`. Ciało `read()` jest opakowane tak, żeby każdy
+> `RuntimeException` z Gsona wychodził jako `IllegalArgumentException`. (`{"min":"abc"}` był
+> przypadkiem zgodny od początku — `NumberFormatException` dziedziczy po `IllegalArgumentException`
+> — i ma teraz test, żeby ten przypadek nie rozpadł się przy refaktorze.)
+>
+> Testów w tej klasie jest 13. Cały `core` po zadaniu 5: **41 testów** (ArgType 4, CommandIndex 13,
+> InputParser 11, JsonTreeReader 13).
 
 ---
 
