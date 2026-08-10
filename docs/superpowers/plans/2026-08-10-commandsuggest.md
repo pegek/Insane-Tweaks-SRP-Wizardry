@@ -1013,7 +1013,10 @@ public final class CommandIndex {
                 }
             }
         }
-        this.byName = Collections.unmodifiableMap(m);
+        // Bez unmodifiableMap: pole jest prywatne i nigdy nie wycieka - czytaja je tylko byName()
+        // (pojedynczy lookup) i allNames() (kopiuje keySet do TreeSet). Ten sam argument, ktory
+        // wyrzucil opakowanie z ArgType.BY_ID.
+        this.byName = m;
     }
 
     public List<CommandTree> getCommands() {
@@ -1060,6 +1063,18 @@ Oczekiwane: `BUILD SUCCESSFUL`, sześć testów `passed`.
 git add commandsuggest/src/main/java/com/spege/commandsuggest/core/ commandsuggest/src/test/java/com/spege/commandsuggest/core/CommandIndexTest.java
 git commit -m "feat(commandsuggest): model drzewa i CommandIndex.prune"
 ```
+
+> **Po recenzji (2026-08-11).** `CommandTree` rzuca teraz `IllegalArgumentException` na nazwie `null`:
+> `HashMap` przyjmuje takiego klucza bez mrugnięcia, ale `TreeSet` w `allNames()` wybucha `NPE`
+> — czyli w pętli rysującej popup, daleko od miejsca, w którym śmieć wszedł. Konsekwencja dla
+> zadania 11 jest już w jego kodzie: komendę z `getName() == null` pomijamy z ostrzeżeniem,
+> bo w paczce z 268 modami jeden zepsuty mod nie ma prawa zabrać podpowiedzi całej reszcie.
+>
+> Testów jest 13, nie 6. Mutacyjny sweep pokazał, że pierwotna szóstka zabijała tylko 2 z 6 mutacji:
+> nie było **ani jednego** testu na `containsKey` przy wstawianiu aliasu (czyli na regułę, dla której
+> ta gałąź istnieje), a niemutowalność sprawdzano dla jednej z pięciu list. Doszły: obie kolizje
+> aliasów w obu kolejnościach wejścia, wszystkie pięć list, `isExecutable`/`usage` round-trip,
+> `CommandIndex.EMPTY` i dwa przypadki brzegowe `prune`.
 
 ---
 
@@ -2811,6 +2826,15 @@ public final class TreeBuilder {
         for (Map.Entry<ICommand, List<String>> e : keys.entrySet()) {
             ICommand cmd = e.getKey();
             String name = cmd.getName();
+            // 🚨 CommandTree rzuca IllegalArgumentException na nazwie null (guard dodany w Task 4,
+            // zeby null nie dolecial do TreeSet w allNames i nie wybuchl w petli rysujacej).
+            // W paczce z 268 modami jeden mod z zepsutym getName() nie ma prawa zabrac podpowiedzi
+            // calej reszcie, wiec taka komende pomijamy z ostrzezeniem zamiast przerywac budowe.
+            if (name == null) {
+                CommandSuggest.LOGGER.warn("Komenda {} zwrocila null z getName() - pomijam.",
+                        cmd.getClass().getName());
+                continue;
+            }
             List<String> aliases = new ArrayList<String>();
             for (String k : e.getValue()) {
                 if (!k.equals(name)) {
