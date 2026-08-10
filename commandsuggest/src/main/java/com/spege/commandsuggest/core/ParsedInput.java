@@ -32,9 +32,14 @@ public final class ParsedInput {
         return this.editIndex;
     }
 
-    /** Tresc edytowanego tokenu — to ona filtruje liste. */
+    /**
+     * Tresc edytowanego tokenu — to ona filtruje liste. Dla {@link #NOT_A_COMMAND} zwraca pusty
+     * string, a nie wyjatek: ten obiekt czyta petla rysujaca popup, wolana co klatke, a najczestsze
+     * wejscie w czacie to zwykly tekst bez ukosnika. Wyjatek w tym miejscu bylby crashem renderu
+     * za to, ze gracz cos napisal.
+     */
     public String getPrefix() {
-        return this.tokens[this.editIndex];
+        return this.editIndex < this.tokens.length ? this.tokens[this.editIndex] : "";
     }
 
     /** Offset w ORYGINALNEJ linii, pod ktorym zaczyna sie edytowany token. Potrzebny przy podmianie. */

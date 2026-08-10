@@ -80,4 +80,11 @@ public class InputParserTest {
     public void kursorNaPoczatkuNieWywalaSie() {
         assertFalse(InputParser.parse("/gamerule", 0).isCommand());
     }
+
+    @Test
+    public void prefiksNieKomendyToPustyStringANieWyjatek() {
+        // czytane z petli rysujacej, wiec musi byc totalne - patrz javadoc getPrefix
+        assertEquals("", InputParser.parse("czesc", 5).getPrefix());
+        assertEquals("", ParsedInput.NOT_A_COMMAND.getPrefix());
+    }
 }
