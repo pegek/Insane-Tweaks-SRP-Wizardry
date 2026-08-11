@@ -13,11 +13,13 @@ import electroblob.wizardry.constants.Tier;
 import electroblob.wizardry.item.ItemWand;
 import electroblob.wizardry.spell.Spell;
 import electroblob.wizardry.util.SpellModifiers;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.Loader;
 import java.util.Arrays;
 import java.util.List;
@@ -129,6 +131,62 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
             }
         }
         return this.basePotencyBonus;
+    }
+
+    /**
+     * Mana capacity, read from config at call time.
+     *
+     * <p>EBW routes {@code getManaCapacity} straight through {@code getMaxDamage}, whose base is
+     * {@code tier.maxCharge} fixed in the constructor. We cannot set that base from config in the
+     * constructor: {@code ModItems} is a {@code @Mod.EventBusSubscriber}, so its {@code <clinit>}
+     * can run before Forge's first {@code ConfigManager.sync}, and the read would capture the Java
+     * field default instead of the file value - silently.
+     *
+     * <p>The scaling expression is EBW's own, copied deliberately so storage upgrades keep behaving
+     * identically. If EBW ever changes it, the symptom is a different number, never a crash.
+     */
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        int base = this.getBaseManaCapacity();
+        if (base <= 0) {
+            return super.getMaxDamage(stack);
+        }
+        int storage = electroblob.wizardry.util.WandHelper.getUpgradeLevel(
+                stack, electroblob.wizardry.registry.WizardryItems.storage_upgrade);
+        return (int) (base * (1.0F + electroblob.wizardry.constants.Constants.STORAGE_INCREASE_PER_LEVEL * storage) + 0.5F);
+    }
+
+    /** Zero means "not one of ours" - fall back to whatever the tier says. */
+    private int getBaseManaCapacity() {
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_wand".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.wands.livingManaCapacity;
+            }
+            if ("sentient_wand".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.wands.sentientManaCapacity;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Insurance against a config lowered under a wand that already has more mana spent than the
+     * new capacity allows. EBW stores mana as {@code capacity - damage} with nothing clamping the
+     * result, so a wand can otherwise read a negative value, which {@code isManaEmpty} (an exact
+     * {@code == 0} check) does not recognise as empty - the wand then keeps its melee bonuses and
+     * refuses every spell instead of just being empty.
+     *
+     * <p>Our shipped defaults no longer cause this (they match what these wands have always held),
+     * but a pack author is free to set the config lower on a live world, and this is what keeps
+     * that from corrupting the wand's apparent state instead of just being restrictive.
+     */
+    @Override
+    public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+        super.onUpdate(stack, world, entity, itemSlot, isSelected);
+        if (this.getMana(stack) < 0) {
+            this.setMana(stack, 0);
+        }
     }
 
     public int getArcaneAdaptationLevel(ItemStack stack) {

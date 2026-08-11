@@ -8,7 +8,7 @@ public class LivingWandItem extends BaseCustomWandItem {
     @SuppressWarnings("null")
     public LivingWandItem() {
         super(Tier.MASTER, null, 0.40f, 1);
-        setMaxDamage(4000);
+        // Mana capacity comes from gear.wands (BaseCustomWandItem#getMaxDamage), not from here.
         this.setRegistryName("insanetweaks", "living_wand");
         this.setUnlocalizedName("living_wand");
         CreativeTabs tab = CreativeTabs.COMBAT;

@@ -13,8 +13,8 @@
   "tier": "master",
   "element": "abomination",
   "type": "minion",
-  "cost": 320,
-  "chargeup": 55,
+  "cost": 640,
+  "chargeup": 60,
   "cooldown": 1600,
   "base_properties": {
     "minion_lifetime": 900,

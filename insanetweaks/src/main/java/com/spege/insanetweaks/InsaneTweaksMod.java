@@ -106,7 +106,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.15.3";
+    public static final String VERSION = "1.16.1";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -154,7 +154,10 @@ public class InsaneTweaksMod implements IGuiHandler {
         // FIRST. Appends the Abomination constant to Wizardry's Element enum. Must precede both our
         // own ModItems.<clinit> and EBW's RegistryEvent.Register<Block>, because BlockCrystal's
         // <clinit> runs PropertyEnum.create(Element.class), which snapshots values() - an element
-        // added after that snapshot is not a legal blockstate value.
+        // added after that snapshot is not a legal blockstate value. Also must precede
+        // BlockReceptacle's <clinit>: MixinBlockReceptacleColours redirects its Maps.immutableEnumMap
+        // call, but the EnumMap it wraps already sized itself off Element's constant array by the
+        // time that runs - appending the element any later throws AIOOBE out of Guava, not this mod.
         com.spege.insanetweaks.init.ModElements.init();
         // Must run before FML's first ConfigManager.sync (which fires later inside
         // FMLModContainer.constructMod) - see OldConfigBackup.

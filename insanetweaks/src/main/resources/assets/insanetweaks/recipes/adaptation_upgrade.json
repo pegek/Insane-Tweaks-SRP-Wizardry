@@ -15,10 +15,16 @@
     "A": {
       "item": "ebwizardry:attunement_upgrade"
     },
-    "N": {
-      "type": "forge:ore_dict",
-      "ore": "itLivingNucleus"
-    }
+    "N": [
+      {
+        "type": "forge:ore_dict",
+        "ore": "itMagicNucleus"
+      },
+      {
+        "type": "forge:ore_dict",
+        "ore": "itLivingNucleus"
+      }
+    ]
   },
   "result": {
     "item": "insanetweaks:adaptation_upgrade",

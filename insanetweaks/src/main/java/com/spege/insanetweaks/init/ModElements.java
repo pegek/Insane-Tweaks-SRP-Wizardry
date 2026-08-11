@@ -53,6 +53,12 @@ public final class ModElements {
     /** True when the enum was really extended. False means every consumer must degrade. */
     public static final boolean EXTENDED;
 
+    /**
+     * Flash, particle and fade colours for an Abomination receptacle, in EBW's own
+     * {@code {flash, particle, fade}} order. Deep red to match the element's {@code TextFormatting.RED}.
+     */
+    private static final int[] RECEPTACLE_COLOURS = { 0xD42A2A, 0xFF9090, 0x6E0B0B };
+
     static {
         Element registered = null;
         try {
@@ -87,6 +93,27 @@ public final class ModElements {
 
     /** No-op whose only job is to force this class's static initialiser at a chosen moment. */
     public static void init() {
+    }
+
+    /**
+     * Adds Abomination's colours to a receptacle colour table that is still being built.
+     *
+     * <p>Called from {@code MixinBlockReceptacleColours} during {@code BlockReceptacle.<clinit>},
+     * which is the only moment the table is writable: its final act is to wrap itself in a Guava
+     * {@code ImmutableEnumMap}, whose {@code put} throws. Five client-side call sites read that
+     * table and dereference the result without a null check, so an element missing from it is a
+     * crash, not a cosmetic gap.
+     *
+     * <p>Ordering is sound: the builder is an {@code EnumMap}, whose key universe comes from
+     * {@code Element.class.getEnumConstants()} at construction; Forge's {@code EnumHelper.addEnum}
+     * clears that cache when it appends a constant; and we append from the {@code @Mod} constructor,
+     * long before block registration runs this {@code <clinit>}.
+     */
+    public static void addReceptacleColour(java.util.Map<Element, int[]> colours) {
+        if (!EXTENDED) {
+            return;
+        }
+        colours.put(ABOMINATION, RECEPTACLE_COLOURS);
     }
 
     /**

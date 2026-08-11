@@ -1,13 +1,13 @@
 {
-  "required": false,
+  "required": true,
   "minVersion": "0.8.2",
   "package": "com.spege.insanetweaks.mixins",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
-  "client": [
-    "MixinJeiImbuementAltarElements"
+  "mixins": [
+    "MixinImbuementAltarGuard"
   ],
+  "client": [],
   "server": [],
   "injectors": {
     "defaultRequire": 1

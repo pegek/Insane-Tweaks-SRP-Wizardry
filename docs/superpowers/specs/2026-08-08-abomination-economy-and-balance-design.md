@@ -50,11 +50,13 @@ exclusion mixins stay. §4 records what would have to change if that ever happen
 
 ### 1.1 Spectral dust and crystal, metadata 8
 
-`ItemSpectralDust.getModel` and `ItemCrystal.getModel` derive
-`ebwizardry:spectral_dust_<name>` / `ebwizardry:crystal_<name>` from the element name, and their
-model-registration loops iterate the whole enum. Our mixins narrow only `getSubItems` — the model
-loops were never redirected, so EBW is *already* asking for `spectral_dust_abomination` and
-`crystal_abomination` and silently getting nothing.
+`ItemSpectralDust.getModelName` and `ItemCrystal.getModelName` derive
+`ebwizardry:spectral_dust_<name>` / `ebwizardry:crystal_<name>` from the element name. Model
+registration runs through `WizardryModels.registerMultiTexturedModel`, which **iterates
+`getSubItems`** and calls `setCustomModelResourceLocation` per returned stack — so while our two
+redirects narrow `getSubItems`, meta 8's model is not requested *at all*. That is why the log is
+silent about it today: not a swallowed error, simply no registration. Removing the redirects is what
+creates the demand, and the files must land in the same change.
 
 Ship both models and both textures **from our jar, under `assets/ebwizardry/`**. This is safe
 because they are filenames EBW does not have: resource packs merge at file granularity, so we add
@@ -62,24 +64,83 @@ without replacing. Then delete the two `getSubItems` redirects
 (`MixinItemSpectralDustElements`, `MixinItemCrystalElements`) so the items appear in creative and
 JEI.
 
-🚨 **The crystal *block* stays hidden.** `BlockCrystal` renders through a single
-`assets/ebwizardry/blockstates/crystal_block.json` that lists every variant. Shipping our own copy
-would *replace* EBW's file and take the other eight variants with it. `MixinBlockCrystalElements`
-therefore stays exactly as it is. This is the one place where "add a file to their domain" does not
-work, and the reason is the difference between one-file-per-name (models) and one-file-for-all
-(blockstates).
+🚨 **The crystal needs a lang key; the dust does not.** `ItemCrystal` overrides
+`getUnlocalizedName(ItemStack)` as `"item." + getModelName(stack)`, so it asks for
+`item.ebwizardry:crystal_abomination.name` — a key EBW ships for its eight elements and cannot ship
+for ours. Without it the item's name renders as the raw key, and JEI cannot find it by search.
+`ItemSpectralDust` has no such override: all eight dusts share `item.ebwizardry:spectral_dust.name`
+and the element is carried by the texture alone. Supply the crystal key from our own lang file
+(keys are global; escape the colon the way EBW does).
+
+**The crystal *block* stays hidden — by choice, not necessity.** An earlier draft claimed
+`BlockCrystal` renders from one `crystal_block.json` listing every variant, so ours would replace
+EBW's file. That is wrong. `WizardryModels` uses `new StateMap.Builder().withName(ELEMENT)
+.withSuffix("_crystal_block")`, and EBW ships **eight separate files** — `fire_crystal_block.json`,
+`ice_crystal_block.json`, and so on. A ninth would slot in beside them exactly like the item models
+in the paragraph above.
+
+Nor is the blockstate property narrowed: `MixinBlockCrystalElements` redirects `getSubBlocks` only,
+and its own javadoc explains why it must — `getStateFromMeta` has to keep seeing the whole enum or a
+blockstate round trip resolves to the wrong element. `BlockCrystal.ELEMENT` is built during block
+registration, after the `@Mod` constructor appended Abomination, so it genuinely has nine values.
+
+So un-hiding it is ordinary work, not a wall: one blockstate file, one block model, one texture, and
+a `crystal_block_to_crystals_abomination` recipe to mirror EBW's eight. It stays out of scope here
+because it is art plus a recipe for a decorative block, and §1.4b's guard is what makes leaving it
+out safe — without that guard the altar happily mints a metadata with no blockstate file behind it
+and no way back.
+
+🚨 **But hiding it is not the same as blocking it, and the altar does not care.**
+`getImbuementResult` accepts `Item.getItemFromBlock(crystal_block)` as well as the crystal item, so
+a player can feed nine magic crystals' worth of crystal block plus four dust into an altar and get
+`crystal_block` metadata 8 back: a block with no blockstate variant, no model, and no
+`crystal_block_to_crystals` recipe to reverse it. That is item loss, not a cosmetic gap, and it
+becomes reachable the moment §2.3 makes dust cheap. §1.4b's guard must cover this branch too —
+same key, "the result has no registered form", not "the element is Abomination".
 
 ### 1.2 Receptacle particles
 
-Fix the NPE by `@Redirect`ing the `Map.get` invoke inside
-`BlockReceptacle.func_180655_c` (`randomDisplayTick`) rather than guarding the method. When the
-lookup returns null, substitute an Abomination colour triple. This turns a crash into the feature
-it should have been: the dust glows red in a receptacle like every other element glows its own
-colour.
+`BlockReceptacle.PARTICLE_COLOURS` is a `Map<Element, int[]>` populated for the eight vanilla
+elements, and **five** places read it and dereference the result unchecked — `randomDisplayTick`,
+`TileEntityImbuementAltar`, `EntityRemnant.onUpdate`, `RenderImbuementAltar`, `RenderDonationPerks`.
+All five are client-side. The imbuement altar is the one a player meets first, since receptacles are
+how the altar works at all.
 
-The method is `@SideOnly(Side.CLIENT)` in effect (it is a display tick), but the *class* is not, so
-the mixin loads on a server harmlessly. Put it in the existing early/compat config alongside the
-other EBW-targeting mixins.
+🚨 **The map cannot be written to after the fact, and the declaration hides that.** The field is
+`public static final Map`, and `<clinit>` fills a `Maps.newEnumMap(Element.class)` — but its last
+line is:
+
+```java
+PARTICLE_COLOURS = Maps.immutableEnumMap((Map) map);
+```
+
+Guava's `ImmutableEnumMap.put` throws `UnsupportedOperationException` unconditionally. Because the
+*field* is declared as plain `java.util.Map`, a `PARTICLE_COLOURS.put(...)` call site compiles
+without a warning and dies at runtime. The first draft of this spec called for exactly that `put`; it
+would have been a hard crash on every correctly-configured launch, on both sides. Reflection is not
+an escape either — the pack runs Java 25, where the `Field.modifiers` trick no longer works.
+
+So it is a mixin, on the one writable moment: a `@Redirect` of the single `Maps.immutableEnumMap`
+invoke in `BlockReceptacle.<clinit>`, which adds Abomination to the still-mutable builder and then
+delegates. Verified descriptor:
+
+```
+Lcom/google/common/collect/Maps;immutableEnumMap(Ljava/util/Map;)Lcom/google/common/collect/ImmutableMap;
+```
+
+One occurrence in the class. Fixing it here covers all five read sites at once.
+
+The ordering reasoning that survives from the first draft: the builder is an `EnumMap`, whose key
+universe comes from `Element.class.getEnumConstants()` at construction, and Forge's
+`EnumHelper.addEnum` clears that cache when it appends a constant. We register from the `@Mod`
+constructor and `<clinit>` runs later, during block registration, so the universe is nine elements
+wide by then. That was always right — it was just attached to the wrong object.
+
+Routing: content, late config (`mixins.insanetweaks.late.json`), alongside the other EBW-targeting
+mixins. `BlockReceptacle` carries no class-level `@SideOnly`, so the mixin is side-safe.
+
+Result: the crash becomes the feature it should have been — Abomination dust glows red in a
+receptacle, like every other element glows its own colour.
 
 ### 1.3 The ruined spell book loot table
 
@@ -106,16 +167,55 @@ it does, each is re-decided on its own merits:
 | target | verdict | why |
 |---|---|---|
 | `ImbuementAltarRecipeCategory.generateCrystalRecipes` | **remove redirect** | crystal item meta 8 now has a model; the recipe genuinely works |
-| `generateCrystalBlockRecipes` | **keep redirect** | the crystal *block* stays hidden (§1.1), so a JEI entry would show an output with no model |
-| `generateArmourRecipes` | **remove redirect** | it filters itself — see below |
+| `generateCrystalBlockRecipes` | **keep redirect** | the crystal *block* stays hidden by choice (§1.1), so a JEI entry would advertise an output we ship no blockstate for |
+| `generateArmourRecipes` | **remove redirect, but only once §1.4b lands** | it filters itself *after* the crash below is guarded |
 | `ArcaneWorkbenchRecipe.generateCrystalStacks` | **remove redirect** | Abomination crystals charge a wand like any other |
 
-🚨 `generateArmourRecipes` needs no exclusion because EBW already wrote the guard: it calls
-`TileEntityImbuementAltar.getImbuementResult(...)` and then `if (output.isEmpty()) continue;`.
-`getArmour(ABOMINATION, …)` is a registry lookup that misses, returns null, and `new ItemStack(null)`
-is empty — so the Abomination rows drop out on their own. The player still sees every other
-element's armour recipe, which is how they learn the altar exists, and the Abomination row appears
-automatically the day `living_warlock_armour` is registered (§4). Do not add a mixin for this.
+### 1.4b The armour branch crashes, and it is not only a JEI problem
+
+An earlier draft of this spec said `generateArmourRecipes` needs no exclusion because EBW already
+guards it with `if (output.isEmpty()) continue;`. **That guard is never reached.** Read
+`TileEntityImbuementAltar.getImbuementResult` to the end of its armour branch:
+
+```java
+ItemStack result = new ItemStack(ItemWizardArmour.getArmour(receptacleElements[0], …));
+result.setTagCompound(input.getTagCompound());
+((IManaStoringItem) result.getItem()).setMana(result, …);
+```
+
+For Abomination the lookup misses, so `result` is empty, so `result.getItem()` is `Items.AIR`, and
+the cast to `IManaStoringItem` throws `ClassCastException` — one line before the method returns and
+long before JEI's `isEmpty` check runs.
+
+🚨 **Do not write the guard as `getArmour(...) == null`.** What a missed lookup yields is not
+settled by reading one declaration: `Item.REGISTRY` is declared `RegistryNamespaced`, which returns
+null, but Forge substitutes a wrapper with a default key of `minecraft:air`, which returns `AIR`.
+Asking `instanceof IManaStoringItem` is false in both cases and is also exactly the question the
+crashing cast asks. A later "simplification" to a null check would silently reopen the crash on
+whichever of the two readings is wrong.
+
+🚨 **And `getImbuementResult` is not a JEI method.** The altar's own tile entity calls it every time
+its contents change. So a player who sets up four Abomination receptacles and drops in a plain
+wizard robe crashes the server. That path has been unreachable only because the dust had no source
+at all; §1.1 and §2.2 are precisely what give it one.
+
+The fix is one guard at the source, and it must be phrased so it disappears by itself:
+
+```java
+@Inject(method = "getImbuementResult", at = @At("HEAD"), cancellable = true)
+```
+
+reproduce EBW's own branch condition, then ask whether
+`ItemWizardArmour.getArmour(element, armourClass, slot)` yields something that is actually an
+`IManaStoringItem`. If it does, return and let EBW run. If it does not, set the return value to
+`ItemStack.EMPTY`.
+
+Keying on **"the lookup produced no usable armour"** rather than on **"the element is Abomination"**
+is the whole point: the day `living_warlock_armour` is registered (§4) the guard stops firing on its
+own, with no edit. It also covers any other mod that appends an element without armour.
+
+With that guard in place the JEI armour rows genuinely do filter themselves, and the redirect on
+`generateArmourRecipes` can go. Not before.
 
 ### 1.5 Element icon
 
@@ -146,8 +246,21 @@ assigns itself.
 
 SRP inputs chosen because a repo-wide grep found no other recipe using them:
 `srparasites:ada_yelloweye_drop` (Yelloweye Bone — we already have a `yelloweye_gland` spell and
-summon yelloweyes, so the theme is established), `srparasites:ada_burrower_drop` (Figment),
-`srparasites:ada_viscera_drop` (Chipped Motherly Membrane), `srparasites:hive_scrap`.
+summon yelloweyes, so the theme is established), `srparasites:ada_vermin_drop` (Corrosive Mucus),
+`srparasites:ada_viscera_drop` (Chipped Motherly Membrane), `srparasites:hive_scrap`,
+`srparasites:assimilated_flesh`.
+
+🚨 **`srparasites:ada_burrower_drop` does not exist, and its lang entry says otherwise.** An earlier
+draft used it, on the strength of `item.srparasites.ada_burrower_drop.name=§cFigment` sitting in
+SRP's `en_us.lang`. There is no registration, no model and no texture for it — the lang line is an
+orphan. Only ten `ada_*_drop` items actually register. The failure mode is quiet: `safeItem` records
+a miss, `registerFallback` drops the recipe, and you get an item that exists, is ore-dicted, gates
+two other recipes and is uncraftable, with one warn line to show for it.
+
+**Verify an SRP ingredient against `SRPItems` bytecode, or at minimum against
+`assets/srparasites/models/item/`, never against the lang file.** `ada_vermin_drop` replaced it:
+same `§d` tier as `ada_viscera_drop`, and both are drops SRP's own tooltips pointedly do *not*
+describe as weapon components — which is exactly the line this currency is drawn along.
 
 Concrete recipes — starting points, tunable:
 
@@ -157,7 +270,7 @@ spectral dust (abomination) x2          magic_nucleus x1
   FCF                                     DKD
    H                                       V
 
-Y srparasites:ada_yelloweye_drop        B srparasites:ada_burrower_drop
+Y srparasites:ada_yelloweye_drop        B srparasites:ada_vermin_drop
 F srparasites:assimilated_flesh         D ebwizardry:spectral_dust meta 8
 C ebwizardry:magic_crystal (meta 0)     K ebwizardry:magic_crystal meta 8
 H srparasites:hive_scrap                V srparasites:ada_viscera_drop
@@ -170,6 +283,15 @@ upgrade rather than a side attraction. Its shape mirrors `living_nucleus` (`" S 
 
 `ruined_spell_book`: shapeless, `minecraft:book` + 2 dust → 1 `ebwizardry:ruined_spell_book`.
 Combined with the four dust the altar consumes, one crafted spell book costs six dust.
+
+🚨 **This makes an EBW loot-only item renewable, deliberately.** EBW ships no recipe for
+`ruined_spell_book` at all — in the whole 4.3.19 jar it appears only in three loot tables. Ours
+makes it craftable, and because §1.3's altar table carries no `tiers` key, `RandomSpell` rolls over
+every tier: **master Abomination spell books become farmable**, at roughly one ruined book plus
+three magic crystals plus twelve SRP drops per roll. Reviewed and accepted on 2026-08-08 — the
+crystal-and-drop cost is the intended gate. If it ever proves too generous, the one-line lever is a
+`"tiers": ["novice", "apprentice", "advanced"]` on the altar pool, which pushes master spells back
+onto the sim-wizard drop and natural loot.
 
 `adaptation_upgrade` and `living_wand` keep their existing shapes; only the `itLivingNucleus`
 ingredient becomes `itMagicNucleus`.
@@ -199,6 +321,14 @@ Two sources, deliberately unequal:
    `sim_wizard_master`. `EntitySimBattlemage` inherits these through `getLootTable` and its ADEPT
    tier floor, so it needs no table of its own. The spell-book pool uses the same
    `ebwizardry:random_spell` function as §1.3, so gated spells exclude themselves.
+
+   🚨 **These three tables hard-code the dust metadata as `8`, and the recipes deliberately do not.**
+   Loot-table JSON has no way to compute `ModElements.ABOMINATION.ordinal()`; a code recipe does.
+   The asymmetry is accepted, but it has a sharp edge: if the pack ever gains a second
+   element-appending mod, the **recipes follow the new ordinal and the drops do not** — which is
+   worse than uniform hard-coding, because half the economy silently switches to another element's
+   dust. These three files are the first place to look, and the only defence is that no other mod in
+   DEv 1.2 appends an element.
 2. **A workbench recipe** turning SRP drops plus a magic crystal into dust (§2.2). Deliberately
    expensive and low-yield.
 
@@ -241,14 +371,38 @@ Plus the pre-existing EBW generic loot, which stays open — the previous spec's
 
 ### 3.1 The rule
 
-The wand's full pool is the unit of measure. Two bands, and nothing between them:
+Two bands, and nothing between them:
 
-- **Tool** — cost ≤ 5% of a full wand, cooldown 5–15 s, chargeup ≤ 30 ticks. Cast several times in
-  one fight.
+- **Tool** — cost ≤ 5% of the yardstick wand, cooldown 5–15 s, chargeup ≤ 30 ticks. Cast several
+  times in one fight.
 - **Ritual** — cost ≥ 10%, cooldown ≥ 60 s, chargeup ≥ 60 ticks. Once a fight or rarer.
 
 **The 5–10% band is left empty on purpose.** A spell that lands there is not a compromise; it is a
 spell whose role we have not decided.
+
+🚨 **The yardstick is the fully-evolved Living Wand, and the percentage is of what the player
+actually pays.** Two corrections, both from a review that caught the first draft measuring against
+a number that was never real:
+
+- **Our wands hold 4000 and 6500, not EBW's stock 2500.** `LivingWandItem` and `SentientWandItem`
+  have called `setMaxDamage(4000)` / `setMaxDamage(6500)` in their constructors all along. Anything
+  in an earlier draft that reasoned from 2500 was wrong.
+- **No player ever pays the raw JSON cost on these wands.** `BaseCustomWandItem.calculateModifiers`
+  applies a cost reduction of 0.05→0.20 on the Living Wand (by evolution progress) and a flat 0.20
+  on the Sentient. Measuring the rule against the raw number describes a price nobody is charged.
+
+Taking the Living Wand at 4000 with its full 20% discount, effective cost is `raw × 0.8`, so the
+bands become arithmetic on the raw JSON number:
+
+| band | raw cost |
+|---|---|
+| tool | ≤ 250 |
+| *(deliberately empty)* | 251–499 |
+| ritual | ≥ 500 |
+
+The Living Wand is the yardstick because it is the entry-level of our two. The Sentient Wand is
+supposed to make rituals feel cheap — that is what being the endgame wand means — so measuring
+against it would collapse the distinction by design rather than by accident.
 
 ### 3.2 What the rule flags in the current numbers
 
@@ -261,31 +415,38 @@ spell whose role we have not decided.
 
 ### 3.3 Proposed values
 
-Tools:
+Tools — all comfortably under the 250 ceiling:
 
 | spell | cost | chargeup | cooldown |
 |---|---|---|---|
 | `dispatcher_grasp` | 130 | 20 | 200 (10 s) |
-| `yelloweye_gland` | 150 | 30 | 240 (12 s) |
 | `immune_bond` | 140 | 30 | 300 (15 s) |
+| `yelloweye_gland` | 150 | 30 | 240 (12 s) |
 
-Rituals:
+Rituals — every one at or above the 500 floor, and every chargeup at or above 60:
 
 | spell | cost | chargeup | cooldown |
 |---|---|---|---|
-| `summon_thrall` | 320 | 40 | 1200 (60 s) |
-| `summon_fer_cow` | 340 | 45 | 1300 |
-| `summon_wizard` | 420 | 55 | 1600 |
-| `summon_primitive_yelloweye` | 450 | 45 | 1800 |
-| `summon_light_bomber` | 500 | 45 | 1800 |
-| `summon_primitive_summoner` | 560 | 60 | 2600 |
-| `parasite_shroud` | 400 | 80 | 1800 (90 s) |
-| `cleanse` | 500 | 60 | 3600 |
-| `purifying_pulse` | 800 | 100 | 6000 |
+| `summon_thrall` | 520 | 60 | 1200 (60 s) |
+| `summon_fer_cow` | 540 | 60 | 1300 |
+| `parasite_shroud` | 600 | 80 | 1800 (90 s) |
+| `summon_wizard` | 640 | 60 | 1600 |
+| `summon_primitive_yelloweye` | 700 | 60 | 1800 |
+| `summon_light_bomber` | 760 | 60 | 1800 |
+| `cleanse` | 760 | 60 | 3600 |
+| `summon_primitive_summoner` | 850 | 60 | 2600 |
+| `purifying_pulse` | 1100 | 100 | 6000 |
 | `call_of_demise` | 1800 | 180 | 12000 |
 
-`call_of_demise` is unchanged — it is the capstone and the one number that was already right.
+`call_of_demise` is unchanged — it is the capstone and the one number that was right from the start.
 `test_projectile` is untouched (see §5.1).
+
+Two things moved from the first draft, both because that draft measured against a capacity the wands
+never had. **Every ritual under 500 went up** — the cheap summons and `parasite_shroud` were priced
+as tools by the corrected arithmetic. And **five rituals had their chargeup raised to 60**
+(`summon_thrall`, `summon_fer_cow`, `summon_primitive_yelloweye`, `summon_light_bomber`,
+`summon_wizard`, previously 40–55): the rule names three axes and the first draft only enforced two,
+so a "ritual" could be cast with a shorter wind-up than a tool.
 
 These are a starting point, not a verdict; they exist so playtesting has something coherent to
 adjust rather than a spread to untangle.
@@ -298,9 +459,21 @@ from `tier.maxCharge`, set in the constructor. So the clean override is **`setMa
 `BaseCustomWandItem`'s constructor** — not overriding `getManaCapacity`, which would bypass storage
 upgrades.
 
-EBW's stock master wand is 2500 (`Settings.masterMaxCharge`). Proposed: `LivingWandItem` 3200,
-`SentientWandItem` 4400, both config-driven under `gear.wands`. Our wands are the top-end gear every
-mage wants (the predecessor spec's §8 decision), so it is right that they carry the rituals.
+🚨 **This task is exposing existing values to config, not changing them.** EBW's stock master wand
+is 2500, but ours are **4000 and 6500** — `setMaxDamage` in each subclass's constructor, there all
+along. The config defaults must be exactly those two numbers.
+
+Lowering them is not a balance lever, it is data loss. **Mana is stored as damage**, and
+`getMana = capacity − damage`, with nothing clamping the result. Drop the Sentient Wand from 6500 to
+4400 and every existing wand below ~32% charge reports negative mana: `isManaEmpty` tests `== 0` so
+the wand claims to be *not* empty and keeps its melee attribute modifiers, `canCast` fails for every
+spell, and the durability bar renders a negative width. It is recoverable by recharging, but it
+reads as a corrupted item and it hits every wand in every existing world.
+
+So: defaults 4000 and 6500, and a clamp in `onUpdate` so that a pack author who *does* lower the
+config gets a wand pinned to zero rather than one lying about being non-empty. Once config owns the
+number, delete the `setMaxDamage` literals — two authoritative-looking constants that no longer
+decide anything are worse than none.
 
 This touches no other mod's wands and no shared config. If the unified cross-mod mana pool
 (Trinkets and Baubles + EBW) ever happens, these two numbers are the only thing to revisit — the
@@ -315,13 +488,25 @@ Recorded so a future session does not have to re-derive them.
 registry lookup for `ebwizardry:<class>_<piece>_abomination`. Nothing is registered, so it returns
 null and the altar does nothing.
 
-We are **not** closing this combination. It costs nothing to leave open: the altar silently produces
-nothing (the same as any mismatched dust), and JEI never advertises it because
-`generateArmourRecipes` skips empty outputs (§1.4). Meanwhile the player still sees every other
-element's armour recipe, which is how they learn what the altar is for. The empty slot is the
-natural hook for a future **`living_warlock_armour`** — Abomination armour of the WARLOCK class.
-Registering those four items under the `ebwizardry` namespace makes both the altar and its JEI entry
-light up with no other change anywhere.
+We are **not** closing this combination — but it does not "cost nothing" to leave open, as an
+earlier draft claimed. It costs the crash in §1.4b, and the guard there is what makes leaving it
+open safe. With that guard the altar silently produces nothing (the same as any mismatched dust) and
+JEI never advertises it, while the player still sees every other element's armour recipe, which is
+how they learn what the altar is for.
+
+The empty slot is the natural hook for a future **`living_warlock_armour`** — Abomination armour of
+the WARLOCK class. Because the guard keys on "the lookup produced no usable armour" rather than on
+the element's identity, registering those four items under the `ebwizardry` namespace makes the
+guard stop firing, and both the altar and its JEI entry light up, with no other change *to the altar
+path*. The altar reads `armourClass` off the input, so an elementless warlock hood imbues to
+`warlock_hood_abomination` and a wizard hat to `wizard_hat_abomination`.
+
+🚨 **But `ItemWizardArmour.applyUpgrade` has the same unguarded shape** — `getArmour(this.element,
+armourClass, slot)`, then a stack built straight from it, then a cast. It is unreachable today
+because it needs a piece that already carries an element whose SAGE / BATTLEMAGE / WARLOCK
+counterpart is missing, and no Abomination piece can exist at all. Registering **one** class without
+the other three would make it reachable. So: register all four classes, or extend §1.4b's guard to
+that method too.
 
 **Promotion to a "full" element** (EBW wizards, shrines, obelisks, trades) needs 4 wands plus at
 least the 4 WIZARD-class armour pieces registered as `ebwizardry:` names, because `getWand` and
@@ -380,8 +565,8 @@ version nobody is running.
 
 ### 5.5 Verification checklist
 
-- Fresh launch, `logs/cleanmix.log`: the new receptacle mixin shows an `APPLY` line; no
-  `InvalidInjectionException`, `Scanned 0`, or `VerifyError`.
+- Fresh launch, `logs/cleanmix.log`: no `InvalidInjectionException`, `Scanned 0`, or `VerifyError`.
+  This spec removes mixins and adds none, so the only expected change is three fewer `APPLY` lines.
 - `logs/latest.log`: the `ruined_spell_book_abomination` WARN is gone.
 - No `Unable to load model` for `spectral_dust_abomination` / `crystal_abomination`.
 - Creative and JEI show the dust and the crystal item; the crystal **block** still shows eight
