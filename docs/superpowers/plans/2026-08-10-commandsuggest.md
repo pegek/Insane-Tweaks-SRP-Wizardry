@@ -3557,8 +3557,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * <p>Geometria jest przywiazana do {@code GuiChat.initGui}, ktore tworzy pole jako
  * {@code new GuiTextField(0, fontRenderer, 4, height - 12, width - 4, 12)} z wylaczonym tlem —
  * a przy wylaczonym tle {@code GuiTextField.drawTextBox} rysuje tekst od {@code x}, nie od
- * {@code x + 4}. Stad {@link #CHAT_FIELD_X}. Samo pole jest prywatne i nie ma gettera na {@code x},
- * wiec ta stala jest jedynym sensownym sposobem wyrownania popupu do edytowanego tokenu.
+ * {@code x + 4}. Stad {@link #CHAT_FIELD_X}.
+ *
+ * <p>Uwaga: {@code GuiTextField.x} jest w 1.12.2 polem PUBLICZNYM — wczesniejsza wersja tego
+ * komentarza twierdzila inaczej i byla po prostu nieprawdziwa. Stala zostaje mimo to, bo
+ * {@code draw()} nie dostaje referencji do pola tekstowego, a nie ma powodu jej tam przeciskac
+ * dla wartosci, ktora {@code GuiChat.initGui} i tak wpisuje na sztywno.
  */
 @SideOnly(Side.CLIENT)
 public final class SuggestionPopup {
@@ -4100,6 +4104,35 @@ Oczekiwane: `BUILD SUCCESSFUL`.
 git add commandsuggest/src/main/java/com/spege/commandsuggest/client/
 git commit -m "feat(commandsuggest): ChatScreenHandler - cztery eventy i podmiana tabCompletera"
 ```
+
+> **Po recenzji (2026-08-11).** Pięć zmian względem zadań 13–16 i trzy rzeczy do sprawdzenia
+> w zadaniu 18.
+>
+> - **`LocalValueSource` nie unieważniał cache'y przy przełączeniu serwera** — realny błąd.
+>   Po wyjściu z serwera A i wejściu na B z innym modsetem klient dalej podpowiadał itemy z A
+>   i nie znał tych z B, cicho. Doszło `invalidate()`, wołane z `ClientTreeCache.Events`
+>   przy connect i disconnect.
+> - **Odpowiedź serwera mogła dolecieć do popupu zbudowanego już dla innego tokenu.** `drain()`
+>   sam nie wie, czego dotyczy. Doszły dwa warunki przed `append()`: `replaceStart` zapamiętany
+>   przy wysyłce musi się zgadzać z bieżącym, a każda wartość jest przefiltrowana **aktualnym**
+>   prefiksem, nie tym sprzed zapytania — inaczej szybko piszący gracz widzi przez chwilę
+>   podpowiedzi do tekstu, który już minął.
+> - **`ReflectionHelper` jest w całości `@Deprecated`** i zapalał `-Xlint:all`. Zamiast niego
+>   `ObfuscationReflectionHelper.findField(Class, srg)`, który sam remapuje na MCP.
+> - **Podmiana completera idzie na `EventPriority.LOWEST`.** Forge nie gwarantuje kolejności
+>   między modami, a Chunk-Pregenerator wozi własny `AdvancedTabCompleter`; kto podmieni jako
+>   ostatni, ten wygrywa. Nasz `SpyTabCompleter` przegrywając zostaje sierotą — bez crasha,
+>   bez linii w logu, po prostu argumenty serwerowe przestają dostawać wartości.
+> - **`onInitGuiPost` przepina się bezwarunkowo przy każdym `GuiChat.initGui`**, nie tylko przy
+>   nowym ekranie: resize woła `initGui()` na tym samym obiekcie, a ono buduje **nowe**
+>   `GuiTextField` i **nowy** waniliowy `ChatTabCompleter`, więc nasze referencje są wtedy nieaktualne
+>   mimo niezmienionego `GuiChat`.
+>
+> Dwie znane szorstkości, świadomie zostawione: nie ma eventu „czat się zamknął"
+> (`displayGuiScreen(null)` nie woła `initGui`), więc martwa referencja siedzi bezczynnie do
+> następnego otwarcia ekranu — samo się leczy, a gdyby uwierało, lekarstwem jest `GuiOpenEvent`.
+> I wyłączenie `Enabled` przy już otwartym czacie zostawia TAB bezczynny aż do zamknięcia czatu,
+> bo podmiana cofa się dopiero przy następnym `initGui`.
 
 ---
 
