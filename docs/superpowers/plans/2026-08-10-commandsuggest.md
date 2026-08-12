@@ -3191,6 +3191,13 @@ Oczekiwane: `BUILD SUCCESSFUL`.
 
 - [ ] **Step 6: Pierwszy dowód, że to lata — dev client**
 
+> 🚨 **To się nie udało i zostało przeniesione do zadania 18.** `:commandsuggest:runClient` **nie
+> istnieje** — podprojekt nie ma bloku `minecraft { runs { … } }` (ma go tylko `insanetweaks`,
+> a jego dev client nie ładuje naszego jara). Świadomie nie dokładamy tu bloku `runs`: prawdziwym
+> stanowiskiem testowym tej paczki jest instancja DEv 1.2, do której i tak kopiujemy jar w zadaniu
+> 18. Konsekwencja, którą trzeba znać: **zadania 13–17 powstają bez informacji zwrotnej z runtime'u**,
+> a pierwszy raz kod zobaczy Minecrafta dopiero w zadaniu 18.
+
 ```bash
 ./gradlew :commandsuggest:runClient
 ```
