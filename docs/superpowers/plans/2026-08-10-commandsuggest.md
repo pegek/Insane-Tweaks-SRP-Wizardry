@@ -2241,6 +2241,23 @@ git add commandsuggest/src/main/java/com/spege/commandsuggest/core/Suggestion.ja
 git commit -m "feat(commandsuggest): SuggestionEngine - spacer po drzewie, core kompletny"
 ```
 
+> **Po recenzji (2026-08-11).** `SuggestionEngineTest` ma 15 testów — doszły dwa pinujące zachowania,
+> które inaczej nikt by nie zauważył, że są decyzjami:
+>
+> - **`greedy` nie na końcu listy argumentów pożera wszystko po sobie.** Sprawdzenie `GREEDY` stoi
+>   przed sprawdzeniem indeksu, więc dla węzła z `args = [greedy, word]` ten `word` jest
+>   nieosiągalny. Silnik zostaje taki, jaki jest — to jest właściwa semantyka greedy'ego —
+>   ale walidacja przeniosła się do `JsonTreeReader`, patrz niżej.
+> - **`usage` pokazuje pełną listę argumentów, nie tylko pozostałe.** Przy `/cs give Steve ` linia
+>   dalej brzmi `<who> <what>`. Tak robi wanilia i tak ma zostać.
+>
+> Niezmiennik pętli, spisany po analizie: `1 <= i <= editIndex` przez cały czas, a każda
+> nie-kończąca się iteracja zwiększa `i` co najmniej o jeden — więc nawet cykl w drzewie
+> (`JsonTreeReader` go nie wyprodukuje, ale model go nie zabrania) nie zawiesi klienta,
+> bo każde okrążenie kosztuje token ze skończonej linii wejścia.
+>
+> Cały `core` po zadaniu 7: **69 testów**.
+
 > **Koniec warstwy `core`.** Od tego miejsca kończą się testy jednostkowe — wszystko poniżej dotyka
 > Minecrafta i weryfikuje się kompilacją plus scenariuszem ręcznym z zadania 18. Nie pisz atrap
 > `Minecraft.getMinecraft()`; to nie jest kod, który da się sensownie odpalić poza grą.
