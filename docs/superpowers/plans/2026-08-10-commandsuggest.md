@@ -4355,6 +4355,33 @@ git commit -m "docs: CLAUDE.md - siodmy mod commandsuggest i pierwszy zestaw tes
 
 ---
 
+---
+
+## Stan po zadaniach 1–17 i 19 (2026-08-11)
+
+Wszystko poza zadaniem 18 jest zrobione. **81 testów** jednostkowych `core` przechodzi
+(ArgType 4, BuiltinDescriptors 3, CommandIndex 13, InputParser 11, JsonTreeReader 16,
+SuggestionEngine 21, TreeCodec 13), `./gradlew :commandsuggest:build` zielony, jar się składa.
+
+Przegląd całości przed testami w grze dorzucił trzy rzeczy, wszystkie już zamknięte:
+
+- **Podpowiedź zakresu dla `int`/`float` nigdy nie została podpięta.** Spec §4 ją obiecywał,
+  `min`/`max` przechodziły przez model, JSON i kodek — i nikt ich nie czytał. `usageOf` renderuje
+  je teraz jako `<points (0-99)>`, `<points (0+)>` albo `<points (max 99)>`, z formatowaniem, które
+  nie dokleja `.0` do granicy całkowitej i nie zależy od locale.
+- Dwie niezależne stałe `MAX_PAYLOAD_BYTES` musiały pozostawać równe, a nic tego nie pilnowało —
+  właścicielem jest teraz `S2CCommandTree`, `TreeDispatcher` się do niej odwołuje.
+- `ClientTreeCache.hasTree()` nie miał ani jednego wołającego. Usunięty.
+
+**Dwie rzeczy świadomie niezrobione**, obie do rozważenia przy v2:
+
+- `TreeCodec.encode` nie ma limitów, które ma `decode`. Jeden przesadnie duży, ale poprawny opis
+  ręczny wywraca dekodowanie **całego** drzewa u gracza, a nie tylko swojej komendy — co znosi
+  izolację per plik, którą `DescriptorLoader` skądinąd starannie utrzymuje. Dziś nieosiągalne:
+  oba wbudowane opisy są o rzędy wielkości poniżej każdego limitu.
+- `TreeDispatcher.sendToAll` iteruje po liście graczy bez synchronizacji. `/commandsuggest reload`
+  z konsoli RCON chodzi po własnym wątku, nie po kolejce tickowej — wąskie, ale realne.
+
 ## Definition of done
 
 - `./gradlew build` buduje siedem jarów.
