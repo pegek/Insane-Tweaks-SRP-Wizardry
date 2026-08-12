@@ -1,0 +1,7 @@
+{
+  "command": "commandsuggest",
+  "sub": [
+    { "lit": "reload",  "exec": true, "usage": "/commandsuggest reload - reread command descriptions" },
+    { "lit": "refresh", "exec": true, "usage": "/commandsuggest refresh - resend your command tree" }
+  ]
+}

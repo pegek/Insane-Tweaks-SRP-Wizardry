@@ -1,0 +1,16 @@
+{
+  "command": "gamerule",
+  "args": [
+    { "name": "rule", "type": "choice", "choices": [
+      "announceAdvancements", "commandBlockOutput", "disableElytraMovementCheck",
+      "doDaylightCycle", "doEntityDrops", "doFireTick", "doLimitedCrafting", "doMobLoot",
+      "doMobSpawning", "doTileDrops", "doWeatherCycle", "gameLoopFunction", "keepInventory",
+      "logAdminCommands", "maxCommandChainLength", "maxEntityCramming", "mobGriefing",
+      "naturalRegeneration", "randomTickSpeed", "reducedDebugInfo", "sendCommandFeedback",
+      "showDeathMessages", "spawnRadius", "spectatorsGenerateChunks"
+    ]},
+    { "name": "value", "type": "word" }
+  ],
+  "exec": true,
+  "usage": "/gamerule <rule> [value]"
+}

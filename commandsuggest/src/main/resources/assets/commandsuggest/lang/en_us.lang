@@ -1,0 +1,4 @@
+commandsuggest.command.usage=/commandsuggest <reload|refresh>
+commandsuggest.command.reloaded=Reloaded %s command descriptions and resent the tree to everyone.
+commandsuggest.command.refreshed=Command tree refreshed.
+commandsuggest.command.playeronly=Only a player can refresh their own command tree.
