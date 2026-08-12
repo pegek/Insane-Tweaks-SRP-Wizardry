@@ -1815,6 +1815,14 @@ git commit -m "feat(commandsuggest): TreeCodec - drzewo do bajtow, pula stringow
 > pięciobajtowa nie była pokryta ani jedną wartością.
 >
 > `TreeCodecTest` ma 13 testów. Cały `core` po zadaniu 6: **54 testy**.
+>
+> **Domknięcie z zadania 7:** `JsonTreeReader` odrzuca też opis, w którym argument typu `greedy`
+> stoi gdziekolwiek indziej niż na końcu listy `args` danego węzła — silnik zwraca na nim sterowanie
+> natychmiast, więc wszystko po nim jest martwe. Model tej formy nadal nie zabrania (test
+> `greedyNieNaKoncuPolykaKazdyKolejnyArgumentWezla` buduje ją wprost przez konstruktory i pinuje
+> zachowanie silnika); drzwi są zamknięte wyłącznie na warstwie JSON. Cały `core` finalnie:
+> **72 testy** (ArgType 4, CommandIndex 13, InputParser 11, JsonTreeReader 16, SuggestionEngine 15,
+> TreeCodec 13).
 
 ---
 
