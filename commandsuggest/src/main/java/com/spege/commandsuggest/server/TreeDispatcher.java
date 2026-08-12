@@ -13,16 +13,17 @@ import net.minecraft.server.MinecraftServer;
 public final class TreeDispatcher {
 
     /**
-     * 🚨 Musi zostac rowne prywatnej stalej {@code S2CCommandTree.MAX_PAYLOAD_BYTES} (wanilijny
-     * sufit {@code SPacketCustomPayload} dla client-bound, 1 MiB). Sprawdzenie po stronie
-     * odbiorcy w {@code S2CCommandTree.fromBytes} istnieje po to, zeby uszkodzony/zlosliwy
+     * 🚨 Ta sama wartosc, co {@code S2CCommandTree.MAX_PAYLOAD_BYTES} — stad, zamiast wlasnej
+     * kopii, zeby nadawca i odbiorca fizycznie nie mogly rozjechac sie liczbowo. Sprawdzenie po
+     * stronie odbiorcy w {@code S2CCommandTree.fromBytes} istnieje po to, zeby uszkodzony/zlosliwy
      * strumien z sieci nie trafil w {@code new byte[len]} z absurdalna dlugoscia — ale gdyby TU
      * nic nie sprawdzalo rozmiaru, za duze drzewo poszloby normalnie przez siec i dopiero klient
      * by je odrzucil, bez ani jednej linii w logu serwera tlumaczacej, czemu gracz nie ma
      * podpowiedzi. Ten check jest wiec diagnostyczny, nie bezpieczenstwa — zapobiega cichej
-     * porazce, nie atakowi.
+     * porazce, nie atakowi. Uzasadnienie samej wartosci (wanilijny sufit client-bound
+     * {@code SPacketCustomPayload}) siedzi przy zrodle prawdy w {@code S2CCommandTree}.
      */
-    private static final int MAX_PAYLOAD_BYTES = 1024 * 1024;
+    private static final int MAX_PAYLOAD_BYTES = S2CCommandTree.MAX_PAYLOAD_BYTES;
 
     private TreeDispatcher() {
     }

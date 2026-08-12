@@ -177,4 +177,86 @@ public class SuggestionEngineTest {
         assertSame("front zjada linie, tail jest nieosiagalny", ArgType.GREEDY, s.getArgType());
         assertEquals("/zle <front> <tail>", s.getUsage());
     }
+
+    /**
+     * Pkt 1 z recenzji: {@code min}/{@code max} maja trafiac w linie usage — do teraz siedzialy
+     * w modelu, przechodzily przez {@code JsonTreeReader} i {@code TreeCodec}, ale nikt ich nie
+     * czytal. Cztery kombinacje obu granic, plus osobny test na format liczby calkowitej.
+     */
+    @Test
+    public void usageDoklejaObieGraniceZakresu() {
+        CmdArg points = new CmdArg("points", ArgType.INT, null, Double.valueOf(0), Double.valueOf(99));
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(points), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <points (0-99)>", s.getUsage());
+    }
+
+    @Test
+    public void usageDoklejaTylkoDolnaGranice() {
+        CmdArg points = new CmdArg("points", ArgType.INT, null, Double.valueOf(0), null);
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(points), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <points (0+)>", s.getUsage());
+    }
+
+    @Test
+    public void usageDoklejaTylkoGornaGranice() {
+        CmdArg points = new CmdArg("points", ArgType.INT, null, null, Double.valueOf(99));
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(points), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <points (max 99)>", s.getUsage());
+    }
+
+    @Test
+    public void usageBezGranicWygladaDokladnieJakWczesniej() {
+        CmdArg points = new CmdArg("points", ArgType.INT, null, null, null);
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(points), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <points>", s.getUsage());
+    }
+
+    /**
+     * {@code min}/{@code max} sa {@code Double} nawet dla {@code ArgType.INT} (jedna para pol
+     * obsluguje oba typy liczbowe — patrz javadoc {@code CmdArg}), wiec granica calkowita 0.0
+     * musi wyrenderowac sie jako "0", nie "0.0".
+     */
+    @Test
+    public void intowaGranicaZerowaNieMaSpurioznejKropki() {
+        CmdArg points = new CmdArg("points", ArgType.INT, null, Double.valueOf(0.0), Double.valueOf(99.0));
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(points), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <points (0-99)>", s.getUsage());
+    }
+
+    @Test
+    public void floatowaGranicaZachowujeUlamek() {
+        CmdArg factor = new CmdArg("factor", ArgType.FLOAT, null, Double.valueOf(-1.5), null);
+        CommandTree t = new CommandTree("zasieg", null,
+                new CmdNode(null, Collections.singletonList(factor), null, true, null));
+        CommandIndex idx = new CommandIndex(Collections.singletonList(t));
+
+        Suggestions s = SuggestionEngine.suggest(idx, InputParser.parse("/zasieg ", 8));
+
+        assertEquals("/zasieg <factor (-1.5+)>", s.getUsage());
+    }
 }

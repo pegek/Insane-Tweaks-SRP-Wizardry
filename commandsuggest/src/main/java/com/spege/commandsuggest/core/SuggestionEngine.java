@@ -126,7 +126,12 @@ public final class SuggestionEngine {
         return null;
     }
 
-    /** Gotowy usage z opisu, a jak go nie ma — sklejony ze sciezki literalow i nazw argumentow. */
+    /**
+     * Gotowy usage z opisu, a jak go nie ma — sklejony ze sciezki literalow i nazw argumentow,
+     * z dopiskiem zakresu przy {@code min}/{@code max} (spec §4: "podpowiedz w linii usage" dla
+     * {@code int}/{@code float}). Gdy opis podal wlasna linie ({@code node.getUsage() != null}),
+     * ta funkcja jej nie dotyka — autor opisu wiedzial, co pisze.
+     */
     private static String usageOf(CmdNode node, StringBuilder path) {
         if (node.getUsage() != null) {
             return node.getUsage();
@@ -136,9 +141,37 @@ public final class SuggestionEngine {
         }
         StringBuilder sb = new StringBuilder(path);
         for (CmdArg a : node.getArgs()) {
-            sb.append(" <").append(a.getName()).append('>');
+            sb.append(" <").append(a.getName());
+            appendRange(sb, a.getMin(), a.getMax());
+            sb.append('>');
         }
         return sb.toString();
+    }
+
+    /** Dopisuje " (min-max)" / " (min+)" / " (max X)" do usage; nic, gdy oba pola sa {@code null}. */
+    private static void appendRange(StringBuilder sb, Double min, Double max) {
+        if (min != null && max != null) {
+            sb.append(" (").append(formatBound(min.doubleValue()))
+                    .append('-').append(formatBound(max.doubleValue())).append(')');
+        } else if (min != null) {
+            sb.append(" (").append(formatBound(min.doubleValue())).append("+)");
+        } else if (max != null) {
+            sb.append(" (max ").append(formatBound(max.doubleValue())).append(')');
+        }
+    }
+
+    /**
+     * {@code min}/{@code max} sa {@code Double} nawet dla {@link ArgType#INT} (patrz javadoc
+     * {@link CmdArg}), wiec bez tego kazde ograniczenie calkowite renderowaloby sie z zbednym
+     * {@code .0}. {@code Double.toString} jest celowo uzyte zamiast {@code String.format} —
+     * nigdy nie zaleza od domyslnej lokalizacji (zawsze kropka, nigdy przecinek), co ma znaczenie
+     * dla tekstu skierowanego wylacznie po angielsku.
+     */
+    private static String formatBound(double v) {
+        if (!Double.isInfinite(v) && v == Math.rint(v)) {
+            return Long.toString((long) v);
+        }
+        return Double.toString(v);
     }
 
     private static boolean matches(String candidate, String prefix) {

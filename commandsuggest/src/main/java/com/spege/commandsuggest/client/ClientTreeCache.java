@@ -34,10 +34,6 @@ public final class ClientTreeCache {
         return index;
     }
 
-    public static boolean hasTree() {
-        return received;
-    }
-
     /** Wolane z watku glownego przez {@code TreeApplier}. */
     public static void accept(CommandIndex fresh) {
         index = fresh != null ? fresh : CommandIndex.EMPTY;

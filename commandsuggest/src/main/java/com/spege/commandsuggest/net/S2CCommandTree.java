@@ -20,8 +20,11 @@ public class S2CCommandTree implements IMessage {
      * liczba z sieci, wiec NIE trafia prosto w {@code new byte[len]}. Vanilla ogranicza
      * client-bound {@code SPacketCustomPayload} do 1 MiB — to naturalny, hojny sufit: dobrze
      * uformowany pakiet fizycznie nie moze niesc wiecej.
+     *
+     * <p>Jedyne zrodlo prawdy dla tej granicy — {@code TreeDispatcher.MAX_PAYLOAD_BYTES} tylko
+     * odwoluje sie tutaj, zeby nadawca i odbiorca nie mogly rozjechac sie liczbowo.
      */
-    private static final int MAX_PAYLOAD_BYTES = 1024 * 1024;
+    public static final int MAX_PAYLOAD_BYTES = 1024 * 1024;
 
     private byte[] payload;
 
