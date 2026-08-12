@@ -3,10 +3,14 @@ package com.spege.commandsuggest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.spege.commandsuggest.server.CommandCommandSuggest;
+import com.spege.commandsuggest.server.DescriptorLoader;
+
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
 /**
  * Command Suggest — podpowiedzi komend pod polem czatu, bez ani jednego mixina.
@@ -37,11 +41,23 @@ public class CommandSuggest {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        DescriptorLoader.init(event.getModConfigurationDirectory());
         proxy.preInit(event);
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+    }
+
+    /**
+     * {@code serverStarting}, nie {@code preInit}/{@code init}: opisy w {@code config/} moga byc
+     * podmienione miedzy sesjami (edytowane recznie), a rejestr komend nie istnieje jeszcze przy
+     * ladowaniu moda — {@code registerServerCommand} jest wlasnie na to.
+     */
+    @Mod.EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        DescriptorLoader.reload();
+        event.registerServerCommand(new CommandCommandSuggest());
     }
 }
