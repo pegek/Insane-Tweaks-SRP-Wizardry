@@ -31,7 +31,18 @@ public final class DescriptorLoader {
     private static final String BUILTIN_DIR = "/assets/commandsuggest/commands/";
 
     private static File userDir;
-    private static Map<String, CommandTree> descriptors = Collections.emptyMap();
+
+    /**
+     * 🚨 {@code volatile} nie jest kosmetyczne. {@code reload()} zwykle biegnie na glownym watku
+     * serwera (login i normalne komendy graczy sa kolejkowane na ten watek), ale RCON wykonuje
+     * komendy NA WLASNYM watku, prosto, bez kolejkowania na glowny watek tick-a. Bez
+     * {@code volatile} ten zapis nie ma zadnej krawedzi happens-before wzgledem odczytu w
+     * {@link #get()} z innego watku — {@code TreeBuilder.build()} na watku logowania moglby
+     * zobaczyc albo stara referencje w nieskonczonosc, albo (gorzej) swiezo widoczna referencje
+     * na {@code HashMap}, ktorego wewnetrzne pola nie zostaly bezpiecznie opublikowane. Sam zapis
+     * referencji jest atomowy, ale atomowosc to nie to samo co widocznosc.
+     */
+    private static volatile Map<String, CommandTree> descriptors = Collections.emptyMap();
 
     private DescriptorLoader() {
     }

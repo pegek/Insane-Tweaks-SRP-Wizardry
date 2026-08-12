@@ -65,6 +65,25 @@ public final class TreeBuilder {
                         cmd.getClass().getName());
                 continue;
             }
+            // 🚨 Dwie ROZNE komendy (rozny obiekt, wiec dwa osobne klucze w tym IdentityHashMap)
+            // moga zglosic ten sam getName() - w zywym rejestrze druga rejestracja pod tym samym
+            // stringiem po prostu podmienia wpis mapy pod tamtym kluczem, wiec pierwsza komenda
+            // zostaje osiagalna juz tylko przez swoj alias (jesli jakis ma). CommandIndex.prune
+            // dostaje predykat Predicate<String>, wiec i tak moze rozstrzygac uprawnienia tylko
+            // PO NAZWIE, nie po tozsamosci komendy - gdybysmy pozwolili 'canonical' nadpisac sie
+            // druga komenda, prune sprawdzalby uprawnienia DRUGIEJ komendy takze dla drzewa
+            // PIERWSZEJ (bo obie maja ta sama nazwe, ten sam klucz w 'canonical'). Zamiast tej
+            // dwuznacznosci: pierwsza komenda pod danym imieniem wygrywa, druga i kolejne sa
+            // pomijane z ostrzezeniem - deterministyczne (w ramach jednego przebiegu) i bez
+            // przypadkowego sprawdzania cudzych uprawnien.
+            if (canonical.containsKey(name)) {
+                CommandSuggest.LOGGER.warn(
+                        "Komendy {} i {} zglaszaja ta sama nazwe '{}' - druga jest pomijana "
+                        + "(prune sprawdza uprawnienia po nazwie, nie po tozsamosci obiektu).",
+                        canonical.get(name).getClass().getName(), cmd.getClass().getName(), name);
+                continue;
+            }
+
             List<String> aliases = new ArrayList<String>();
             for (String k : e.getValue()) {
                 if (!k.equals(name)) {
