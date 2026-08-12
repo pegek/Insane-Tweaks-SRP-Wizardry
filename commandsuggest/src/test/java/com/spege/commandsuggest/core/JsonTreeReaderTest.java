@@ -117,6 +117,53 @@ public class JsonTreeReaderTest {
     }
 
     @Test
+    public void greedyNieNaKoncuOdrzucaPlik() {
+        // SuggestionEngine sprawdza greedy PRZED tym, czy dotarl do kursora, wiec kazdy argument
+        // po greedy w tym samym 'args' jest nieosiagalny - to nie literowka, to sprzeczna
+        // struktura, wiec odrzucamy zamiast po cichu ucinac.
+        try {
+            JsonTreeReader.read(
+                    "{\"command\":\"x\",\"args\":["
+                    + "{\"name\":\"a\",\"type\":\"greedy\"},"
+                    + "{\"name\":\"b\",\"type\":\"word\"}"
+                    + "]}");
+            fail("mialo rzucic");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("a"));
+        }
+    }
+
+    @Test
+    public void greedyNaKoncuJestLegalny() {
+        // Greedy jako OSTATNI argument to legalny i pozadany ksztalt (m.in. generyczny
+        // wezel-fallback z zadania 11) - walidacja sprawdza tylko pozycje, nie obecnosc.
+        CommandTree t = JsonTreeReader.read(
+                "{\"command\":\"x\",\"args\":["
+                + "{\"name\":\"a\",\"type\":\"word\"},"
+                + "{\"name\":\"b\",\"type\":\"greedy\"}"
+                + "]}");
+        assertEquals(2, t.getRoot().getArgs().size());
+        assertSame(ArgType.WORD, t.getRoot().getArgs().get(0).getType());
+        assertSame(ArgType.GREEDY, t.getRoot().getArgs().get(1).getType());
+    }
+
+    @Test
+    public void greedyNieNaKoncuWZagniezdzonymSubTezOdrzucaPlik() {
+        // Sprawdzenie jest per wezel, nie per drzewo - to samo musi dzialac dowolnie glebko,
+        // nie tylko w korzeniu.
+        try {
+            JsonTreeReader.read(
+                    "{\"command\":\"x\",\"sub\":[{\"lit\":\"set\",\"args\":["
+                    + "{\"name\":\"target\",\"type\":\"greedy\"},"
+                    + "{\"name\":\"points\",\"type\":\"int\"}"
+                    + "]}]}");
+            fail("mialo rzucic");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("target"));
+        }
+    }
+
+    @Test
     public void zlyTypElementuAliasesDajeIllegalArgumentException() {
         // Gson na obiekcie zamiast stringa rzuca UnsupportedOperationException - kontrakt tej
         // metody to IllegalArgumentException, wiec musi byc przepakowany.

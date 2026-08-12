@@ -31,8 +31,12 @@ public final class JsonTreeReader {
      * niepoprawny {@code exec} -> {@code false}). Cicha porazka jest dla pliku edytowanego recznie
      * gorsza niz glosna — patrz uzasadnienie w {@link #readNode}.
      *
+     * Trzeci przypadek odrzucenia: argument typu {@code greedy}, ktory nie jest ostatni w
+     * {@code args} danego wezla — patrz uzasadnienie w {@link #validateGreedyIsLast}.
+     *
      * @throws IllegalArgumentException gdy to nie jest obiekt JSON, brak pola {@code command},
-     *         albo ktorykolwiek wpis w {@code sub} nie ma pola {@code lit}
+     *         ktorykolwiek wpis w {@code sub} nie ma pola {@code lit}, albo argument typu
+     *         {@code greedy} nie jest ostatni w {@code args} wezla
      */
     public static CommandTree read(String json) {
         JsonObject o;
@@ -97,6 +101,7 @@ public final class JsonTreeReader {
                 args.add(readArg(e.getAsJsonObject()));
             }
         }
+        validateGreedyIsLast(args, literal);
         List<CmdNode> sub = new ArrayList<CmdNode>();
         if (o.has("sub") && o.get("sub").isJsonArray()) {
             for (JsonElement e : o.getAsJsonArray("sub")) {
@@ -112,6 +117,32 @@ public final class JsonTreeReader {
         boolean exec = o.has("exec") && isTrue(o.get("exec"));
         String usage = o.has("usage") ? o.get("usage").getAsString() : null;
         return new CmdNode(literal, args, sub, exec, usage);
+    }
+
+    /**
+     * {@link ArgType#GREEDY} pochlania reszte linii — {@code SuggestionEngine} sprawdza greedy
+     * PRZED tym, czy dotarl do argumentu pod kursorem, co jest poprawna semantyka ("greedy" ma
+     * znaczyc "wszystko do konca"), ale ma konsekwencje: kazdy argument PO greedy w tym samym
+     * {@code args} jest nieosiagalny — silnik wraca przy pierwszym kontakcie z greedy i nigdy
+     * dalej nie patrzy. To nie literowka do zdegradowania jak nieznany {@code type}: nie ma
+     * odczytania takiego opisu, ktore robi to, co autor zamierzal, wiec traktujemy to jak
+     * strukturalnie zepsuty plik — tak samo jak brakujacy {@code lit}. Greedy jako OSTATNI
+     * argument jest jak najbardziej legalny (to ksztalt genericznego wezla-fallbacku z zadania
+     * 11) — walidacja sprawdza tylko pozycje, nigdy sama obecnosc.
+     *
+     * <p>Sprawdzenie jest per wezel, nie per drzewo: greedy na koncu {@code args} jednego wezla
+     * nic nie mowi o rodzenstwie ani dzieciach — kazde wywolanie {@link #readNode} dostaje
+     * swoja wlasna liste {@code args} i woala te metode osobno.
+     */
+    private static void validateGreedyIsLast(List<CmdArg> args, String literal) {
+        for (int i = 0; i < args.size() - 1; i++) {
+            if (args.get(i).getType() == ArgType.GREEDY) {
+                throw new IllegalArgumentException("argument '" + args.get(i).getName()
+                        + "' w wezle '" + (literal != null ? literal : "korzeniu")
+                        + "' jest typu greedy, ale nie jest ostatni w 'args' - greedy pochlania"
+                        + " reszte linii, wiec nic nie moze po nim wystapic");
+            }
+        }
     }
 
     /**
