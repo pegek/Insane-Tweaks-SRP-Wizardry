@@ -2642,6 +2642,24 @@ git add commandsuggest/src/main/java/com/spege/commandsuggest/net/ commandsugges
 git commit -m "feat(commandsuggest): kanal, pakiet S2CCommandTree i cache drzewa na kliencie"
 ```
 
+> **Po recenzji (2026-08-11).** Cztery zmiany względem kodu powyżej:
+>
+> - **`fromBytes` waliduje długość przed alokacją** — limit 1 MiB (sufit `SPacketCustomPayload`)
+>   plus sprawdzenie przeciw `buf.readableBytes()`, żeby deklarowana długość nie mogła przekroczyć
+>   tego, co faktycznie przyszło. To ta sama klasa błędu, którą zamknęliśmy w `TreeCodec.decode`.
+> - **`TreeApplier.apply` łapie `IllegalStateException` z dekodera.** Bez tego wyjątek szedłby
+>   przez `MessageToMessageDecoder` do `NetworkManager.exceptionCaught` i **rozłączał gracza** —
+>   za popsuty pakiet kosmetycznej funkcji. Teraz leci ERROR do logu, a gracz zostaje na ścieżce
+>   waniliowej.
+> - **`ClientTreeCache` dostał flagę `connected`.** Licznik ticków startował od uruchomienia gry,
+>   więc linia „serwer nie ma tego moda" pojawiała się w logu **w menu głównym**, po pięciu
+>   sekundach od startu, zanim gracz gdziekolwiek wszedł. `onDisconnect` zeruje teraz też
+>   `ticksSinceJoin`, symetrycznie do `onConnect`.
+> - **`@SideOnly(Side.CLIENT)` dopisane na zagnieżdżonej klasie `Events`** — adnotacja klasy
+>   zewnętrznej nie przechodzi na zagnieżdżoną. Dziś nic na tym nie wisi (rejestracja idzie przez
+>   `EVENT_BUS.register(Object)` z `ClientProxy`, którego dedyk nigdy nie ładuje), ale to pułapka
+>   dla przyszłego refaktoru, który przeniesie wywołanie gdzieś mniej oczywiście bramkowane.
+
 ---
 
 ## Task 10: `server` — `DescriptorLoader`
