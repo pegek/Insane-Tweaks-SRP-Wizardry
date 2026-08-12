@@ -73,6 +73,9 @@ public final class ClientTreeCache {
             connected = true;
             ticksSinceJoin = 0;
             modeLogged = false;
+            // rejestry moga byc przemapowane pod inny modset niz na poprzednim serwerze - patrz
+            // javadoc LocalValueSource.invalidate()
+            LocalValueSource.invalidate();
         }
 
         @SubscribeEvent
@@ -82,6 +85,7 @@ public final class ClientTreeCache {
             connected = false;
             ticksSinceJoin = 0;
             modeLogged = false;
+            LocalValueSource.invalidate();
         }
 
         @SubscribeEvent
