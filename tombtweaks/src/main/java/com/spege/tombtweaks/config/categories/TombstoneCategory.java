@@ -37,6 +37,21 @@ public class TombstoneCategory {
     @Config.RequiresMcRestart
     public boolean fixMissingParticleSprites = true;
 
+    @Config.Comment({
+            "Stops Tombstone from overwriting your Video Settings GUI Scale when you close one of",
+            "its own screens (Knowledge of Death, Compendium).",
+            "Tombstone 4.8.0 enlarges the GUI scale while those screens are open and puts your value",
+            "back on close - but the resize call it makes right after restoring immediately re-runs",
+            "the enlarging code on the closing screen, so your setting is overwritten instead.",
+            "This is a workaround for a bug reported upstream, not a feature. It disarms itself on",
+            "any version where that call is gone, so it is safe to leave on across updates - but",
+            "delete it from your config worries entirely once a fixed Tombstone ships.",
+            "Turning Tombstone's own scaleGuiscreens option off avoids the bug too, at the cost of",
+            "the larger screens. Client side, read live."
+    })
+    @Config.Name("Fix Gui Scale Reset")
+    public boolean fixGuiScaleReset = true;
+
     @Config.Comment("Removes the vanilla Tombstone recipe to craft an Enchanted Grave Key using an Ender Pearl.")
     @Config.Name("Disable Enchant Key Recipe")
     @Config.RequiresMcRestart
