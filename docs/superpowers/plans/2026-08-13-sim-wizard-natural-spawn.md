@@ -312,6 +312,39 @@ This is spec §1. The whole mechanism is one file.
 **Files:**
 - Create: `insanetweaks/src/main/java/com/spege/insanetweaks/events/SimWizardNaturalSpawnHandler.java`
 
+> 🚨 **The code block below is superseded — do not transcribe it.** It was written before
+> implementation and review, and it carried two feature-breaking defects plus a crash. The
+> authoritative version is the committed file at
+> `insanetweaks/src/main/java/com/spege/insanetweaks/events/SimWizardNaturalSpawnHandler.java`
+> (commits `bed82e0` → `786cce1` → `f714766`). The block is kept as written so the four findings
+> below stay attached to the thing that caused them:
+>
+> 1. **Feature-breaking.** It built a fresh `Biome.SpawnListEntry` on every event fire.
+>    `WorldServer.canCreatureTypeSpawnHere` fires `PotentialSpawns` a **second** time and then does
+>    `list.contains(entry)` — and `SpawnListEntry` has no `equals`, so that is reference identity.
+>    An entry picked by the first fire is never found by the second: **nothing ever spawns**, and
+>    whenever our entry won the roll the whole pack attempt was discarded rather than re-rolled,
+>    silently suppressing SRP's own spawns too. Forge documents the requirement on
+>    `WorldEvent.PotentialSpawns` itself: *both events must add the same instance*. Fixed with two
+>    `static final` singletons whose public `itemWeight` is mutated in place.
+> 2. **Unsound thread safety.** `SPAWN_BIOMES` was a `static final HashSet` mutated by
+>    `resolveBiomes()` after class init and read from threads that `final` gives no happens-before
+>    edge to. Fixed with a `volatile Set<Biome>` built into a local and published once through
+>    `Collections.unmodifiableSet`. The original javadoc asserted this was safe, which was worse
+>    than saying nothing.
+> 3. **The cap did not bind.** Recounting every 40 ticks while `WorldEntitySpawner` runs every tick
+>    let a burst reach ~70–80 against a configured 12. Fixed with an `EntityJoinWorldEvent`
+>    increment at `LOWEST` priority (so cancelled joins are not counted), with the tick recount
+>    still overwriting outright so the two cannot compound.
+> 4. **Crash.** Reading `cfg.wizardSpawnWeight` three times across the guard and the assignment let
+>    a concurrent config write publish `itemWeight = 0` on an entry that was still added; a list
+>    whose only entry has weight 0 makes `WeightedRandom.getRandomItem` throw out of the spawn pass.
+>    Fixed by reading each weight once into a local.
+>
+> Deliberately **not** fixed: the static `POPULATIONS` map is never pruned, so in single-player a
+> world change carries the previous world's count for up to 40 ticks. Self-correcting; a fourth
+> event subscription is not worth two seconds of a slightly wrong cap.
+
 - [ ] **Step 1: Write the file**
 
 ```java
