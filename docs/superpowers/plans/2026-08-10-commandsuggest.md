@@ -4230,6 +4230,11 @@ ls commandsuggest/build/libs/
 
 Oczekiwane: `commandsuggest-1.0.0.jar`.
 
+> 🚨 **NIE na DEv 1.2.** Ustalone 2026-08-12: Cleanroom wozi własny suggester wbudowany w loader,
+> bez przełącznika, i gryzie się z naszym w trzech miejscach — szczegóły i dźwignia do wyłączenia
+> w specu §12. Jar został z `DEv 1.2/mods/` wycofany. Ten scenariusz odpalamy na środowisku
+> **bez Cleanroomu**, dopóki nie zapadnie decyzja A/B z §12.
+
 - [ ] **Step 2: Wdróż do instancji**
 
 Skopiuj `commandsuggest/build/libs/commandsuggest-1.0.0.jar` do

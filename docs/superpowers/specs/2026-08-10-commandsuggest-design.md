@@ -298,7 +298,67 @@ i `/commandsuggest refresh`.
 - **`fg.deobf(files)` w modDev jest no-opem** — nie dotyczy, bo nie linkujemy się do żadnego moda.
 - **Rozmiar drzewa** — patrz §6, mierzymy przed optymalizacją.
 
-## 12. Zakres
+## 12. Cleanroom wozi własny suggester (ustalone 2026-08-12)
+
+🚨 **DEv 1.2 chodzi na Cleanroomie, a Cleanroom ma tę samą funkcję wbudowaną w loader.** Ustalone
+z bajtkodu `cleanroom-0.6.10-alpha.jar` i z łatki
+[`patches/minecraft/net/minecraft/client/gui/GuiChat.java.patch`](https://raw.githubusercontent.com/CleanroomMC/Cleanroom/main/patches/minecraft/net/minecraft/client/gui/GuiChat.java.patch).
+
+Klasy to `com.cleanroommc.client.chat.suggestion.SuggestionList` i `SuggestionUpdater`. Wołający
+siedzi w **binpatchu na `GuiChat`**, więc żadna klasa w jarze się do nich nie odwołuje i nie ma po
+nich śladu w żadnym logu — dlatego nikt tego wcześniej nie zauważył. Co robi łatka:
+
+- `initGui` tworzy oba obiekty i woła `this.inputField.setGuiResponder(this.suggestionUpdater)`;
+- konstruktor `SuggestionUpdater` od razu wysyła `CPacketTabComplete("/")`, żeby poznać listę komend;
+- `keyTyped` przechwytuje **TAB, Esc, Enter, ↑ i ↓**;
+- `handleMouseInput` / `mouseClicked` obsługują scroll i klik w podpowiedź;
+- `drawScreen` dorysowuje ghost text, kolorowanie komendy w polu i całą listę;
+- `setCompletions` woła `tabCompleter.setCompletions(...)` **oraz** `suggestionUpdater.onServerCompletions(...)`.
+
+**Przełącznika nie ma.** Ani w `cleanroom_relauncher.cfg` (to tylko parametry uruchamiania), ani
+w `KirinoConfigHub` (to renderer), ani w żadnym stringu w tych klasach. Łatka nie jest bramkowana.
+
+### Jak to się gryzie z nami
+
+1. **Enter zatwierdzałby ICH podpowiedź.** Nasz §7 celowo nie przechwytuje Entera, żeby `/home` nie
+   poszło jako `/homes`; ich `keyTyped` robi dokładnie to, a nasz brak przechwycenia oddaje mu pole.
+2. Dwa popupy w tym samym miejscu ekranu.
+3. Ich TAB i strzałki są martwe, bo `KeyboardInputEvent.Pre` leci przed `keyTyped` i my anulujemy
+   pierwsi — zostaje hybryda: ich lista się rysuje, ale nie da się po niej chodzić.
+
+Nasz `SpyTabCompleter` natomiast **działa** na Cleanroomie, bo załatane `setCompletions` woła oba.
+
+### Dźwignia do wyłączenia, gdyby była potrzebna
+
+`onServerCompletions` przyjmuje odpowiedź tylko gdy `prefix.equals(this.lastRequest)`, a
+`lastRequest` ustawia **wyłącznie** `refresh()` — wołane tylko przez responder. Odpięcie respondera
+przez `inputField.setGuiResponder(null)` zostawia `lastRequest` pustym stringiem, więc każda
+odpowiedź odpada na bramce, lista nigdy się nie zapełnia, `isVisible()` jest fałszem, a ich
+rysowanie i przechwytywanie klawiszy same się wyłączają. To **publiczna waniliowa metoda**, a
+`GuiTextField.setResponderEntryValue` ma null-check (linia 135 w źródłach 2860) — wspierana ścieżka,
+nie hack. Koszt: jeden zbędny `CPacketTabComplete("/")` na otwarcie czatu.
+
+### Co oni robią lepiej i co warto od nich wziąć
+
+- **Hak na zmianę tekstu zamiast odpytywania co klatkę.** Oni biorą `GuiTextField.setGuiResponder`
+  i dostają callback przy każdej zmianie; my w `ChatScreenHandler` porównujemy tekst i pozycję
+  kursora w `DrawScreenEvent.Post` i dokładamy debounce. Ich sposób jest zdarzeniowy, tańszy
+  i dostępny bez mixina — najlepsza rzecz do przepisania niezależnie od tego, co zdecydujemy.
+- **Ghost text** — dokończenie wpisywane szarym wprost w pole, przed listą. Nie mamy tego w ogóle.
+- **Kolorowanie komendy w polu tekstowym**, nie tylko pozycji na liście.
+- **`pendingReplies` + `lastRequest`** jako bookkeeping na przeterminowane odpowiedzi serwera —
+  wariant tego samego problemu, który u nas rozwiązuje porównanie `replaceStart` i ponowne
+  filtrowanie prefiksem. Warto porównać, które jest szczelniejsze.
+
+### Stan decyzji
+
+**Nierozstrzygnięte.** Mod został wycofany z `DEv 1.2` (2026-08-12), testy przenoszą się na
+środowisko **bez Cleanroomu**. Trzy drogi: (A) wyłączyć ich suggester i zostawić nasz;
+(B) zostawić ich UI i wyrzucić nasze §7 — ale ich `SuggestionUpdater` przyjmuje gołe stringi
+i nie ma czym odebrać naszego drzewa, więc cała warstwa serwerowa zostałaby bez konsumenta;
+(C) współistnienie — odpada, patrz kolizje.
+
+## 13. Zakres
 
 **v1** — popup z nawigacją, klikiem i scrollem; drzewo z serwera z filtrem uprawnień; fallback
 generyczny z `getTabCompletions`; degradacja do pustego drzewa; kolorowanie argumentów wg typu;
@@ -309,7 +369,7 @@ generyczny z `getTabCompletions`; degradacja do pustego drzewa; kolorowanie argu
 `assets/<modid>/commandsuggest/*.json` w cudzych jarach przez `CraftingHelper.findFiles`;
 importer formatu drzewa z 1.13+; komplet opisów per-mod dla paczki.
 
-## 13. Referencje
+## 14. Referencje
 
 - Spec wstępny z genezą i crashem brigo: `notes/cmdsuggest_spec_2026-08-10.md`
 - Jar brigo: `notes/decompiled_mods/brigo_forge-1.1.1+1.12.x.jar` — warte obejrzenia
