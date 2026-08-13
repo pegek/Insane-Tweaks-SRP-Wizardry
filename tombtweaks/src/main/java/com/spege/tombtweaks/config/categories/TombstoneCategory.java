@@ -205,6 +205,15 @@ public class TombstoneCategory {
             "below. Without them the whole section is inert."})
     public WandSoulbindingConfig wandSoulbinding = new WandSoulbindingConfig();
 
+    @Config.Name("concentrationcooldown")
+    @Config.Comment({"Lets the Concentration perk cool down wands you are carrying but not holding.",
+            "Only does anything when Electroblob's Wizardry is set to stop cooldowns on stowed",
+            "wands (its own wandsMustBeHeldToDecrementCooldown option). With that off, cooldowns",
+            "already run everywhere and there is nothing for the perk to restore.",
+            "A wand in your off hand counts as held by Wizardry's own rule, so it already cools at",
+            "full rate and this never touches it."})
+    public ConcentrationCooldownConfig concentrationCooldown = new ConcentrationCooldownConfig();
+
     @Config.Name("firstkillrewards")
     @Config.Comment({"A one-off knowledge reward the first time a player kills a named enemy.",
             "Tombstone pays alignment for seven things and killing a monster is none of them, and",
@@ -530,6 +539,38 @@ public class TombstoneCategory {
         @Config.Name("Debug Logging")
         @Config.Comment("Log every accepted binding and every refusal, with the reason.")
         public boolean debugLogging = false;
+    }
+
+    /**
+     * Concentration's reach into Electroblob's Wizardry.
+     *
+     * <p>The perk's own description promises two things — shorter casting and immunity to
+     * interruption. Wizardry has no interruption at all (verified: nothing in the mod calls
+     * {@code stopActiveHand} or {@code resetActiveHand}), and its casting time is a per-spell
+     * balance value we deliberately leave alone. What is left, and what this section governs, is an
+     * axis Wizardry itself does not offer: whether a stowed wand cools down.
+     */
+    public static class ConcentrationCooldownConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment("Let Concentration cool stowed wands. Read live - no restart needed.")
+        public boolean enabled = true;
+
+        @Config.Name("Percent Per Level")
+        @Config.RangeInt(min = 0, max = 100)
+        @Config.Comment({"Share of the normal cooldown rate each Concentration level gives back to a",
+                "wand in your inventory. At the default 10 and the perk's native cap of 5 levels, a",
+                "stowed wand cools at half the speed it would in your hand.",
+                "0 switches the effect off without disabling the feature."})
+        public int percentPerLevel = 10;
+
+        @Config.Name("Scan Interval Ticks")
+        @Config.RangeInt(min = 1, max = 100)
+        @Config.Comment({"How often the inventory is walked, in ticks. Purely a cost dial: the rate",
+                "above is preserved whatever this is set to, because the fractional remainder is",
+                "carried between scans rather than rounded away.",
+                "Raise it on a busy server, lower it if you want cooldowns to move more smoothly."})
+        public int scanIntervalTicks = 10;
     }
 
     // ========================================================================
