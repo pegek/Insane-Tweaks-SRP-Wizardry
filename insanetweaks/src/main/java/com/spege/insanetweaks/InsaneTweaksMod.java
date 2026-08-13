@@ -406,6 +406,18 @@ public class InsaneTweaksMod implements IGuiHandler {
             }
         }
 
+        // Natural spawning for sim_wizard / sim_battlemage. Deliberately NOT inside the
+        // enableSrpEbWizardryBridge block above: that flag governs turning EB Wizardry wizards
+        // into ours, and a pack may reasonably want the population without the conversion.
+        // Biomes are resolved once, here, because the config field is RequiresMcRestart and a
+        // registry lookup per spawn attempt would be absurd.
+        if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard
+                .naturalSpawn.enableNaturalSpawn) {
+            com.spege.insanetweaks.events.SimWizardNaturalSpawnHandler.resolveBiomes();
+            MinecraftForge.EVENT_BUS.register(
+                    new com.spege.insanetweaks.events.SimWizardNaturalSpawnHandler());
+        }
+
         // The advanced-property tooltip ("Ashen Legacy" and friends) is generic, so it must not sit
         // inside the SRP-EBWizardry bridge block: Bauble Fruits are lava-proof property holders
         // whether or not the bridge is enabled, and with the bridge off they were silently missing
