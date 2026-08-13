@@ -23,6 +23,7 @@ import com.spege.commandsuggest.core.Suggestions;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.GuiPageButtonList;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
@@ -54,6 +55,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * nastepnego {@code InitGuiEvent.Post} - a wtedy albo to znowu {@code GuiChat} (podmieniamy od
  * nowa), albo inny ekran (galaz {@code else} czysci referencje). Ograniczony, samo-naprawiajacy
  * sie "wyciek" jednego obiektu na czas jednej sesji GUI - nie kumuluje sie.
+ *
+ * <p><b>Wykrywanie zmian w polu - zdarzeniowo, nie odpytywaniem.</b> Zmiany TEKSTU przychodza
+ * przez {@link FieldResponder}, instalowany na {@code inputField.setGuiResponder(...)} w
+ * {@link #onInitGuiPost}: {@code GuiTextField.setResponderEntryValue} jest wolane WYLACZNIE z
+ * {@code writeText} i {@code deleteFromCursor} (zweryfikowane w zrodlach 1.12.2-14.23.5.2860),
+ * wiec pisanie, kasowanie i wklejanie zawsze go odpalaja. Sam ruch KURSORA (strzalki, Home/End,
+ * klik myszy w pole) nie idzie przez respondera w ogole - a to on decyduje, ktory token jest
+ * edytowany - wiec {@link #onKeyboardPre} i {@link #onMousePre} doklejaja wlasne "dirty" dla
+ * kazdego zdarzenia, ktorego same nie konsumuja. Rownolegle {@code setText} (nasz {@link #accept},
+ * waniliowa historia czatu przez gora/dol) tez nie zglasza sie do respondera, wiec {@link #accept}
+ * zaznacza dirty sam. Wynik: zero porownywania tekstu/kursora co klatke w {@link #onDrawScreenPost}.
  *
  * <p><b>Resize.</b> Zmiana rozmiaru okna tez odpala {@code InitGuiEvent.Post} - {@code GuiScreen.onResize}
  * wola {@code setWorldAndResolution}, ktore wola {@code initGui()} na TEJ SAMEJ instancji
@@ -123,9 +135,6 @@ public final class ChatScreenHandler {
     @Nullable
     private SpyTabCompleter spy;
 
-    @Nullable
-    private String lastFieldText;
-    private int lastFieldCursor;
     private long lastChangeAtMs;
     private boolean recomputePending;
 
@@ -158,11 +167,24 @@ public final class ChatScreenHandler {
             return;
         }
 
+        // 🚨 To CELOWO nadpisuje kazdy responder juz zainstalowany na tym polu - na Cleanroomie to
+        // wlasny SuggestionUpdater loadera, ktory binpatch GuiChat.initGui wpina wczesniej. My
+        // rejestrujemy sie na Post, wiec wygrywamy. Efekt uboczny (rowniez celowy): ich refresh()
+        // przestaje sie wywolywac, ich lastRequest zostaje pusty, wiec kazda odpowiedz serwera na
+        // ich CPacketTabComplete odpada na bramce onServerCompletions i ich popup sam sie wylacza -
+        // inaczej dwa popupy rysowalyby sie w tym samym miejscu. Nie doklejamy sie do istniejacego
+        // respondera (chain) - to przywrociloby ich liste. Pelna analiza: spec §12.
+        field.setGuiResponder(new FieldResponder(this));
+
         this.screen = chat;
         this.inputField = field;
         this.spy = newSpy;
         this.popup.close();
-        this.lastFieldText = null;
+        // Wymusza pierwsze przeliczenie tego ekranu bez czekania na jakikolwiek input - inaczej
+        // czat otwarty z gotowym tekstem (np. klawisz "/" -> GuiChat("/")) nie pokazalby popupu,
+        // dopoki gracz czegos nie wcisnie: setText() (ktorym GuiChat.initGui wypelnia pole) nie
+        // przechodzi przez respondera.
+        markDirty();
         this.pendingRequestReplaceStart = -1;
         this.pendingRequestArgType = null;
     }
@@ -175,12 +197,9 @@ public final class ChatScreenHandler {
         String text = this.inputField.getText();
         int cursor = this.inputField.getCursorPosition();
 
-        if (this.lastFieldText == null || !text.equals(this.lastFieldText) || cursor != this.lastFieldCursor) {
-            this.lastFieldText = text;
-            this.lastFieldCursor = cursor;
-            this.lastChangeAtMs = System.currentTimeMillis();
-            this.recomputePending = true;
-        }
+        // Zero porownywania tekstu/kursora tutaj - "dirty" jest ustawiane zdarzeniowo przez
+        // FieldResponder / onKeyboardPre / onMousePre / accept(), patrz javadoc klasy. Ta metoda
+        // tylko realizuje debounce na juz zaznaczonej fladze.
         if (this.recomputePending
                 && System.currentTimeMillis() - this.lastChangeAtMs >= CommandSuggestConfig.recomputeDebounceMs) {
             recompute(text, cursor);
@@ -220,6 +239,11 @@ public final class ChatScreenHandler {
         }
 
         if (!this.popup.isOpen()) {
+            // Nieskonsumowany klawisz trafi do waniliowego GuiChat.keyTyped. Pisanie/kasowanie/
+            // wklejanie i tak przejdzie przez writeText/deleteFromCursor -> FieldResponder, ale
+            // sam ruch kursora (strzalki, Home/End, Ctrl+A) nie zglasza sie do respondera wcale -
+            // wiec zaznaczamy dirty tutaj bezwarunkowo (nadmiarowe w pierwszym przypadku, ale tanie).
+            markDirty();
             return;
         }
         if (key == Keyboard.KEY_UP) {
@@ -234,13 +258,24 @@ public final class ChatScreenHandler {
             // zamyka caly czat.
             this.popup.close();
             event.setCanceled(true);
+        } else {
+            // Nieobsluzony przez nas klawisz z otwartym popupem (dalsze pisanie, lewo/prawo,
+            // Home/End, backspace, Enter...) - przejdzie do vanilla, ta sama logika co wyzej.
+            // Enter CELOWO nie jest przechwytywany - patrz javadoc klasy/spec zadania 16.
+            markDirty();
         }
-        // Enter CELOWO nie jest przechwytywany - patrz javadoc klasy/spec zadania 16.
     }
 
     @SubscribeEvent
     public void onMousePre(GuiScreenEvent.MouseInputEvent.Pre event) {
-        if (!CommandSuggestConfig.enabled || event.getGui() != this.screen || !this.popup.isOpen()) {
+        if (!CommandSuggestConfig.enabled || event.getGui() != this.screen) {
+            return;
+        }
+        if (!this.popup.isOpen()) {
+            // Popup zamkniety, ale klik wciaz moze przesunac kursor w polu (GuiTextField.mouseClicked
+            // przez GuiChat.mouseClicked) - to repozycjonowanie nie idzie przez respondera (patrz
+            // javadoc klasy), wiec zaznaczamy dirty sami, bezwarunkowo dla kazdego zdarzenia myszy.
+            markDirty();
             return;
         }
         int dWheel = Mouse.getEventDWheel();
@@ -257,15 +292,39 @@ public final class ChatScreenHandler {
             if (this.popup.click(mx, my)) {
                 accept(this.popup.getSelected());
                 event.setCanceled(true);
+                return;
             }
         }
+        // Zdarzenie nie zostalo skonsumowane (klik poza lista podpowiedzi, inny przycisk, zwolnienie
+        // przycisku) - moze dotrzec do pola tekstowego (np. przesuniecie kursora klikiem obok listy),
+        // wiec zaznaczamy dirty jak w galezi "popup zamkniety" powyzej.
+        markDirty();
     }
 
     private void detach() {
+        // setGuiResponder(null) jest wspierana wartoscia, nie hackiem -
+        // GuiTextField.setResponderEntryValue null-checkuje pole przed uzyciem. Pole tekstowe i
+        // tak zaraz przestaje istniec (GuiChat.initGui tworzy nowe przy resize/reopen), ale
+        // odpinamy jawnie, zeby nie zostawiac respondera wskazujacego na martwy ekran.
+        if (this.inputField != null) {
+            this.inputField.setGuiResponder(null);
+        }
         this.screen = null;
         this.inputField = null;
         this.spy = null;
         this.popup.close();
+    }
+
+    /**
+     * Zaznacza, ze pole tekstowe zmienilo sie od ostatniego przeliczenia (tekst LUB kursor) -
+     * jedyne miejsce, ktore dotyka {@link #recomputePending}/{@link #lastChangeAtMs}. Wywolywane
+     * z {@link FieldResponder} (zmiana tekstu), z {@link #onKeyboardPre}/{@link #onMousePre} (ruch
+     * kursora, ktorego responder nie zglasza) i z {@link #accept} ({@code setText} tez go nie
+     * zglasza). Debounce sam w sobie zyje w {@link #onDrawScreenPost}.
+     */
+    private void markDirty() {
+        this.recomputePending = true;
+        this.lastChangeAtMs = System.currentTimeMillis();
     }
 
     private void recompute(String text, int cursor) {
@@ -369,7 +428,9 @@ public final class ChatScreenHandler {
         this.inputField.setText(newText);
         this.inputField.setCursorPosition(start + replacement.length());
         this.popup.close();
-        this.lastFieldText = null; // wymus ponowne przeliczenie na nastepnej klatce
+        // setText() nie zglasza sie do respondera (patrz javadoc klasy) - wymuszamy przeliczenie
+        // na nastepnej klatce sami.
+        markDirty();
     }
 
     private String textBeforeToken(String text) {
@@ -421,6 +482,38 @@ public final class ChatScreenHandler {
             CommandSuggest.LOGGER.error(
                     "Podmiana GuiChat.tabCompleter zawiodla w trakcie gry - "
                     + "podpowiedzi komend wylaczone na ta sesje gry.", e);
+        }
+    }
+
+    /**
+     * Instalowany na {@code inputField.setGuiResponder(...)} w {@link #onInitGuiPost}. Jedyna
+     * przeciazona metoda, ktora {@code GuiTextField} kiedykolwiek faktycznie wola, to
+     * {@link #setEntryValue(int, String)} - patrz {@code GuiTextField.setResponderEntryValue},
+     * ktore samo jest wolane wylacznie z {@code writeText} i {@code deleteFromCursor}.
+     */
+    @SideOnly(Side.CLIENT)
+    private static final class FieldResponder implements GuiPageButtonList.GuiResponder {
+
+        private final ChatScreenHandler handler;
+
+        FieldResponder(ChatScreenHandler handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        public void setEntryValue(int id, String value) {
+            this.handler.markDirty();
+        }
+
+        @Override
+        public void setEntryValue(int id, boolean value) {
+            // GuiTextField nigdy nie zglasza tej przeciazonej wersji - zglasza wylacznie String
+            // (patrz setResponderEntryValue). Puste celowo, nie przeoczenie.
+        }
+
+        @Override
+        public void setEntryValue(int id, float value) {
+            // Jak wyzej - GuiTextField nie uzywa tej przeciazonej wersji.
         }
     }
 }
