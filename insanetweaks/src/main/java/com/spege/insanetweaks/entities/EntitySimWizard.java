@@ -381,7 +381,12 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
             if (data == null) {
                 return;
             }
-            int rawPhase = data.getEvolutionPhase(cfg.srpSaveDataId) & 0xFF;
+            // 🚨 getEvolutionPhase takes a DIMENSION id, not the save-data id. SRP passes
+            // world.provider.getDimension() at every one of its own call sites (verified in
+            // SRPEventHandlerBus, 1.10.7). Passing srpSaveDataId here meant the phase read 0 in
+            // every dimension except 104, so rollTier() always did exactly one roll and
+            // cachedPhaseBonus never left 1.0 - i.e. "Enable SRP Phase Scaling" did nothing at all.
+            int rawPhase = data.getEvolutionPhase(this.world.provider.getDimension()) & 0xFF;
             this.cachedSrpPhase = Math.max(0, Math.min(rawPhase, cfg.phaseScalingMaxPhase));
             this.cachedPhaseBonus = (float) (1.0D + this.cachedSrpPhase * cfg.phaseScalingPerPhase);
         } catch (Exception ex) {

@@ -474,8 +474,10 @@ public class EntitiesCategory {
         public int phaseScalingMaxPhase = 4;
 
         @Config.Comment({
-                "SRP save-data dimension/data id used for evolution phase lookup.",
-                "Matches the value used by SrpWizardryAssimilationHelper for conversion (104).",
+                "Id passed to SRPSaveData.get(world, id). It does NOT select the evolution phase -",
+                "that is read from the entity's own dimension. SRPSaveData.get is a singleton over",
+                "MapStorage and forwards this int only to createData, so the value decides very",
+                "little; it is kept to match SrpWizardryAssimilationHelper (104).",
                 "Only touch this if your SRP install uses a different shared data id."
         })
         @Config.Name("SRP Save Data ID")
