@@ -138,8 +138,10 @@ Find the closing brace of `WandSoulbindingConfig` (around line 533), directly ab
         @Config.Name("Percent Per Level")
         @Config.RangeInt(min = 0, max = 100)
         @Config.Comment({"Share of the normal cooldown rate each Concentration level gives back to a",
-                "wand in your inventory. At the default 10 and the perk's native cap of 5 levels, a",
-                "stowed wand cools at half the speed it would in your hand.",
+                "wand in your main inventory. Concentration caps at 2 levels, not the 5 most",
+                "Tombstone perks allow, so the default 10 means a stowed wand cools at one fifth of",
+                "the speed it would in your hand. Raise it to 25 if you want a fully levelled perk",
+                "to reach half speed.",
                 "0 switches the effect off without disabling the feature."})
         public int percentPerLevel = 10;
 
@@ -471,7 +473,9 @@ Expected: the cooldown has **not** moved. This is what makes the next step evide
 
 Raise Concentration to 5. Repeat step 3.
 
-Expected: after 30 seconds stowed, roughly 15 seconds of cooldown are gone — half the rate, matching 5 levels × 10%.
+Raise Concentration to its cap, which is **2**, not 5 — `PerkConcentration.getLevelMax()` returns 2.
+
+Expected: after 30 seconds stowed, roughly 6 seconds of cooldown are gone — one fifth of the rate, matching 2 levels × 10%. If you expected 15 seconds, you were working from the level cap most other Tombstone perks use.
 
 - [ ] **Step 5: Confirm Wizardry's own path is untouched**
 

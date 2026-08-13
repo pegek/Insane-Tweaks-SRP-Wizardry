@@ -129,7 +129,10 @@ a stowed wand is drawn.
 
 - `Enabled` (bool, default true) — read live.
 - `Percent Per Level` (int, default 10, range 0–100) — share of the normal cooldown rate each
-  Concentration level restores to a stowed wand. At the native cap of 5 levels the default gives 50%.
+  Concentration level restores to a stowed wand. 🚨 **Concentration caps at 2 levels**, not the 5
+  most Tombstone perks allow — `PerkConcentration.getLevelMax()` returns 2, and
+  `getPerkLevelWithBonus` clamps bonus levels to the same cap. So the default 10 tops out at **20%**
+  of the normal rate, not 50%. Raising it to 25 is what a fully levelled perk needs to reach half.
 - `Scan Interval Ticks` (int, default 10, range 1–100) — how often the inventory is walked. Purely a
   cost/smoothness dial: the rate above is preserved at any value.
 

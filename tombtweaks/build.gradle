@@ -7,7 +7,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.8.3'
+version = '1.9.0'
 group = 'com.spege.tombtweaks'
 archivesBaseName = 'tombtweaks'
 
