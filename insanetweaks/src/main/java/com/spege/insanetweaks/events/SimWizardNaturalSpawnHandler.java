@@ -1,5 +1,6 @@
 package com.spege.insanetweaks.events;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +19,7 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -47,9 +49,9 @@ import net.minecraftforge.fml.relauncher.Side;
  * {@code WorldEvent.PotentialSpawns}, which Forge fires from
  * {@code WorldServer.getSpawnListEntryForTypeAt} immediately before the weighted pick. Nothing of
  * ours lives in any biome list, so there is nothing for SRP to clear; there is no init-ordering
- * question; and the per-dimension cap costs no extra handler, because above the limit we simply
- * do not append. The event fires even when the biome's own list is empty, so appending to a
- * cleared parasite biome works.
+ * question; and the per-dimension cap costs no extra veto handler - above the limit we simply
+ * do not append, so there is no offer to cancel. The event fires even when the biome's own list is
+ * empty, so appending to a cleared parasite biome works.
  *
  * <p>That we leave no trace is guaranteed by the event itself rather than by our restraint: the
  * {@code PotentialSpawns} constructor does {@code this.list = new ArrayList<>(oldList)}, so
@@ -87,10 +89,13 @@ public class SimWizardNaturalSpawnHandler {
      * Resolved once from config at init. Empty means the feature is inert, and
      * {@link #resolveBiomes()} has already said so in the log.
      *
-     * <p>Read-only after init, so a plain {@link HashSet} is safe even though readers may be off
-     * the main thread.
+     * <p>{@code volatile} rather than {@code final} for safe publication: {@link #resolveBiomes()}
+     * mutates this after class init, and {@code PotentialSpawns} readers in this pack can run on
+     * entity-threading worker threads with no other happens-before edge to that write. Readers
+     * take one local snapshot ({@code Set<Biome> biomes = spawnBiomes;}) rather than reading the
+     * field twice, so a concurrent reassignment mid-event cannot produce an inconsistent view.
      */
-    private static final Set<Biome> SPAWN_BIOMES = new HashSet<Biome>();
+    private static volatile Set<Biome> spawnBiomes = Collections.emptySet();
 
     private static final Map<Integer, Population> POPULATIONS =
             new ConcurrentHashMap<Integer, Population>();
@@ -103,7 +108,24 @@ public class SimWizardNaturalSpawnHandler {
     }
 
     /**
-     * Parses {@code Spawn Biomes} into {@link #SPAWN_BIOMES}. Call once from
+     * 🚨 The SAME instance must be appended on every fire.
+     * {@code WorldServer.canCreatureTypeSpawnHere} fires {@code PotentialSpawns} a second time and
+     * asks {@code list.contains(entry)} - and {@code SpawnListEntry} has no {@code equals}, so that
+     * is a reference-identity test. A fresh entry per fire is picked by the first fire and then
+     * rejected by the second, which spawns nothing AND discards the whole pack attempt instead of
+     * re-rolling, quietly eating SRP's own spawns.
+     *
+     * <p>{@code itemWeight} is public and mutable, so live config edits are honoured by writing to
+     * these rather than by rebuilding them.
+     */
+    private static final Biome.SpawnListEntry WIZARD_ENTRY =
+            new Biome.SpawnListEntry(EntitySimWizard.class, 1, 1, 1);
+
+    private static final Biome.SpawnListEntry BATTLEMAGE_ENTRY =
+            new Biome.SpawnListEntry(EntitySimBattlemage.class, 1, 1, 1);
+
+    /**
+     * Parses {@code Spawn Biomes} into {@link #spawnBiomes}. Call once from
      * {@code InsaneTweaksMod.init}.
      *
      * <p>Every rejection is an ERROR with its reason and the accepted count goes out at INFO,
@@ -111,7 +133,7 @@ public class SimWizardNaturalSpawnHandler {
      * silent - exactly the reasoning behind {@code SpawnEngine.reload()} in srpwizcore.
      */
     public static void resolveBiomes() {
-        SPAWN_BIOMES.clear();
+        Set<Biome> resolved = new HashSet<Biome>();
         int rejected = 0;
         for (String raw : ModConfig.entities.assimilatedWizard.naturalSpawn.spawnBiomes) {
             if (raw == null || raw.trim().isEmpty()) {
@@ -126,16 +148,17 @@ public class SimWizardNaturalSpawnHandler {
                                 + " - IGNORED.", id);
                 continue;
             }
-            SPAWN_BIOMES.add(biome);
+            resolved.add(biome);
         }
         InsaneTweaksMod.LOGGER.info(
                 "[InsaneTweaks][SimWizard] Natural spawn: {} biome(s) accepted, {} rejected.",
-                Integer.valueOf(SPAWN_BIOMES.size()), Integer.valueOf(rejected));
-        if (SPAWN_BIOMES.isEmpty()) {
+                Integer.valueOf(resolved.size()), Integer.valueOf(rejected));
+        if (resolved.isEmpty()) {
             InsaneTweaksMod.LOGGER.warn(
                     "[InsaneTweaks][SimWizard] Natural spawn is ON but no biome resolved"
                             + " - nothing will ever spawn.");
         }
+        spawnBiomes = Collections.unmodifiableSet(resolved);
     }
 
     /**
@@ -156,10 +179,16 @@ public class SimWizardNaturalSpawnHandler {
         if (world.getTotalWorldTime() % REFRESH_INTERVAL_TICKS != 0L) {
             return;
         }
+        if (spawnBiomes.isEmpty()) {
+            return;
+        }
         int alive = 0;
         try {
             for (int i = 0; i < world.loadedEntityList.size(); i++) {
                 Entity ent = world.loadedEntityList.get(i);
+                if (ent == null) {
+                    continue;
+                }
                 // EntitySimBattlemage extends EntitySimWizard, so this one test is the shared cap.
                 if (ent instanceof EntitySimWizard && !ent.isDead) {
                     alive++;
@@ -173,18 +202,37 @@ public class SimWizardNaturalSpawnHandler {
         population(world.provider.getDimension()).count = alive;
     }
 
+    /**
+     * Counts a new arrival immediately, so the cap binds within the tick rather than within the
+     * next {@link #REFRESH_INTERVAL_TICKS}. Without this the vanilla monster cap - not ours - is
+     * what actually limits a burst, and a dimension can run several times over its configured
+     * ceiling before the next recount corrects it.
+     *
+     * <p>This also fires for entities arriving by chunk load rather than by spawning, which is
+     * correct here: they are loaded, so they belong in the count. The tick handler REPLACES the
+     * count rather than adding to it, so the two can never compound.
+     */
+    @SubscribeEvent
+    public void onEntityJoin(EntityJoinWorldEvent event) {
+        if (event.getWorld().isRemote || !(event.getEntity() instanceof EntitySimWizard)) {
+            return;
+        }
+        population(event.getWorld().provider.getDimension()).count++;
+    }
+
     /** Appends our two entries to the candidate list, unless the dimension is at its cap. */
     @SubscribeEvent
     public void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
         // Cheapest rejections first - this runs once per candidate spawn position.
-        if (event.getType() != EnumCreatureType.MONSTER || SPAWN_BIOMES.isEmpty()) {
+        Set<Biome> biomes = spawnBiomes;
+        if (event.getType() != EnumCreatureType.MONSTER || biomes.isEmpty()) {
             return;
         }
         if (!(event.getWorld() instanceof WorldServer)) {
             return;
         }
         WorldServer world = (WorldServer) event.getWorld();
-        if (!SPAWN_BIOMES.contains(world.getBiome(event.getPos()))) {
+        if (!biomes.contains(world.getBiome(event.getPos()))) {
             return;
         }
 
@@ -218,11 +266,16 @@ public class SimWizardNaturalSpawnHandler {
 
         List<Biome.SpawnListEntry> list = event.getList();
         if (cfg.wizardSpawnWeight > 0) {
-            list.add(new Biome.SpawnListEntry(EntitySimWizard.class, cfg.wizardSpawnWeight, 1, 1));
+            if (WIZARD_ENTRY.itemWeight != cfg.wizardSpawnWeight) {
+                WIZARD_ENTRY.itemWeight = cfg.wizardSpawnWeight;
+            }
+            list.add(WIZARD_ENTRY);
         }
         if (cfg.battlemageSpawnWeight > 0) {
-            list.add(new Biome.SpawnListEntry(
-                    EntitySimBattlemage.class, cfg.battlemageSpawnWeight, 1, 1));
+            if (BATTLEMAGE_ENTRY.itemWeight != cfg.battlemageSpawnWeight) {
+                BATTLEMAGE_ENTRY.itemWeight = cfg.battlemageSpawnWeight;
+            }
+            list.add(BATTLEMAGE_ENTRY);
         }
     }
 
