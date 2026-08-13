@@ -42,6 +42,11 @@ public class EntitiesCategory {
         @Config.Comment("Master toggle, base attributes and SRP phase scaling. Attribute values apply to newly created entities only.")
         public final Spawning spawning = new Spawning();
 
+        @Config.Name("natural_spawn")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.natural_spawn")
+        @Config.Comment("Natural spawning in SRP parasite biomes, and the per-dimension cap on it.")
+        public final NaturalSpawn naturalSpawn = new NaturalSpawn();
+
         @Config.Name("combat")
         @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.combat")
         @Config.Comment("Cast AI tunables: ranges, cooldowns, self-heal, telegraph.")
@@ -534,6 +539,81 @@ public class EntitiesCategory {
         })
         @Config.Name("Always Leave Remains")
         public boolean guaranteedRemains = false;
+    }
+
+    /**
+     * Natural spawning in SRP's parasite biomes, so the sim wizards have a population that does
+     * not depend on SRP happening to assimilate an EB Wizardry wizard.
+     *
+     * <p>Injected per candidate position through {@code WorldEvent.PotentialSpawns} rather than
+     * registered as a permanent biome entry - SRP's {@code clearMobSpawnList} wipes those lists
+     * and is reachable from a runtime command. See the design spec for the bytecode.
+     */
+    public static class NaturalSpawn {
+
+        @Config.Comment({
+                "Master switch for natural spawning of sim_wizard and sim_battlemage in SRP's",
+                "parasite biomes.",
+                "Does nothing where those biomes do not exist, so on an uninfested world it is",
+                "inert regardless of this setting.",
+                "Gates the event handler's registration, hence the restart requirement."
+        })
+        @Config.Name("Enable Natural Spawn")
+        @Config.RequiresMcRestart
+        public boolean enableNaturalSpawn = true;
+
+        @Config.Comment({
+                "Biomes to spawn in, by registry name. SRP registers exactly TWO parasite biomes",
+                "and both are listed by default (BiomeParasiteBoils and BiomeParasiteDemen are",
+                "classes in the SRP jar that nothing ever instantiates).",
+                "Unknown names are logged as errors during startup and skipped - if nothing ever",
+                "spawns, that log line is the first place to look. Read at startup only."
+        })
+        @Config.Name("Spawn Biomes")
+        @Config.RequiresMcRestart
+        public String[] spawnBiomes = {
+                "srparasites:biomeparasite_shrouded",
+                "srparasites:biomeparasite_harlequin"
+        };
+
+        @Config.Comment({
+                "Spawn weight for sim_wizard, relative to whatever else competes at that position.",
+                "🚨 This number controls less than it looks like it does. SRP CLEARS the monster",
+                "spawn list of its own parasite biomes and re-adds its parasites per evolution",
+                "phase, so in phases where its list is short we are most or all of the list no",
+                "matter what this says. 'Max Per Dimension' below is the real lever."
+        })
+        @Config.Name("Wizard Spawn Weight")
+        @Config.RangeInt(min = 0, max = 100)
+        public int wizardSpawnWeight = 10;
+
+        @Config.Comment({
+                "Spawn weight for sim_battlemage. Deliberately well below the wizard's: it carries",
+                "an ADEPT tier floor and a shield, so it is the elite of the zone rather than its",
+                "rank and file. 0 disables it without disabling the wizard."
+        })
+        @Config.Name("Battlemage Spawn Weight")
+        @Config.RangeInt(min = 0, max = 100)
+        public int battlemageSpawnWeight = 3;
+
+        @Config.Comment({
+                "Hard ceiling on how many sim_wizards may exist per dimension.",
+                "sim_battlemage is a SUBCLASS of sim_wizard and counts against this same number,",
+                "so the cap is shared: a battlemage occupies a wizard's slot.",
+                "This is the primary balance lever for the whole feature. Read live."
+        })
+        @Config.Name("Max Per Dimension")
+        @Config.RangeInt(min = 0, max = 200)
+        public int maxPerDimension = 12;
+
+        @Config.Comment({
+                "Log one line when the per-dimension cap starts blocking spawns, and one when it",
+                "stops. Deliberately edge-triggered rather than per-attempt: PotentialSpawns fires",
+                "once per candidate spawn position, and a line per event is a measurable cost on",
+                "the server thread. Read live."
+        })
+        @Config.Name("Debug Logging")
+        public boolean debugLogging = false;
     }
 
     public static class Combat {
