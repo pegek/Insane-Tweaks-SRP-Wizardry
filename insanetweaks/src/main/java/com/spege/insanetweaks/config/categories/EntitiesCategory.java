@@ -600,6 +600,8 @@ public class EntitiesCategory {
                 "Hard ceiling on how many sim_wizards may exist per dimension.",
                 "sim_battlemage is a SUBCLASS of sim_wizard and counts against this same number,",
                 "so the cap is shared: a battlemage occupies a wizard's slot.",
+                "Counts LOADED entities only, like vanilla's own mob cap: wizards left behind in",
+                "unloaded chunks stop counting, so travelling away lets more spawn.",
                 "This is the primary balance lever for the whole feature. Read live."
         })
         @Config.Name("Max Per Dimension")

@@ -21,6 +21,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -75,6 +76,10 @@ import net.minecraftforge.fml.relauncher.Side;
  * workers, and walking {@code loadedEntityList} from one of those is how you get a
  * {@code ConcurrentModificationException} nobody can reproduce. The tick handler is main-thread
  * by construction.
+ *
+ * <p>The third subscription, {@link #onEntityJoin}, is the highest-frequency event in this pack,
+ * but its body is an {@code isRemote} check and one {@code instanceof} - no allocation, no scan -
+ * so it does not need the same defensiveness as the other two.
  */
 public class SimWizardNaturalSpawnHandler {
 
@@ -211,8 +216,12 @@ public class SimWizardNaturalSpawnHandler {
      * <p>This also fires for entities arriving by chunk load rather than by spawning, which is
      * correct here: they are loaded, so they belong in the count. The tick handler REPLACES the
      * count rather than adding to it, so the two can never compound.
+     *
+     * <p>{@code LOWEST} priority deliberately: {@code EntityJoinWorldEvent} is {@code @Cancelable}
+     * and this pack vetoes on it (InControl {@code onjoin} rules, srpwizcore's namespace budgets),
+     * so running last means we only count a join that survived every other listener's veto.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onEntityJoin(EntityJoinWorldEvent event) {
         if (event.getWorld().isRemote || !(event.getEntity() instanceof EntitySimWizard)) {
             return;
@@ -265,15 +274,22 @@ public class SimWizardNaturalSpawnHandler {
         }
 
         List<Biome.SpawnListEntry> list = event.getList();
-        if (cfg.wizardSpawnWeight > 0) {
-            if (WIZARD_ENTRY.itemWeight != cfg.wizardSpawnWeight) {
-                WIZARD_ENTRY.itemWeight = cfg.wizardSpawnWeight;
+        // 🚨 Read each weight ONCE. These are plain ints a config sync can write from another
+        // thread (integrated server: client thread saving the config GUI vs. server thread running
+        // this spawn pass); re-reading between the guard and the assignment can publish
+        // itemWeight = 0 on an entry we then add anyway, and a list whose only entry has weight 0
+        // makes WeightedRandom.getRandomItem throw IllegalArgumentException out of the spawn pass.
+        int wizardWeight = cfg.wizardSpawnWeight;
+        if (wizardWeight > 0) {
+            if (WIZARD_ENTRY.itemWeight != wizardWeight) {
+                WIZARD_ENTRY.itemWeight = wizardWeight;
             }
             list.add(WIZARD_ENTRY);
         }
-        if (cfg.battlemageSpawnWeight > 0) {
-            if (BATTLEMAGE_ENTRY.itemWeight != cfg.battlemageSpawnWeight) {
-                BATTLEMAGE_ENTRY.itemWeight = cfg.battlemageSpawnWeight;
+        int battlemageWeight = cfg.battlemageSpawnWeight;
+        if (battlemageWeight > 0) {
+            if (BATTLEMAGE_ENTRY.itemWeight != battlemageWeight) {
+                BATTLEMAGE_ENTRY.itemWeight = battlemageWeight;
             }
             list.add(BATTLEMAGE_ENTRY);
         }
