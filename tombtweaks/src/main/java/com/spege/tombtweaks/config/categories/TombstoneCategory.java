@@ -206,7 +206,9 @@ public class TombstoneCategory {
     public WandSoulbindingConfig wandSoulbinding = new WandSoulbindingConfig();
 
     @Config.Name("concentrationcooldown")
-    @Config.Comment({"Lets the Concentration perk cool down wands you are carrying but not holding.",
+    @Config.Comment({"Lets the Concentration perk cool down wands in your main inventory that you",
+            "are not currently holding. Wands in a Baubles slot or inside a backpack mod's",
+            "container are not covered.",
             "Only does anything when Electroblob's Wizardry is set to stop cooldowns on stowed",
             "wands (its own wandsMustBeHeldToDecrementCooldown option). With that off, cooldowns",
             "already run everywhere and there is nothing for the perk to restore.",
@@ -559,8 +561,10 @@ public class TombstoneCategory {
         @Config.Name("Percent Per Level")
         @Config.RangeInt(min = 0, max = 100)
         @Config.Comment({"Share of the normal cooldown rate each Concentration level gives back to a",
-                "wand in your inventory. At the default 10 and the perk's native cap of 5 levels, a",
-                "stowed wand cools at half the speed it would in your hand.",
+                "wand in your main inventory. Concentration caps at 2 levels, not the 5 most",
+                "Tombstone perks allow, so the default 10 means a stowed wand cools at one fifth of",
+                "the speed it would in your hand. Raise it to 25 if you want a fully levelled perk",
+                "to reach half speed.",
                 "0 switches the effect off without disabling the feature."})
         public int percentPerLevel = 10;
 
