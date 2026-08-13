@@ -779,7 +779,12 @@ grep -n "SimWizard" "/c/Users/spege/curseforge/minecraft/Instances/DEv 1.2/logs/
 
 Expected: a line reading `Natural spawn: 2 biome(s) accepted, 0 rejected.`
 
-If it says `0 biome(s) accepted`, the registry names are wrong for this SRP build — read the ERROR lines above it, and confirm the real names with the biome registry rather than guessing.
+If it says `0 biome(s) accepted`, read the ERROR lines above it. Two causes, in order of likelihood:
+
+1. 🚨 **SRP never registered its biomes at all.** `SRPBiomes$RegistrationHandler.onEvent` is gated on SRP's own config flag `SRPConfigWorld.biomeRegster`. With that off, both names are genuinely absent from the registry and nothing this mod does can help. Check `config/srparasites/` before suspecting our code.
+2. The registry names are wrong for this SRP build — confirm the real names against the biome registry rather than guessing.
+
+Registry timing is *not* a possible cause: `RegistryEvent.Register<Biome>` fires for every mod strictly before any mod's `preInit`, so the registry is always fully populated by the time `resolveBiomes()` runs in `init`.
 
 🚨 **Do not grep `cleanmix.log` here.** This feature contains no mixin; there is no `APPLY` line to find and its absence proves nothing.
 
