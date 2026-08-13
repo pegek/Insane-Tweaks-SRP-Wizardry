@@ -340,10 +340,7 @@ nie hack. Koszt: jeden zbędny `CPacketTabComplete("/")` na otwarcie czatu.
 
 ### Co oni robią lepiej i co warto od nich wziąć
 
-- **Hak na zmianę tekstu zamiast odpytywania co klatkę.** Oni biorą `GuiTextField.setGuiResponder`
-  i dostają callback przy każdej zmianie; my w `ChatScreenHandler` porównujemy tekst i pozycję
-  kursora w `DrawScreenEvent.Post` i dokładamy debounce. Ich sposób jest zdarzeniowy, tańszy
-  i dostępny bez mixina — najlepsza rzecz do przepisania niezależnie od tego, co zdecydujemy.
+- ~~**Hak na zmianę tekstu zamiast odpytywania co klatkę.**~~ **Wzięte 2026-08-12** — patrz niżej.
 - **Ghost text** — dokończenie wpisywane szarym wprost w pole, przed listą. Nie mamy tego w ogóle.
 - **Kolorowanie komendy w polu tekstowym**, nie tylko pozycji na liście.
 - **`pendingReplies` + `lastRequest`** jako bookkeeping na przeterminowane odpowiedzi serwera —
@@ -352,11 +349,27 @@ nie hack. Koszt: jeden zbędny `CPacketTabComplete("/")` na otwarcie czatu.
 
 ### Stan decyzji
 
-**Nierozstrzygnięte.** Mod został wycofany z `DEv 1.2` (2026-08-12), testy przenoszą się na
-środowisko **bez Cleanroomu**. Trzy drogi: (A) wyłączyć ich suggester i zostawić nasz;
-(B) zostawić ich UI i wyrzucić nasze §7 — ale ich `SuggestionUpdater` przyjmuje gołe stringi
-i nie ma czym odebrać naszego drzewa, więc cała warstwa serwerowa zostałaby bez konsumenta;
-(C) współistnienie — odpada, patrz kolizje.
+🚨 **Droga A jest de facto wybrana od 2026-08-12**, jako skutek uboczny refaktoru, nie jako osobna
+decyzja — i to jest jedyna rzecz w tej sekcji, którą trzeba znać, zanim ktoś wróci do tematu.
+
+`ChatScreenHandler` przestał odpytywać pole tekstowe co klatkę i instaluje własny
+`GuiResponder` przez `inputField.setGuiResponder(...)` w `InitGuiEvent.Post`. Pole trzyma
+**jeden** responder, a nasz wchodzi po `initGui`, więc **nadpisuje `SuggestionUpdater` Cleanroomu**.
+Dalej działa bramka opisana wyżej: bez respondera ich `refresh()` nigdy nie leci, `lastRequest`
+zostaje pustym stringiem, `onServerCompletions` odrzuca każdą odpowiedź, lista jest pusta,
+`isVisible()` fałszywe — a więc ich rysowanie i przechwytywanie klawiszy wyłączają się same.
+Celowo **nie łańcuchujemy** się do poprzedniego respondera: łańcuch utrzymałby ich listę przy życiu
+i wróciłby podwójny popup.
+
+Gdyby kiedyś wybrać drogę B, trzeba będzie **cofnąć instalację respondera**, a nie tylko wyrzucić
+nasze GUI — inaczej ich suggester zostanie martwy i nie zastąpi niczego.
+
+Drogi B i C bez zmian: (B) zostawić ich UI i wyrzucić nasze §7 — ale ich `SuggestionUpdater`
+przyjmuje gołe stringi i nie ma czym odebrać naszego drzewa, więc cała warstwa serwerowa
+zostałaby bez konsumenta; (C) współistnienie — odpada, patrz kolizje.
+
+Mod pozostaje wycofany z `DEv 1.2` (2026-08-12), a testy zadania 18 przenoszą się na środowisko
+**bez Cleanroomu**.
 
 ## 13. Zakres
 
