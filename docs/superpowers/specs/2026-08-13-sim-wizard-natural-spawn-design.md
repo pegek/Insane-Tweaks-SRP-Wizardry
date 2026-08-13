@@ -110,9 +110,11 @@ CLAUDE.md's measurement is the precedent: a Flare profile put `RandomAccessFile.
 
 ### 1.5 New file
 
-`insanetweaks/src/main/java/com/spege/insanetweaks/events/SimWizardPotentialSpawnHandler.java`
+`insanetweaks/src/main/java/com/spege/insanetweaks/events/SimWizardNaturalSpawnHandler.java`
 
-One handler. Server-side only by nature of the event; it references no client type, so it needs no
+Two handlers in one class - the population tracker on `TickEvent.WorldTickEvent` and the entry
+injector on `WorldEvent.PotentialSpawns`. They share one private map and change together, so they
+share a file. Server-side only by nature of both events; the class references no client type, so it needs no
 `@SideOnly` and its registration needs no side guard.
 
 Registered from `InsaneTweaksMod.init` conditionally on `naturalSpawn.enableNaturalSpawn`, following
@@ -336,7 +338,7 @@ The evidence is `latest.log` and in-game observation. Do not go looking for `APP
 
 | file | change |
 |---|---|
-| `events/SimWizardPotentialSpawnHandler.java` | **new** — the whole spawn mechanism (§1) |
+| `events/SimWizardNaturalSpawnHandler.java` | **new** — the whole spawn mechanism (§1) |
 | `config/categories/EntitiesCategory.java` | new `NaturalSpawn` subcategory (§2); two entries appended to `spellPool` (§3.2); corrected comment on `srpSaveDataId` (§4.1) |
 | `entities/EntitySimWizard.java` | one-line phase-lookup fix (§4.1) |
 | `InsaneTweaksMod.java` | conditional registration of the new handler |
