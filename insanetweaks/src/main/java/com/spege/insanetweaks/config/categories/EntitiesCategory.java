@@ -745,7 +745,13 @@ public class EntitiesCategory {
                 "ebwizardry:banish",
                 "ebwizardry:group_heal",
                 "insanetweaks:summon_fer_cow",
-                "insanetweaks:summon_primitive_yelloweye"
+                "insanetweaks:summon_primitive_yelloweye",
+                // dispatcher_grasp is the only OFFENSIVE Abomination spell an NPC can cast: it
+                // extends SpellRay, which implements the cast(World, EntityLiving, ...) overload
+                // that Spell's base returns false from. It is what makes the element visible in
+                // combat rather than only in an inventory.
+                "insanetweaks:dispatcher_grasp",
+                "insanetweaks:summon_light_bomber"
         };
 
         @Config.Comment({
