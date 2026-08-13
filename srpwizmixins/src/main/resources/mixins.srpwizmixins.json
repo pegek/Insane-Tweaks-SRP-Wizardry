@@ -16,7 +16,8 @@
     "MixinSrpNeedlerPlayerKey",
     "MixinSrpMeteorTriggerPersist",
     "MixinSrpMeteorPlacement",
-    "MixinSrpMeteorAnnounce"
+    "MixinSrpMeteorAnnounce",
+    "MixinSrpMeteorPerDimCounter"
   ],
   "client": [
     "MixinSrpDistortionTooltipThread"

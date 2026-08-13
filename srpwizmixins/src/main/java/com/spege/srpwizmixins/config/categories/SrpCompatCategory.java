@@ -191,6 +191,24 @@ public class SrpCompatCategory {
     public boolean fixDistortionTooltipCrash = false;
 
     @Config.Comment({
+            "Gives every dimension its own meteor countdown, so the meteor actually arrives on time.",
+            "SRP counts down once for the whole server, but that countdown is advanced by every loaded",
+            "dimension at once - and whichever one happens to tick as it runs out is the dimension the",
+            "meteor is then judged against. Land on a blacklisted dimension and the attempt is thrown",
+            "away, and because the countdown is reset before that check, it costs the full wait again.",
+            "In a pack that keeps several dimensions loaded, most attempts are lost this way: measured",
+            "on a fresh world with four of them ticking, no meteor arrived in eleven minutes against a",
+            "configured wait of five.",
+            "With this ON each dimension waits its own 'Meteor Ticks' and is judged on its own terms.",
+            "Nothing else changes - the wait, the chance and the blacklist all mean exactly what they",
+            "did. Note that this makes meteors arrive as often as you configured them to, which in a",
+            "pack with several eligible dimensions may be more often than you had got used to.",
+            "Takes effect immediately, no restart. Default OFF."
+    })
+    @Config.Name("Meteor Timer Per Dimension")
+    public boolean meteorTimerPerDimension = false;
+
+    @Config.Comment({
             "Decides where the parasite meteor lands, instead of dropping it on top of whoever is",
             "outdoors at the time.",
             "Unmodified SRP aims the meteor at a player and offsets it by a random amount that its own",
