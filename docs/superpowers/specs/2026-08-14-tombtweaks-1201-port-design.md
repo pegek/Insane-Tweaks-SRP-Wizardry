@@ -35,8 +35,11 @@ Wszystko poniżej potwierdzone przez `javap` na `tombstone-1.20.1-9.1.4.jar` (JD
 | `EventFactory.onRestoreInventory` odpala się po cięciu `chanceLossOnDeath`/`percentLossOnDeath`, a przed auto-equipem i priorytetem narzędzi | ten sam użyteczny moment co na 1.12.2 |
 | Po evencie leci pass `PlayerPreference.isReverseInventorySorting()`, przepisujący `Inventory.items` w odwrotnej kolejności | **nowe ryzyko**, patrz §4 |
 | `BlockEntityPlayerGrave.serverTick(...)` — publiczna statyczna | hook decay bez skanowania TE |
-| `BlockWritableGrave.countTicks` — `public long`, wczytywany z NBT w `load` | harmonogram decay może być bezstanowy |
-| `ItemBook implements ISoulConsumer`, z `canEnchant(...)` i `setEnchant(...)` | cooldowny na jednym mixinie klasy bazowej, z jawnym wynikiem sukcesu |
+| `BlockWritableGrave.countTicks` — `public long`, **zapisywany** w `writeShared` i wczytywany w `load`; `serverTick` woła `commonTick` jako pierwszą instrukcję | harmonogram decay może być bezstanowy i przeżywa restart |
+| `getOwnerDeathTime()` zwraca `deathDate`, ustawiane z `TimeHelper.systemTime()` = `System.currentTimeMillis()` | wiązanie snapshotu z grobem idzie po czasie zegarowym w ms, ta sama skala co `capturedAt` |
+| `ItemBook implements ISoulConsumer` i deklaruje `canEnchant(...)`, ale **nie** `setEnchant(...)` — tę mają dopiero konkretne księgi | cooldown potrzebuje dwóch punktów zaczepienia, nie jednego, patrz §6 |
+| `ISoulConsumer.canEnchant` i `.setEnchant` są wołane z **dokładnie jednego** miejsca: `BlockDecorativeGrave.use`, 18 instrukcji od siebie | jeden punkt na ustawienie cooldownu, obejmujący wszystkie księgi |
+| `ConsumeResult` to rekord z `result()` → `Result.SUCCESS` / `Result.FAIL` | sukces jest zwracany wprost, bez zgadywania po zmianie stacku |
 | `CooldownHandler.CooldownType` to enum z 4 wartościami (`NEXT_PRAY`, `RESET_PERKS`, `TELEPORT_DEATH`, `REQUEST_TELEPORT`) | natywny system cooldownów nierozszerzalny bez mixina, nie używamy go |
 | `ConfigTombstone.general.unhandledBeneficialEffects` / `unhandledHarmfulEffects` | natywne czarne listy losowych efektów — nasze whitelisty są częściowo zbędne, stąd wypadły z v1 |
 | `ConfigTombstone.compatibility.curioAutoEquip` | Curios ma natywne wsparcie; nasz feature to etap 2, nie luka |
@@ -44,11 +47,7 @@ Wszystko poniżej potwierdzone przez `javap` na `tombstone-1.20.1-9.1.4.jar` (JD
 
 ### Założenia jeszcze niepotwierdzone
 
-Do sprawdzenia **przed** pisaniem kodu odpowiedniego featura:
-
-1. Czy `BlockWritableGrave.writeShared` zapisuje `countTicks` (odczyt w `load` potwierdzony, zapis założony przez symetrię). Jeśli nie — harmonogram decay traci bezstanowość i wraca do mapy per-grób.
-2. Czy `BlockEntityPlayerGrave.serverTick` woła `commonTick`, czyli czy `countTicks` rośnie po stronie serwera.
-3. Czy `PlayerPreference.isReverseInventorySorting()` jest domyślnie wyłączone.
+Zostało jedno, niesprawdzalne bajtkodem: **`PlayerPreference.isReverseInventorySorting()`** to prywatne pole per-gracz, przestawiane z GUI klienta — czyli część graczy może je mieć włączone niezależnie od domyślnej wartości. Do sprawdzenia w grze (§9 punkt 2): jaka jest wartość domyślna i co dokładnie robi z odzyskanym ekwipunkiem po włączeniu.
 
 ---
 
@@ -132,7 +131,7 @@ Brak dopasowania w tolerancji = brak snapshotu = ścieżka standardowa, zgodnie 
 
 Lista oczekujących snapshotów jest przycinana z dwóch stron: limit sztuk na gracza i wiek (snapshot starszy niż grób może być, czyli po prostu bardzo stary, jest wyrzucany). Bez tego jedna śmierć bez powrotu po grób zostawiałaby wpis na zawsze.
 
-**Do zweryfikowania:** że `getOwnerDeathTime()` zwraca czas zegarowy w milisekundach, a nie czas świata w tickach. Jeśli tickach — wiązanie przechodzi na tę samą skalę po stronie snapshotu i reszta projektu się nie zmienia.
+Skala jest potwierdzona: `deathDate` grobu bierze się z `TimeHelper.systemTime()`, czyli wprost z `System.currentTimeMillis()`.
 
 ### Klucz dopasowania — tu port się różni
 
@@ -209,14 +208,20 @@ W porcie historia idzie po `ownerId` (UUID). Gdy właściciel jest online — do
 
 ## 6. Feature: cooldowny ksiąg
 
-### Hook — jeden mixin na klasie bazowej `ItemBook`
+### Hook — dwa mixiny, każdy o jednej odpowiedzialności
 
-`ItemBook` implementuje publiczne API `ISoulConsumer`:
+`ItemBook` implementuje publiczne API `ISoulConsumer`, ale deklaruje z niego **tylko `canEnchant`**; `setEnchant` mają dopiero konkretne księgi. Stąd dwa punkty, nie jeden:
 
-- `@Inject` na głowie `canEnchant(Level, BlockPos, Player, ItemStack)` → zwraca `false` plus komunikat z pozostałym czasem, gdy cooldown trwa;
-- `@Inject` na ogonie `setEnchant(...)`, wyłącznie gdy `ConsumeResult` oznacza sukces → ustawia cooldown.
+1. **`MixinItemBook`** — `@Inject` na głowie `canEnchant(Level, BlockPos, Player, ItemStack)`, `cancellable = true`, `remap = false` (cel to metoda Tombstone'a na klasie Tombstone'a, nic do remapowania). Zwraca `false` plus komunikat z pozostałym czasem, gdy cooldown trwa. **Blokada.**
+2. **`MixinBlockDecorativeGrave`** — `@Redirect` na wywołaniu `ISoulConsumer.setEnchant` wewnątrz `use(...)`. Przepuszcza wywołanie, czyta zwrócony `ConsumeResult` i przy `Result.SUCCESS` ustawia cooldown. **Start cooldownu.**
 
-To zastępuje całą maszynerię z 1.12.2 (`PlayerInteractEvent` + odroczone sprawdzenie „czy stack się zmniejszył po ticku", żeby zgadnąć, czy użycie się powiodło). Tutaj sukces jest zwracany wprost jako wartość.
+Rozdzielenie jest celowe: blokada siedzi na typie księgi, więc działa niezależnie od tego, skąd ktoś ją zawoła; start cooldownu siedzi na jedynym istniejącym miejscu wywołania, więc obejmuje wszystkie księgi jednym mixinem.
+
+Uwaga na remapowanie w mixinie nr 2: selektor `method = "use"` celuje w **metodę Minecrafta** (`BlockBehaviour.use`, w runtime `m_6227_`), więc musi być remapowany — i to on jest powodem, dla którego refmapy w tym repo są włączone (§3). Wewnętrzny `@At(target = "L…/ISoulConsumer;setEnchant…")` celuje w członka Tombstone'a i dostaje własne `remap = false`.
+
+Zgodnie z zasadą, którą `modDev` ma zapisaną osobno: **receiver `@Redirect` musi być dokładnie właścicielem wywołania** — tu wywołanie to `invokeinterface ISoulConsumer.setEnchant`, więc pierwszym parametrem handlera jest `ISoulConsumer`, nie konkretna księga.
+
+To zastępuje całą maszynerię z 1.12.2 (`PlayerInteractEvent` + odroczone sprawdzenie „czy stack się zmniejszył po ticku", żeby zgadnąć, czy użycie się powiodło). Tutaj sukces jest zwracany wprost jako wartość rekordu.
 
 ### Konsekwencja: config staje się mapą
 
