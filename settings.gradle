@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { name = 'MinecraftForge'; url = 'https://maven.minecraftforge.net/' }
+        maven { name = 'Sponge';         url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    }
+}
+
+plugins {
+    // Pozwala Gradle pobrac JDK 17 samodzielnie. Na tej maszynie 17 nie ma zainstalowanej.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'tombtweaks'

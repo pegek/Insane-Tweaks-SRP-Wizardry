@@ -1,0 +1,15 @@
+build/
+bin/
+out/
+run/
+.gradle/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+hs_err_pid*.log
+
+# Jary cudzych modow nigdy nie ida do repo (Tombstone = "All rights reserved").
+# Zaleznosci ida z CurseMaven - patrz build.gradle.
+libs/*.jar

@@ -1,0 +1,84 @@
+plugins {
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+    id 'org.spongepowered.mixin'   version '0.7.+'
+}
+
+version = '0.1.0'
+group   = 'com.spege.tombtweaks'
+base { archivesName = 'tombtweaks-1.20.1' }
+
+// NIE dodawaj -proc:none. Mixinowy annotation processor musi dzialac, bo
+// MixinBlockDecorativeGrave celuje w metode Minecrafta i potrzebuje refmapy.
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods { tombtweaks { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods { tombtweaks { source sourceSets.main } }
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, 'tombtweaks.refmap.json'
+    config 'mixins.tombtweaks.json'
+}
+
+repositories {
+    mavenCentral()
+    // Tombstone jest "All rights reserved", wiec jego jar NIE moze trafic do repo.
+    // CurseMaven serwuje dokladnie ten sam plik co CurseForge.
+    maven { url = 'https://www.cursemaven.com' }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.2.20'
+
+    // Tombstone: deobf jest konieczny, bo referencje do MC w jego bajtkodzie sa SRG-owe.
+    // Koordynat: curse.maven:<slug>-<projectId>:<fileId>. 243707 = corail-tombstone,
+    // 8606942 = plik "Corail Tombstone 9.1.4 for 1.20.1". Zweryfikowane sha256 -
+    // artefakt z CurseMaven jest bajt w bajt tym samym plikiem co jar z CurseForge.
+    // UWAGA: fg.deobf(files(...)) NIE dziala na ForgeGradle 6 - cicho podsuwa
+    // zaobfuskowany jar (to jest skladnia FG3).
+    implementation fg.deobf('curse.maven:corail-tombstone-243707:8606942')
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    // NIE dodawaj tu -proc:none - patrz notatka na gorze tego pliku.
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'   : 'TombTweaks',
+            'Specification-Vendor'  : 'spege',
+            'Specification-Version' : "${version}",
+            'Implementation-Title'  : project.name,
+            'Implementation-Version': "${version}",
+            'Implementation-Vendor' : 'spege'
+        ])
+    }
+}

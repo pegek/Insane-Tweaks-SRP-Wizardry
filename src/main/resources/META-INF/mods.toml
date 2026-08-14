@@ -1,0 +1,37 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+issueTrackerURL="https://github.com/spege/tombtweaks"
+
+[[mods]]
+modId="tombtweaks"
+version="${file.jarVersion}"
+displayName="TombTweaks"
+authors="spege"
+description='''
+Tweaks for Corail Tombstone: items return to the slots they came from, unvisited graves slowly decay, and the magic books get a cooldown.
+'''
+
+[[dependencies.tombtweaks]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tombtweaks]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tombtweaks]]
+    modId="tombstone"
+    mandatory=true
+    versionRange="[9.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[mixins]]
+config="mixins.tombtweaks.json"
