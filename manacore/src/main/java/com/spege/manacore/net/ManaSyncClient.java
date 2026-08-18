@@ -13,6 +13,8 @@ public final class ManaSyncClient {
     }
 
     public static void apply(final double current) {
+        // onMessage runs on the Netty thread; the state the renderer reads must be written on
+        // the client thread, so hop over via addScheduledTask instead of writing it here.
         Minecraft.getMinecraft().addScheduledTask(new Runnable() {
             @Override
             public void run() {
