@@ -968,17 +968,17 @@ W `ManaAttributes.onEntityConstructing`, po `registerAttribute`, ustaw bazę z c
                     .setBaseValue(com.spege.manacore.config.ManaCoreConfig.pool.baseMaxMana);
 ```
 
-- [ ] **Step 4: Zbuduj i uruchom klienta**
+- [ ] **Step 4: Zbuduj**
 
 ```bash
 ./gradlew :manacore:build
 ```
 
-```bash
-./gradlew runClient
-```
+Oczekiwane: `BUILD SUCCESSFUL`, bez nowych ostrzeżeń `-Xlint`, 10 testów `ManaMathTest` nadal zielonych.
 
-Oczekiwane: klient startuje, powstaje `run/config/manacore.cfg` z **trzema kategoriami na poziomie głównym** (`pool`, `regen`, `hud`) — nie pod `general`.
+> 🚨 **Weryfikacja w grze jest odłożona do Tasku 11 — dev-runtime jest obecnie zepsuty i nie z naszej winy.** `insanetweaks/build.gradle` deobfuskuje cały `fileTree` z `libs/`, wykluczając tylko trzy jary, a w `libs/` leżą **dwie wersje Tombstone** (`4.7.6` i `4.8.0`). Dwa mody o tym samym modid to gwarantowany crash przy starcie. Naprawa to jedno dodatkowe wykluczenie w `insanetweaks/build.gradle` albo usunięcie zbędnego jara — do rozstrzygnięcia osobno, bo dotyka cudzej, niezacommitowanej pracy.
+>
+> Czego oczekujemy po pierwszym udanym uruchomieniu: `run/config/manacore.cfg` z **trzema kategoriami na poziomie głównym** (`pool`, `regen`, `hud`), a **nie** pod `general`. Kategorie pod `general` = `category = ""` zostało zgubione i wstępnie ustawione wartości są po cichu ignorowane.
 
 - [ ] **Step 5: Commit**
 
@@ -1773,6 +1773,10 @@ git commit -m "feat(manacore): publiczne API i komenda debugowa /mana"
 Oczekiwane: `BUILD SUCCESSFUL`, jary wszystkich subprojektów obecne w swoich `build/libs/`.
 
 - [ ] **Step 2: Klient — pasek, regen, komenda**
+
+> 🚨 **Najpierw napraw dev-runtime, bo inaczej nic nie wystartuje.** `libs/` zawiera dwie wersje Tombstone (`tombstone-1.12.2-4.7.6.jar` i `tombstone-1.12.2-4.8.0.jar`), a `insanetweaks/build.gradle` deobfuskuje cały `fileTree` z `libs/` wykluczając tylko `ElectroblobsWizardry-*`, `dldungeonsjbg-*` i `journeymap-*`. Dwa mody o modid `tombstone` = crash przy starcie. Dopisz czwarte wykluczenie albo usuń zbędny jar. Zwróć uwagę, że `tombtweaks/build.gradle` przypina **4.7.6**, a pack DEv 1.2 chodzi na **4.8.0** — to osobny drift, nie myl go z tym crashem.
+>
+> Sprawdź też, czy `libs/` nie zebrał w międzyczasie innych duplikatów: `ls libs/ | sed 's/-[0-9].*//' | sort | uniq -d` powinno nic nie zwrócić.
 
 ```bash
 ./gradlew runClient
