@@ -150,13 +150,16 @@ publishing {
   {
     "modid": "manacore",
     "name": "Mana Core",
-    "description": "Zunifikowana pula many gracza.",
+    "description": "Unified player mana pool with bridges to Electroblob's Wizardry and Trinkets and Baubles.",
     "version": "0.1.0",
     "mcversion": "1.12.2",
-    "authorList": ["spege"]
+    "authorList": ["Isuthhh"],
+    "dependencies": []
   }
 ]
 ```
+
+> Trzy szczegóły, każdy zgodny z pozostałymi sześcioma `mcmod.info` w repo: **`authorList` to `Isuthhh`**, nie `spege` — `spege` jest wyłącznie `Vendor` w manifeście jara, czyli identyfikatorem build-owym, a nie nazwą autora widoczną na liście modów gracza. Opis jest **po angielsku**, bo to pole trafia do gracza. Klucz **`dependencies` musi istnieć**, choćby pusty.
 
 - [ ] **Step 5: Utwórz `en_us.lang`**
 
@@ -223,7 +226,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(modid = ManaCoreMod.MODID, name = ManaCoreMod.NAME, version = ManaCoreMod.VERSION,
-        acceptedMinecraftVersions = "[1.12.2]")
+        acceptableRemoteVersions = "*")
 public class ManaCoreMod {
 
     public static final String MODID = "manacore";
@@ -251,6 +254,8 @@ public class ManaCoreMod {
 ```
 
 > Klasa `@Mod` **nie może** nazwać żadnego typu z `net.minecraft.client` ani `fml.client` — weryfikator rozwiązuje je przy ładowaniu klasy, zanim jakikolwiek `if (side == CLIENT)` zdąży się wykonać.
+>
+> `acceptableRemoteVersions = "*"`, a **nie** `acceptedMinecraftVersions` — tak robi pięć z sześciu pozostałych modów w repo. Ogranicznik wersji Minecrafta nic tu nie wnosi, bo wymusza go już zależność Forge; realnie boli handshake odrzucający połączenie, gdy serwer ma nowszą wersję moda niż klient — a to jest normalny stan w pętli build → kopiuj jar do `mods/`.
 
 - [ ] **Step 8: Zbuduj i sprawdź**
 
