@@ -371,6 +371,10 @@ public class TabCategory {
 }
 ```
 
+> 🚨 **Dług projektowy do rozstrzygnięcia w tym zadaniu, nie do przeoczenia.** `manaCrystalCap` i `pool.progressionCap` to **dwa niezależne sufity nałożone na to samo pole** `progressionBonus`. Wartownia w `ManaMath.afterProgressionGain` („nigdy nie obniżaj") sprawia, że nic nie ginie — bez niej kryształy podbijające pulę do 80 zostałyby skasowane do 50 przy pierwszym rzuconym czarze. Ale to nadal znaczy, że żaden z dwóch sufitów nie jest prawdziwym sufitem: gracz może przekroczyć `progressionCap` kryształami i odwrotnie.
+>
+> Trzy wyjścia, do wyboru przy implementacji: (a) rozdzielić na dwa pola w capability, każde z własnym sufitem, sumowane w atrybucie — najczystsze, ale zmienia format NBT; (b) jeden wspólny sufit i skasowanie `manaCrystalCap`; (c) świadomie zostawić, dokumentując, że sufity są miękkie i dotyczą tylko *przyrostu z danego źródła*. Nie implementuj (c) po cichu — jeśli je wybierasz, zapisz to w komentarzu configu.
+
 - [ ] **Step 3: Podepnij kategorie do roota configu**
 
 W `ManaCoreConfig` dodaj dwa pola obok istniejących trzech:
@@ -1324,7 +1328,7 @@ public class TabManaItemHandler {
         }
         double current = pool.getProgressionBonus();
         double next = ManaMath.afterProgressionGain(
-                current, ManaCoreConfig.tab.manaCrystalMaxBonus, ManaCoreConfig.tab.manaCrystalCap);
+                current, ManaCoreConfig.tab.manaCrystalCap, ManaCoreConfig.tab.manaCrystalMaxBonus);
         if (next > current) {
             ManaAPI.addProgression(player, next - current);
         }

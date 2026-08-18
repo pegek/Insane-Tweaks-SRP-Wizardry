@@ -337,9 +337,17 @@ public class ManaMathTest {
 
     @Test
     public void progresjaZatrzymujeSieNaSuficie() {
-        assertEquals(4.0D, ManaMath.afterProgressionGain(3.5D, 1.0D, 4.0D), EPS);
-        assertEquals(4.0D, ManaMath.afterProgressionGain(4.0D, 1.0D, 4.0D), EPS);
-        assertEquals(1.5D, ManaMath.afterProgressionGain(1.0D, 0.5D, 4.0D), EPS);
+        assertEquals(4.0D, ManaMath.afterProgressionGain(3.5D, 4.0D, 1.0D), EPS);
+        assertEquals(4.0D, ManaMath.afterProgressionGain(4.0D, 4.0D, 1.0D), EPS);
+        assertEquals(1.5D, ManaMath.afterProgressionGain(1.0D, 4.0D, 0.5D), EPS);
+    }
+
+    @Test
+    public void progresjaNieObnizaJuzZbankowanejWartosci() {
+        // Administrator obnizyl sufit w configu po tym, jak gracz nabil progresje.
+        // Dorobek ma zostac nietkniety, a nie zostac obciety w dol.
+        assertEquals(60.0D, ManaMath.afterProgressionGain(60.0D, 50.0D, 5.0D), EPS);
+        assertEquals(50.0D, ManaMath.afterProgressionGain(50.0D, 50.0D, 5.0D), EPS);
     }
 
     @Test
@@ -409,7 +417,15 @@ public final class ManaMath {
         return result > max ? max : result;
     }
 
-    public static double afterProgressionGain(double current, double gain, double cap) {
+    /**
+     * Nigdy nie obniża wartości: przy `current >= cap` zwraca `current` bez zmian.
+     * Chroni zbankowaną progresję przed obcięciem, gdy administrator obniży sufit w configu.
+     * Kolejność argumentów celowo taka sama jak w `afterRegen`: (current, sufit, delta).
+     */
+    public static double afterProgressionGain(double current, double cap, double gain) {
+        if (current >= cap) {
+            return current;
+        }
         double result = current + gain;
         return result > cap ? cap : result;
     }
@@ -1568,7 +1584,7 @@ public final class ManaAPI {
             return;
         }
         pool.setProgressionBonus(ManaMath.afterProgressionGain(
-                pool.getProgressionBonus(), amount, ManaCoreConfig.pool.progressionCap));
+                pool.getProgressionBonus(), ManaCoreConfig.pool.progressionCap, amount));
         ManaAttributes.refreshProgressionModifier(player);
         syncNow(player);
     }
