@@ -1,0 +1,10 @@
+[
+  {
+    "modid": "manacore",
+    "name": "Mana Core",
+    "description": "Zunifikowana pula many gracza.",
+    "version": "0.1.0",
+    "mcversion": "1.12.2",
+    "authorList": ["spege"]
+  }
+]
