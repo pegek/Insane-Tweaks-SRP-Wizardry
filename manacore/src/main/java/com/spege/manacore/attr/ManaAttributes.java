@@ -8,7 +8,6 @@ import com.spege.manacore.ManaCoreMod;
 import com.spege.manacore.cap.IManaPool;
 import com.spege.manacore.cap.ManaCapabilities;
 
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -30,7 +29,14 @@ public final class ManaAttributes {
             .setDescription("Max Mana")
             .setShouldWatch(true);
 
-    /** Stale UUID modyfikatora progresji - musi byc stabilne miedzy sesjami. */
+    /**
+     * Modyfikator progresji jest identyfikowany WYLACZNIE po tym UUID - wanilla serializuje
+     * AttributeMap razem z modyfikatorami do NBT gracza, wiec zmiana tej stalej w przyszlej
+     * wersji moda nie usunie starego modyfikatora z istniejacych swiatow: zostanie osierocony,
+     * dalej doliczy sie do maksimum many, a nowy kod dolozy obok niego drugi modyfikator ze
+     * swiezym UUID. Efekt to trwale podwojony bonus progresji, nie do naprawienia bez recznej
+     * ingerencji w zapis gracza. Nie zmieniac tej wartosci.
+     */
     private static final UUID PROGRESSION_MODIFIER_ID =
             UUID.fromString("6b7a1d54-3f6c-4a0e-9a1a-2f9c5b8e7d10");
     private static final String PROGRESSION_MODIFIER_NAME = "manacore.progression";
@@ -43,9 +49,9 @@ public final class ManaAttributes {
         if (!(event.getEntity() instanceof EntityPlayer)) {
             return;
         }
-        EntityLivingBase living = (EntityLivingBase) event.getEntity();
-        if (living.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
-            living.getAttributeMap().registerAttribute(MAX_MANA);
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+        if (player.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
+            player.getAttributeMap().registerAttribute(MAX_MANA);
         }
     }
 
@@ -57,9 +63,15 @@ public final class ManaAttributes {
         return instance == null ? 0.0D : instance.getAttributeValue();
     }
 
-    /** Przelicza modyfikator progresji na podstawie zapisanej w capability wartosci. */
+    /**
+     * Przelicza modyfikator progresji na podstawie zapisanej w capability wartosci.
+     * Bezpieczne do wywolania z dowolnej strony - po stronie klienta nic nie robi.
+     */
     public static void refreshProgressionModifier(@Nullable EntityPlayer player) {
         if (player == null) {
+            return;
+        }
+        if (player.world.isRemote) {
             return;
         }
         IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
