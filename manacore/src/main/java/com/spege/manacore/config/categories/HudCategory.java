@@ -4,17 +4,17 @@ import net.minecraftforge.common.config.Config;
 
 public class HudCategory {
 
-    @Config.Comment("Czy rysowac pasek many.")
+    @Config.Comment("Whether to draw the mana bar.")
     public boolean showBar = true;
 
-    @Config.Comment("Czy pisac liczbe obok paska.")
+    @Config.Comment("Whether to print the number next to the bar.")
     public boolean showNumber = true;
 
-    @Config.Comment("Przesuniecie paska w poziomie, w pikselach GUI.")
+    @Config.Comment("Horizontal offset of the bar, in GUI pixels.")
     @Config.RangeInt(min = -1000, max = 1000)
     public int offsetX = 0;
 
-    @Config.Comment("Przesuniecie paska w pionie, w pikselach GUI.")
+    @Config.Comment("Vertical offset of the bar, in GUI pixels.")
     @Config.RangeInt(min = -1000, max = 1000)
     public int offsetY = 0;
 }

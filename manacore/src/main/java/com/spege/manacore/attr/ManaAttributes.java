@@ -23,8 +23,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class ManaAttributes {
 
     /**
-     * setShouldWatch(true) sprawia, ze Forge sam synchronizuje wartosc atrybutu do klienta.
-     * Dzieki temu sami synchronizujemy WYLACZNIE `current` (patrz Task 6).
+     * setShouldWatch(true) makes Forge sync the attribute value to the client on its own.
+     * Because of that, we only ever sync `current` ourselves (see Task 6).
      */
     public static final IAttribute MAX_MANA = new RangedAttribute(
             (IAttribute) null, "manacore.maxMana", 100.0D, 0.0D, 1.0E7D)
@@ -32,12 +32,13 @@ public final class ManaAttributes {
             .setShouldWatch(true);
 
     /**
-     * Modyfikator progresji jest identyfikowany WYLACZNIE po tym UUID - wanilla serializuje
-     * AttributeMap razem z modyfikatorami do NBT gracza, wiec zmiana tej stalej w przyszlej
-     * wersji moda nie usunie starego modyfikatora z istniejacych swiatow: zostanie osierocony,
-     * dalej doliczy sie do maksimum many, a nowy kod dolozy obok niego drugi modyfikator ze
-     * swiezym UUID. Efekt to trwale podwojony bonus progresji, nie do naprawienia bez recznej
-     * ingerencji w zapis gracza. Nie zmieniac tej wartosci.
+     * The progression modifier is identified SOLELY by this UUID - vanilla serializes the
+     * AttributeMap together with its modifiers into the player's NBT, so changing this constant
+     * in a future version of the mod would not remove the old modifier from existing worlds: it
+     * would become orphaned, keep contributing to the max mana total, and the new code would add
+     * a second modifier next to it with a fresh UUID. The result is a permanently doubled
+     * progression bonus, not fixable without manually editing the player's save data. Do not
+     * change this value.
      */
     private static final UUID PROGRESSION_MODIFIER_ID =
             UUID.fromString("6b7a1d54-3f6c-4a0e-9a1a-2f9c5b8e7d10");
@@ -58,10 +59,10 @@ public final class ManaAttributes {
     }
 
     /**
-     * Wanilla serializuje baze atrybutu do NBT gracza i przywraca ja przy wczytaniu, wiec
-     * wartosc ustawiona w EntityConstructing zostaje nadpisana zapisem sprzed zmiany configu.
-     * Bez tego handlera zmiana `baseMaxMana` nie dotarlaby NIGDY do istniejacej postaci -
-     * tylko do zupelnie nowej. Ustawiamy baze bezwarunkowo, po wczytaniu.
+     * Vanilla serializes the attribute base into the player's NBT and restores it on load, so
+     * the value set in EntityConstructing gets overwritten by the save data from before the
+     * config change. Without this handler, a change to `baseMaxMana` would NEVER reach an
+     * existing character - only a brand new one. We set the base unconditionally, after loading.
      */
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
@@ -84,8 +85,8 @@ public final class ManaAttributes {
     }
 
     /**
-     * Przelicza modyfikator progresji na podstawie zapisanej w capability wartosci.
-     * Bezpieczne do wywolania z dowolnej strony - po stronie klienta nic nie robi.
+     * Recomputes the progression modifier from the value stored in the capability.
+     * Safe to call from either side - does nothing on the client side.
      */
     public static void refreshProgressionModifier(@Nullable EntityPlayer player) {
         if (player == null) {

@@ -14,7 +14,7 @@ public class ManaCoreMod {
 
     public static final String MODID = "manacore";
     public static final String NAME = "Mana Core";
-    /** MUSI byc recznie zsynchronizowana z `version` w build.gradle - manifest nie jest widoczny dla @Mod. */
+    /** MUST be kept in sync by hand with `version` in build.gradle - the manifest is not visible to @Mod. */
     public static final String VERSION = "0.1.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);

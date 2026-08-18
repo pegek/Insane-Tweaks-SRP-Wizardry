@@ -41,7 +41,7 @@ public class ManaMathTest {
 
     @Test
     public void regenNieObnizaPuliPowyzejMaksimum() {
-        // Po zdjeciu bauble'a `current` moze przekraczac nowe `max`. Regen nie ma tego obcinac.
+        // After unequipping a bauble, `current` can exceed the new `max`. Regen must not clamp it down.
         assertEquals(15.0D, ManaMath.afterRegen(15.0D, 10.0D, 2.0D), EPS);
     }
 
@@ -54,15 +54,15 @@ public class ManaMathTest {
 
     @Test
     public void progresjaNieObnizaJuzZbankowanejWartosci() {
-        // Administrator obniżył sufit w configu po tym, jak gracz nabił progresję.
-        // Dorobek ma zostać nietknięty, a nie zostać obcięty w dół.
+        // The admin lowered the cap in the config after the player had already banked progression.
+        // The banked amount must stay untouched, not get clamped down.
         assertEquals(60.0D, ManaMath.afterProgressionGain(60.0D, 50.0D, 5.0D), EPS);
         assertEquals(50.0D, ManaMath.afterProgressionGain(50.0D, 50.0D, 5.0D), EPS);
     }
 
     @Test
     public void regenNaTickPrzeliczaSekundyNaTicki() {
-        // 5 many co 2 sekundy = 5 / 40 ticka
+        // 5 mana every 2 seconds = 5 / 40 ticks
         assertEquals(0.125D, ManaMath.regenPerTick(5.0D, 2.0D), EPS);
     }
 

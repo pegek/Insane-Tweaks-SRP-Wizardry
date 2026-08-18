@@ -1,8 +1,8 @@
 package com.spege.manacore.core;
 
 /**
- * Czysta matematyka puli many. ZERO typów Minecrafta - dzięki temu ten pakiet
- * jest jedyną częścią moda, którą da się przetestować JUnitem.
+ * Pure mana pool math. ZERO Minecraft types - this is what makes this package
+ * the only part of the mod that can be unit-tested with JUnit.
  */
 public final class ManaMath {
 
@@ -12,8 +12,8 @@ public final class ManaMath {
     }
 
     /**
-     * Ogranicza wartość do zakresu [min, max]. Gdy zakres jest odwrócony (min > max),
-     * zwraca min bez próby jego naprawienia.
+     * Clamps a value to the range [min, max]. When the range is inverted (min > max),
+     * returns min without trying to fix it.
      */
     public static double clamp(double value, double min, double max) {
         if (min > max) {
@@ -26,9 +26,10 @@ public final class ManaMath {
     }
 
     /**
-     * Odejmuje koszt od puli, obcinając wynik do zera. Nie sprawdza wypłacalności —
-     * wołający, któremu zależy na rozróżnieniu "stać mnie" od "nie stać mnie", musi
-     * sam sprawdzić stan puli PRZED wywołaniem (tak robi ManaAPI.spend).
+     * Subtracts a cost from the pool, clamping the result to zero. Does not check
+     * affordability — a caller that cares about distinguishing "can afford it" from
+     * "can't afford it" must check the pool state itself BEFORE calling this (that is
+     * what ManaAPI.spend does).
      */
     public static double afterSpend(double current, double cost) {
         double result = current - cost;
@@ -36,8 +37,8 @@ public final class ManaMath {
     }
 
     /**
-     * Regen nigdy nie obniża puli: gdy `current` przekracza `max` (np. po zdjęciu bauble'a),
-     * wartość zostaje bez zmian zamiast zostać obcięta.
+     * Regen never lowers the pool: when `current` already exceeds `max` (e.g. after
+     * unequipping a bauble), the value is left unchanged instead of being clamped down.
      */
     public static double afterRegen(double current, double max, double amount) {
         if (current >= max) {
@@ -48,8 +49,8 @@ public final class ManaMath {
     }
 
     /**
-     * Podobnie jak afterRegen, nigdy nie obniża wartości: gdy `current` już osiągnął
-     * albo przekroczył `cap`, zwraca `current` bez zmian zamiast obcinać go w dół.
+     * Like afterRegen, this never lowers the value: when `current` has already reached
+     * or exceeded `cap`, it returns `current` unchanged instead of clamping it down.
      */
     public static double afterProgressionGain(double current, double cap, double gain) {
         if (current >= cap) {
@@ -60,9 +61,9 @@ public final class ManaMath {
     }
 
     /**
-     * Przelicza ilość many na cykl regeneracji (w sekundach) na ilość many na tick.
-     * Dla niepoprawnej (niedodatniej) długości cyklu zwraca 0 zamiast rzucać wyjątek
-     * albo dzielić przez zero.
+     * Converts an amount of mana per regen cycle (in seconds) into an amount of mana
+     * per tick. For an invalid (non-positive) cycle length, returns 0 instead of
+     * throwing an exception or dividing by zero.
      */
     public static double regenPerTick(double amountPerCycle, double cycleSeconds) {
         if (cycleSeconds <= 0.0D) {

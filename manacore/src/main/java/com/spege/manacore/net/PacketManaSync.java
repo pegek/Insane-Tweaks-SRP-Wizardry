@@ -28,9 +28,9 @@ public class PacketManaSync implements IMessage {
     }
 
     /**
-     * Klasa handlera NIE MOZE nosic @SideOnly: registerMessage wola newInstance() po OBU stronach,
-     * a trailing Side wybiera tylko, ktora strona PRZETWARZA wiadomosc. Praca klienta siedzi
-     * w osobnej klasie wolanej jednym invokestatic.
+     * The handler class MUST NOT carry @SideOnly: registerMessage calls newInstance() on BOTH
+     * sides, and the trailing Side argument only picks which side PROCESSES the message. The
+     * client-side work lives in a separate class, reached through a single invokestatic.
      */
     public static class Handler implements IMessageHandler<PacketManaSync, IMessage> {
 

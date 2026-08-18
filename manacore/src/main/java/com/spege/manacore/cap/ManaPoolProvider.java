@@ -38,8 +38,9 @@ public class ManaPoolProvider implements ICapabilitySerializable<NBTTagCompound>
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-        // Idzie przez te same settery co runtime, więc zaznacza instancję jako dirty po
-        // wczytaniu z dysku — celowo, bo świeżo wczytany gracz i tak wymaga synchronizacji do klienta.
+        // Goes through the same setters as runtime does, so it marks the instance dirty after
+        // loading from disk — deliberately, because a freshly loaded player needs a sync to the
+        // client anyway.
         ManaCapabilities.MANA_POOL.getStorage()
                 .readNBT(ManaCapabilities.MANA_POOL, this.instance, null, nbt);
     }

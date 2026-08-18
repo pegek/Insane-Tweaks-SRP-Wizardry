@@ -3,7 +3,7 @@ package com.spege.manacore.client;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-/** Lustro `current` wylacznie na potrzeby HUD-u. Nigdy nie jest zrodlem prawdy. */
+/** Mirror of `current` for HUD purposes only. Never a source of truth. */
 @SideOnly(Side.CLIENT)
 public final class ManaClientState {
 

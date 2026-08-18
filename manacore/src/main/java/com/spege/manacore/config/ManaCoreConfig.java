@@ -12,10 +12,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * category = "" jest OBOWIAZKOWE, bo wszystkie pola sa obiektami kategorii.
- * Pominiecie go wrzuca kategorie pod `general.*` i po cichu ignoruje wstepnie ustawione wartosci.
- * Odwrotnie: gdyby ktores pole bylo wartoscia prosta, tablica lub mapa, `""` bylby twardym crashem
- * w ConfigManager.sync ("An empty category may not contain anything but objects...").
+ * category = "" is MANDATORY, because every field here is a category object.
+ * Omitting it dumps the categories under `general.*` and silently ignores any pre-seeded values.
+ * Conversely, if any field were a plain value, an array or a map, `""` would be a hard crash
+ * in ConfigManager.sync ("An empty category may not contain anything but objects...").
  */
 @Config(modid = ManaCoreMod.MODID, name = ManaCoreMod.MODID, category = "")
 public class ManaCoreConfig {
