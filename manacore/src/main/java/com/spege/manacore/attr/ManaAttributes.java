@@ -97,7 +97,23 @@ public final class ManaAttributes {
         }
         IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
         IManaPool pool = ManaCapabilities.get(player);
-        if (instance == null || pool == null) {
+        if (instance == null) {
+            // MAX_MANA is registered unconditionally for every EntityPlayer in
+            // onEntityConstructing, with no event another mod could intercept to steal it -
+            // unlike the capability below, there is no known path that leaves this null, so
+            // there is nothing actionable to warn about here.
+            return;
+        }
+        if (pool == null) {
+            // Since onAttachCapabilities was added, every player is guaranteed a mana pool
+            // provider, so this is no longer a normal state: it means some other mod
+            // intercepted AttachCapabilitiesEvent before us, or this player instance was
+            // constructed through a path that bypassed capability attachment entirely. Either
+            // way the player silently loses their max mana progression bonus, which is why this
+            // is logged at warn rather than passed through quietly.
+            ManaCoreMod.LOGGER.warn("[ManaCore] No mana pool capability found on player {} while refreshing "
+                    + "the progression modifier - the max mana progression bonus was not applied.",
+                    player.getName());
             return;
         }
 
