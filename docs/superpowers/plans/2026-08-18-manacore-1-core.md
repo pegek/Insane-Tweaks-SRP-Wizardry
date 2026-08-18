@@ -846,12 +846,14 @@ import net.minecraftforge.common.config.Config;
 
 public class PoolCategory {
 
-    @Config.Comment("Bazowa maksymalna mana gracza, zanim doliczymy jakiekolwiek modyfikatory.")
+    @Config.Comment({"Bazowa maksymalna mana gracza, zanim doliczymy jakiekolwiek modyfikatory.",
+            "Zmiana obowiazuje przy nastepnym wejsciu gracza do swiata, nie natychmiast."})
     @Config.RangeDouble(min = 1.0D, max = 1.0E6D)
-    @Config.RequiresMcRestart
     public double baseMaxMana = 100.0D;
 
-    @Config.Comment("Twardy sufit maksymalnej many po zsumowaniu wszystkich zrodel.")
+    @Config.Comment({"Twardy sufit maksymalnej many po zsumowaniu wszystkich zrodel.",
+            "JESZCZE NIEAKTYWNE - zostanie podlaczone w pozniejszym zadaniu.",
+            "Sprzezone z baseMaxMana: baza wyzsza niz sufit oznacza pule od razu przycinana."})
     @Config.RangeDouble(min = 1.0D, max = 1.0E7D)
     public double hardCap = 2000.0D;
 
@@ -958,15 +960,32 @@ public class ManaCoreConfig {
 
 > `ConfigChangedEvent` mieszka w pakiecie `fml.client`, ale ładuje się na serwerze bez problemu — nie dodawaj tu `@SideOnly`.
 
-- [ ] **Step 3: Podłącz bazową wartość atrybutu**
+- [ ] **Step 3: Podłącz bazową wartość atrybutu — i to NIE w `onEntityConstructing`**
 
-W `ManaAttributes.onEntityConstructing`, po `registerAttribute`, ustaw bazę z configu:
+🚨 **Ustawienie bazy przy konstrukcji encji nie działa i wygląda, jakby działało.** Wanilla serializuje **wszystkie** zarejestrowane instancje atrybutów do tagu `Attributes` w NBT gracza (`EntityLivingBase.writeEntityToNBT` → `SharedMonsterAttributes.writeBaseAttributeMapToNBT`) i przywraca z niego `Base` przy wczytaniu (`readEntityFromNBT` → `SharedMonsterAttributes.setAttributeModifiers` → `setBaseValue`). Nasza wartość z configu zostaje więc nadpisana zapisem sprzed zmiany, chwilę po tym, jak ją ustawimy. Efekt: zmiana `baseMaxMana` **nigdy** nie dociera do postaci, która choć raz się zalogowała — także po restarcie serwera — i nie zostawia śladu w logu.
+
+Dlatego bazę ustawia osobny handler, **bezwarunkowo, po wczytaniu gracza**. `onEntityConstructing` nadal tylko rejestruje atrybut (bez tego `getEntityAttribute` zwróci `null`).
 
 ```java
-            player.getAttributeMap().registerAttribute(MAX_MANA);
-            player.getEntityAttribute(MAX_MANA)
-                    .setBaseValue(com.spege.manacore.config.ManaCoreConfig.pool.baseMaxMana);
+    /**
+     * Wanilla serializuje baze atrybutu do NBT gracza i przywraca ja przy wczytaniu, wiec
+     * wartosc ustawiona w EntityConstructing zostaje nadpisana zapisem sprzed zmiany configu.
+     * Bez tego handlera zmiana `baseMaxMana` nie dotarlaby NIGDY do istniejacej postaci.
+     */
+    @SubscribeEvent
+    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
+        if (event.getWorld().isRemote || !(event.getEntity() instanceof EntityPlayer)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+        IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
+        if (instance != null) {
+            instance.setBaseValue(ManaCoreConfig.pool.baseMaxMana);
+        }
+    }
 ```
+
+`EntityJoinWorldEvent` odpala się przy logowaniu, respawnie i zmianie wymiaru, czyli w każdym momencie, w którym gracz wchodzi do świata. To także powód, dla którego `baseMaxMana` **nie** ma `@Config.RequiresMcRestart` — restart nie jest tu potrzebny ani wystarczający, liczy się przelogowanie.
 
 - [ ] **Step 4: Zbuduj**
 
