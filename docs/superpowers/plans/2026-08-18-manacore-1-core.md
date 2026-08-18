@@ -477,13 +477,18 @@ public interface IManaPool {
 
     double getCurrent();
 
+    /** Podnosi flagę `dirty`, ale tylko gdy nowa wartość faktycznie różni się od dotychczasowej. */
     void setCurrent(double value);
 
     double getProgressionBonus();
 
+    /** Podnosi flagę `dirty`, ale tylko gdy nowa wartość faktycznie różni się od dotychczasowej. */
     void setProgressionBonus(double value);
 
-    /** Ustawiane przez warstwę sieci; oznacza, że klient wymaga odświeżenia. */
+    /**
+     * Flagę podnoszą settery przy każdej realnej zmianie wartości.
+     * Warstwa sieci wyłącznie ją zeruje, po wysłaniu synchronizacji do klienta.
+     */
     boolean isDirty();
 
     void setDirty(boolean dirty);
@@ -622,17 +627,19 @@ public class ManaPoolProvider implements ICapabilitySerializable<NBTTagCompound>
                 .writeNBT(ManaCapabilities.MANA_POOL, this.instance, null);
     }
 
+    /**
+     * Odczyt idzie przez settery, więc świeżo wczytany gracz zostaje oznaczony jako `dirty`.
+     * To jest celowe: po wczytaniu z dysku klient i tak wymaga synchronizacji.
+     */
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
         ManaCapabilities.MANA_POOL.getStorage()
                 .readNBT(ManaCapabilities.MANA_POOL, this.instance, null, nbt);
     }
-
-    public IManaPool getInstance() {
-        return this.instance;
-    }
 }
 ```
+
+> Bez `getInstance()` — dostęp do puli idzie wyłącznie przez `ManaCapabilities.get(player)`, czyli oficjalne API capability. Dodatkowy getter na providerze byłby drugą, równoległą drogą do tych samych danych i martwym kodem.
 
 - [ ] **Step 5: Uchwyt capability i rejestracja**
 
@@ -1550,7 +1557,7 @@ public final class ManaAPI {
     }
 
     public static void add(@Nullable EntityPlayer player, double amount) {
-        if (player == null || player.world.isRemote || amount <= 0.0D) {
+        if (player == null || player.world.isRemote || amount <= 0.0D || !isFinite(amount)) {
             return;
         }
         IManaPool pool = ManaCapabilities.get(player);
@@ -1563,7 +1570,7 @@ public final class ManaAPI {
     }
 
     public static void setMana(@Nullable EntityPlayer player, double value) {
-        if (player == null || player.world.isRemote) {
+        if (player == null || player.world.isRemote || !isFinite(value)) {
             return;
         }
         IManaPool pool = ManaCapabilities.get(player);
@@ -1576,7 +1583,7 @@ public final class ManaAPI {
 
     /** Doklada trwala progresje, twardo ograniczona configowym sufitem. */
     public static void addProgression(@Nullable EntityPlayer player, double amount) {
-        if (player == null || player.world.isRemote || amount <= 0.0D) {
+        if (player == null || player.world.isRemote || amount <= 0.0D || !isFinite(amount)) {
             return;
         }
         IManaPool pool = ManaCapabilities.get(player);
@@ -1620,8 +1627,20 @@ public final class ManaAPI {
             ManaNetwork.sync((EntityPlayerMP) player);
         }
     }
+
+    /**
+     * Bariera przeciw NaN i nieskonczonosciom. Java 8 nie ma Double.isFinite w wersji,
+     * ktora chcemy tu miec jawna, wiec sprawdzamy oba warunki wprost.
+     */
+    private static boolean isFinite(double value) {
+        return !Double.isNaN(value) && !Double.isInfinite(value);
+    }
 }
 ```
+
+> 🚨 **Dlaczego bariera na `NaN` stoi akurat tutaj, a nie w setterach capability.** `ManaPool.setCurrent` podnosi flagę `dirty` przez porównanie `this.current != value`. Dla `NaN` to porównanie jest **zawsze prawdziwe** (`NaN != NaN`), więc jedna skażona wartość zamieniłaby throttling synchronizacji w stały spam pakietów co tick — i to bez żadnego widocznego objawu poza ruchem sieciowym. `ManaAPI` jest jedyną drogą, którą obce mody (mosty z Planu 2) piszą do puli, więc bariera tutaj zamyka całe wejście, zamiast rozsypywać walidację po setterach.
+>
+> 🚨 **Nie licz na to, że `amount <= 0.0D` odfiltruje `NaN` — jest dokładnie odwrotnie.** Każde porównanie z `NaN` jest fałszywe, więc `NaN <= 0.0` to `false`, metoda **nie** wychodzi wcześniej i skażona wartość leci dalej. Dlatego `add`, `addProgression` i `setMana` mają jawne `!isFinite(...)` obok warunku na znak. To jest ten rodzaj pułapki, który wygląda na obsłużony i nie jest.
 
 - [ ] **Step 2: Komenda debugowa**
 
