@@ -2,9 +2,10 @@
   {
     "modid": "manacore",
     "name": "Mana Core",
-    "description": "Zunifikowana pula many gracza.",
+    "description": "Unified player mana pool with bridges to Electroblob's Wizardry and Trinkets and Baubles.",
     "version": "0.1.0",
     "mcversion": "1.12.2",
-    "authorList": ["spege"]
+    "authorList": ["Isuthhh"],
+    "dependencies": []
   }
 ]

@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(modid = ManaCoreMod.MODID, name = ManaCoreMod.NAME, version = ManaCoreMod.VERSION,
-        acceptedMinecraftVersions = "[1.12.2]")
+        acceptableRemoteVersions = "*")
 public class ManaCoreMod {
 
     public static final String MODID = "manacore";
