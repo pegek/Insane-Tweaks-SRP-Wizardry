@@ -52,6 +52,8 @@ public final class ManaAttributes {
         EntityPlayer player = (EntityPlayer) event.getEntity();
         if (player.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
             player.getAttributeMap().registerAttribute(MAX_MANA);
+            player.getEntityAttribute(MAX_MANA)
+                    .setBaseValue(com.spege.manacore.config.ManaCoreConfig.pool.baseMaxMana);
         }
     }
 
