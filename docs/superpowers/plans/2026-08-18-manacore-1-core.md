@@ -10,6 +10,8 @@
 
 **Źródło prawdy:** [spec 2026-08-18-manacore-design.md](../specs/2026-08-18-manacore-design.md). Przy każdej rozbieżności wygrywa spec.
 
+🚨 **Komentarze i javadoc w kodzie piszemy PO ANGIELSKU.** Taka jest konwencja całego repozytorium — sprawdź `tombtweaks`, `enchanteraser`, `srpwizmixins`. Bloki kodu w tym planie mają komentarze po polsku, bo plan jest po polsku; **przy przepisywaniu ich do plików źródłowych przetłumacz komentarze na angielski.** Treść i sens zostają bez zmian, tłumaczy się tylko język.
+
 ---
 
 ## Struktura plików
@@ -1145,21 +1147,48 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
+/**
+ * Kanal wozi WYLACZNIE `current`. Maksimum synchronizuje Forge sam, bo atrybut MAX_MANA
+ * ma setShouldWatch(true) - nie dokladaj tu drugiego pakietu na maksimum.
+ *
+ * Dwie metody, dwa kontrakty:
+ *  - syncNow      - surowe "wyslij teraz", bezwarunkowo. WOLAJACY odpowiada za to,
+ *                   zeby nie robic tego co tick. Dla logowania, respawnu, zmiany wymiaru.
+ *  - syncIfDirty  - bezpieczne do wolania czesto: samo sie wycofuje, gdy nie ma czego wyslac.
+ */
 public final class ManaNetwork {
 
-    public static final SimpleNetworkWrapper CHANNEL =
+    private static final SimpleNetworkWrapper CHANNEL =
             NetworkRegistry.INSTANCE.newSimpleChannel(ManaCoreMod.MODID);
 
     private ManaNetwork() {
     }
 
     public static void register() {
+        // Dyskryminator 0 nalezy do PacketManaSync. Kolejny pakiet w tym kanale musi dostac 1 -
+        // identyfikatory musza sie zgadzac po obu stronach, inaczej kanal sie rozjezdza.
         CHANNEL.registerMessage(PacketManaSync.Handler.class, PacketManaSync.class, 0, Side.CLIENT);
     }
 
-    public static void sync(EntityPlayerMP player) {
+    /** Wysyla bezwarunkowo. Nie wolaj tego co tick - patrz syncIfDirty. */
+    public static void syncNow(EntityPlayerMP player) {
         IManaPool pool = ManaCapabilities.get(player);
         if (pool == null) {
+            ManaCoreMod.LOGGER.debug("[ManaCore] syncNow: brak capability puli dla {}", player.getName());
+            return;
+        }
+        CHANNEL.sendTo(new PacketManaSync(pool.getCurrent()), player);
+        pool.setDirty(false);
+    }
+
+    /** Wysyla tylko gdy pula faktycznie sie zmienila. Bezpieczne do wolania okresowo. */
+    public static void syncIfDirty(EntityPlayerMP player) {
+        IManaPool pool = ManaCapabilities.get(player);
+        if (pool == null) {
+            ManaCoreMod.LOGGER.debug("[ManaCore] syncIfDirty: brak capability puli dla {}", player.getName());
+            return;
+        }
+        if (!pool.isDirty()) {
             return;
         }
         CHANNEL.sendTo(new PacketManaSync(pool.getCurrent()), player);
@@ -1167,6 +1196,8 @@ public final class ManaNetwork {
     }
 }
 ```
+
+> 🚨 **Dlaczego dwie metody, a nie jedna z flagą.** Throttling nie może być umową ustną rozproszoną po miejscach wywołania — a dokładnie tym był, dopóki istniało jedno `sync()`. Most do Electroblob's Wizardry z Planu 2 pobiera manę za czar ciągły **co tick** (`ItemWand.onUsingTick` → `cast()` → `Post` co tick), więc bezwarunkowa synchronizacja w `ManaAPI` dałaby pakiet na gracza na tick przez cały czas kanałowania. Nazwa metody ma tę różnicę pokazywać w miejscu wywołania, a nie ukrywać w parametrze.
 
 - [ ] **Step 4: Zawołaj rejestrację z `preInit`**
 
@@ -1284,7 +1315,9 @@ public final class ManaCapabilityHandler {
             return;
         }
         ManaAttributes.refreshProgressionModifier(player);
-        ManaNetwork.sync((EntityPlayerMP) player);
+        // syncNow, nie syncIfDirty: przy wejsciu do swiata klient MUSI dostac wartosc,
+        // nawet jesli pula nie zmienila sie od ostatniego zapisu.
+        ManaNetwork.syncNow((EntityPlayerMP) player);
     }
 }
 ```
@@ -1363,8 +1396,8 @@ public final class ManaRegenHandler {
             pool.setCurrent(ManaMath.afterRegen(pool.getCurrent(), max, perTick));
         }
 
-        if (pool.isDirty() && player.ticksExisted % SYNC_INTERVAL_TICKS == 0) {
-            ManaNetwork.sync((EntityPlayerMP) player);
+        if (player.ticksExisted % SYNC_INTERVAL_TICKS == 0) {
+            ManaNetwork.syncIfDirty((EntityPlayerMP) player);
         }
     }
 }
@@ -1584,6 +1617,26 @@ public final class ManaAPI {
         return true;
     }
 
+    /**
+     * Jak `spend`, ale BEZ natychmiastowej synchronizacji - zostawia pule oznaczona jako dirty
+     * i pozwala okresowemu `syncIfDirty` z handlera tickow ja dosłać (do pół sekundy pozniej).
+     *
+     * Dla scieżek powtarzanych co tick, przede wszystkim czarow ciaglych EBW: bezwarunkowa
+     * synchronizacja dalaby tam pakiet na gracza na tick przez caly czas kanalowania.
+     * Do dyskretnych akcji uzywaj zwyklego `spend` - gracz ma zobaczyc ubytek natychmiast.
+     */
+    public static boolean spendQuiet(@Nullable EntityPlayer player, double amount) {
+        if (player == null || player.world.isRemote || !isFinite(amount)) {
+            return false;
+        }
+        IManaPool pool = ManaCapabilities.get(player);
+        if (pool == null || pool.getCurrent() < amount) {
+            return false;
+        }
+        pool.setCurrent(ManaMath.afterSpend(pool.getCurrent(), amount));
+        return true;
+    }
+
     public static void add(@Nullable EntityPlayer player, double amount) {
         if (player == null || player.world.isRemote || amount <= 0.0D || !isFinite(amount)) {
             return;
@@ -1650,9 +1703,15 @@ public final class ManaAPI {
         addMaxModifier(player, id, "manacore.removed", 0.0D, 0);
     }
 
+    /**
+     * 🚨 Uzywa syncNow, czyli wysyla BEZWARUNKOWO. To jest wlasciwe dla dyskretnych akcji
+     * (wypicie mikstury, jeden rzucony czar, komenda), ale zabojcze dla scieżek powtarzanych
+     * co tick. Most do EBW z Planu 2 pobiera mane za czar ciagly co tick - tam koszt ma isc
+     * przez sciezke oznaczajaca pule jako dirty, a nie przez ta metode.
+     */
     private static void syncNow(EntityPlayer player) {
         if (player instanceof EntityPlayerMP) {
-            ManaNetwork.sync((EntityPlayerMP) player);
+            ManaNetwork.syncNow((EntityPlayerMP) player);
         }
     }
 

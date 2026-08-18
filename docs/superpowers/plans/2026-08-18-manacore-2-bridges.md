@@ -10,6 +10,8 @@
 
 **Tech Stack:** Java 8, Forge 1.12.2-14.23.5.2860, MixinBooter 7.1 (trasa późna, `ILateMixinLoader`), EBW 4.3.19 z CurseMaven, TaB deobfuskowany z `libs/`, JUnit 4.12.
 
+🚨 **Komentarze i javadoc w kodzie piszemy PO ANGIELSKU.** Taka jest konwencja całego repozytorium — sprawdź `tombtweaks`, `enchanteraser`, `srpwizmixins`. Bloki kodu w tym planie mają komentarze po polsku, bo plan jest po polsku; **przy przepisywaniu ich do plików źródłowych przetłumacz komentarze na angielski.** Treść i sens zostają bez zmian, tłumaczy się tylko język.
+
 ---
 
 ## Fakty z bajtkodu, na których stoi ten plan
@@ -822,8 +824,17 @@ public class EbwSpellCostHandler {
                         player.getItemInUseMaxCount())
                 : SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers());
 
+        // 🚨 Czary ciagle: `Post` leci CO TICK, wiec `spend` z natychmiastowa synchronizacja
+        // dalby pakiet na gracza na tick przez caly czas kanalowania. `spendQuiet` odejmuje
+        // i zostawia pule dirty - okresowy `syncIfDirty` z handlera regenu doslе ja w ciagu
+        // pol sekundy. Dla czarow jednorazowych zostaje zwykly `spend`, zeby gracz zobaczyl
+        // ubytek natychmiast po rzuceniu.
         if (cost > 0.0D) {
-            ManaAPI.spend(player, cost);
+            if (continuous) {
+                ManaAPI.spendQuiet(player, cost);
+            } else {
+                ManaAPI.spend(player, cost);
+            }
         }
 
         // Refund ze `storage` - tylko dla czarow jednorazowych. Dla ciaglych rozlicza go Finish,
