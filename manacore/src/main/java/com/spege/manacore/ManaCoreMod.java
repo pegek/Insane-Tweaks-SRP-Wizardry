@@ -26,6 +26,7 @@ public class ManaCoreMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         com.spege.manacore.cap.ManaCapabilities.register();
+        com.spege.manacore.net.ManaNetwork.register();
         proxy.preInit(event);
         LOGGER.info("[ManaCore] preInit done");
     }
