@@ -747,7 +747,13 @@ public final class ManaAttributes {
             .setDescription("Max Mana")
             .setShouldWatch(true);
 
-    /** Stale UUID modyfikatora progresji - musi byc stabilne miedzy sesjami. */
+    /**
+     * NIE ZMIENIAJ TEJ STALEJ. Modyfikator jest identyfikowany wylacznie po tym UUID,
+     * a wanilla serializuje AttributeMap RAZEM z modyfikatorami do NBT gracza.
+     * Zmiana tej wartosci nie usunie starego modyfikatora z istniejacych swiatow -
+     * zostanie osierocony i dalej doliczany, a nowy kod dolozy drugi ze swiezym UUID.
+     * Skutek: trwale podwojony bonus, nie do naprawienia bez ingerencji w zapis.
+     */
     private static final UUID PROGRESSION_MODIFIER_ID =
             UUID.fromString("6b7a1d54-3f6c-4a0e-9a1a-2f9c5b8e7d10");
     private static final String PROGRESSION_MODIFIER_NAME = "manacore.progression";
@@ -760,9 +766,9 @@ public final class ManaAttributes {
         if (!(event.getEntity() instanceof EntityPlayer)) {
             return;
         }
-        EntityLivingBase living = (EntityLivingBase) event.getEntity();
-        if (living.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
-            living.getAttributeMap().registerAttribute(MAX_MANA);
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+        if (player.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
+            player.getAttributeMap().registerAttribute(MAX_MANA);
         }
     }
 
@@ -774,9 +780,12 @@ public final class ManaAttributes {
         return instance == null ? 0.0D : instance.getAttributeValue();
     }
 
-    /** Przelicza modyfikator progresji na podstawie zapisanej w capability wartosci. */
+    /**
+     * Przelicza modyfikator progresji na podstawie zapisanej w capability wartosci.
+     * Bezpieczna do wolania z dowolnej strony - po stronie klienta nie robi nic.
+     */
     public static void refreshProgressionModifier(@Nullable EntityPlayer player) {
-        if (player == null) {
+        if (player == null || player.world.isRemote) {
             return;
         }
         IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
@@ -954,8 +963,8 @@ public class ManaCoreConfig {
 W `ManaAttributes.onEntityConstructing`, po `registerAttribute`, ustaw bazę z configu:
 
 ```java
-            living.getAttributeMap().registerAttribute(MAX_MANA);
-            living.getEntityAttribute(MAX_MANA)
+            player.getAttributeMap().registerAttribute(MAX_MANA);
+            player.getEntityAttribute(MAX_MANA)
                     .setBaseValue(com.spege.manacore.config.ManaCoreConfig.pool.baseMaxMana);
 ```
 
@@ -1641,6 +1650,15 @@ public final class ManaAPI {
 > 🚨 **Dlaczego bariera na `NaN` stoi akurat tutaj, a nie w setterach capability.** `ManaPool.setCurrent` podnosi flagę `dirty` przez porównanie `this.current != value`. Dla `NaN` to porównanie jest **zawsze prawdziwe** (`NaN != NaN`), więc jedna skażona wartość zamieniłaby throttling synchronizacji w stały spam pakietów co tick — i to bez żadnego widocznego objawu poza ruchem sieciowym. `ManaAPI` jest jedyną drogą, którą obce mody (mosty z Planu 2) piszą do puli, więc bariera tutaj zamyka całe wejście, zamiast rozsypywać walidację po setterach.
 >
 > 🚨 **Nie licz na to, że `amount <= 0.0D` odfiltruje `NaN` — jest dokładnie odwrotnie.** Każde porównanie z `NaN` jest fałszywe, więc `NaN <= 0.0` to `false`, metoda **nie** wychodzi wcześniej i skażona wartość leci dalej. Dlatego `add`, `addProgression` i `setMana` mają jawne `!isFinite(...)` obok warunku na znak. To jest ten rodzaj pułapki, który wygląda na obsłużony i nie jest.
+
+> 🚨 **Po napisaniu `addMaxModifier` przepisz `ManaAttributes.refreshProgressionModifier`, żeby go wołało** — zamiast trzymać drugą, niezależną implementację tego samego wzorca remove-then-apply. Dziś obie istnieją osobno, z subtelnie różnym warunkiem aplikacji (`bonus > 0.0D` tam, `amount != 0.0D` tutaj), a to jest fundament, na którym stanie siedem przyszłych źródeł bonusu. Docelowo ciało tamtej metody to jedna linia:
+>
+> ```java
+>         ManaAPI.addMaxModifier(player, PROGRESSION_MODIFIER_ID, PROGRESSION_MODIFIER_NAME,
+>                 pool.getProgressionBonus(), 0);
+> ```
+>
+> Uwaga na kierunek zależności: `ManaAttributes` zacznie wtedy zależeć od `api`, a `ManaAPI` już zależy od `attr`. To cykl między pakietami — jeśli okaże się uciążliwy, przenieś wspólną logikę modyfikatora do prywatnej metody w `ManaAttributes` i niech `ManaAPI` woła ją, a nie odwrotnie.
 
 - [ ] **Step 2: Komenda debugowa**
 
