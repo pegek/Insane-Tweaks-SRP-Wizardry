@@ -21,9 +21,16 @@ public class ManaMathTest {
     }
 
     @Test
+    public void clampNaGranicachZakresu() {
+        assertEquals(0.0D, ManaMath.clamp(0.0D, 0.0D, 10.0D), EPS);
+        assertEquals(10.0D, ManaMath.clamp(10.0D, 0.0D, 10.0D), EPS);
+    }
+
+    @Test
     public void wydatekNieSchodziPonizejZera() {
         assertEquals(0.0D, ManaMath.afterSpend(3.0D, 10.0D), EPS);
         assertEquals(7.0D, ManaMath.afterSpend(10.0D, 3.0D), EPS);
+        assertEquals(0.0D, ManaMath.afterSpend(5.0D, 5.0D), EPS);
     }
 
     @Test
@@ -40,9 +47,17 @@ public class ManaMathTest {
 
     @Test
     public void progresjaZatrzymujeSieNaSuficie() {
-        assertEquals(4.0D, ManaMath.afterProgressionGain(3.5D, 1.0D, 4.0D), EPS);
-        assertEquals(4.0D, ManaMath.afterProgressionGain(4.0D, 1.0D, 4.0D), EPS);
-        assertEquals(1.5D, ManaMath.afterProgressionGain(1.0D, 0.5D, 4.0D), EPS);
+        assertEquals(4.0D, ManaMath.afterProgressionGain(3.5D, 4.0D, 1.0D), EPS);
+        assertEquals(4.0D, ManaMath.afterProgressionGain(4.0D, 4.0D, 1.0D), EPS);
+        assertEquals(1.5D, ManaMath.afterProgressionGain(1.0D, 4.0D, 0.5D), EPS);
+    }
+
+    @Test
+    public void progresjaNieObnizaJuzZbankowanejWartosci() {
+        // Administrator obniżył sufit w configu po tym, jak gracz nabił progresję.
+        // Dorobek ma zostać nietknięty, a nie zostać obcięty w dół.
+        assertEquals(60.0D, ManaMath.afterProgressionGain(60.0D, 50.0D, 5.0D), EPS);
+        assertEquals(50.0D, ManaMath.afterProgressionGain(50.0D, 50.0D, 5.0D), EPS);
     }
 
     @Test
