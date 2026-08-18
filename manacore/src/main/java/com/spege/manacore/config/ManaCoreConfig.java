@@ -20,12 +20,23 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Config(modid = ManaCoreMod.MODID, name = ManaCoreMod.MODID, category = "")
 public class ManaCoreConfig {
 
-    public static PoolCategory pool = new PoolCategory();
-    public static RegenCategory regen = new RegenCategory();
-    public static HudCategory hud = new HudCategory();
+    @Config.Name("pool")
+    @Config.LangKey("config.manacore.category.pool")
+    @Config.Comment("Player mana pool: base maximum, hard cap and progression tunables.")
+    public static final PoolCategory pool = new PoolCategory();
+
+    @Config.Name("regen")
+    @Config.LangKey("config.manacore.category.regen")
+    @Config.Comment("Passive mana regeneration tunables.")
+    public static final RegenCategory regen = new RegenCategory();
+
+    @Config.Name("hud")
+    @Config.LangKey("config.manacore.category.hud")
+    @Config.Comment("Mana HUD display toggles and appearance.")
+    public static final HudCategory hud = new HudCategory();
 
     @Mod.EventBusSubscriber(modid = ManaCoreMod.MODID)
-    public static class EventHandler {
+    private static class EventHandler {
 
         @SubscribeEvent
         public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {

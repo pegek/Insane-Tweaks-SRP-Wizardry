@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import com.spege.manacore.ManaCoreMod;
 import com.spege.manacore.cap.IManaPool;
 import com.spege.manacore.cap.ManaCapabilities;
+import com.spege.manacore.config.ManaCoreConfig;
 
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttribute;
@@ -14,6 +15,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -52,8 +54,24 @@ public final class ManaAttributes {
         EntityPlayer player = (EntityPlayer) event.getEntity();
         if (player.getAttributeMap().getAttributeInstance(MAX_MANA) == null) {
             player.getAttributeMap().registerAttribute(MAX_MANA);
-            player.getEntityAttribute(MAX_MANA)
-                    .setBaseValue(com.spege.manacore.config.ManaCoreConfig.pool.baseMaxMana);
+        }
+    }
+
+    /**
+     * Wanilla serializuje baze atrybutu do NBT gracza i przywraca ja przy wczytaniu, wiec
+     * wartosc ustawiona w EntityConstructing zostaje nadpisana zapisem sprzed zmiany configu.
+     * Bez tego handlera zmiana `baseMaxMana` nie dotarlaby NIGDY do istniejacej postaci -
+     * tylko do zupelnie nowej. Ustawiamy baze bezwarunkowo, po wczytaniu.
+     */
+    @SubscribeEvent
+    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
+        if (event.getWorld().isRemote || !(event.getEntity() instanceof EntityPlayer)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+        IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
+        if (instance != null) {
+            instance.setBaseValue(ManaCoreConfig.pool.baseMaxMana);
         }
     }
 
