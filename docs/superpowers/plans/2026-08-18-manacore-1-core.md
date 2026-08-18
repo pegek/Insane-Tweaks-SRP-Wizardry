@@ -1277,6 +1277,17 @@ public final class ManaCapabilityHandler {
      * Klonowanie przy smierci i przy przejsciu przez End. `progressionBonus` przezywa ZAWSZE -
      * trwaly dorobek nie moze przepasc przez jeden zgon. `current` zeruje sie wedlug configu,
      * ale tylko przy prawdziwej smierci (wasDeath), nie przy powrocie z Endu.
+     *
+     * Modyfikator atrybutu jest tu CELOWO nieprzeliczany. Dziala to wylacznie dzieki gwarancji
+     * kolejnosci: PlayerEvent.Clone leci wewnatrz PlayerList.respawnPlayer, a PlayerRespawnEvent
+     * bezwarunkowo na koncu TEJ SAMEJ synchronicznej metody - wiec refreshAndSync przeliczy
+     * modyfikator chwile pozniej, w tej samej turze. Usuniecie ktoregos z wolajacych
+     * refreshAndSync jako "zbednego" cicho to zepsuje.
+     *
+     * Znane ograniczenie: to zdarzenie pokrywa wylacznie waniliowa sciezke Forge. Mod
+     * rekonstruujacy EntityPlayerMP poza PlayerList.respawnPlayer ominie je calkowicie -
+     * wtedy pula przezyje tylko wtedy, gdy tamten mod kopiuje pelne NBT encji (ForgeCaps
+     * przeniosa dane same przez ManaPoolProvider.deserializeNBT), a nie wybrane pola.
      */
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
