@@ -53,6 +53,12 @@ public final class ManaRegenHandler {
             pool.setCurrent(ManaMath.afterRegen(pool.getCurrent(), max, perTick));
         }
 
+        // Deliberately outside the regen guard above: this is the only periodic flush of dirty
+        // pool state to the client, so it must run even when regen is switched off. Writers that
+        // change the pool without syncing themselves - notably the per-tick upkeep of a channelled
+        // spell, which subtracts mana and leaves the pool dirty rather than sending a packet every
+        // tick - depend on this call to deliver their value. An "optimisation" that returns early
+        // when regen is disabled would silently stop those updates from ever reaching the HUD.
         if (player.ticksExisted % SYNC_INTERVAL_TICKS == 0) {
             ManaNetwork.syncIfDirty((EntityPlayerMP) player);
         }
