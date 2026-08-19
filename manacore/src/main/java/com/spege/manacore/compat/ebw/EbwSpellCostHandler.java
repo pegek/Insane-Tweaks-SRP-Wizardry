@@ -75,7 +75,7 @@ public class EbwSpellCostHandler {
         EntityPlayer player = (EntityPlayer) event.getCaster();
         double cost = SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers());
 
-        if (ManaAPI.getMana(player) < cost) {
+        if (!ManaAPI.hasMana(player, cost)) {
             event.setCanceled(true);
             if (!player.world.isRemote) {
                 player.sendStatusMessage(new TextComponentTranslation("manacore.message.not_enough"), true);
@@ -92,7 +92,7 @@ public class EbwSpellCostHandler {
         double cost = SpellCostResolver.resolveContinuousTick(
                 player, event.getSpell(), event.getModifiers(), event.getCount());
 
-        if (cost > 0.0D && ManaAPI.getMana(player) < cost) {
+        if (cost > 0.0D && !ManaAPI.hasMana(player, cost)) {
             event.setCanceled(true);
         }
     }

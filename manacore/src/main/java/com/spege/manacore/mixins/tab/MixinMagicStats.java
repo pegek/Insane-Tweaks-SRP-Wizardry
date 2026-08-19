@@ -95,4 +95,25 @@ public abstract class MixinMagicStats {
             cir.setReturnValue(Boolean.valueOf(TabManaAccess.needMana(owner)));
         }
     }
+
+    /**
+     * Stops Trinkets and Baubles from running its own per-tick mana upkeep once we own the pool.
+     *
+     * <p>This one is not about presentation, it fixes a real double-count. TaB's {@code onUpdate}
+     * regenerates mana by calling {@code addMana(...)}, and every one of those calls is redirected
+     * by the injections above into <em>our</em> pool - so leaving it running would give the player
+     * two regeneration sources stacked on top of each other: ManaCore's own tick handler plus this
+     * one, both filling the same pool. It also calls {@code refillMana} and {@code setMana}, which
+     * land in our pool for the same reason.
+     *
+     * <p>Cancelling the whole method is safe because this capability is TaB's mana subsystem and
+     * nothing else: once ManaCore is the source of truth, its update loop has no work left that is
+     * still meaningful. TaB's own mana HUD is switched off through TaB's config rather than here.
+     */
+    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, remap = false)
+    private void manacore$onUpdate(CallbackInfo ci) {
+        if (TabManaAccess.handles(manacore$owner())) {
+            ci.cancel();
+        }
+    }
 }

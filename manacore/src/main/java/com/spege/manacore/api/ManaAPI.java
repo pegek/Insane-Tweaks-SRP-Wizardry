@@ -38,7 +38,15 @@ public final class ManaAPI {
         return ManaAttributes.getMaxMana(player);
     }
 
+    /**
+     * Whether the player can afford {@code amount}. Creative players always can, matching
+     * {@link #spendQuiet} - gate on this rather than comparing {@link #getMana} yourself, or the
+     * gate and the charge will disagree in creative mode.
+     */
     public static boolean hasMana(@Nullable EntityPlayer player, double amount) {
+        if (player != null && player.capabilities.isCreativeMode) {
+            return true;
+        }
         return getMana(player) >= amount;
     }
 
@@ -63,6 +71,14 @@ public final class ManaAPI {
     public static boolean spendQuiet(@Nullable EntityPlayer player, double amount) {
         if (player == null || player.world.isRemote || !isFinite(amount)) {
             return false;
+        }
+        // Creative players never pay. Both mods this bridges to exempt them in their own spend
+        // paths - Trinkets and Baubles checks isCreativePlayer() inside spendMana, and our
+        // handlers replace those paths wholesale - so without this the bridges would be strictly
+        // more restrictive in creative than the mods they replace. Reported as success: the
+        // caster gets the spell, the pool is simply not touched.
+        if (player.capabilities.isCreativeMode) {
+            return true;
         }
         IManaPool pool = ManaCapabilities.get(player);
         if (pool == null || pool.getCurrent() < amount) {
