@@ -39,6 +39,18 @@ public class ManaCoreMod {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         com.spege.manacore.compat.wizardryutils.WizardryUtilsBridge.init();
+
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("ebwizardry")
+                && com.spege.manacore.config.ManaCoreConfig.ebw.enabled) {
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.manacore.compat.ebw.EbwSpellCostHandler());
+            LOGGER.info("[ManaCore] EBW bridge registered");
+        } else {
+            LOGGER.info("[ManaCore] EBW bridge NOT registered (mod present={}, enabled={})",
+                    Boolean.valueOf(net.minecraftforge.fml.common.Loader.isModLoaded("ebwizardry")),
+                    Boolean.valueOf(com.spege.manacore.config.ManaCoreConfig.ebw.enabled));
+        }
+
         proxy.init(event);
     }
 }
