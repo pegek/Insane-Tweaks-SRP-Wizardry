@@ -4,6 +4,14 @@ import net.minecraftforge.common.config.Config;
 
 public class HudCategory {
 
+    @Config.Comment({
+            "Whether to hide the mana bars other mods draw, so only ManaCore's own bar is shown.",
+            "On by default: once ManaCore owns the pool, a second bar shows the same number twice",
+            "and is simply confusing. Currently this covers Trinkets and Baubles, the only other",
+            "mod in this pack that draws a per-player mana bar; further mods would be added here.",
+            "Works live, no restart."})
+    public boolean hideForeignManaBars = true;
+
     @Config.Comment("Whether to draw the mana bar.")
     public boolean showBar = true;
 
