@@ -396,7 +396,7 @@ wraz z importami `com.spege.manacore.config.categories.EbwCategory` i `...TabCat
 
 ```json
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.8",
   "package": "com.spege.manacore.mixins.ebw",
   "refmap": "",
@@ -412,7 +412,7 @@ wraz z importami `com.spege.manacore.config.categories.EbwCategory` i `...TabCat
 
 ```json
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.8",
   "package": "com.spege.manacore.mixins.tab",
   "refmap": "",
@@ -423,6 +423,12 @@ wraz z importami `com.spege.manacore.config.categories.EbwCategory` i `...TabCat
   ]
 }
 ```
+
+> 🚨 **`"required": false`, a NIE `true` — pierwotny tekst tego planu był tu błędny i wywaliłby grę na starcie.** Przy `required: true` `MixinConfig.prepareMixins` **rethrowuje** brakującą klasę mixina jako fatalny `InvalidMixinException`, i to w fazie `LoaderState.CONSTRUCTING` — czyli crash przy starcie, na długo zanim jakikolwiek mixin próbowałby się do czegokolwiek zaaplikować. Przy `required: false` ten sam błąd tylko loguje i idzie dalej. Ponieważ configi commitujemy przed klasami mixinów, `true` znaczyłoby: każdy, kto ma EBW albo TaB, dostaje crash.
+>
+> Niezależnie od tego stanu przejściowego `false` jest tu **konwencją repo**: wszystkie 20 configów bramkowanych modami używa `false`; jedyne dwa z `true` celują w klasy waniliowe i mają istniejące klasy mixinów.
+>
+> Cena `false` jest realna i CLAUDE.md ją nazywa: mixin, który się nie zaaplikował, **no-opuje po cichu**. Dlatego weryfikacja `cleanmix.log` w zadaniu końcowym nie jest formalnością — jest jedyną rzeczą, która odróżni „działa" od „cicho nie działa".
 
 > `"refmap": ""` jest obowiązkowe — cały repo kompiluje się z `-proc:none`, więc procesor adnotacji mixina nie działa i żaden refmap nie powstaje. Dopasowanie idzie po jawnych nazwach z `remap = false`.
 > `minVersion` **0.8**, nie niżej: konfiguracje deklarujące mniej trafiają na ścieżkę `INJECT_PREPARE_LEGACY`, w której regresja CleanMixa zabiła kiedyś moda `brigo`.
