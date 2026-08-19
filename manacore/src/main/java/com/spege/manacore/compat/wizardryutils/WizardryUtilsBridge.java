@@ -143,10 +143,18 @@ public final class WizardryUtilsBridge {
         if (instance == null) {
             return 1.0D;
         }
-        double value = instance.getAttributeValue();
-        if (Double.isNaN(value)) {
+        double percent = instance.getAttributeValue();
+        if (Double.isNaN(percent)) {
             return 1.0D;
         }
+        // wizardryutils declares its attributes as RangedAttribute(null, name, 100.0, -500.0, MAX),
+        // i.e. the value is a PERCENTAGE whose neutral point is 100, not a multiplier whose neutral
+        // point is 1. Reading it as a multiplier makes every spell cost a hundred times its real
+        // price - which reads as "not enough mana" on a full pool for anything but the cheapest
+        // spells, and is exactly the bug this conversion fixes. Verified against wizardryutils
+        // 1.3.1 by decompiling com.windanesz.wizardryutils.server.Attributes; re-check the default
+        // if that mod is ever updated, because nothing here would notice the neutral point moving.
+        double value = percent / 100.0D;
         if (value < MIN_COST_MULTIPLIER) {
             warnClampedOnce(value, MIN_COST_MULTIPLIER);
             return MIN_COST_MULTIPLIER;
