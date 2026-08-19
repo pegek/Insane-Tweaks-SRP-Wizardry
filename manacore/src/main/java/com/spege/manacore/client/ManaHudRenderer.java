@@ -53,7 +53,13 @@ public class ManaHudRenderer {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) {
             return;
         }
-        if (!ManaCoreConfig.hud.showBar) {
+        // The two switches are independent, which is what gives all four display modes: icons and
+        // numbers, icons only, numbers only, or nothing at all. Bailing out on `showBar` alone -
+        // as this did originally - made "numbers only" impossible to select, because the number is
+        // drawn further down this same method.
+        boolean drawBar = ManaCoreConfig.hud.showBar;
+        boolean drawNumber = ManaCoreConfig.hud.showNumber;
+        if (!drawBar && !drawNumber) {
             return;
         }
 
@@ -81,21 +87,25 @@ public class ManaHudRenderer {
         int left = res.getScaledWidth() / 2 + 91 - rowWidth + ManaCoreConfig.hud.offsetX;
         int top = res.getScaledHeight() - ROW_OFFSET_FROM_BOTTOM + ManaCoreConfig.hud.offsetY;
 
-        int filled = (int) Math.round(fraction * ICON_COUNT);
+        if (drawBar) {
+            int filled = (int) Math.round(fraction * ICON_COUNT);
 
-        GlStateManager.enableBlend();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        mc.getTextureManager().bindTexture(ICONS);
+            GlStateManager.enableBlend();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            mc.getTextureManager().bindTexture(ICONS);
 
-        for (int i = 0; i < ICON_COUNT; i++) {
-            int u = i < filled ? FRAME_FULL_U : FRAME_EMPTY_U;
-            Gui.drawModalRectWithCustomSizedTexture(left + i * ICON_STEP, top, u, 0,
-                    ICON_SIZE, ICON_SIZE, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            for (int i = 0; i < ICON_COUNT; i++) {
+                int u = i < filled ? FRAME_FULL_U : FRAME_EMPTY_U;
+                Gui.drawModalRectWithCustomSizedTexture(left + i * ICON_STEP, top, u, 0,
+                        ICON_SIZE, ICON_SIZE, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            }
+
+            GlStateManager.disableBlend();
         }
 
-        GlStateManager.disableBlend();
-
-        if (ManaCoreConfig.hud.showNumber) {
+        // Kept at the same anchor whether or not the icons are drawn, so switching the bar off
+        // does not also move the readout - the offsets keep meaning the same thing in every mode.
+        if (drawNumber) {
             String text = ((int) Math.floor(current)) + " / " + ((int) Math.floor(max));
             int textX = left + rowWidth - mc.fontRenderer.getStringWidth(text);
             mc.fontRenderer.drawStringWithShadow(text, textX, top - 10, 0x55AAFF);

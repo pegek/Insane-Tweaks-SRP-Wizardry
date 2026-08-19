@@ -20,6 +20,14 @@ public class EbwCategory {
     public boolean useWizardryUtilsAttributes = true;
 
     @Config.Comment({
+            "Whether a higher-tier wand refunds part of a spell's cost. Works live, no restart.",
+            "OFF by default: in play the refund turned out far too strong, and the mechanic is",
+            "under review - the current thinking is to replace it with a fatigue system, where a",
+            "better wand softens the penalty for casting rapidly instead of handing mana back.",
+            "The `refund*` settings below do nothing while this is off."})
+    public boolean refundEnabled = false;
+
+    @Config.Comment({
             "Wand capacity below which the `storage` upgrade grants no refund at all. Works live, no restart.",
             "Setting this above any capacity a wand can actually reach disables the refund entirely,",
             "silently - nothing in game says why it stopped working. Real EBW wand capacities are in",

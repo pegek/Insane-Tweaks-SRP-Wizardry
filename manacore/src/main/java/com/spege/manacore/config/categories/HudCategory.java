@@ -12,10 +12,19 @@ public class HudCategory {
             "Works live, no restart."})
     public boolean hideForeignManaBars = true;
 
-    @Config.Comment("Whether to draw the mana bar.")
+    @Config.Comment({
+            "Whether to draw the row of mana icons. Works live, no restart.",
+            "This and `showNumber` are independent, which is what selects the display mode:",
+            "  both true  - icons with the raw numbers above them",
+            "  bar only   - showBar=true,  showNumber=false",
+            "  numbers    - showBar=false, showNumber=true",
+            "  hidden     - both false"})
     public boolean showBar = true;
 
-    @Config.Comment("Whether to print the number next to the bar.")
+    @Config.Comment({
+            "Whether to print the raw current/maximum figures. Works live, no restart.",
+            "Can be used on its own with `showBar` off - the numbers stay at the same anchor",
+            "either way, so the offsets below mean the same thing in every display mode."})
     public boolean showNumber = true;
 
     @Config.Comment("Horizontal offset of the bar, in GUI pixels.")

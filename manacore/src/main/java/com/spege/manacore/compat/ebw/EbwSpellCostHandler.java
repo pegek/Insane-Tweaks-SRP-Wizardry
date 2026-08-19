@@ -154,7 +154,7 @@ public class EbwSpellCostHandler {
      * prefers the main hand when both happen to hold a wand.
      */
     private void applyRefund(EntityPlayer player, double cost) {
-        if (cost <= 0.0D) {
+        if (!ManaCoreConfig.ebw.refundEnabled || cost <= 0.0D) {
             return;
         }
         ItemStack wandStack = wandStackOf(player);
