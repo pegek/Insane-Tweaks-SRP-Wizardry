@@ -27,7 +27,17 @@ public class PoolCategory {
 
     @Config.Comment("Cap on permanent progression from spellcasting alone. Works live, no restart.")
     @Config.RangeDouble(min = 0.0D, max = 1.0E6D)
-    public double progressionCap = 50.0D;
+    public double castProgressionCap = 50.0D;
+
+    @Config.Comment({
+            "Cap on permanent progression from consumed items alone (Trinkets and Baubles' Mana Crystal",
+            "and anything else that grants permanent maximum through ManaAPI.addItemProgression), no",
+            "matter which mod supplies them. This is a real ceiling on that budget - unlike",
+            "`castProgressionCap`, which is a separate ceiling on the casting budget, the two never add",
+            "past each other because each source has its own field. Works live, no restart."
+    })
+    @Config.RangeDouble(min = 0.0D, max = 1.0E6D)
+    public double itemProgressionCap = 100.0D;
 
     @Config.Comment("Whether `current` resets on death. Permanent progression always survives death. Works live, no restart.")
     public boolean resetCurrentOnDeath = true;

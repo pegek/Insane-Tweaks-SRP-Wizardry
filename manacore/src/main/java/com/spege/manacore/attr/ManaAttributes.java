@@ -85,7 +85,10 @@ public final class ManaAttributes {
     }
 
     /**
-     * Recomputes the progression modifier from the value stored in the capability.
+     * Recomputes the progression modifier from the sum of both progression fields stored in the
+     * capability (cast progression + item progression). They are two independently capped
+     * budgets, but they contribute to one and the same attribute modifier - see the note on
+     * {@link #PROGRESSION_MODIFIER_ID} for why this stays a single modifier rather than two.
      * Safe to call from either side - does nothing on the client side.
      */
     public static void refreshProgressionModifier(@Nullable EntityPlayer player) {
@@ -118,7 +121,7 @@ public final class ManaAttributes {
         }
 
         applyMaxModifier(player, PROGRESSION_MODIFIER_ID, PROGRESSION_MODIFIER_NAME,
-                pool.getProgressionBonus(), 0);
+                pool.getCastProgression() + pool.getItemProgression(), 0);
     }
 
     /**

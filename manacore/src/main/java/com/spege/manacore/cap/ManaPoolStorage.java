@@ -8,13 +8,17 @@ import net.minecraftforge.common.capabilities.Capability;
 public class ManaPoolStorage implements Capability.IStorage<IManaPool> {
 
     static final String KEY_CURRENT = "current";
-    static final String KEY_PROGRESSION = "progression";
+    /** Kept as "progression" (rather than renamed to "castProgression") so the meaning of this
+     * existing save key does not change: it always meant "progression from casting". */
+    static final String KEY_CAST_PROGRESSION = "progression";
+    static final String KEY_ITEM_PROGRESSION = "itemProgression";
 
     @Override
     public NBTBase writeNBT(Capability<IManaPool> capability, IManaPool instance, EnumFacing side) {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setDouble(KEY_CURRENT, instance.getCurrent());
-        tag.setDouble(KEY_PROGRESSION, instance.getProgressionBonus());
+        tag.setDouble(KEY_CAST_PROGRESSION, instance.getCastProgression());
+        tag.setDouble(KEY_ITEM_PROGRESSION, instance.getItemProgression());
         return tag;
     }
 
@@ -25,6 +29,7 @@ public class ManaPoolStorage implements Capability.IStorage<IManaPool> {
         }
         NBTTagCompound tag = (NBTTagCompound) nbt;
         instance.setCurrent(tag.getDouble(KEY_CURRENT));
-        instance.setProgressionBonus(tag.getDouble(KEY_PROGRESSION));
+        instance.setCastProgression(tag.getDouble(KEY_CAST_PROGRESSION));
+        instance.setItemProgression(tag.getDouble(KEY_ITEM_PROGRESSION));
     }
 }

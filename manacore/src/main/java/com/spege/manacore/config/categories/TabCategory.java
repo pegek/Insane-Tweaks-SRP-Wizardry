@@ -16,19 +16,13 @@ public class TabCategory {
     @Config.RangeDouble(min = 0.0D, max = 1000.0D)
     public double unitScale = 1.0D;
 
-    @Config.Comment("How much permanent maximum eating a Mana Crystal adds. Works live, no restart.")
+    @Config.Comment({
+            "How much permanent maximum eating a Mana Crystal adds. Works live, no restart.",
+            "Capped by `pool.itemProgressionCap`, not by anything in this category - that is where",
+            "the ceiling on permanent maximum from consumed items lives, shared across every source."
+    })
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)
     public double manaCrystalMaxBonus = 5.0D;
-
-    @Config.Comment({
-            "Cap on permanent maximum from Mana Crystals alone. Works live, no restart.",
-            "WARNING: this cap is INDEPENDENT of `pool.progressionCap` - both add to the same permanent",
-            "progression field, so neither one is a hard cap on the total. This is a known design debt,",
-            "to be resolved in a later task; this comment is deliberately honest about what the field",
-            "actually does rather than promising an overall ceiling it does not enforce."
-    })
-    @Config.RangeDouble(min = 0.0D, max = 1.0E6D)
-    public double manaCrystalCap = 100.0D;
 
     @Config.Comment("How much current mana a Mana Reagent or Mana Candy restores. Works live, no restart.")
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)

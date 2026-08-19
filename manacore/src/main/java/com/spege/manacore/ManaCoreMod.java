@@ -53,6 +53,17 @@ public class ManaCoreMod {
                     Boolean.valueOf(com.spege.manacore.config.ManaCoreConfig.ebw.enabled));
         }
 
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("xat")
+                && com.spege.manacore.config.ManaCoreConfig.tab.enabled) {
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.manacore.compat.tab.TabManaItemHandler());
+            LOGGER.info("[ManaCore] TaB bridge registered");
+        } else {
+            LOGGER.info("[ManaCore] TaB bridge NOT registered (mod present={}, enabled={})",
+                    Boolean.valueOf(net.minecraftforge.fml.common.Loader.isModLoaded("xat")),
+                    Boolean.valueOf(com.spege.manacore.config.ManaCoreConfig.tab.enabled));
+        }
+
         proxy.init(event);
     }
 }

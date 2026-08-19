@@ -3,7 +3,8 @@ package com.spege.manacore.cap;
 public class ManaPool implements IManaPool {
 
     private double current;
-    private double progressionBonus;
+    private double castProgression;
+    private double itemProgression;
     private boolean dirty;
 
     @Override
@@ -20,14 +21,27 @@ public class ManaPool implements IManaPool {
     }
 
     @Override
-    public double getProgressionBonus() {
-        return this.progressionBonus;
+    public double getCastProgression() {
+        return this.castProgression;
     }
 
     @Override
-    public void setProgressionBonus(double value) {
-        if (this.progressionBonus != value) {
-            this.progressionBonus = value;
+    public void setCastProgression(double value) {
+        if (this.castProgression != value) {
+            this.castProgression = value;
+            this.dirty = true;
+        }
+    }
+
+    @Override
+    public double getItemProgression() {
+        return this.itemProgression;
+    }
+
+    @Override
+    public void setItemProgression(double value) {
+        if (this.itemProgression != value) {
+            this.itemProgression = value;
             this.dirty = true;
         }
     }

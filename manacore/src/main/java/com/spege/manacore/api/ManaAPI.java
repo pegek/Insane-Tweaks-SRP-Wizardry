@@ -112,8 +112,19 @@ public final class ManaAPI {
         syncNow(player);
     }
 
-    /** Adds permanent progression, hard-limited by the configured cap. */
-    public static void addProgression(@Nullable EntityPlayer player, double amount) {
+    /**
+     * Adds permanent progression from spellcasting, hard-limited by
+     * {@code ManaCoreConfig.pool.castProgressionCap}.
+     *
+     * <p>There are two progression-adding methods, {@link #addCastProgression} and
+     * {@link #addItemProgression}, rather than one, because they draw from two independent
+     * budgets with two independent caps ({@code pool.castProgressionCap} and
+     * {@code pool.itemProgressionCap}). A single method with a single cap would let either source
+     * push the total past whichever cap looked at it last - which is exactly the bug this split
+     * fixes: before it, casting and eating a Mana Crystal shared one field and two unrelated
+     * ceilings, so neither ceiling was actually a ceiling on the total.
+     */
+    public static void addCastProgression(@Nullable EntityPlayer player, double amount) {
         if (player == null || player.world.isRemote || !isFinite(amount) || amount <= 0.0D) {
             return;
         }
@@ -121,8 +132,30 @@ public final class ManaAPI {
         if (pool == null) {
             return;
         }
-        pool.setProgressionBonus(ManaMath.afterProgressionGain(
-                pool.getProgressionBonus(), ManaCoreConfig.pool.progressionCap, amount));
+        pool.setCastProgression(ManaMath.afterProgressionGain(
+                pool.getCastProgression(), ManaCoreConfig.pool.castProgressionCap, amount));
+        ManaAttributes.refreshProgressionModifier(player);
+        syncNow(player);
+    }
+
+    /**
+     * Adds permanent progression from consumed items (Trinkets and Baubles' Mana Crystal and
+     * anything else that grants permanent maximum through this method), hard-limited by
+     * {@code ManaCoreConfig.pool.itemProgressionCap}.
+     *
+     * <p>See {@link #addCastProgression} for why this is a separate method with a separate cap
+     * rather than one shared budget.
+     */
+    public static void addItemProgression(@Nullable EntityPlayer player, double amount) {
+        if (player == null || player.world.isRemote || !isFinite(amount) || amount <= 0.0D) {
+            return;
+        }
+        IManaPool pool = ManaCapabilities.get(player);
+        if (pool == null) {
+            return;
+        }
+        pool.setItemProgression(ManaMath.afterProgressionGain(
+                pool.getItemProgression(), ManaCoreConfig.pool.itemProgressionCap, amount));
         ManaAttributes.refreshProgressionModifier(player);
         syncNow(player);
     }

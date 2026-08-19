@@ -37,9 +37,10 @@ public final class ManaCapabilityHandler {
     }
 
     /**
-     * Cloning on death and on passing through the End. `progressionBonus` ALWAYS survives -
-     * permanent progress must not be lost to a single death. `current` resets according to the
-     * config, but only on a real death (wasDeath), not when returning from the End.
+     * Cloning on death and on passing through the End. Both progression fields (cast and item)
+     * ALWAYS survive - permanent progress must not be lost to a single death, regardless of which
+     * source it came from. `current` resets according to the config, but only on a real death
+     * (wasDeath), not when returning from the End.
      * <p>
      * This handler deliberately does NOT call {@link ManaAttributes#refreshProgressionModifier}
      * after copying the bonus into the new pool. That is safe only because of the calling
@@ -67,7 +68,8 @@ public final class ManaCapabilityHandler {
             return;
         }
 
-        newPool.setProgressionBonus(oldPool.getProgressionBonus());
+        newPool.setCastProgression(oldPool.getCastProgression());
+        newPool.setItemProgression(oldPool.getItemProgression());
 
         if (event.isWasDeath() && ManaCoreConfig.pool.resetCurrentOnDeath) {
             newPool.setCurrent(0.0D);

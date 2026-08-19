@@ -123,7 +123,7 @@ public class EbwSpellCostHandler {
             ManaAPI.spend(player, cost);
         }
         applyRefund(player, cost);
-        ManaAPI.addProgression(player, ManaCoreConfig.pool.progressionPerCast);
+        ManaAPI.addCastProgression(player, ManaCoreConfig.pool.progressionPerCast);
     }
 
     @SubscribeEvent
@@ -145,7 +145,7 @@ public class EbwSpellCostHandler {
         double totalCost = perSecondCost * (event.getCount() / 20.0D);
 
         applyRefund(player, totalCost);
-        ManaAPI.addProgression(player, ManaCoreConfig.pool.progressionPerCast);
+        ManaAPI.addCastProgression(player, ManaCoreConfig.pool.progressionPerCast);
     }
 
     /**

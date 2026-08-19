@@ -57,7 +57,11 @@ public class CommandMana extends CommandBase {
         } else if ("add".equals(args[0])) {
             ManaAPI.add(target, amount);
         } else if ("addprog".equals(args[0])) {
-            ManaAPI.addProgression(target, amount);
+            // Kept as an alias for cast progression, matching what this subcommand always did
+            // before the progression field split.
+            ManaAPI.addCastProgression(target, amount);
+        } else if ("addprogitem".equals(args[0])) {
+            ManaAPI.addItemProgression(target, amount);
         } else {
             throw new WrongUsageException(getUsage(sender));
         }
