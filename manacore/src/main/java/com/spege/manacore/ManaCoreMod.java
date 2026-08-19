@@ -44,6 +44,8 @@ public class ManaCoreMod {
                 && com.spege.manacore.config.ManaCoreConfig.ebw.enabled) {
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                     new com.spege.manacore.compat.ebw.EbwSpellCostHandler());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.manacore.compat.ebw.WandUpgradeBridge());
             LOGGER.info("[ManaCore] EBW bridge registered");
         } else {
             LOGGER.info("[ManaCore] EBW bridge NOT registered (mod present={}, enabled={})",
