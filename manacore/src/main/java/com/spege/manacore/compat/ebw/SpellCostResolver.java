@@ -59,14 +59,12 @@ public final class SpellCostResolver {
      * itself distributes it.
      *
      * <p>🚨 Goes through {@link CostMath#continuousSecondCost}, deliberately NOT {@code (int)
-     * Math.round(full)}. Rounding to nearest turns a spell whose per-second cost lands on
-     * something like {@code 0.4} - reachable once our config multiplier is in play, unlike
-     * vanilla EBW - into a permanently free channel ({@code round(0.4) == 0}). Worse, an
-     * infinite {@code full} would round to {@code Long.MAX_VALUE} and then narrow to {@code
-     * int} as {@code -1}: a negative cost, which {@code ManaAPI.spendQuiet} would read as
-     * "add mana" rather than "subtract it". {@link CostMath#continuousSecondCost} rounds up
-     * instead and maps every non-finite or non-positive input to {@code 0}, so a spell that
-     * costs anything per second always costs at least 1 and never goes negative.
+     * Math.round(full)} - see {@link CostMath#continuousSecondCost} for why naive rounding can
+     * silently turn an infinite or fractional cost into a free or negative one.
+     *
+     * <p>Returns {@code double} only for consistency with {@link
+     * com.spege.manacore.api.ManaAPI#spend(EntityPlayer, double)} - the actual result is always
+     * a whole number, never a fractional per-tick cost.
      */
     public static double resolveContinuousTick(@Nullable EntityPlayer player, Spell spell,
             SpellModifiers modifiers, int castingTick) {

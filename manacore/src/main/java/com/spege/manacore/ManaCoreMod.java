@@ -38,6 +38,7 @@ public class ManaCoreMod {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        com.spege.manacore.compat.wizardryutils.WizardryUtilsBridge.init();
         proxy.init(event);
     }
 }

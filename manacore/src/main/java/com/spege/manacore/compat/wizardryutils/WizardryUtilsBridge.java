@@ -21,8 +21,8 @@ import net.minecraftforge.fml.common.Loader;
  * gates it, and the attribute field is looked up by name via {@link Class#forName} /
  * {@link Class#getDeclaredField}. When the mod is absent, or anything about that lookup
  * fails or changes shape upstream, this bridge degrades to a no-op rather than crashing
- * class-load - which is also why the failure path is a caught {@code Exception} plus a
- * logged warning, not a hard requirement.
+ * class-load - which is also why the failure path catches both {@code Exception} and
+ * {@code LinkageError} (see {@link #init()}) plus a logged warning, not a hard requirement.
  *
  * <p>The neutral / "no influence" return value is {@code 1.0}, not {@code 0.0}. This bridge
  * hands back a <em>multiplier</em> that {@link com.spege.manacore.core.CostMath#resolveCost}
@@ -59,30 +59,47 @@ public final class WizardryUtilsBridge {
     private static final double MIN_COST_MULTIPLIER = 0.0D;
     private static final double MAX_COST_MULTIPLIER = 100.0D;
 
-    private static boolean initialized;
     private static boolean available;
     @Nullable
     private static IAttribute costAttribute;
+
+    /**
+     * Guards the one-time "clamped a wizardryutils multiplier" warning below. Deliberately not
+     * {@code volatile} and the write is not synchronized: this is a logging-frequency flag, not
+     * correctness state, so the worst case of a torn/racy write is one duplicate warning line on
+     * a hot path - acceptable, and cheaper than adding synchronization to a per-tick call for a
+     * cosmetic guarantee.
+     */
+    private static boolean clampWarned;
 
     private WizardryUtilsBridge() {
     }
 
     /**
-     * Lazily resolves and caches the {@code COST} attribute the first time it is needed.
-     * Idempotent by design: {@code initialized} is set before any lookup work happens, so a
-     * lookup failure never causes a retry on every subsequent call (which would repeat the
-     * warning log on a hot path). Not synchronized - this class is only ever driven from the
-     * server thread (spell casting is not a multi-threaded path in EBW), so the ordinary
-     * single-writer JMM guarantees here are sufficient; a torn read from another thread would
-     * at worst see the pre-init defaults ({@code available == false}, i.e. the neutral 1.0
-     * path) and try again later, never a crash.
+     * Resolves and caches the {@code COST} attribute. Must be called exactly once, from
+     * {@code ManaCoreMod.init(FMLInitializationEvent)} before {@code proxy.init(event)} runs and
+     * before any spell can be cast - never lazily from {@link #getCostMultiplier}. This class
+     * used to initialize itself lazily on first use, guarded by a plain (non-volatile) boolean
+     * set at the top of the method; that had a real race (one thread could observe the flag
+     * already set while {@code available}/{@code costAttribute} were still mid-write, and would
+     * then read the pre-init defaults permanently, with no retry and no visibility guarantee
+     * between threads) and no verified guarantee that spell casting is single-threaded to begin
+     * with. Explicit, single-call initialization at a known point in mod startup removes the
+     * class of bug instead of patching it.
+     *
+     * <p>Catches both {@code Exception} and {@link LinkageError}. The single-argument {@link
+     * Class#forName(String)} used below runs the target class's static initializer as part of
+     * resolution - and we do not control, and cannot see the source of, whatever {@code
+     * wizardryutils}'s {@code <clinit>} does in a version we have not tested against. If that
+     * initializer throws, or references a class that is not present in some mod combination, the
+     * JVM raises {@link ExceptionInInitializerError} or {@link NoClassDefFoundError} - both
+     * {@code Error}, not {@code Exception}, so a plain {@code catch (Exception e)} would not stop
+     * either one from propagating into the caller (i.e. into an actual spell-cast attempt).
+     * {@code LinkageError} is the common supertype of both, and is caught deliberately narrowly:
+     * not {@code Throwable}, so an {@code OutOfMemoryError} or {@code StackOverflowError} still
+     * propagates rather than being silently swallowed by a soft-integration shim.
      */
-    private static void init() {
-        if (initialized) {
-            return;
-        }
-        initialized = true;
-
+    public static void init() {
         if (!Loader.isModLoaded(MODID)) {
             ManaCoreMod.LOGGER.info("[ManaCore] wizardryutils absent - spell cost attributes not used");
             return;
@@ -102,11 +119,12 @@ public final class WizardryUtilsBridge {
             }
         } catch (Exception e) {
             ManaCoreMod.LOGGER.warn("[ManaCore] failed to bind wizardryutils COST attribute", e);
+        } catch (LinkageError e) {
+            ManaCoreMod.LOGGER.warn("[ManaCore] failed to load wizardryutils COST attribute class", e);
         }
     }
 
     public static boolean isAvailable() {
-        init();
         return available;
     }
 
@@ -114,10 +132,10 @@ public final class WizardryUtilsBridge {
      * Returns the player's current {@code wizardryutils} spell cost multiplier, clamped to
      * {@code [MIN_COST_MULTIPLIER, MAX_COST_MULTIPLIER]}, or {@code 1.0} - "no influence" -
      * when the mod is absent, the attribute could not be bound, or this player carries no
-     * instance of it.
+     * instance of it. Assumes {@link #init()} has already run; stateless otherwise, so it is
+     * safe to call on a hot path (e.g. once per tick for a continuous spell).
      */
     public static double getCostMultiplier(@Nullable EntityPlayer player) {
-        init();
         if (!available || player == null || costAttribute == null) {
             return 1.0D;
         }
@@ -130,11 +148,29 @@ public final class WizardryUtilsBridge {
             return 1.0D;
         }
         if (value < MIN_COST_MULTIPLIER) {
+            warnClampedOnce(value, MIN_COST_MULTIPLIER);
             return MIN_COST_MULTIPLIER;
         }
         if (value > MAX_COST_MULTIPLIER) {
+            warnClampedOnce(value, MAX_COST_MULTIPLIER);
             return MAX_COST_MULTIPLIER;
         }
         return value;
+    }
+
+    /**
+     * Logs a warning the first time a {@code wizardryutils} multiplier is actually clamped, then
+     * stays silent on every later clamp. This method can run once per tick for a continuous
+     * spell, so an unconditional log here would be a real per-tick cost on the server thread;
+     * one-time is enough to tell a pack maintainer that {@code wizardryutils} is handing out an
+     * out-of-range value, without turning that into ongoing log spam.
+     */
+    private static void warnClampedOnce(double value, double clampedTo) {
+        if (clampWarned) {
+            return;
+        }
+        clampWarned = true;
+        ManaCoreMod.LOGGER.warn("[ManaCore] wizardryutils COST multiplier {} out of range - clamped to {}",
+                value, clampedTo);
     }
 }
