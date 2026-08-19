@@ -117,15 +117,42 @@ public final class ManaAttributes {
             return;
         }
 
-        AttributeModifier existing = instance.getModifier(PROGRESSION_MODIFIER_ID);
+        applyMaxModifier(player, PROGRESSION_MODIFIER_ID, PROGRESSION_MODIFIER_NAME,
+                pool.getProgressionBonus(), 0);
+    }
+
+    /**
+     * Installs or replaces one max-mana modifier, keyed by UUID. This is the single
+     * implementation of the remove-then-apply dance: every source of bonus max mana goes
+     * through here, including the progression bonus above and everything {@code ManaAPI}
+     * exposes to other mods.
+     *
+     * <p>It lives in this class rather than in the API facade so the dependency runs one way
+     * only - the facade calls into the attribute layer, never the reverse - and so there is no
+     * second copy of the logic to drift out of step with this one.
+     *
+     * <p>An amount of zero removes the modifier instead of installing a no-op one, which keeps
+     * a bonus that has fallen to zero from lingering in the player's serialised attribute map.
+     *
+     * @param operation vanilla attribute operation: 0 adds a flat amount, 1 and 2 are the
+     *                  multiplicative forms. Percentage-based sources will want 1 or 2.
+     */
+    public static void applyMaxModifier(@Nullable EntityPlayer player, UUID id, String name,
+            double amount, int operation) {
+        if (player == null || Double.isNaN(amount) || Double.isInfinite(amount)) {
+            return;
+        }
+        IAttributeInstance instance = player.getEntityAttribute(MAX_MANA);
+        if (instance == null) {
+            return;
+        }
+
+        AttributeModifier existing = instance.getModifier(id);
         if (existing != null) {
             instance.removeModifier(existing);
         }
-
-        double bonus = pool.getProgressionBonus();
-        if (bonus > 0.0D) {
-            instance.applyModifier(new AttributeModifier(
-                    PROGRESSION_MODIFIER_ID, PROGRESSION_MODIFIER_NAME, bonus, 0));
+        if (amount != 0.0D) {
+            instance.applyModifier(new AttributeModifier(id, name, amount, operation));
         }
     }
 }

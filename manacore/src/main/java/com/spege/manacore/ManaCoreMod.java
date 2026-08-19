@@ -32,6 +32,11 @@ public class ManaCoreMod {
     }
 
     @Mod.EventHandler
+    public void serverStarting(net.minecraftforge.fml.common.event.FMLServerStartingEvent event) {
+        event.registerServerCommand(new com.spege.manacore.command.CommandMana());
+    }
+
+    @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
     }
