@@ -26,7 +26,11 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
     implementation 'zone.rong:mixinbooter:7.1'
-    // Pakiet `core` nie zawiera ani jednego typu Minecrafta, wiec da sie testowac na golej JVM.
+    // Same coordinate insanetweaks and reskilltweaks use. Do NOT add an EBW jar to libs/.
+    implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
+    // TaB: the mixin names the MagicStats type in its signature, so the jar must be deobfuscated.
+    implementation fg.deobf(files(rootProject.file('libs/Trinkets and Baubles-Forge-1.12.2-0.33.3.jar')))
+    // The `core` package contains no Minecraft types at all, so it can be tested on a plain JVM.
     testImplementation 'junit:junit:4.12'
 }
 

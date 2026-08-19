@@ -1,9 +1,11 @@
 package com.spege.manacore.config;
 
 import com.spege.manacore.ManaCoreMod;
+import com.spege.manacore.config.categories.EbwCategory;
 import com.spege.manacore.config.categories.HudCategory;
 import com.spege.manacore.config.categories.PoolCategory;
 import com.spege.manacore.config.categories.RegenCategory;
+import com.spege.manacore.config.categories.TabCategory;
 
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -34,6 +36,16 @@ public class ManaCoreConfig {
     @Config.LangKey("config.manacore.category.hud")
     @Config.Comment("Mana HUD display toggles and appearance.")
     public static final HudCategory hud = new HudCategory();
+
+    @Config.Name("ebw")
+    @Config.LangKey("config.manacore.category.ebw")
+    @Config.Comment("Electroblob's Wizardry bridge: spell cost hookup and wand upgrade tunables.")
+    public static final EbwCategory ebw = new EbwCategory();
+
+    @Config.Name("tab")
+    @Config.LangKey("config.manacore.category.tab")
+    @Config.Comment("Trinkets and Baubles bridge: mana pool takeover and item tunables.")
+    public static final TabCategory tab = new TabCategory();
 
     @Mod.EventBusSubscriber(modid = ManaCoreMod.MODID)
     private static class EventHandler {
