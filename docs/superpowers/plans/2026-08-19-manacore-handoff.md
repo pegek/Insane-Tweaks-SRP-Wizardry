@@ -71,8 +71,24 @@ Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gra
 - **`xat:mana_candy2/3/4` nie istnieją w rejestrze.** To warianty modelu wybierane przez `ItemMeshDefinition` po rozmiarze stosu; wszystkie to jeden `xat:mana_candy`.
 - **Mixin na klasę rozszerzającą typ kliencki idzie do sekcji `"client"`** configu mixinów, nie `"mixins"` — nawet jeśli sam mixin nie nazywa żadnego typu z `net.minecraft.client`.
 
+## Kierunek do przemyślenia — zmiana zamysłu z 2026-08-19
+
+Po pierwszych testach w grze pojawił się pomysł, żeby **odejść od mnożenia ścieżek zwiększania puli** na rzecz mechaniki zmęczenia. Nie jest to jeszcze decyzja, ale zmienia sens kilku rzeczy już zbudowanych, więc warto go rozważyć przed fazą 6.
+
+**Mniej hooków na `+max mana`.** Spec §10 planował sześć źródeł bonusu (bauble EBW, enchant zbroi, quality z QualityTools, drzewko Reskillable, achievementy, bonusy rasowe). Jeśli pula ma zostać stosunkowo płaska, większość z nich traci rację bytu. Architektura to znosi bez bólu — każde źródło jest jednym `AttributeModifier` przez `ManaAPI.addMaxModifier`, więc rezygnacja to po prostu nienapisanie kodu, a nie usuwanie go.
+
+**Mana exhaustion zamiast refundu z tieru różdżki.** Dziś upgrade `storage` jest przemapowany na procentowy zwrot many po udanym caście (`CostMath.refundFraction`, konfigurowalny w `ebw.refund*`). Propozycja: zastąpić to ograniczeniem tempa — gracz nie może rzucić wielu zaklęć w krótkim czasie, a **wyższy tier różdżki łagodzi debuffy zmęczenia** zamiast zwracać manę.
+
+Co to znaczy dla istniejącego kodu:
+- Refund ze `storage` znika. `CostMath.refundFraction` i cztery pola `ebw.refund*` stają się martwe — do usunięcia, nie do zostawienia jako nieaktywne.
+- Znika też problem opisany wyżej, że `Finish` nie leci przy przerwanym kanałowaniu, bo to właśnie refund i progresja na nim wisiały.
+- Zmęczenie potrzebuje **stanu per gracz z czasem** — czyli nowego pola w capability, obok `current` i dwóch progresji. Format zapisu znów najtańszy do zmiany teraz.
+- Debuffy to naturalne miejsce na integrację z PotionCore, który dotąd nie miał w tym projekcie żadnej roli mimo pierwotnego założenia.
+
+Otwarte pytania, gdyby to wchodziło: czy zmęczenie liczy się od liczby rzuconych czarów, od wydanej many, czy od kosztu ostatniego czaru; czy jest widoczne na HUD osobno, czy jako stan paska; i czy dotyczy też czarów ciągłych, gdzie „liczba rzutów" nie ma sensu.
+
 ## Co dalej
 
-Fazy z §10 specu, nierozpoczęte: normalizacja kosztów między modami (4), agregacja cudzych efektów mana-owych (5), źródła progresji — drzewko Reskillable, achievementy, baubles, enchanty, QualityTools (6), system capów (7).
+Fazy z §10 specu, nierozpoczęte: normalizacja kosztów między modami (4), agregacja cudzych efektów mana-owych (5), źródła progresji — drzewko Reskillable, achievementy, baubles, enchanty, QualityTools (6), system capów (7). **Fazę 6 przemyśleć w świetle sekcji wyżej.**
 
 Przed publikacją: zastąpić roboczą teksturę `bar_mana.png` pożyczoną z `player_mana` własną.
