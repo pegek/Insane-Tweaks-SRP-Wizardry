@@ -1167,9 +1167,9 @@ import xzeroair.trinkets.capabilities.magic.MagicStats;
 @Mixin(value = MagicStats.class, remap = false)
 public abstract class MixinMagicStats {
 
-    /** Wlasciciel statystyk; pole dziedziczone z CapabilityEntityBase. */
+    /** Wlasciciel statystyk; getter dziedziczony z CapabilityEntityBase. */
     private EntityLivingBase manacore$owner() {
-        return ((xzeroair.trinkets.capabilities.CapabilityEntityBase<?, ?>) (Object) this).getObject();
+        return ((xzeroair.trinkets.capabilities.CapabilityEntityBase<?, ?>) (Object) this).getEntity();
     }
 
     @Inject(method = "getMana", at = @At("HEAD"), cancellable = true, remap = false)
@@ -1233,11 +1233,9 @@ public abstract class MixinMagicStats {
 }
 ```
 
-> **Sprawdź nazwę gettera właściciela w `CapabilityEntityBase` przed kompilacją:**
-> ```bash
-> javap -p -cp "libs/Trinkets and Baubles-Forge-1.12.2-0.33.3.jar" xzeroair.trinkets.capabilities.CapabilityEntityBase
-> ```
-> Jeśli metoda nazywa się inaczej niż `getObject()`, popraw `manacore$owner()`. To jedyna linijka w tym mixinie, która zależy od wewnętrznej struktury TaB.
+> ✅ **Zweryfikowane na TaB 0.33.3** (`javap -p ... CapabilityEntityBase`): getter nazywa się **`getEntity()`**, nie `getObject()` — pierwotny tekst tego planu był tu błędny i został poprawiony. Sygnatura to `public E getEntity()` przy `E extends EntityLivingBase`, więc przez wildcard `CapabilityEntityBase<?, ?>` zwraca `EntityLivingBase`.
+>
+> Potwierdzone też, że wszystkie siedem metod z faktu F8 (`getMana`, `setMana`, `addMana`, `spendMana`, `getMaxMana`, `refillMana`, `needMana`) istnieje w 0.33.3 z niezmienionymi sygnaturami. Po kolejnej aktualizacji TaB powtórz oba sprawdzenia — to jedyne dwa miejsca, w których ten mixin zależy od wewnętrznej struktury cudzego moda.
 
 - [ ] **Step 4: Wyłącz pasek TaB w configu instancji**
 
