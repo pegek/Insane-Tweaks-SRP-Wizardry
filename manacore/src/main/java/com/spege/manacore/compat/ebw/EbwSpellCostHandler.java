@@ -22,18 +22,19 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * progression happen once in {@code Finish}). This is the central difference from the
  * {@code player_mana} mod this project started from, which spent in {@code Pre}.
  *
- * <p>For a continuous (channelled) spell, {@code ItemWand.onUsingTick} calls {@code cast()} every
- * tick once the charge-up period is over, so {@code Post} fires every tick too. Two consequences
- * follow directly from that:
- * <ul>
- *   <li>Progression must NOT be granted in {@code Post} for continuous spells - it would be
- *   granted once per tick, and ten seconds of channelling at the default
- *   {@code progressionPerCast = 0.05} would add 10 permanent points against a default cap of 50.
- *   Progression is granted once, in {@code Finish}, for both spell kinds.</li>
- *   <li>Continuous upkeep must use {@link ManaAPI#spendQuiet}, never {@link ManaAPI#spend} -
- *   the latter syncs immediately, which would mean one packet per player per tick for the whole
- *   duration of the channel.</li>
- * </ul>
+ * <p>🚨 <b>{@code Post} fires once per cast, NOT once per tick of a channelled spell.</b> An
+ * earlier version of this file asserted the opposite and drove continuous upkeep from here, which
+ * made channelled spells very nearly free. {@code ItemWand.cast} IS called every tick while
+ * channelling, but the event it posts is gated on {@code castingTick == 0} ({@code 48: ifne 72} in
+ * EBW 4.3.19 bytecode). Continuous upkeep therefore lives in {@link EbwContinuousUpkeep}, charged
+ * from the {@code consumeMana} call site that {@code MixinItemWand} redirects - the only per-tick
+ * point that is still downstream of {@code Spell.cast()} returning {@code true}. This handler
+ * charges one-shot spells only.
+ *
+ * <p>Progression is granted once per cast for both spell kinds: in {@code Post} for one-shot
+ * spells and in {@code Finish} for continuous ones. Granting it per tick would add 10 permanent
+ * points for ten seconds of channelling at the default {@code progressionPerCast = 0.05}, against
+ * a default cap of 50.
  *
  * <p>🚨 This handler only READS {@link electroblob.wizardry.util.SpellModifiers}, exactly like
  * {@link SpellCostResolver} - see that class's javadoc for why writing our multiplier back into
@@ -108,13 +109,9 @@ public class EbwSpellCostHandler {
         }
 
         if (event.getSpell().isContinuous) {
-            // Upkeep only. Refund and progression are deferred to Finish (see class javadoc) so
-            // that they are granted once per cast, not once per tick of channelling.
-            double tickCost = SpellCostResolver.resolveContinuousTick(
-                    player, event.getSpell(), event.getModifiers(), player.getItemInUseMaxCount());
-            if (tickCost > 0.0D) {
-                ManaAPI.spendQuiet(player, tickCost);
-            }
+            // Nothing to do: this event only ever fires on the FIRST tick of a channel (see class
+            // javadoc), so upkeep is charged per tick by EbwContinuousUpkeep instead, and the
+            // refund and progression are granted once in Finish.
             return;
         }
 

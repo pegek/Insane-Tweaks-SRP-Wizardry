@@ -4,11 +4,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import com.spege.manacore.compat.ebw.EbwContinuousUpkeep;
 import com.spege.manacore.config.ManaCoreConfig;
 
 import electroblob.wizardry.item.ItemWand;
+import electroblob.wizardry.spell.Spell;
+import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 
 /**
  * Neutralizes {@link ItemWand}'s own mana pool as the payer for spell casts, without ever
@@ -103,17 +108,38 @@ public abstract class MixinItemWand {
         return self.getManaCapacity(stack);
     }
 
+    /**
+     * Redirects the wand's own mana deduction, and doubles as the charging point for a channelled
+     * spell's per-tick upkeep - see {@link EbwContinuousUpkeep} for why the upkeep cannot live in
+     * {@code SpellCastEvent.Post} like every other deduction in this mod.
+     *
+     * <p>The trailing parameters after {@code caster} are {@code cast}'s own arguments, captured
+     * by Mixin: a {@code @Redirect} handler may append the target method's full parameter list to
+     * its signature, in order, and receive them alongside the redirected call's own. That is what
+     * makes {@code castingTick} and {@code modifiers} reachable here. They cannot be recovered any
+     * other way at this point - {@code player.getItemInUseMaxCount()} is the obvious substitute
+     * for the tick and it is wrong, because {@code cast} calls {@code setActiveHand} AFTER this
+     * call site, so on the first tick of a channel it still reads 0.
+     *
+     * <p>This site is server-only without needing a check of its own: EBW guards the whole block
+     * containing it with {@code if(!world.isRemote)} (offsets 72-77 of {@code cast}).
+     */
     @Redirect(
             method = "cast",
             at = @At(value = "INVOKE",
                     target = "Lelectroblob/wizardry/item/ItemWand;consumeMana(Lnet/minecraft/item/ItemStack;ILnet/minecraft/entity/EntityLivingBase;)V"),
             remap = false)
-    private void manacore$skipWandManaConsumption(ItemWand self, ItemStack stack, int cost, EntityLivingBase caster) {
-        if (!ManaCoreConfig.ebw.enabled) {
+    private void manacore$skipWandManaConsumption(ItemWand self, ItemStack stack, int cost, EntityLivingBase caster,
+            ItemStack castStack, Spell castSpell, EntityPlayer castPlayer, EnumHand castHand, int castingTick,
+            SpellModifiers castModifiers) {
+        if (!EbwContinuousUpkeep.enabled()) {
             self.consumeMana(stack, cost, caster);
+            return;
         }
-        // else: intentionally do nothing - the wand's own NBT mana is left untouched, and the
-        // player's unified mana pool is charged elsewhere (handler added in a later task).
+        // The wand's own NBT mana is left untouched. One-shot spells are charged to the player's
+        // pool from SpellCastEvent.Post; continuous ones are charged here, because Post fires only
+        // on the first tick of a channel.
+        EbwContinuousUpkeep.charge(castPlayer, castSpell, castModifiers, castingTick);
     }
 
     @Redirect(

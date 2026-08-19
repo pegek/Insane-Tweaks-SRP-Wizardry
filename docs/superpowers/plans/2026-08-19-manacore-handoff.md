@@ -73,6 +73,9 @@ Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gra
 - **`@LateMixin` nie istnieje w MixinBooter 7.1.** Adnotacja to `@zone.rong.mixinbooter.MixinLoader`, oznaczona jako deprecated. Sprawdź `grep -rn "MixinLoader" --include=*.java */src/main/java`.
 - **`SpellCastEvent$Tick`/`$Finish` mają `getCount()`, nie `getCastingTick()`.** `$Post` nie ma nic — numer ticka bierze się z `player.getItemInUseMaxCount()`, co działa tylko dlatego, że wanilla dekrementuje `activeItemStackUseCount` **po** powrocie z `onUsingTick`.
 - **EBW czyta manę różdżki w TRZECH miejscach**, nie dwóch: `canCast`, `cast` i `func_77615_a`. Trzecie bramkuje zdarzenie `Finish`.
+- 🚨 **`SpellCastEvent.Post` leci RAZ na cast, nie co tick.** `ItemWand.cast` jest wołane co tick przy kanałowaniu, ale post zdarzenia jest bramkowany na `castingTick == 0` (`48: ifne 72`). Upkeep czarów ciągłych naliczany z `Post` = czar prawie darmowy. Naliczanie siedzi w `EbwContinuousUpkeep`, wołane z przekierowania `consumeMana` — to jedyny punkt per-tick po `Spell.cast() == true`.
+- **`player.getItemInUseMaxCount()` nie zastąpi `castingTick`** — `cast` woła `setActiveHand` **po** miejscu naliczania, więc w pierwszym ticku kanału czyta 0.
+- **Rozkład kosztu w EBW jest bezstratny.** `getDistributedCost`: `cost/2 + cost%2` co 20 ticków, `cost/2` co 10 — sumuje się dokładnie do `cost`/s także dla nieparzystych. Na 189 czarów EBW najtańszy po `none` (0) i `snowball` (1) kosztuje 5, koszty idą co 5.
 - **`Math.round(Infinity)` → `Long.MAX_VALUE`, a `(int)` z tego → `-1`**, nie `Integer.MAX_VALUE`. Ujemny koszt w `spendQuiet` **dodaje** manę.
 - **`amount <= 0.0D` nie odrzuca `NaN`** — każde porównanie z `NaN` jest fałszywe, więc warunek wygląda na obsłużony i nie jest.
 - **`getEntity()`, nie `getObject()`** — getter właściciela w `CapabilityEntityBase` z TaB.
