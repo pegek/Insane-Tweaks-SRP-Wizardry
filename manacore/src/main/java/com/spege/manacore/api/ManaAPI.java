@@ -134,7 +134,7 @@ public final class ManaAPI {
         }
         pool.setCastProgression(ManaMath.afterProgressionGain(
                 pool.getCastProgression(), ManaCoreConfig.pool.castProgressionCap, amount));
-        ManaAttributes.refreshProgressionModifier(player);
+        ManaAttributes.refreshPersistentModifiers(player);
         syncNow(player);
     }
 
@@ -156,7 +156,64 @@ public final class ManaAPI {
         }
         pool.setItemProgression(ManaMath.afterProgressionGain(
                 pool.getItemProgression(), ManaCoreConfig.pool.itemProgressionCap, amount));
-        ManaAttributes.refreshProgressionModifier(player);
+        ManaAttributes.refreshPersistentModifiers(player);
+        syncNow(player);
+    }
+
+    /**
+     * The persistent half of the maximum only - config base, progression, flat grants - without
+     * whatever the player happens to be wearing. Use {@link #getMaxMana} for the number that
+     * actually gates casting; this is for code that needs to reason about the two halves apart,
+     * such as a command that sets a target and must not count gear towards it.
+     */
+    public static double getPersistentMaxMana(@Nullable EntityPlayer player) {
+        return ManaAttributes.getPersistentMaxMana(player);
+    }
+
+    /** The dynamic half of the maximum only: everything granted by currently worn gear. */
+    public static double getBonusMana(@Nullable EntityPlayer player) {
+        return ManaAttributes.getBonusMana(player);
+    }
+
+    /** Flat maximum granted outright, outside both progression budgets. Survives death. */
+    public static double getGrantedMax(@Nullable EntityPlayer player) {
+        IManaPool pool = ManaCapabilities.get(player);
+        return pool == null ? 0.0D : pool.getGrantedMax();
+    }
+
+    /**
+     * Adds to the flat granted maximum: a permanent award that is neither progression nor gear -
+     * an achievement, a quest reward, a one-off from a command. Unlike the progression methods
+     * this has no cap of its own, and unlike a bare attribute modifier it survives death, because
+     * the value is stored in the capability and re-applied on respawn.
+     *
+     * <p>🚨 This is ONE shared number, not a per-source ledger. Two sources that both add here can
+     * never be told apart afterwards, so a source whose value can CHANGE - a skill level, a
+     * difficulty setting, anything recomputed - must not use this: it would have no way to
+     * subtract its own previous contribution. Such a source owns an attribute modifier with its
+     * own UUID instead, via {@link #addMaxModifier}, re-applied whenever its input changes.
+     * Only genuinely one-way, one-shot awards belong here.
+     *
+     * <p>Negative amounts are allowed, so an award can be revoked; the total is floored at zero.
+     */
+    public static void addGrantedMax(@Nullable EntityPlayer player, double amount) {
+        if (!isFinite(amount) || amount == 0.0D) {
+            return;
+        }
+        setGrantedMax(player, getGrantedMax(player) + amount);
+    }
+
+    /** Sets the flat granted maximum to an absolute value. See {@link #addGrantedMax}. */
+    public static void setGrantedMax(@Nullable EntityPlayer player, double value) {
+        if (player == null || player.world.isRemote || !isFinite(value)) {
+            return;
+        }
+        IManaPool pool = ManaCapabilities.get(player);
+        if (pool == null) {
+            return;
+        }
+        pool.setGrantedMax(value < 0.0D ? 0.0D : value);
+        ManaAttributes.refreshPersistentModifiers(player);
         syncNow(player);
     }
 
@@ -178,6 +235,31 @@ public final class ManaAPI {
 
     public static void removeMaxModifier(@Nullable EntityPlayer player, UUID id) {
         ManaAttributes.applyMaxModifier(player, id, "manacore.removed", 0.0D, 0);
+    }
+
+    /**
+     * Installs or replaces a DYNAMIC bonus-mana modifier: maximum mana granted only while its
+     * source is active, which for this pack means worn gear above all - EBW and Trinkets and
+     * Baubles artifacts. Call again with an amount of zero (or {@link #removeBonusModifier}) when
+     * the item comes off, and the player's maximum drops the same tick.
+     *
+     * <p>Differs from {@link #addMaxModifier} in lifetime, not in arithmetic: these modifiers are
+     * never written to the player's save and never survive death, on the assumption that whatever
+     * equips the item applies them again. That assumption is what makes them safe - a saved gear
+     * bonus would outlive the gear with nothing able to notice.
+     *
+     * <p>The UUID must still be a stable per-source constant, so re-applying replaces rather than
+     * stacks; it just does not have to be unique across saves the way a persistent one does.
+     *
+     * @param operation 0 adds a flat amount, 1 and 2 are the multiplicative forms.
+     */
+    public static void addBonusModifier(@Nullable EntityPlayer player, UUID id, String name,
+            double amount, int operation) {
+        ManaAttributes.applyBonusModifier(player, id, name, amount, operation);
+    }
+
+    public static void removeBonusModifier(@Nullable EntityPlayer player, UUID id) {
+        ManaAttributes.applyBonusModifier(player, id, "manacore.removed", 0.0D, 0);
     }
 
     /**

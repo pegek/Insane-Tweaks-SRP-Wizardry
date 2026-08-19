@@ -37,17 +37,21 @@ public final class ManaCapabilityHandler {
     }
 
     /**
-     * Cloning on death and on passing through the End. Both progression fields (cast and item)
-     * ALWAYS survive - permanent progress must not be lost to a single death, regardless of which
-     * source it came from. `current` resets according to the config, but only on a real death
-     * (wasDeath), not when returning from the End.
+     * Cloning on death and on passing through the End. Every persistent field - both progression
+     * budgets and the flat granted maximum - ALWAYS survives: permanent progress must not be lost
+     * to a single death, regardless of which source it came from. Copying them here is not
+     * belt-and-braces, it is the ONLY thing that carries them across, because vanilla builds a
+     * fresh player entity with a fresh attribute map and copies neither.
      * <p>
-     * This handler deliberately does NOT call {@link ManaAttributes#refreshProgressionModifier}
+     * `current` resets according to the config, but only on a real death (wasDeath), not when
+     * returning from the End.
+     * <p>
+     * This handler deliberately does NOT call {@link ManaAttributes#refreshPersistentModifiers}
      * after copying the bonus into the new pool. That is safe only because of the calling
      * contract with {@code onRespawn}: {@code PlayerEvent.Clone} fires inside
      * {@code PlayerList.respawnPlayer} (via {@code recreatePlayerEntity}), and
      * {@code PlayerRespawnEvent} fires unconditionally at the end of that same synchronous
-     * method - so {@code onRespawn} -> {@code refreshAndSync} -> refreshProgressionModifier still
+     * method - so {@code onRespawn} -> {@code refreshAndSync} -> refreshPersistentModifiers still
      * runs moments later, in the same tick, before the client sees anything. Removing either
      * respawn-path call to {@code refreshAndSync} as "redundant" would silently break this: the
      * new pool's progression bonus would then never be reflected in the MAX_MANA attribute.
@@ -70,6 +74,7 @@ public final class ManaCapabilityHandler {
 
         newPool.setCastProgression(oldPool.getCastProgression());
         newPool.setItemProgression(oldPool.getItemProgression());
+        newPool.setGrantedMax(oldPool.getGrantedMax());
 
         if (event.isWasDeath() && ManaCoreConfig.pool.resetCurrentOnDeath) {
             newPool.setCurrent(0.0D);
@@ -97,7 +102,7 @@ public final class ManaCapabilityHandler {
         if (player.world.isRemote || !(player instanceof EntityPlayerMP)) {
             return;
         }
-        ManaAttributes.refreshProgressionModifier(player);
+        ManaAttributes.refreshPersistentModifiers(player);
         // syncNow, not syncIfDirty: when the player enters the world the client MUST get the
         // value, even if the pool has not changed since it was last saved.
         ManaNetwork.syncNow((EntityPlayerMP) player);

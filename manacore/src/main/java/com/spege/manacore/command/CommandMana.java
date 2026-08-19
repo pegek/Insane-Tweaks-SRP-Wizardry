@@ -16,16 +16,6 @@ import net.minecraft.util.text.TextComponentString;
  */
 public class CommandMana extends CommandBase {
 
-    /**
-     * Own UUID for the debug modifier installed by {@code setmax}, kept separate from the
-     * progression modifier so the two never overwrite each other. Like every attribute modifier
-     * id, this must stay constant: vanilla serialises modifiers into the player's NBT, so changing
-     * it would orphan the old one in existing worlds instead of replacing it.
-     */
-    private static final java.util.UUID DEBUG_MAX_MODIFIER_ID =
-            java.util.UUID.fromString("c1f4a2b8-0d6e-4c53-9f21-7a8b3e5d4c60");
-    private static final String DEBUG_MAX_MODIFIER_NAME = "manacore.debug.setmax";
-
     @Override
     public String getName() {
         return "mana";
@@ -82,32 +72,46 @@ public class CommandMana extends CommandBase {
     }
 
     /**
-     * Forces the player's total maximum mana to {@code target}, using a debug attribute modifier
-     * with its own stable UUID.
+     * Forces the player's PERSISTENT maximum mana to {@code desiredMax}, by writing the difference
+     * into the flat granted bucket ({@code ManaAPI.setGrantedMax}).
      *
      * <p>Deliberately not implemented by touching the progression fields: those are capped by
      * config, so a debug command built on them could not reach an arbitrary value - which is the
      * one thing a debug command is for. Deliberately not implemented by setting the attribute base
      * either, because {@code ManaAttributes.onEntityJoinWorld} rewrites the base from config on
-     * every world entry, so the change would silently vanish on the next relog.
+     * every world entry, so the change would silently vanish on the next relog. And deliberately
+     * not implemented as a bare attribute modifier, which is what this did until 2026-08-19: that
+     * version reset on death, because vanilla builds a new player entity on respawn and copies no
+     * attribute modifiers onto it. Routing through the capability is what makes the value stick.
      *
-     * <p>The modifier is computed as a delta against whatever the player's max would be without
-     * it, so calling this twice sets an absolute value rather than stacking. Passing a value equal
-     * to the natural maximum removes the modifier entirely.
+     * <p>Targets the persistent half only - worn gear is NOT counted towards {@code desiredMax},
+     * so a bauble granting bonus mana still adds on top of whatever is set here. Otherwise the
+     * command would silently bank the gear's contribution into a permanent grant, and taking the
+     * item off would leave the player richer than before they put it on.
+     *
+     * <p>The grant is computed as a delta against the maximum WITHOUT it, so calling this twice
+     * sets an absolute value rather than stacking. Values below the natural maximum cannot be
+     * reached - the grant floors at zero rather than going negative.
      */
     private void setMaxTo(EntityPlayer target, double desiredMax) {
-        // Drop any previous debug modifier first, so `naturalMax` is the value this command is not
-        // responsible for - otherwise repeated calls would compound.
-        ManaAPI.addMaxModifier(target, DEBUG_MAX_MODIFIER_ID, DEBUG_MAX_MODIFIER_NAME, 0.0D, 0);
-        double naturalMax = ManaAPI.getMaxMana(target);
-        double delta = desiredMax - naturalMax;
-        if (delta != 0.0D) {
-            ManaAPI.addMaxModifier(target, DEBUG_MAX_MODIFIER_ID, DEBUG_MAX_MODIFIER_NAME, delta, 0);
-        }
+        // Clear the grant first, so `naturalMax` is the part this command is not responsible for -
+        // otherwise repeated calls would compound.
+        ManaAPI.setGrantedMax(target, 0.0D);
+        double naturalMax = ManaAPI.getPersistentMaxMana(target);
+        ManaAPI.setGrantedMax(target, desiredMax - naturalMax);
     }
 
+    /**
+     * Reports current/maximum, plus the split into persistent and gear-granted maximum whenever
+     * gear is actually contributing. The breakdown is hidden when the bonus is zero, which is the
+     * normal case, so the common reading stays a single short line.
+     */
     private void report(ICommandSender sender, EntityPlayer target) {
-        sender.sendMessage(new TextComponentString(
-                ManaAPI.getMana(target) + " / " + ManaAPI.getMaxMana(target)));
+        String line = ManaAPI.getMana(target) + " / " + ManaAPI.getMaxMana(target);
+        double bonus = ManaAPI.getBonusMana(target);
+        if (bonus != 0.0D) {
+            line += " (max: " + ManaAPI.getPersistentMaxMana(target) + " + " + bonus + " from gear)";
+        }
+        sender.sendMessage(new TextComponentString(line));
     }
 }

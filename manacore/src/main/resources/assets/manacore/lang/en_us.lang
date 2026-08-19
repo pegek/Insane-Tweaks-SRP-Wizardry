@@ -1,4 +1,5 @@
 attribute.name.manacore.maxMana=Max Mana
+attribute.name.manacore.bonusMana=Bonus Mana
 manacore.message.not_enough=Not enough mana
 manacore.command.usage=/mana <get|set|add|setmax|addprog|addprogitem> [amount] [player]
 manacore.command.report=Mana: %s / %s

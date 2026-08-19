@@ -5,6 +5,7 @@ public class ManaPool implements IManaPool {
     private double current;
     private double castProgression;
     private double itemProgression;
+    private double grantedMax;
     private boolean dirty;
 
     @Override
@@ -42,6 +43,19 @@ public class ManaPool implements IManaPool {
     public void setItemProgression(double value) {
         if (this.itemProgression != value) {
             this.itemProgression = value;
+            this.dirty = true;
+        }
+    }
+
+    @Override
+    public double getGrantedMax() {
+        return this.grantedMax;
+    }
+
+    @Override
+    public void setGrantedMax(double value) {
+        if (this.grantedMax != value) {
+            this.grantedMax = value;
             this.dirty = true;
         }
     }
