@@ -714,11 +714,18 @@ public final class SpellCostResolver {
                 foreign);
     }
 
-    /** Koszt pojedynczego ticka czaru ciaglego, rozlozony tak samo jak robi to EBW. */
+    /**
+     * Koszt pojedynczego ticka czaru ciaglego, rozlozony tak samo jak robi to EBW.
+     *
+     * 🚨 `continuousSecondCost`, a NIE `(int) Math.round(full)`. Zaokraglenie do najblizszej
+     * calkowitej zamienia czar o koszcie 0.4 na sekunde w TRWALE DARMOWY, a przy wartosci
+     * nieskonczonej daje -1 (Math.round -> Long.MAX_VALUE, rzutowanie na int -> -1), czyli
+     * ujemny koszt, ktory w ManaAPI.spendQuiet DODAJE mane zamiast ja odejmowac.
+     */
     public static double resolveContinuousTick(@Nullable EntityPlayer player, Spell spell,
             SpellModifiers modifiers, int castingTick) {
         double full = resolve(player, spell, modifiers);
-        return CostMath.distributedCost((int) Math.round(full), castingTick);
+        return CostMath.distributedCost(CostMath.continuousSecondCost(full), castingTick);
     }
 }
 ```
