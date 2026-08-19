@@ -37,7 +37,7 @@ import net.minecraft.item.ItemStack;
  *   small, balance shift that falls out of separating two mechanics which used to share one pool.</li>
  * </ul>
  *
- * <p>Two call sites are targeted, both confirmed on EBW 4.3.19 bytecode before writing this
+ * <p>Three call sites are targeted, all confirmed on EBW 4.3.19 bytecode before writing this
  * class (see the Task 3 report for the full {@code javap} trace):
  * <ul>
  *   <li>{@code ItemWand#canCast} calls {@code getMana(stack)} to compare the wand's current mana
@@ -50,16 +50,34 @@ import net.minecraft.item.ItemStack;
  *   <li>{@code ItemWand#cast} calls {@code consumeMana(stack, cost, caster)} after a successful
  *   cast to deduct the cost from the wand; skipping that call (instead of calling it) leaves the
  *   NBT mana untouched, i.e. exactly what "not paying with wand mana" means.</li>
+ *   <li>{@code ItemWand#onPlayerStoppedUsing} ({@code func_77615_a} at runtime) gates a
+ *   continuous spell's own {@code SpellCastEvent.Finish} the same way {@code canCast} gates
+ *   {@code Pre}: it compares the wand's {@code getMana(stack)} against the distributed cost and,
+ *   if the wand can't afford it, jumps straight past the {@code Finish} post and
+ *   {@code Spell.finishCasting(...)} entirely. Left alone, a wand whose stored mana this mod
+ *   already froze below a continuous spell's cost would never fire {@code Finish} again -
+ *   silently dropping the per-cast refund and progression (both granted only in
+ *   {@link com.spege.manacore.compat.ebw.EbwSpellCostHandler#onSpellFinish}) and skipping EBW's
+ *   own cleanup for that channel. Redirecting this call to {@code getManaCapacity(stack)}, exactly
+ *   like the {@code canCast} redirect, keeps the gate meaningful (a spell that could never fit in
+ *   the wand still doesn't finish) while removing the "is it charged right now" question that no
+ *   longer applies once wand mana is frozen.</li>
  * </ul>
  *
  * <p>Deliberately NOT touched: {@code ItemWand#func_77644_a} (melee weapon-cast on hit) also
  * calls {@code getMana}/{@code consumeMana}, but that is EBW's melee damage path, not spell
  * casting, and is out of scope for this mixin.
  *
- * <p>Both {@link Redirect} handlers take {@link ItemWand} as their first (receiver) parameter,
- * matching the exact owner of the {@code invoke*} instruction being redirected - {@code @Redirect}
- * requires the receiver type to be the precise declaring class of the call site, not a supertype
- * or an implemented interface (see repo memory {@code mixin-redirect-exact-receiver}).
+ * <p>All three {@link Redirect} handlers take {@link ItemWand} as their first (receiver)
+ * parameter, matching the exact owner of the {@code invoke*} instruction being redirected -
+ * {@code @Redirect} requires the receiver type to be the precise declaring class of the call
+ * site, not a supertype or an implemented interface (see repo memory
+ * {@code mixin-redirect-exact-receiver}).
+ *
+ * <p>🚨 {@code onPlayerStoppedUsing} overrides {@link net.minecraft.item.Item}, so unlike
+ * {@code canCast}/{@code cast} (EBW's own methods, whose names survive obfuscation) its method
+ * selector must carry both the MCP dev name and the runtime SRG name: {@code onPlayerStoppedUsing}
+ * in the dev/deobfuscated environment, {@code func_77615_a} under Cleanroom's SRG-named runtime.
  *
  * <p>🚨 {@link ManaCoreConfig#ebw}'s {@code enabled} flag carries
  * {@code @Config.RequiresMcRestart}, but that annotation does not gate whether this mixin
@@ -96,5 +114,21 @@ public abstract class MixinItemWand {
         }
         // else: intentionally do nothing - the wand's own NBT mana is left untouched, and the
         // player's unified mana pool is charged elsewhere (handler added in a later task).
+    }
+
+    @Redirect(
+            method = {"onPlayerStoppedUsing", "func_77615_a"},
+            at = @At(value = "INVOKE",
+                    target = "Lelectroblob/wizardry/item/ItemWand;getMana(Lnet/minecraft/item/ItemStack;)I"),
+            remap = false)
+    private int manacore$bypassOnStoppedUsingManaGate(ItemWand self, ItemStack stack) {
+        if (!ManaCoreConfig.ebw.enabled) {
+            return self.getMana(stack);
+        }
+        // Same reasoning as canCast's redirect: compare against capacity, not current charge, so
+        // this gate keeps blocking a continuous spell whose cost could never fit the wand, while
+        // no longer blocking SpellCastEvent.Finish (and EBW's own finishCasting cleanup) just
+        // because our other redirects already froze the wand's stored mana.
+        return self.getManaCapacity(stack);
     }
 }

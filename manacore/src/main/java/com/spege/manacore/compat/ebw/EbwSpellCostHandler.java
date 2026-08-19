@@ -39,6 +39,31 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * {@link SpellCostResolver} - see that class's javadoc for why writing our multiplier back into
  * the modifiers would make EBW's own wand-capacity gate reject casts that the player's actual
  * mana pool could easily afford.
+ *
+ * <p>🚨 <b>Known, deliberately unpatched gap: no {@code Finish} (and therefore no refund or
+ * progression) when {@code onSpellTick} cancels a channel.</b> {@code ItemWand.onUsingTick}
+ * bytecode (EBW 4.3.19):
+ * <pre>
+ * onUsingTick:
+ *   121: canCast(...)
+ *   124: ifeq 149
+ *   149..151: func_184597_cx()    &lt;- resetActiveHand, NOT stopActiveHand
+ * </pre>
+ * When our {@link #onSpellTick} handler cancels the event (the player's unified pool can't afford
+ * the next tick's upkeep), EBW's own {@code canCast} check inside {@code onUsingTick} takes the
+ * same branch it would if the *wand's* mana had run dry, and calls {@code resetActiveHand()} -
+ * which, unlike {@code stopActiveHand()}, never calls {@code onPlayerStoppedUsing}
+ * ({@code func_77615_a}, the method {@link com.spege.manacore.mixins.ebw.MixinItemWand}'s third
+ * redirect targets). No {@code onPlayerStoppedUsing} means no {@code SpellCastEvent.Finish}, so a
+ * player who runs out of mana mid-channel gets neither the capacity-based refund nor the
+ * once-per-cast progression for that cast.
+ *
+ * <p>This is intentionally left as-is, not a bug to chase: it is exactly how vanilla EBW behaves
+ * when a wand's own mana runs out mid-channel (the code path is identical - only which pool is
+ * checked differs), so this mod is consistent with the mechanic it's built on top of, not broken
+ * relative to it. If this is ever reported as "progression sometimes doesn't arrive for a
+ * continuous spell", this paragraph is the answer - it is not a regression to fix, and fixing it
+ * would mean diverging from upstream EBW's own out-of-mana behaviour.
  */
 public class EbwSpellCostHandler {
 
