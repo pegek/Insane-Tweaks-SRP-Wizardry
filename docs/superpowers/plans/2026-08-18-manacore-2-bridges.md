@@ -441,14 +441,14 @@ import com.spege.manacore.ManaCoreMod;
 
 import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
-import zone.rong.mixinbooter.LateMixin;
 
 /**
  * Trasa POZNA - oba configi celuja w klasy modow, wiec musza byc bramkowane obecnoscia
  * tych modow. Ta klasa MUSI zyc poza pakietem `mixins`: Mixin zabrania Class.forName()
  * klas niebedacych mixinami wewnatrz `*.mixins.*`.
  */
-@LateMixin
+@SuppressWarnings("deprecation")
+@zone.rong.mixinbooter.MixinLoader
 public class ManaCoreLateBooter implements ILateMixinLoader {
 
     @Override
@@ -477,6 +477,8 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
 ```
 
 > Log przy **odmowie** jest tu celowy. Bez niego cichy brak mixina wygląda dokładnie tak samo jak mixin, którego cel nie został jeszcze załadowany — a to dwie zupełnie różne diagnozy.
+>
+> 🚨 **Adnotacja to `@zone.rong.mixinbooter.MixinLoader`, NIE `@LateMixin`** — pierwotny tekst tego planu był tu błędny. MixinBooter 7.1 (wersja, na której stoi całe repo) zawiera dokładnie trzy klasy: `IEarlyMixinLoader`, `ILateMixinLoader` i `MixinLoader`. `LateMixin` nie istnieje i kompilacja pada na `cannot find symbol`. `MixinLoader` jest oznaczone jako deprecated, stąd `@SuppressWarnings("deprecation")` — i dokładnie tak robi pozostałe sześć modów w tym repo (`enchanteraser`, `insanetweaks`, `reskilltweaks`, `srpwizcore`, `srpwizmixins`, `tombtweaks`). Sprawdź `grep -rn "MixinLoader" --include=*.java */src/main/java`, zanim napiszesz kolejny booter.
 
 - [ ] **Step 6: Zbuduj**
 
