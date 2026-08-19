@@ -33,7 +33,10 @@ Testy jednostkowe: **30** (`ManaMathTest` 10, `CostMathTest` 20), `./gradlew :ma
 ## Architektura w skrócie
 
 - **Pula** — capability na graczu, dwa pola trwałej progresji (`castProgression`, `itemProgression`) plus `current`. `maxMana` **nie jest przechowywana**.
-- **Maksimum** — atrybut `RangedAttribute` `manacore.maxMana` z `setShouldWatch(true)`, więc Forge sam synchronizuje je do klienta. Baza z configu, ustawiana w `EntityJoinWorldEvent` (nie w `EntityConstructing` — wanilla nadpisałaby ją z NBT).
+- **Maksimum** — suma **dwóch** atrybutów `RangedAttribute` z `setShouldWatch(true)`, więc Forge sam synchronizuje je do klienta (od 0.2.0):
+  - `manacore.maxMana` — **trwały**: baza z configu (ustawiana w `EntityJoinWorldEvent`, nie w `EntityConstructing` — wanilla nadpisałaby ją z NBT), obie progresje, oraz `grantedMax` (płaskie nadania: `/mana setmax`, w przyszłości achievementy).
+  - `manacore.bonusMana` — **dynamiczny**: noszone artefakty. Modyfikatory `setSaved(false)`, więc nigdy nie trafiają do NBT i nie przeżywają śmierci.
+  - 🚨 **Sam modyfikator atrybutu NIE przeżywa śmierci.** Wanilla buduje na respawnie nową encję gracza i nie kopiuje mapy atrybutów. Każde trwałe źródło musi trzymać wartość w capability i być odtwarzane przez `refreshPersistentModifiers`. To był błąd `/mana setmax` do 2026-08-19.
 - **Sieć** — wozi wyłącznie `current`. Dwa kontrakty: `syncNow` (bezwarunkowo) i `syncIfDirty` (tylko przy zmianie). Interwał należy do wołającego okresowego, nie do kanału.
 - **EBW** — `Pre`/`Tick` to bramki, odjęcie w `Post` (leci dopiero po `Spell.cast() == true`). Czary ciągłe używają `spendQuiet`, jednorazowe `spend`.
 - **TaB** — `MagicStats` przekierowane w całości na naszą pulę, `onUpdate` anulowane (jego regen dublował nasz).
@@ -50,6 +53,8 @@ Rozgrywki. Do sprawdzenia, w tej kolejności:
 
 Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gracz]`, poziom operatora.
 
+`setmax` celuje w połowę **trwałą**, więc bonus z ekwipunku dodaje się na wierzchu zamiast zostać zabankowany w trwały grant. `get` pokazuje rozbicie tylko wtedy, gdy bonus ≠ 0.
+
 ## Znane długi, świadome
 
 - **Bonusy rasowe TaB przepadają.** `MagicStats.getMaxMana` czytało `MagicAttributes.MAX_MANA` i skalowało przez `getMagicAffinity()`; nadpisanie tego kasuje wkład ras. Odtworzenie — faza 6.
@@ -57,6 +62,8 @@ Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gra
 - **Efekty mana-owe innych modów** (ASC `PotionManaRegeneration`, bonus setowy SpellBundle, mana leech Necromancer's Delight, ArcaneApprentices) nadal celują w manę **itemu**, nie w pulę. Faza 5.
 - **`spellarchives`** pokazuje `Cost: %d mana` z niewłaściwego źródła.
 - **`pool.hardCap` jest zadeklarowane, ale nic go nie czyta.** Komentarz w configu to mówi.
+- **`grantedMax` to jedna wspólna liczba, nie rejestr per źródło.** Nadaje się wyłącznie dla nagród jednokierunkowych. Źródło przeliczalne (poziom Reskillable, noszony item) nie potrafiłoby odjąć swojego poprzedniego wkładu — musi mieć własny modyfikator z własnym UUID.
+- **Nadmiar many po zdjęciu artefaktu nie jest konfiskowany.** `ManaMath.afterRegen` celowo nigdy nie obniża puli, więc stan 150/100 utrzyma się, dopóki gracz go nie wyda. Maksimum aktualizuje się natychmiast — tylko `current` nie.
 - **Bonus melee różdżki stał się stały**, bo bramkuje go „różdżka nie jest pusta", a nic jej już nie rozładowuje.
 
 ## Pułapki, które kosztowały czas — nie powtarzać
