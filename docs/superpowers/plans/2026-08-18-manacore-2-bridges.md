@@ -41,6 +41,10 @@ Czyli pełny koszt na sekundę, w dwóch ratach. Replikujemy to u siebie (Task 1
 
 **F6. `SpellCastEvent$Source`:** `WAND`, `SCROLL`, `COMMAND`, `NPC`, `DISPENSER`, `OTHER`. W v1 płaci **tylko `WAND`**.
 
+**F6a. Numer ticka czytamy przez `getCount()`, nie `getCastingTick()`** — ta druga nie istnieje. `SpellCastEvent$Tick` i `$Finish` mają dokładnie jedną metodę własną: `public int getCount()`. `SpellCastEvent$Post` **nie ma żadnej**, więc dla czarów ciągłych numer ticka trzeba wziąć z `player.getItemInUseMaxCount()`.
+
+**F6b. `getItemInUseMaxCount()` faktycznie równa się `castingTick` EBW — ale tylko dzięki kolejności.** EBW liczy `castingTick = stack.getMaxItemUseDuration() - count` w `onUsingTick`, a wanilla zwraca z `getItemInUseMaxCount()` dokładnie `getMaxItemUseDuration() - activeItemStackUseCount`. Kluczowe: `EntityLivingBase.onLivingUpdate` **dekrementuje `activeItemStackUseCount` dopiero po powrocie** z `onUsingTick`, czyli po `cast()` i po `SpellCastEvent$Post`. Odczyt wewnątrz `Post` trafia więc w tę samą liczbę, którą EBW policzyło dla siebie. Gdyby dekrementacja szła przed, koszt rozkładałby się o tick przesunięty — i objawiłoby się to wyłącznie jako dziwny balans.
+
 **F7. `SpellModifiers`** ma stałe `POTENCY`, `COST`, `CHARGEUP`, `PROGRESSION` i metodę `float get(String)`.
 
 **F8. Sygnatury TaB `MagicStats`:** `float getMana()`, `void setMana(float)`, `void addMana(float)`, `boolean spendMana(float)`, `float getMaxMana()`, `void refillMana()`, `boolean needMana()`.
@@ -816,7 +820,7 @@ public class EbwSpellCostHandler {
         }
         EntityPlayer player = (EntityPlayer) event.getCaster();
         double cost = SpellCostResolver.resolveContinuousTick(
-                player, event.getSpell(), event.getModifiers(), event.getCastingTick());
+                player, event.getSpell(), event.getModifiers(), event.getCount());
 
         if (cost > 0.0D && ManaAPI.getMana(player) < cost) {
             event.setCanceled(true);
@@ -875,7 +879,7 @@ public class EbwSpellCostHandler {
             return;
         }
         double totalCost = SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers())
-                * (event.getCastingTick() / 20.0D);
+                * (event.getCount() / 20.0D);
         applyRefund(player, totalCost);
     }
 
