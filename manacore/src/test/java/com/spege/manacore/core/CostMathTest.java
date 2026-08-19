@@ -81,4 +81,49 @@ public class CostMathTest {
         assertEquals(100.0F, CostMath.toForeignUnits(100.0D, 0.0D), 1.0e-6F);
         assertEquals(100.0D, CostMath.fromForeignUnits(100.0F, 0.0D), EPS);
     }
+
+    @Test
+    public void kosztNieskonczonyJestOdrzucany() {
+        assertEquals(0.0D, CostMath.resolveCost(10, 1.0D, 1.0D, Double.POSITIVE_INFINITY), EPS);
+        assertEquals(0.0D, CostMath.resolveCost(10, Double.NEGATIVE_INFINITY, 1.0D, 1.0D), EPS);
+    }
+
+    @Test
+    public void kosztNieBedacyLiczbaJestOdrzucany() {
+        assertEquals(0.0D, CostMath.resolveCost(10, Double.NaN, 1.0D, 1.0D), EPS);
+        assertEquals(0.0D, CostMath.resolveCost(10, 1.0D, Double.NaN, 1.0D), EPS);
+        assertEquals(0.0D, CostMath.resolveCost(10, 1.0D, 1.0D, Double.NaN), EPS);
+    }
+
+    @Test
+    public void refundJestZerowyGdyUlamekNieJestLiczba() {
+        assertEquals(0.0D, CostMath.refundFraction(700, 100, 100, Double.NaN), EPS);
+    }
+
+    @Test
+    public void kosztRozlozonyOdrzucaUjemnyKoszt() {
+        assertEquals(0, CostMath.distributedCost(-5, 20));
+        assertEquals(0, CostMath.distributedCost(-1, 20));
+    }
+
+    @Test
+    public void kosztRozlozonySymetriaDlaUjemnychTickow() {
+        assertEquals(3, CostMath.distributedCost(5, -20));
+        assertEquals(0, CostMath.distributedCost(5, -7));
+    }
+
+    @Test
+    public void kosztSekundowyZaokraglaWGoreZebyTaniCzarNieBylDarmowy() {
+        assertEquals(1, CostMath.continuousSecondCost(0.4D));
+        assertEquals(1, CostMath.continuousSecondCost(1.0D));
+        assertEquals(2, CostMath.continuousSecondCost(1.2D));
+    }
+
+    @Test
+    public void kosztSekundowyOdrzucaWartosciNiepoprawne() {
+        assertEquals(0, CostMath.continuousSecondCost(0.0D));
+        assertEquals(0, CostMath.continuousSecondCost(-3.0D));
+        assertEquals(0, CostMath.continuousSecondCost(Double.NaN));
+        assertEquals(0, CostMath.continuousSecondCost(Double.POSITIVE_INFINITY));
+    }
 }
