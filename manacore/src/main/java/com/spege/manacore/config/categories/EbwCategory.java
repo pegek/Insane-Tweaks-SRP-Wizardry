@@ -4,7 +4,11 @@ import net.minecraftforge.common.config.Config;
 
 public class EbwCategory {
 
-    @Config.Comment("Whether to hook Electroblob's Wizardry spell cost into the player's mana pool.")
+    @Config.Comment({
+            "Whether to hook Electroblob's Wizardry spell cost into the player's mana pool.",
+            "This does NOT switch off the EBW mixins - those apply whenever EBW is installed,",
+            "because a config value cannot gate mixin application. The flag controls only whether",
+            "ManaCore registers its own event handlers, which is why it needs a restart."})
     @Config.RequiresMcRestart
     public boolean enabled = true;
 
@@ -15,7 +19,11 @@ public class EbwCategory {
     @Config.Comment("Whether to respect COST attributes from the wizardryutils mod, when present. Works live, no restart.")
     public boolean useWizardryUtilsAttributes = true;
 
-    @Config.Comment("Wand capacity below which the `storage` upgrade grants no refund at all. Works live, no restart.")
+    @Config.Comment({
+            "Wand capacity below which the `storage` upgrade grants no refund at all. Works live, no restart.",
+            "Setting this above any capacity a wand can actually reach disables the refund entirely,",
+            "silently - nothing in game says why it stopped working. Real EBW wand capacities are in",
+            "the hundreds, so the upper end of this range is far past anything useful."})
     @Config.RangeInt(min = 0, max = 100000)
     public int refundBaselineCapacity = 100;
 
