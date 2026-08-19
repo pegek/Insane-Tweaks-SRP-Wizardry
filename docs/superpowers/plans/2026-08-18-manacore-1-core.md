@@ -1448,6 +1448,12 @@ Oczekiwane: powstaje `manacore/src/main/resources/assets/manacore/textures/gui/b
 
 > Tekstura jest **robocza** — praca jest prywatna. Przed jakąkolwiek publikacją trzeba ją zastąpić własną.
 
+> 🚨 **To NIE jest pasek — i pierwotny kod tego zadania był przez to błędny.** Plik ma **27×9** i zawiera **trzy klatki 9×9 obok siebie**, renderowane jak waniliowe serca. Potwierdzone dwiema drogami: dekompilacją `EventsHandler.onEntityShowcase` w player_mana (trzy wywołania `DrawingUtils.drawTexturedRect` z `u=0`, `u=9`, `u=18`, każde `9×9`, przy `textureWidth=27, textureHeight=9`) oraz analizą pikseli.
+>
+> Analiza pikseli rozstrzyga też, która klatka jest która: `u=0` (ciemnoszara) i `u=9` (niebieska) mają **identyczną liczbę nieprzezroczystych pikseli — 39**, czyli tę samą sylwetkę w dwóch kolorach. To para pusta/pełna. `u=18` ma **57** pikseli i jaśniejszy błękit, czyli inną sylwetkę — jest czymś innym i **nie jest używana**, zamiast być zgadywana.
+>
+> Konsekwencja dla implementacji: renderujemy **rząd 10 ikon 9×9** z krokiem 8 px (jak wanilla), a nie ciągły pasek. Wyświetlanie kwantuje się przez to do 10 kroków — to właściwość pożyczonej grafiki, nie decyzja projektowa warta utrzymania przy własnych assetach.
+
 - [ ] **Step 2: Renderer HUD**
 
 `.../client/ManaHudRenderer.java`:
@@ -1889,6 +1895,21 @@ Oczekiwane: `current` wynosi 42 (plus to, co doszło z regenu), `progressionBonu
 Oczekiwane po respawnie: `current` = 0 (bo `resetCurrentOnDeath = true`), maksimum nadal `105` — **progresja przeżyła zgon**.
 
 - [ ] **Step 5: Serwer dedykowany**
+
+> 🚨 **Wymaga zgody właściciela repo.** `run/eula.txt` ma `eula=false`; ustawienie tego na `true` jest akceptacją umowy licencyjnej Mojanga i **nie wolno tego zrobić w cudzym imieniu**. Poproś o zgodę, zamiast zmieniać plik.
+>
+> Statyczny odpowiednik tej kontroli, wykonalny bez uruchamiania serwera i wart uruchomienia zawsze:
+>
+> ```bash
+> for f in $(find manacore/build/classes/java/main -name "*.class"); do
+>   n=$(basename $f .class)
+>   case "$n" in ManaHudRenderer|ManaClientState|ManaSyncClient|ClientProxy|*\$*) continue;; esac
+>   hit=$(javap -v -p "$f" | grep -cE "minecraft/client|fml/client")
+>   [ "$hit" != "0" ] && echo "!! $n -> $hit"
+> done
+> ```
+>
+> Plus sprawdzenie, że każda klasa z klasowym `@SideOnly` jest dotykana wyłącznie z `ClientProxy` albo z innej klasy klienckiej. To łapie wszystkie sześć wzorców crashy z `CLAUDE.md` poza tymi, które zależą od kolejności ładowania w czasie rzeczywistym.
 
 ```bash
 ./gradlew runServer
