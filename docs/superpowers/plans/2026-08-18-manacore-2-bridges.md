@@ -757,6 +757,10 @@ git commit -m "feat(manacore): resolver kosztu czaru z soft-integracja wizardryu
 
 ## Task 5: Handler zdarzeń EBW
 
+> 🚨 **Handler odczytuje `SpellModifiers.COST`, ale NIGDY go nie zapisuje.** Mixin z Tasku 3 przepuszcza bramkę EBW zwracając `getManaCapacity(stack)` — czyli pojemność różdżki zostaje sufitem pojedynczego czaru. Pod domyślnymi wartościami jest to nieszkodliwe: pojemności to **700 / 1000 / 1500 / 2500** według tieru, a najdroższy natywny czar mistrzowski kosztuje **175**, więc margines wynosi od 14 do 100 razy.
+>
+> Ale `SpellCastEvent$Pre` leci **zanim** `canCast` policzy koszt. Gdyby handler zapisał nasz mnożnik z powrotem do `SpellModifiers`, EBW policzyłoby własną bramkę już na nim — a `costMultiplier` sięga w configu 100, więc koszt przebiłby pojemność nawet mistrzowskiej różdżki i gracz z **pełną pulą** dostałby odmowę rzucenia. Czyli dokładnie to, co ten most miał zlikwidować. Nasz mnożnik ma żyć wyłącznie po naszej stronie.
+
 **Files:**
 - Create: `manacore/src/main/java/com/spege/manacore/compat/ebw/EbwSpellCostHandler.java`
 - Modify: `manacore/src/main/java/com/spege/manacore/ManaCoreMod.java`

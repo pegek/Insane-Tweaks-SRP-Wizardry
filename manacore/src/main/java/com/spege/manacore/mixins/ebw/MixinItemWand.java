@@ -14,8 +14,28 @@ import net.minecraft.item.ItemStack;
  * Neutralizes {@link ItemWand}'s own mana pool as the payer for spell casts, without ever
  * touching the mana value stored in the wand's NBT. Both redirects only change what the wand's
  * {@code canCast}/{@code cast} logic *does* with that stored value - they never write to it - so
- * uninstalling ManaCore leaves every wand exactly as EBW would have left it: same NBT mana, same
- * native gate/consume behaviour.
+ * uninstalling ManaCore leaves every wand working exactly as EBW expects, with no leftover state
+ * of ours to clean up.
+ *
+ * <p>To be precise about the uninstall story: these redirects write nothing, but EBW's own
+ * mechanisms still do. The {@code condenser} upgrade, mana flasks and the Arcane Workbench keep
+ * recharging the wand while nothing drains it any more, so after a long session a wand will sit
+ * at full mana rather than wherever vanilla EBW play would have left it. That is a gift to the
+ * player on uninstall, not a corruption, but it is not "byte-identical to never having installed
+ * this mod" either.
+ *
+ * <p>Two consequences of the target being {@code ItemWand} itself, both intentional and neither
+ * obvious from this file alone:
+ * <ul>
+ *   <li>Subclasses are covered too. The evolved wands in the {@code insanetweaks} content mod
+ *   extend {@code ItemWand} without overriding {@code canCast}/{@code cast}, so they stop paying
+ *   from their own pool as well. That is what we want - they are wands - but it means this mixin
+ *   reaches beyond EBW's own items whenever that mod is installed alongside.</li>
+ *   <li>The melee damage bonus in {@code ItemWand}'s attack handler gates on the wand not being
+ *   mana-empty. Since casting no longer drains the wand and the condenser still refills it, that
+ *   bonus becomes effectively permanent instead of rewarding a charged wand. This is a real, if
+ *   small, balance shift that falls out of separating two mechanics which used to share one pool.</li>
+ * </ul>
  *
  * <p>Two call sites are targeted, both confirmed on EBW 4.3.19 bytecode before writing this
  * class (see the Task 3 report for the full {@code javap} trace):
