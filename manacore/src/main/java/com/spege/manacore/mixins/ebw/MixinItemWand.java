@@ -12,8 +12,8 @@ import net.minecraft.item.ItemStack;
 
 /**
  * Neutralizes {@link ItemWand}'s own mana pool as the payer for spell casts, without ever
- * touching the mana value stored in the wand's NBT. Both redirects only change what the wand's
- * {@code canCast}/{@code cast} logic *does* with that stored value - they never write to it - so
+ * touching the mana value stored in the wand's NBT. All three redirects only change what the
+ * {@code canCast}/{@code cast}/{@code onPlayerStoppedUsing} logic *does* with that stored value - they never write to it - so
  * uninstalling ManaCore leaves every wand working exactly as EBW expects, with no leftover state
  * of ours to clean up.
  *
