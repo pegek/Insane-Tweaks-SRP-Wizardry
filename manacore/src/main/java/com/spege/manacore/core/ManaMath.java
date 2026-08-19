@@ -37,20 +37,28 @@ public final class ManaMath {
     }
 
     /**
-     * Regen never lowers the pool: when `current` already exceeds `max` (e.g. after
-     * unequipping a bauble), the value is left unchanged instead of being clamped down.
+     * Regen enforces the ceiling in BOTH directions: a pool that already exceeds `max` is
+     * clamped back down to it, not left alone. That matters when the maximum drops - taking
+     * off a bauble that granted bonus maximum - and it is what makes bonus maximum a pure
+     * cap raise: putting the bauble on does not hand out the mana, taking it off does not
+     * let the player keep it. The mana has to be regenerated.
+     *
+     * <p>The floor at zero also handles a negative `max`, which cannot occur through
+     * ManaAttributes.getMaxMana (it clamps) but is cheap to be right about here.
      */
     public static double afterRegen(double current, double max, double amount) {
-        if (current >= max) {
-            return current;
-        }
-        double result = current + amount;
-        return result > max ? max : result;
+        return clamp(current + amount, 0.0D, max);
     }
 
     /**
-     * Like afterRegen, this never lowers the value: when `current` has already reached
+     * Unlike afterRegen, this never lowers the value: when `current` has already reached
      * or exceeded `cap`, it returns `current` unchanged instead of clamping it down.
+     *
+     * <p>The two differ on purpose. Exceeding the regen ceiling means holding mana the
+     * player is no longer entitled to, so it is taken back. Exceeding a progression cap
+     * means an admin lowered the cap in the config after the player had already earned the
+     * progress - taking that away retroactively would be punishing them for someone else's
+     * config edit, so the banked amount stays and simply stops growing.
      */
     public static double afterProgressionGain(double current, double cap, double gain) {
         if (current >= cap) {

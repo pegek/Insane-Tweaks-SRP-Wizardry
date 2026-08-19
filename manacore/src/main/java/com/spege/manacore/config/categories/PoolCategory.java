@@ -39,6 +39,21 @@ public class PoolCategory {
     @Config.RangeDouble(min = 0.0D, max = 1.0E6D)
     public double itemProgressionCap = 100.0D;
 
-    @Config.Comment("Whether `current` resets on death. Permanent progression always survives death. Works live, no restart.")
+    @Config.Comment({
+            "Whether death touches the player's CURRENT mana at all. Permanent maximum always",
+            "survives death regardless of this - progression, granted maximum, the config base.",
+            "Off means the player keeps exactly the mana they died with. Works live, no restart."
+    })
     public boolean resetCurrentOnDeath = true;
+
+    @Config.Comment({
+            "What fraction of maximum mana the player respawns with, when `resetCurrentOnDeath` is on.",
+            "0.0 respawns them empty, 1.0 respawns them full; the default half is a cost for dying",
+            "without leaving them unable to cast their way out of wherever they respawned.",
+            "Measured against the PERSISTENT maximum only - worn gear is not counted, because bonus",
+            "maximum raises the ceiling rather than handing out mana, and gear is not on the player",
+            "at the moment this is computed anyway. Works live, no restart."
+    })
+    @Config.RangeDouble(min = 0.0D, max = 1.0D)
+    public double manaFractionOnDeath = 0.5D;
 }

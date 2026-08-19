@@ -40,9 +40,19 @@ public class ManaMathTest {
     }
 
     @Test
-    public void regenNieObnizaPuliPowyzejMaksimum() {
-        // After unequipping a bauble, `current` can exceed the new `max`. Regen must not clamp it down.
-        assertEquals(15.0D, ManaMath.afterRegen(15.0D, 10.0D, 2.0D), EPS);
+    public void regenObcinaNadmiarPonadMaksimum() {
+        // After unequipping a bauble that granted bonus maximum, `current` can exceed the new
+        // `max`. The surplus is confiscated rather than kept - bonus maximum raises the ceiling,
+        // it never hands out the mana itself.
+        assertEquals(10.0D, ManaMath.afterRegen(15.0D, 10.0D, 2.0D), EPS);
+        assertEquals(10.0D, ManaMath.afterRegen(15.0D, 10.0D, 0.0D), EPS);
+    }
+
+    @Test
+    public void regenNieSchodziPonizejZeraPrzyUjemnymMaksimum() {
+        // Unreachable through ManaAttributes.getMaxMana, which clamps the sum of both attributes
+        // at zero, but a caller passing a negative max must not be handed a negative pool.
+        assertEquals(0.0D, ManaMath.afterRegen(0.0D, -5.0D, 1.0D), EPS);
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.spege.manacore.cap;
 import com.spege.manacore.ManaCoreMod;
 import com.spege.manacore.attr.ManaAttributes;
 import com.spege.manacore.config.ManaCoreConfig;
+import com.spege.manacore.core.ManaMath;
 import com.spege.manacore.net.ManaNetwork;
 
 import net.minecraft.entity.Entity;
@@ -43,8 +44,9 @@ public final class ManaCapabilityHandler {
      * belt-and-braces, it is the ONLY thing that carries them across, because vanilla builds a
      * fresh player entity with a fresh attribute map and copies neither.
      * <p>
-     * `current` resets according to the config, but only on a real death (wasDeath), not when
-     * returning from the End.
+     * `current` is re-set to a configured fraction of the maximum, but only on a real death
+     * (wasDeath) and only when `pool.resetCurrentOnDeath` is on; returning from the End carries
+     * the pool across untouched.
      * <p>
      * This handler deliberately does NOT call {@link ManaAttributes#refreshPersistentModifiers}
      * after copying the bonus into the new pool. That is safe only because of the calling
@@ -77,7 +79,18 @@ public final class ManaCapabilityHandler {
         newPool.setGrantedMax(oldPool.getGrantedMax());
 
         if (event.isWasDeath() && ManaCoreConfig.pool.resetCurrentOnDeath) {
-            newPool.setCurrent(0.0D);
+            // Read the maximum off the ORIGINAL entity: the new one has not had its persistent
+            // modifiers rebuilt yet (that happens in onRespawn, after this returns), so its
+            // MAX_MANA is still the bare config base and a fraction of it would be wrong for any
+            // player who had earned or been granted anything.
+            //
+            // Persistent maximum only, deliberately excluding worn gear. Gear grants a ceiling,
+            // not mana, so counting it here would refund part of a bonus the player never held -
+            // and its modifiers do not survive death anyway, so the figure would be measured
+            // against a maximum the respawned player does not yet have.
+            double max = ManaAttributes.getPersistentMaxMana(event.getOriginal());
+            newPool.setCurrent(ManaMath.clamp(
+                    max * ManaCoreConfig.pool.manaFractionOnDeath, 0.0D, max));
         } else {
             newPool.setCurrent(oldPool.getCurrent());
         }

@@ -46,10 +46,23 @@ public final class ManaRegenHandler {
             return;
         }
 
+        double max = ManaAttributes.getMaxMana(player);
+
+        // Enforced BEFORE the regen guard and independently of it, because this is the only thing
+        // that takes back a surplus, and a surplus can appear while regen is switched off: the
+        // maximum drops the moment a bauble granting bonus maximum comes off, leaving the pool
+        // above a ceiling nothing else would ever pull it back under. Folding this into the
+        // `perTick > 0` branch would make "regen disabled" quietly mean "surplus kept forever".
+        //
+        // Both attribute reads behind getMaxMana are cached by the attribute instance and
+        // recomputed only when a modifier changes, so this costs nothing per tick.
+        if (pool.getCurrent() > max) {
+            pool.setCurrent(max);
+        }
+
         double perTick = ManaMath.regenPerTick(
                 ManaCoreConfig.regen.amountPerCycle, ManaCoreConfig.regen.cycleSeconds);
         if (perTick > 0.0D) {
-            double max = ManaAttributes.getMaxMana(player);
             pool.setCurrent(ManaMath.afterRegen(pool.getCurrent(), max, perTick));
         }
 

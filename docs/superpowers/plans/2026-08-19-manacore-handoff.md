@@ -38,6 +38,8 @@ Testy jednostkowe: **30** (`ManaMathTest` 10, `CostMathTest` 20), `./gradlew :ma
   - `manacore.bonusMana` — **dynamiczny**: noszone artefakty. Modyfikatory `setSaved(false)`, więc nigdy nie trafiają do NBT i nie przeżywają śmierci.
   - 🚨 **Sam modyfikator atrybutu NIE przeżywa śmierci.** Wanilla buduje na respawnie nową encję gracza i nie kopiuje mapy atrybutów. Każde trwałe źródło musi trzymać wartość w capability i być odtwarzane przez `refreshPersistentModifiers`. To był błąd `/mana setmax` do 2026-08-19.
 - **Sieć** — wozi wyłącznie `current`. Dwa kontrakty: `syncNow` (bezwarunkowo) i `syncIfDirty` (tylko przy zmianie). Interwał należy do wołającego okresowego, nie do kanału.
+- **Sufit puli** — `ManaRegenHandler` egzekwuje go **bezwarunkowo, przed bramką regenu**: nadmiar ponad maksimum jest konfiskowany. `bonusMana` podnosi więc wyłącznie limit, nigdy nie wypłaca many. Wyjątkiem jest `afterProgressionGain`, które celowo nie obniża zbankowanej progresji, gdy admin zetnie cap w configu.
+- **Śmierć** — `current` wraca do `pool.manaFractionOnDeath` (domyślnie 0.5) maksimum **trwałego**, liczonego ze **starej** encji w `PlayerEvent.Clone`, bo nowa nie ma jeszcze odbudowanych modyfikatorów.
 - **EBW** — `Pre`/`Tick` to bramki, odjęcie w `Post` (leci dopiero po `Spell.cast() == true`). Czary ciągłe używają `spendQuiet`, jednorazowe `spend`.
 - **TaB** — `MagicStats` przekierowane w całości na naszą pulę, `onUpdate` anulowane (jego regen dublował nasz).
 
@@ -63,7 +65,6 @@ Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gra
 - **`spellarchives`** pokazuje `Cost: %d mana` z niewłaściwego źródła.
 - **`pool.hardCap` jest zadeklarowane, ale nic go nie czyta.** Komentarz w configu to mówi.
 - **`grantedMax` to jedna wspólna liczba, nie rejestr per źródło.** Nadaje się wyłącznie dla nagród jednokierunkowych. Źródło przeliczalne (poziom Reskillable, noszony item) nie potrafiłoby odjąć swojego poprzedniego wkładu — musi mieć własny modyfikator z własnym UUID.
-- **Nadmiar many po zdjęciu artefaktu nie jest konfiskowany.** `ManaMath.afterRegen` celowo nigdy nie obniża puli, więc stan 150/100 utrzyma się, dopóki gracz go nie wyda. Maksimum aktualizuje się natychmiast — tylko `current` nie.
 - **Bonus melee różdżki stał się stały**, bo bramkuje go „różdżka nie jest pusta", a nic jej już nie rozładowuje.
 
 ## Pułapki, które kosztowały czas — nie powtarzać
