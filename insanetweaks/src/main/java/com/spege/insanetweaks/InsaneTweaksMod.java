@@ -83,7 +83,7 @@ import java.util.List;
  */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
-        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
+        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites@[" + InsaneTweaksMod.MIN_SRPARASITES + ",);"
         +
         "after:srpextra;after:baubles;after:potioncore;after:locks;"
         +
@@ -96,6 +96,18 @@ public class InsaneTweaksMod implements IGuiHandler {
      * Using the package name here silently disables every SRP-gated feature — always use this.
      */
     public static final String SRP_MODID = "srparasites";
+    /**
+     * Lowest SRParasites this mod can even be LOADED against, not merely the lowest it is tuned
+     * for. Content names ~45 SRP classes, several of them as a superclass ({@code EntityInfHuman})
+     * or in a verifier-visible position, so a jar older than this does not degrade — it fails to
+     * link. A player's crash on 2026-08-16 (SRP 1.9.21, insanetweaks 1.16.1) came out as
+     * {@code NoClassDefFoundError: …ai/misc/EntityAICircleGroup} from the middle of preInit,
+     * because {@code required-after:srparasites} carried no version bound. With the bound, Forge
+     * refuses the load up front and says which mod is at fault.
+     *
+     * Keep in sync with the SRParasites jar in {@code libs/}.
+     */
+    public static final String MIN_SRPARASITES = "1.10.7";
     public static final String NAME  = "Insane Tweaks";
     /**
      * 🚨 Trzymaj to zgodne z 'version' w insanetweaks/build.gradle. To jest wartosc, ktora
@@ -106,7 +118,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.17.0";
+    public static final String VERSION = "1.17.1";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -860,21 +872,23 @@ public class InsaneTweaksMod implements IGuiHandler {
         boolean hasReskillTweaks = Loader.isModLoaded("reskilltweaks");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
 
-        // Check srparasites version.
-        // SRParasites split its versioning after 1.10: the "old" branch stayed at 1.0.x.x
-        // while the maintained branch moved to 1.9.x.x and later 1.10.x.x.
-        // A naive compareTo("1.10") incorrectly classifies 1.9.x.x as "old" because
-        // 1.9 < 1.10 numerically.  We also accept any version whose major.minor is
-        // at least 1.9 as the new scheme.
+        // Check srparasites version against MIN_SRPARASITES.
+        //
+        // 🚨 The previous form of this test could never fire, and that is why the 2026-08-16
+        // crash arrived with no warning ahead of it:
+        //     current < "1.9" && current < "1.10"
+        // Maven orders 1.9 below 1.10, so the left side implies the right and the whole
+        // expression collapses to `current < 1.9` — 1.9.21 passed as supported and then died
+        // linking EntitySimWizard. One comparison against the real floor, nothing else.
+        //
+        // Note SRParasites' own scheme agrees with Maven ordering here (1.9.21 < 1.10.7), so
+        // DefaultArtifactVersion is the right comparator and needs no special-casing.
         boolean oldSrparasites = false;
-        ModContainer srparasitesMod = Loader.instance().getIndexedModList().get("srparasites");
+        ModContainer srparasitesMod = Loader.instance().getIndexedModList().get(SRP_MODID);
         if (srparasitesMod != null) {
             try {
                 DefaultArtifactVersion current = new DefaultArtifactVersion(srparasitesMod.getVersion());
-                DefaultArtifactVersion minNew  = new DefaultArtifactVersion("1.9");  // new versioning scheme start
-                DefaultArtifactVersion minOld  = new DefaultArtifactVersion("1.10"); // old scheme "full" threshold
-                // Accept if >= 1.9 (new branch) OR >= 1.10 (old branch threshold).
-                oldSrparasites = current.compareTo(minNew) < 0 && current.compareTo(minOld) < 0;
+                oldSrparasites = current.compareTo(new DefaultArtifactVersion(MIN_SRPARASITES)) < 0;
             } catch (Exception e) {
                 LOGGER.warn("[InsaneTweaks] Could not parse srparasites version: {}", srparasitesMod.getVersion());
             }
@@ -890,8 +904,11 @@ public class InsaneTweaksMod implements IGuiHandler {
             LOGGER.info("   -> Fallback recipes active.");
 
         if (oldSrparasites && srparasitesMod != null) {
-            LOGGER.warn("  [!] SRParasites v{} is below the supported range. Fallback recipe mode active.",
-                    srparasitesMod.getVersion());
+            // Unreachable while the @Mod dependency bound holds - Forge rejects the load before
+            // preInit. Kept as a second line of defence for anyone stripping the bound.
+            LOGGER.warn("  [!] SRParasites v{} is BELOW the minimum {}. This mod cannot run on it -"
+                    + " expect NoClassDefFoundError on SRP classes. Update SRParasites.",
+                    srparasitesMod.getVersion(), MIN_SRPARASITES);
         }
         
         LOGGER.info("  baubles             ... {} ({})",
