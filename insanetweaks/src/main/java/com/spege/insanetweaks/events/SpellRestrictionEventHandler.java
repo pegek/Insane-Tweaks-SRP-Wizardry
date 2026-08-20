@@ -6,9 +6,11 @@ import com.spege.insanetweaks.init.ModElements;
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
 
 import electroblob.wizardry.event.SpellCastEvent;
+import electroblob.wizardry.util.SpellModifiers;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -52,13 +54,19 @@ public class SpellRestrictionEventHandler {
             return;
         }
 
-        if (isUnadaptedAbominationCast(event, player)) {
+        ItemStack castingStack = AdaptationUpgradeHelper.findCastingItem(player, event.getSpell());
+
+        if (isUnadaptedAbominationCast(event, castingStack)) {
             event.setCanceled(true);
             player.sendStatusMessage(
                     new TextComponentString(TextFormatting.DARK_RED
                             + "This focus has not adapted to Abomination magic."),
                     true);
             return;
+        }
+
+        if (ModElements.isAbomination(event.getSpell()) && event.getSource() == SpellCastEvent.Source.WAND) {
+            applyForeignFocusAbominationCostMultiplier(event, castingStack);
         }
 
         int requiredStage = getRequiredStage(spellId);
@@ -119,14 +127,52 @@ public class SpellRestrictionEventHandler {
      * {@code PlayerManaCompat.isAvailable()} - so it stopped working the day player_mana was
      * disabled in the pack, silently. It lives here now because this handler is gated only on
      * {@code modules.enableSpells} and has no relationship to that mod.
+     *
+     * <p>Takes the casting focus as a precomputed {@link ItemStack} rather than resolving it
+     * itself, so {@code onSpellCastPre} can reuse the same lookup for
+     * {@link #applyForeignFocusAbominationCostMultiplier} instead of calling
+     * {@link AdaptationUpgradeHelper#findCastingItem} twice.
      */
-    private boolean isUnadaptedAbominationCast(SpellCastEvent.Pre event, EntityPlayer player) {
+    private boolean isUnadaptedAbominationCast(SpellCastEvent.Pre event, ItemStack castingStack) {
         if (!ModElements.isAbomination(event.getSpell())
                 || event.getSource() != SpellCastEvent.Source.WAND) {
             return false;
         }
-        return AdaptationUpgradeHelper.getEffectiveAdaptationLevel(
-                AdaptationUpgradeHelper.findCastingItem(player, event.getSpell())) <= 0;
+        return AdaptationUpgradeHelper.getEffectiveAdaptationLevel(castingStack) <= 0;
+    }
+
+    /**
+     * Cost surcharge for casting Abomination magic through a focus that qualifies only through an
+     * applied Adaptation upgrade, not by being one of our own items (Living/Sentient wand or
+     * spellblade).
+     *
+     * <p>This arrived from the deleted {@code ArcaneBridgeEventHandler}, which applied it
+     * unconditionally alongside the Abomination gate above before the player_mana integration -
+     * and that handler along with it - was removed. The design spec's <em>Out of scope</em>
+     * section keeps this multiplier as a separate, deliberately-unwired lever: "it stays as it is
+     * ... switching it on is a separate decision", so relocating the call here is a bug fix for
+     * the config, not a balance change. Before this method existed,
+     * {@code foreignFocusAbominationCostLevel1/2/3} in {@code GearCategory} had zero callers while
+     * their comments still promised "2.0 doubles the cost. Read live - no restart needed."
+     *
+     * <p>It is a no-op at the shipped defaults: {@link AdaptationUpgradeHelper#getForeignFocusAbominationCostMultiplier}
+     * returns 1.0 for every level until the pack's config raises one of those three fields above 1.0.
+     *
+     * <p>Only called when the spell is Abomination and the source is {@link SpellCastEvent.Source#WAND}
+     * (see the caller); {@code player.isCreative()} is already excluded earlier in
+     * {@code onSpellCastPre}.
+     */
+    private void applyForeignFocusAbominationCostMultiplier(SpellCastEvent.Pre event, ItemStack castingStack) {
+        if (AdaptationUpgradeHelper.getDefaultAdaptationLevel(castingStack) != 0) {
+            return;
+        }
+
+        float multiplier = AdaptationUpgradeHelper.getForeignFocusAbominationCostMultiplier(
+                AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(castingStack));
+        if (multiplier != 1.0f) {
+            event.getModifiers().set(SpellModifiers.COST,
+                    event.getModifiers().get(SpellModifiers.COST) * multiplier, false);
+        }
     }
 
     private boolean isBlockedWizardCaster(EntityLivingBase caster) {
