@@ -211,7 +211,7 @@ preserved throughout — no spell overtakes another.
 
 | spell | old | **new** | cut | P | S |
 |---|---|---|---|---|---|
-| `dispatcher_grasp` | 130 | **70** | 1.9x | 0.27 | 1.00 |
+| `dispatcher_grasp` | 130 | **50 /s** | 2.6x | n/a | n/a |
 | `immune_bond` | 140 | **75** | 1.9x | 0.29 | 0.71 |
 | `yelloweye_gland` | 150 | **80** | 1.9x | 0.30 | 0.95 |
 | `summon_thrall` | 520 | **200** | 2.6x | 0.76 | 0.48 |
@@ -224,6 +224,24 @@ preserved throughout — no spell overtakes another.
 | `summon_primitive_summoner` | 850 | **325** | 2.6x | 1.24 | 0.36 |
 | `purifying_pulse` | 1100 | **350** | 3.1x | 1.33 | 0.17 |
 | `call_of_demise` | 1800 | **500** | 3.6x | 1.90 | 0.12 |
+
+🚨 **`dispatcher_grasp` is a CONTINUOUS spell and the formula does not apply to it.** Its JSON looks
+like every other spell's, because the flag is set in Java, not in the file:
+`SpellDispatcherGrasp` calls `super(MODID, "dispatcher_grasp", SpellActions.POINT, true)` — that
+trailing `true` is `isContinuous`. So its `cost` is mana **per second of channel**, not per cast, and
+both indices above are meaningless for it: `P` treats the number as a one-shot burst, and `S` divides
+by a cooldown that does not govern a channel.
+
+It was priced at 70 by the discrete formula and that was an error, caught in play. The corrected value
+is **50 per second**, and the reference for it is EB Wizardry's own continuous spells rather than its
+discrete ones: `arc` 5/s (novice), `frost_ray` and `lightning_ray` 5/s (apprentice), `life_drain`
+10/s (apprentice). EBW ships no master-tier continuous spell, so there is no direct peer; scaling its
+apprentice discrete-to-continuous ratio (≈17 vs 5–10) up to its master discrete mean (≈88) puts a
+master continuous at roughly 35–50/s. 50 is the top of that band, which suits the only offensive
+spell of the element.
+
+**Any future continuous spell must be checked the same way — by reading the constructor, not the
+JSON.** A scan of the spell files cannot see this flag.
 
 `test_projectile` (15) is untouched — it is a development spell and not part of the family.
 
