@@ -305,7 +305,7 @@ No mixin is added or removed except the PlayerMana one, so `cleanmix.log` matter
 | `mixins/playermana/MixinPlayerManaEventsHandler.java`, `mixins.insanetweaks.playermana.json` | **deleted** |
 | `core/LateMixinBooter.java` | drop the PlayerMana mixin config |
 | `events/WandEventHandler.java` | point at `SpellManaAccounting` |
-| `events/LegacyDormantRemapHandler.java` | add the fruit to `MissingMappings<Item>` (§2.3) |
+| `events/RetiredItemsRemapHandler.java` | **new** — `MissingMappings<Item>` for retired items (§2.3) |
 | `init/ModItems.java` | drop the field, registration and model |
 | `commands/CommandInsaneTweaks.java` | drop `/claimarcanefruit` |
 | `baubles/ItemZhonyasHourglassArtefact.java`, `items/spellblade/BridgeSpellblade.java` | drop PlayerMana branches |
