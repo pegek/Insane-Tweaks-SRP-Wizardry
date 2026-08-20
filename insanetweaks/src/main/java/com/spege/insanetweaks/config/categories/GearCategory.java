@@ -81,7 +81,11 @@ public class GearCategory {
 
         @Config.Name("Living Spellblade Mana Capacity")
         @Config.Comment({
-                "How much mana a Living Spellblade holds before storage upgrades.",
+                "The mana pool a Living Spellblade reaches once a storage upgrade has been socketed",
+                "into it - not the pool it starts with. Ancient Spellcraft's battlemage swords hold",
+                "NO mana at all until then, unlike this mod's wands; that has always been true of",
+                "this blade and this config does not change it. Further storage upgrades scale on",
+                "top of this value exactly as they do for a wand.",
                 "Deliberately below the Living Wand's: a spellblade is a hybrid and casting is its",
                 "second job, so it trades pool for a melee profile the wand does not have.",
                 "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",
@@ -91,8 +95,10 @@ public class GearCategory {
 
         @Config.Name("Sentient Spellblade Mana Capacity")
         @Config.Comment({
-                "How much mana a Sentient Spellblade holds before storage upgrades - the evolved",
-                "form of the Living Spellblade.",
+                "The mana pool a Sentient Spellblade reaches once a storage upgrade has been",
+                "socketed into it - not the pool it starts with. See the Living Spellblade entry",
+                "above for why: this has always been true of Ancient Spellcraft's battlemage swords",
+                "and this config does not change it.",
                 "Deliberately below the Sentient Wand's, for the same reason as the Living Spellblade",
                 "above: casting is this weapon's second job.",
                 "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",

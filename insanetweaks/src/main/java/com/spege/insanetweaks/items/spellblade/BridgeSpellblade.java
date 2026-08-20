@@ -68,15 +68,25 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     /**
-     * Mana capacity, read from config at call time.
+     * Mana capacity, read from config at call time - once a storage upgrade has been socketed.
      *
-     * <p>{@code ItemBattlemageSword.getMaxDamage} returns 0 unless a storage_upgrade has already
-     * been applied to the stack (see its {@code hasManaStorage} gate), which would leave a fresh
-     * Spellblade holding zero mana out of the box - not what "before storage upgrades" in the
-     * config comment promises. This override replaces that with the same pattern
-     * {@link com.spege.insanetweaks.items.wand.BaseCustomWandItem#getMaxDamage(ItemStack)} uses for
-     * the two wands: a config base that always applies, scaled by EBW's own storage-upgrade
-     * multiplier.
+     * <p>🚨 {@code ItemBattlemageSword.hasManaStorage(stack)} - true only once
+     * {@code WandHelper.getUpgradeLevel(stack, WizardryItems.storage_upgrade) > 0} - is Ancient
+     * Spellcraft's own design, not an accident: a battlemage sword carries no mana pool at all
+     * until the player sockets a storage upgrade into it, unlike this mod's wands. Both
+     * {@code LivingSpellblade} and {@code SentientSpellblade} ask that exact question themselves
+     * ({@code innateManaAvailable = hasManaStorage(stack) && !isManaEmpty(stack)}) to decide the
+     * {@code melee_upgrade} damage bonus, the out-of-mana penalty, and whether Runeword Fury runs.
+     * An earlier version of this override answered with a config-driven pool regardless of that
+     * gate, which made a fresh blade read as "has mana" for casting while {@code hasManaStorage}
+     * was still false - so it took the out-of-mana melee penalty and never ran Runeword Fury
+     * despite a full pool. Keep the gate: everything downstream of {@code hasManaStorage} depends
+     * on this method agreeing with it.
+     *
+     * <p>Once the gate is open, the base is resolved from config by registry name and scaled the
+     * same way {@link com.spege.insanetweaks.items.wand.BaseCustomWandItem#getMaxDamage(ItemStack)}
+     * scales the two wands, rather than reading the Java field default {@code setMaxDamage} used to
+     * set in the constructor.
      *
      * <p>We cannot set that base from config in the constructor for the identical reason
      * {@code BaseCustomWandItem} documents: {@code ModItems} is a {@code @Mod.EventBusSubscriber},
@@ -84,12 +94,20 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
      * {@code setMaxDamage(config)} there would silently capture the Java field default instead of
      * the value in the file.
      *
-     * <p>The scaling expression is EBW's own, copied deliberately from
-     * {@code BaseCustomWandItem.getMaxDamage} so storage upgrades keep behaving identically to the
-     * wands.
+     * <p>Scaling factor and rounding: Ancient Spellcraft hardcodes {@code 0.15f} per storage level
+     * and rounds ({@code + 0.5f} before truncating) in its own {@code getMaxDamage}. EBW's
+     * {@code Constants.STORAGE_INCREASE_PER_LEVEL} is a config-adjustable field, not a compile-time
+     * constant, but its shipped default - read out of {@code Settings}'s own initialiser in the EBW
+     * jar - is the identical {@code 0.15f}, and {@code BaseCustomWandItem} already scales the two
+     * wands by that constant. Using it here too, with the same {@code + 0.5F} rounding, keeps a
+     * Spellblade's storage-upgrade progression consistent with the rest of this mod's gear instead
+     * of splitting it onto AS's separately-configured number for one weapon pair alone.
      */
     @Override
     public int getMaxDamage(ItemStack stack) {
+        if (!ItemBattlemageSword.hasManaStorage(stack)) {
+            return super.getMaxDamage(stack);
+        }
         int base = this.getBaseManaCapacity();
         if (base <= 0) {
             return super.getMaxDamage(stack);
