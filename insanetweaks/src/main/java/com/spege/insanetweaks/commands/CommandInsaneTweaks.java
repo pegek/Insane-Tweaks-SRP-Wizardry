@@ -1,6 +1,5 @@
 package com.spege.insanetweaks.commands;
 
-import com.spege.insanetweaks.util.ArcaneAdaptedFruitHelper;
 import com.spege.insanetweaks.util.EnchantGrantMarker;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -31,7 +30,7 @@ public class CommandInsaneTweaks extends CommandBase {
     @Override
     @Nonnull
     public String getUsage(@Nonnull ICommandSender sender) {
-        return "/itweaks <claimfruit | grantbook | propertybook | codexpool>";
+        return "/itweaks <grantbook | propertybook | codexpool>";
     }
 
     @Override
@@ -54,9 +53,6 @@ public class CommandInsaneTweaks extends CommandBase {
         String subCommand = args[0].toLowerCase();
 
         switch (subCommand) {
-            case "claimfruit":
-                handleClaimFruit(sender);
-                break;
             case "grantbook":
                 handleGrantBook(server, sender, args);
                 break;
@@ -75,7 +71,6 @@ public class CommandInsaneTweaks extends CommandBase {
 
     private void sendHelp(ICommandSender sender) {
         sender.sendMessage(new TextComponentString("\u00A75--- Insane Tweaks Commands ---"));
-        sender.sendMessage(new TextComponentString("\u00A7e/itweaks claimfruit\u00A77 - Claim your Arcane Adapted Fruit"));
         if (sender.canUseCommand(2, "itweaks")) { // If they have OP permissions
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks grantbook <enchantment> [level] [player]\u00A77 - Give a quest-granted enchanted book"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks propertybook <property> [player]\u00A77 - Give a Property Book (anvil onto a tool)"));
@@ -239,19 +234,6 @@ public class CommandInsaneTweaks extends CommandBase {
         }
         sender.sendMessage(new TextComponentString("\u00A7aGranted \u00A7e" + key + " " + level
                 + "\u00A7a to \u00A7e" + target.getName()));
-    }
-
-    private void handleClaimFruit(ICommandSender sender) throws CommandException {
-        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
-
-        if (!ArcaneAdaptedFruitHelper.hasPendingFruit(player)) {
-            player.sendMessage(new TextComponentString(TextFormatting.GRAY + "You have no Arcane Adapted Fruit waiting to be claimed."));
-            return;
-        }
-
-        if (!ArcaneAdaptedFruitHelper.tryGiveFruit(player)) {
-            player.sendMessage(new TextComponentString(TextFormatting.RED + "You still need at least one free inventory slot."));
-        }
     }
 
 }

@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
-import com.spege.insanetweaks.util.PlayerManaCompat;
 import com.spege.insanetweaks.util.SoManyEnchantmentsCompat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.Entity;
@@ -234,19 +233,6 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
             boolean isSelected) {
         super.onUpdate(stack, world, entity, itemSlot, isSelected);
-
-        if (world.isRemote || !(entity instanceof EntityPlayer) || !PlayerManaCompat.isAvailable()) {
-            return;
-        }
-
-        if (!stack.hasTagCompound()) {
-            stack.setTagCompound(new NBTTagCompound());
-        }
-
-        NBTTagCompound nbt = stack.getTagCompound();
-        if (nbt != null && PlayerManaCompat.hasUsableMana((EntityPlayer) entity)) {
-            nbt.setBoolean("mana_available", true);
-        }
     }
 
     @Override

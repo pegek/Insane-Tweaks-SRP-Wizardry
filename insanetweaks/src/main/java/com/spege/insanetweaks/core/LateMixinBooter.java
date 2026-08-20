@@ -28,9 +28,6 @@ public class LateMixinBooter implements ILateMixinLoader {
         // ClassCastException surfacing somewhere else. Content declares required-after:ebwizardry, so
         // no Loader.isModLoaded gate is needed here.
         configs.add("mixins.insanetweaks.altarguard.json");
-        if (net.minecraftforge.fml.common.Loader.isModLoaded("player_mana")) {
-            configs.add("mixins.insanetweaks.playermana.json");
-        }
         if (net.minecraftforge.fml.common.Loader.isModLoaded("srparasites")) {
             configs.add("mixins.insanetweaks.srpcontent.json");
         }

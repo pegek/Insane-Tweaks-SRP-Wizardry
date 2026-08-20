@@ -390,7 +390,6 @@ public class InsaneTweaksMod implements IGuiHandler {
             // it; arcaneSundering.enabled is read per hit, so it toggles without a restart.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneSunderingHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
             // 🚨 SpellbladeTooltipHandler is @SideOnly(Side.CLIENT) at CLASS level, so merely
             // instantiating it on a dedicated server makes Forge's SideTransformer throw
             // ("Attempted to load class ... for invalid side SERVER"). Same for ArmorTooltipHandler
