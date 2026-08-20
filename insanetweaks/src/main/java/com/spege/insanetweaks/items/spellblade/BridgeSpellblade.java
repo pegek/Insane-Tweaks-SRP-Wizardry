@@ -67,6 +67,70 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         this.setUnlocalizedName(name);
     }
 
+    /**
+     * Mana capacity, read from config at call time.
+     *
+     * <p>{@code ItemBattlemageSword.getMaxDamage} returns 0 unless a storage_upgrade has already
+     * been applied to the stack (see its {@code hasManaStorage} gate), which would leave a fresh
+     * Spellblade holding zero mana out of the box - not what "before storage upgrades" in the
+     * config comment promises. This override replaces that with the same pattern
+     * {@link com.spege.insanetweaks.items.wand.BaseCustomWandItem#getMaxDamage(ItemStack)} uses for
+     * the two wands: a config base that always applies, scaled by EBW's own storage-upgrade
+     * multiplier.
+     *
+     * <p>We cannot set that base from config in the constructor for the identical reason
+     * {@code BaseCustomWandItem} documents: {@code ModItems} is a {@code @Mod.EventBusSubscriber},
+     * so its {@code <clinit>} can run before Forge's first {@code ConfigManager.sync}, and a
+     * {@code setMaxDamage(config)} there would silently capture the Java field default instead of
+     * the value in the file.
+     *
+     * <p>The scaling expression is EBW's own, copied deliberately from
+     * {@code BaseCustomWandItem.getMaxDamage} so storage upgrades keep behaving identically to the
+     * wands.
+     */
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        int base = this.getBaseManaCapacity();
+        if (base <= 0) {
+            return super.getMaxDamage(stack);
+        }
+        int storage = electroblob.wizardry.util.WandHelper.getUpgradeLevel(
+                stack, electroblob.wizardry.registry.WizardryItems.storage_upgrade);
+        return (int) (base * (1.0F + electroblob.wizardry.constants.Constants.STORAGE_INCREASE_PER_LEVEL * storage) + 0.5F);
+    }
+
+    /** Zero means "not one of ours" - fall back to whatever ItemBattlemageSword says. */
+    private int getBaseManaCapacity() {
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_spellblade".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.spellblades.livingSpellbladeManaCapacity;
+            }
+            if ("sentient_spellblade".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.spellblades.sentientSpellbladeManaCapacity;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Insurance against a config lowered under a blade that already has more mana spent than the
+     * new capacity allows. Mana is stored as {@code capacity - damage} with nothing clamping the
+     * result, so a blade charged above a newly lowered ceiling computes to negative mana - but
+     * {@code isManaEmpty} (an exact {@code == 0} check) does not recognise that as empty, so the
+     * blade would keep its melee bonuses and refuse every spell instead of just being empty.
+     * Mirrors {@code BaseCustomWandItem.onUpdate}, which carries the identical clamp for the two
+     * wands. Do not remove this.
+     */
+    @Override
+    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
+            boolean isSelected) {
+        super.onUpdate(stack, world, entity, itemSlot, isSelected);
+        if (this.getMana(stack) < 0) {
+            this.setMana(stack, 0);
+        }
+    }
+
     // ------------------------------------------------------------------
     // IWeaponPropertyContainer Implementation
     // ------------------------------------------------------------------

@@ -50,7 +50,6 @@ public class SentientSpellblade extends BridgeSpellblade {
     public SentientSpellblade() {
         super("sentient_spellblade", "insanetweaks", Tier.MASTER, 8);
         this.setCreativeTab(CreativeTabs.COMBAT);
-        this.setMaxDamage(4000);
         this.swModelPath = "sentient_spellblade";
 
         // Spartan base + local InsaneTweaks parasite properties (no swparasites dependency)

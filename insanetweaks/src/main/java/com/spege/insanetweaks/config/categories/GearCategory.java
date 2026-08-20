@@ -79,6 +79,27 @@ public class GearCategory {
         @Config.RequiresMcRestart
         public double sentientAttackDamage = 22.0D;
 
+        @Config.Name("Living Spellblade Mana Capacity")
+        @Config.Comment({
+                "How much mana a Living Spellblade holds before storage upgrades.",
+                "Deliberately below the Living Wand's: a spellblade is a hybrid and casting is its",
+                "second job, so it trades pool for a melee profile the wand does not have.",
+                "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",
+                "Read live - no restart needed. Default 2500." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int livingSpellbladeManaCapacity = 2500;
+
+        @Config.Name("Sentient Spellblade Mana Capacity")
+        @Config.Comment({
+                "How much mana a Sentient Spellblade holds before storage upgrades - the evolved",
+                "form of the Living Spellblade.",
+                "Deliberately below the Sentient Wand's, for the same reason as the Living Spellblade",
+                "above: casting is this weapon's second job.",
+                "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",
+                "Read live - no restart needed. Default 3000." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int sentientSpellbladeManaCapacity = 3000;
+
         @Config.Name("Out Of Mana Damage Multiplier")
         @Config.Comment({
                 "What a Spellblade's melee damage drops to when its wielder has no mana left. This is",
