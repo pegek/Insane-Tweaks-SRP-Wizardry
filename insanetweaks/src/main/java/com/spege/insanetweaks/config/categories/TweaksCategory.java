@@ -49,7 +49,7 @@ public class TweaksCategory {
     @Config.RangeInt(min = 0)
     public int zhonyaAggroLossTicks = 100;
 
-    @Config.Comment({"Zhonya's Hourglass: capacity of the built-in EB mana pool used by the fallback",
+    @Config.Comment({"Zhonya's Hourglass: capacity of the artefact's own built-in EB mana pool",
             "(default 3000). A full charge is required to activate and is fully consumed."})
     @Config.Name("Zhonya EB-Mana Capacity")
     @Config.RangeInt(min = 1)

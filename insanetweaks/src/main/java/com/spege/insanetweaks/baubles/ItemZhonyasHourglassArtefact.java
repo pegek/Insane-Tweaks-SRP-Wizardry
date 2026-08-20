@@ -37,8 +37,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * ItemRestorationHourglassArtefact. Ten item ma NOWE działanie:
  *
  * AKTYWNE (PPM trzymając w ręce):
- *   1. Koszt: drenaż CAŁEJ aktualnej many (player_mana) + cooldown (config, domyślnie 3 h).
- *      Wymagane minimum many (config, domyślnie 100) — poniżej aktywacja odmawia
+ *   1. Koszt: pełne naładowanie własnej puli many artefaktu (config: zhonyaEbManaCapacity)
+ *      + cooldown (config, domyślnie 3 h). Poniżej pełnego naładowania aktywacja odmawia
  *      i nie zużywa cooldownu.
  *   2. Gilded Stasis (config, domyślnie 3 s): pełna nieśmiertelność + full heal
  *      + Cleanse + root w miejscu + złoty tint modelu (ZhonyaStasisHandler /
@@ -49,22 +49,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SuppressWarnings("null")
 public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaStoringItem {
 
-    /** NBT key for the built-in EB mana pool used by the player_mana-less fallback. */
+    /** NBT key for the artefact's own built-in EB mana pool - the sole cost model. */
     private static final String NBT_MANA = "Mana";
 
     public ItemZhonyasHourglassArtefact() {
         super(EnumRarity.EPIC, Type.CHARM);
         this.setRegistryName("zhonyas_hourglass");
         this.setUnlocalizedName("insanetweaks.zhonyas_hourglass");
-    }
-
-    /**
-     * The item's own EB mana pool is the cost model. It used to be the fallback for when player_mana
-     * was absent; that integration is gone, so the fallback is now the only path and the method is
-     * kept only because several call sites read better with a name than with {@code true}.
-     */
-    private static boolean isEbManaMode() {
-        return true;
     }
 
     // ─── IManaStoringItem (built-in EB mana pool) ────────────────────────────
@@ -93,11 +84,11 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaS
         stack.getTagCompound().setInteger(NBT_MANA, clamped);
     }
 
-    // ─── Charge bar (only while the EB fallback is the active cost model) ─────
+    // ─── Charge bar ────────────────────────────────────────────────────────
 
     @Override
     public boolean showDurabilityBar(@Nonnull ItemStack stack) {
-        return isEbManaMode() && getMana(stack) < getManaCapacity(stack);
+        return getMana(stack) < getManaCapacity(stack);
     }
 
     @Override
@@ -128,9 +119,7 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaS
             return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
-        // Cost: the hourglass's own EB mana pool, spent in full. This used to be the middle of
-        // three branches - player_mana first, this as its fallback, an inert third when neither
-        // was available. player_mana is gone, so this is simply what the hourglass costs.
+        // Cost: the hourglass's own EB mana pool, spent in full.
         if (getMana(stack) < getManaCapacity(stack)) {
             player.sendMessage(new TextComponentString(
                 TextFormatting.GRAY + "[Zhonyas] The hourglass is not fully charged ("
@@ -139,7 +128,7 @@ public class ItemZhonyasHourglassArtefact extends ItemArtefact implements IManaS
         }
         setMana(stack, 0);
 
-        // Cooldown applies to BOTH active cost paths (player_mana and EB-mana fallback).
+        // Cooldown applies to the one active cost path: the hourglass's own EB mana pool.
         if (!player.isCreative()) {
             player.getCooldownTracker().setCooldown(this, ModConfig.tweaks.zhonyaCooldownTicks);
         }

@@ -230,12 +230,6 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     @Override
-    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
-            boolean isSelected) {
-        super.onUpdate(stack, world, entity, itemSlot, isSelected);
-    }
-
-    @Override
     @Nonnull
     @SuppressWarnings("null")
     public SpellModifiers calculateModifiers(@Nonnull ItemStack stack, @Nonnull EntityPlayer player,

@@ -83,7 +83,7 @@ import java.util.List;
  */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
-        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites@[" + InsaneTweaksMod.MIN_SRPARASITES + ",);"
+        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites@[" + InsaneTweaksMod.MIN_SRPARASITES + ",);"
         +
         "after:srpextra;after:baubles;after:potioncore;after:locks;"
         +
@@ -867,7 +867,6 @@ public class InsaneTweaksMod implements IGuiHandler {
         boolean hasSrpExtra = Loader.isModLoaded("srpextra");
         boolean hasBaubles = Loader.isModLoaded("baubles");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
-        boolean hasPlayerMana = Loader.isModLoaded("player_mana");
         boolean hasReskillTweaks = Loader.isModLoaded("reskilltweaks");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
 
@@ -917,9 +916,6 @@ public class InsaneTweaksMod implements IGuiHandler {
         LOGGER.info("  potioncore          ... {}", status(hasPotionCore));
         if (hasPotionCore)
             LOGGER.info("   -> If crashing: set 'Fix Saturation = false' in potioncore.cfg");
-        LOGGER.info("  player_mana         ... {}", status(hasPlayerMana));
-        if (hasPlayerMana)
-            LOGGER.info("   -> Wand evolution and spellblade mana checks use player_mana compat.");
         // Reskillable itself is no longer this mod's business — the whole integration lives in
         // reskilltweaks, which is what actually needs it. Reported by presence rather than by
         // TraitGate.isArmed(): reskilltweaks declares required-after:insanetweaks, so it arms the
