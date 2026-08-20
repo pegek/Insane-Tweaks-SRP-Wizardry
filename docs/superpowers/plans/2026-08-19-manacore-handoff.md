@@ -28,7 +28,7 @@ Z `logs/latest.log`:
 
 `config/manacore.cfg` generuje się z pięcioma kategoriami na poziomie głównym (`ebw`, `hud`, `pool`, `regen`, `tab`) — nic pod `general`, czyli kontrakt `category = ""` się trzyma.
 
-Testy jednostkowe: **30** (`ManaMathTest` 10, `CostMathTest` 20), `./gradlew :manacore:test`.
+Testy jednostkowe: **51** (`ManaMathTest` 11, `CostMathTest` 20, `AdvancementBonusTableTest` 20), `./gradlew :manacore:test`.
 
 ## Architektura w skrócie
 
@@ -42,6 +42,7 @@ Testy jednostkowe: **30** (`ManaMathTest` 10, `CostMathTest` 20), `./gradlew :ma
 - **Śmierć** — `current` wraca do `pool.manaFractionOnDeath` (domyślnie 0.5) maksimum **trwałego**, liczonego ze **starej** encji w `PlayerEvent.Clone`, bo nowa nie ma jeszcze odbudowanych modyfikatorów.
 - **EBW** — `Pre`/`Tick` to bramki, odjęcie w `Post` (leci dopiero po `Spell.cast() == true`). Czary ciągłe używają `spendQuiet`, jednorazowe `spend`.
 - **TaB** — `MagicStats` przekierowane w całości na naszą pulę, `onUpdate` anulowane (jego regen dublował nasz).
+- **Osiągnięcia** — `AdvancementManaHandler` przelicza bonus z rzeczywistego stanu osiągnięć gracza i nakłada **jeden** modyfikator na `manacore.maxMana`. 🚨 Świadomie NIE przez `ManaAPI.addGrantedMax`: tamten bufor jest jednokierunkowy, a stan osiągnięć jest odwracalny (`/advancement revoke`) i przeliczalny (zmiana configu). Tabela `advancements.bonuses` przyjmuje dowolne ID, nie tylko EBW. Spec: [2026-08-20-manacore-advancement-mana-design.md](../specs/2026-08-20-manacore-advancement-mana-design.md).
 
 ## Czego NIE przetestowano
 

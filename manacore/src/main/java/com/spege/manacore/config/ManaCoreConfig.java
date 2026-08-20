@@ -1,6 +1,7 @@
 package com.spege.manacore.config;
 
 import com.spege.manacore.ManaCoreMod;
+import com.spege.manacore.config.categories.AdvancementCategory;
 import com.spege.manacore.config.categories.EbwCategory;
 import com.spege.manacore.config.categories.HudCategory;
 import com.spege.manacore.config.categories.PoolCategory;
@@ -41,6 +42,11 @@ public class ManaCoreConfig {
     @Config.LangKey("config.manacore.category.ebw")
     @Config.Comment("Electroblob's Wizardry bridge: spell cost hookup and wand upgrade tunables.")
     public static final EbwCategory ebw = new EbwCategory();
+
+    @Config.Name("advancements")
+    @Config.LangKey("config.manacore.category.advancements")
+    @Config.Comment("Advancements that permanently raise maximum mana, and the ceiling on their total.")
+    public static final AdvancementCategory advancements = new AdvancementCategory();
 
     @Config.Name("tab")
     @Config.LangKey("config.manacore.category.tab")
