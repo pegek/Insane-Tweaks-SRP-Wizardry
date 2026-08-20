@@ -323,28 +323,16 @@ public class GearCategory {
         @Config.RangeInt(min = 100, max = 100000)
         public int sentientManaCapacity = 3500;
 
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation I)")
+        @Config.Name("Foreign Focus Abomination Cost")
         @Config.Comment({
                 "Mana cost multiplier when an Abomination spell is cast from a focus that is NOT one",
-                "of ours and only qualifies through an applied Adaptation upgrade at level I.",
+                "of ours and only qualifies through an applied Adaptation upgrade. The upgrade is",
+                "capped at one level (AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL), so there is no",
+                "per-level ladder here any more - a foreign focus either qualifies or it doesn't.",
                 "1.0 means no surcharge, which is the shipped default; 2.0 doubles the cost.",
                 "Read live - no restart needed. Default 1.0." })
         @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel1 = 1.0D;
-
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation II)")
-        @Config.Comment({
-                "As above, for an applied Adaptation upgrade at level II.",
-                "Read live - no restart needed. Default 1.0." })
-        @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel2 = 1.0D;
-
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation III)")
-        @Config.Comment({
-                "As above, for an applied Adaptation upgrade at level III.",
-                "Read live - no restart needed. Default 1.0." })
-        @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel3 = 1.0D;
+        public double foreignFocusAbominationCost = 1.0D;
     }
 
     // =====================================================================

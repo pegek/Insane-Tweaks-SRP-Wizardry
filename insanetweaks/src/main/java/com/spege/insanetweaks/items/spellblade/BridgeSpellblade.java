@@ -327,7 +327,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     public int getArcaneAdaptationLevel(ItemStack stack) {
-        return Math.min(3, this.getDefaultAdaptationLevel()
+        return Math.min(AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL, this.getDefaultAdaptationLevel()
                 + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 

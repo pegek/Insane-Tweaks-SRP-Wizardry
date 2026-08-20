@@ -164,10 +164,7 @@ public class SpellbladeTooltipHandler {
                         + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
         if (item instanceof com.spege.insanetweaks.items.spellblade.BridgeSpellblade) {
-            com.spege.insanetweaks.items.spellblade.BridgeSpellblade spellblade = (com.spege.insanetweaks.items.spellblade.BridgeSpellblade) item;
-            int adaptationLevel = spellblade.getArcaneAdaptationLevel(stack);
-
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade " + toRoman(adaptationLevel));
+            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade");
             if (isShiftPressed) {
                 String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {

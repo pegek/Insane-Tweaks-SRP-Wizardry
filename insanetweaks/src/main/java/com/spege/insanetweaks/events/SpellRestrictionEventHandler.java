@@ -153,10 +153,12 @@ public class SpellRestrictionEventHandler {
      * ... switching it on is a separate decision", so relocating the call here is a bug fix for
      * the config, not a balance change. Before this method existed,
      * {@code foreignFocusAbominationCostLevel1/2/3} in {@code GearCategory} had zero callers while
-     * their comments still promised "2.0 doubles the cost. Read live - no restart needed."
+     * their comments still promised "2.0 doubles the cost. Read live - no restart needed." Those
+     * three fields collapsed into the single {@code foreignFocusAbominationCost} once the
+     * Adaptation upgrade itself was capped at one level.
      *
-     * <p>It is a no-op at the shipped defaults: {@link AdaptationUpgradeHelper#getForeignFocusAbominationCostMultiplier}
-     * returns 1.0 for every level until the pack's config raises one of those three fields above 1.0.
+     * <p>It is a no-op at the shipped default: {@link AdaptationUpgradeHelper#getForeignFocusAbominationCostMultiplier}
+     * returns 1.0 until the pack's config raises that field above 1.0.
      *
      * <p>Only called when the spell is Abomination and the source is {@link SpellCastEvent.Source#WAND}
      * (see the caller); {@code player.isCreative()} is already excluded earlier in
@@ -167,8 +169,7 @@ public class SpellRestrictionEventHandler {
             return;
         }
 
-        float multiplier = AdaptationUpgradeHelper.getForeignFocusAbominationCostMultiplier(
-                AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(castingStack));
+        float multiplier = AdaptationUpgradeHelper.getForeignFocusAbominationCostMultiplier();
         if (multiplier != 1.0f) {
             event.getModifiers().set(SpellModifiers.COST,
                     event.getModifiers().get(SpellModifiers.COST) * multiplier, false);

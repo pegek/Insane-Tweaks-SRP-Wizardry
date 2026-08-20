@@ -13,6 +13,17 @@ import net.minecraft.item.ItemStack;
 
 public final class AdaptationUpgradeHelper {
 
+    /**
+     * Highest adaptation level a focus can reach. One: the upgrade is a key, not a ladder.
+     *
+     * <p>It used to be 3, and levels II and III did nothing whatsoever - every consumer either
+     * tested {@code > 0} or printed a Roman numeral, and the one numeric consumer
+     * ({@link #getForeignFocusAbominationCostMultiplier}) shipped at 1.0 for every level. The item
+     * description promised "Stacks up to III", so a player could spend three upgrades to buy an
+     * effect that existed twice over in the tooltip and nowhere in the code.
+     */
+    public static final int MAX_ADAPTATION_LEVEL = 1;
+
     private AdaptationUpgradeHelper() {
     }
 
@@ -85,32 +96,26 @@ public final class AdaptationUpgradeHelper {
     }
 
     public static int getEffectiveAdaptationLevel(ItemStack stack) {
-        return Math.min(3, getDefaultAdaptationLevel(stack) + getAppliedAdaptationUpgradeLevel(stack));
+        return Math.min(MAX_ADAPTATION_LEVEL, getDefaultAdaptationLevel(stack) + getAppliedAdaptationUpgradeLevel(stack));
     }
 
     public static int getMaxAppliedAdaptationUpgrades(ItemStack stack) {
-        return Math.max(0, 3 - getDefaultAdaptationLevel(stack));
+        return Math.max(0, MAX_ADAPTATION_LEVEL - getDefaultAdaptationLevel(stack));
     }
 
     /**
      * Cost multiplier for casting an Abomination spell from a focus that is not one of ours and
      * qualifies only through an applied Adaptation upgrade.
      *
-     * <p>Defaults to 1.0 at every level, i.e. no surcharge. The mechanism ships switched off so the
-     * balance question can be settled with a config edit rather than a code change.
+     * <p>Defaults to 1.0, i.e. no surcharge. The mechanism ships switched off so the balance
+     * question can be settled with a config edit rather than a code change.
      *
-     * @param appliedUpgradeLevel from {@link #getAppliedAdaptationUpgradeLevel(ItemStack)}
+     * <p>Takes no level argument: {@link #MAX_ADAPTATION_LEVEL} caps the upgrade at one level, so
+     * there is no ladder of levels left to distinguish - a foreign focus either qualifies (one
+     * upgrade applied) or it doesn't, and {@link #getDefaultAdaptationLevel(ItemStack)} already
+     * screens out anything that qualifies by being one of our own foci before this is called.
      */
-    public static float getForeignFocusAbominationCostMultiplier(int appliedUpgradeLevel) {
-        switch (Math.max(0, Math.min(3, appliedUpgradeLevel))) {
-            case 1:
-                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel1;
-            case 2:
-                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel2;
-            case 3:
-                return (float) ModConfig.gear.wands.foreignFocusAbominationCostLevel3;
-            default:
-                return 1.0f;
-        }
+    public static float getForeignFocusAbominationCostMultiplier() {
+        return (float) ModConfig.gear.wands.foreignFocusAbominationCost;
     }
 }
