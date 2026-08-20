@@ -597,17 +597,24 @@ public class EntitiesCategory {
         public int battlemageSpawnWeight = 3;
 
         @Config.Comment({
-                "Hard ceiling on how many sim_wizards may exist per dimension.",
+                "Ceiling on how many sim_wizards NATURAL SPAWNING may add per dimension.",
                 "sim_battlemage is a SUBCLASS of sim_wizard and counts against this same number,",
                 "so the cap is shared: a battlemage occupies a wizard's slot.",
                 "Counts LOADED entities only, like vanilla's own mob cap: wizards left behind in",
                 "unloaded chunks stop counting, so travelling away lets more spawn.",
-                "This is the primary balance lever for the whole feature. 0 stops all natural",
-                "spawning outright (the check is count >= cap, which 0 always satisfies). Read live."
+                "🚨 This is NOT a population cap, despite counting the population. The check lives on",
+                "WorldEvent.PotentialSpawns, so it can only refuse to ADD a wizard - it never removes",
+                "one, and it never sees a wizard that arrived any other way. ASSIMILATION is the other",
+                "way, and it is the one that matters: measured 2026-08-18 in dim 0, 29 alive against a",
+                "cap of 12, every one of them assimilated, none from natural spawn (the player was",
+                "nowhere near an SRP parasite biome, so this handler had not fired at all).",
+                "So: lower this to thin out infested biomes, but do not expect it to bound the",
+                "population anywhere assimilation is running.",
+                "0 stops all natural spawning outright (the check is count >= cap). Read live."
         })
         @Config.Name("Max Per Dimension")
         @Config.RangeInt(min = 0, max = 200)
-        public int maxPerDimension = 12;
+        public int maxPerDimension = 5;
 
         @Config.Comment({
                 "Log one line when the per-dimension cap starts blocking spawns, and one when it",
