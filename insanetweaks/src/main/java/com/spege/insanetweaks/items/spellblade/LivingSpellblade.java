@@ -225,18 +225,15 @@ public class LivingSpellblade extends BridgeSpellblade {
 
                     int level = WandHelper.getUpgradeLevel(stack, WizardryItems.melee_upgrade);
                     boolean innateManaAvailable = ItemBattlemageSword.hasManaStorage(stack) && !this.isManaEmpty(stack);
-                    boolean anyManaAvailable = stack.hasTagCompound()
-                            && stack.getTagCompound().hasKey("mana_available")
-                            && stack.getTagCompound().getBoolean("mana_available");
 
-                    if (level > 0 && (innateManaAvailable || anyManaAvailable)) {
+                    if (level > 0 && innateManaAvailable) {
                         finalDamage = customAttackDamage + level;
-                    } else if (!innateManaAvailable && !anyManaAvailable && stack.hasTagCompound()) {
+                    } else if (!innateManaAvailable && stack.hasTagCompound()) {
                         finalDamage = customAttackDamage
                                 * com.spege.insanetweaks.config.ModConfig.gear.spellblades.outOfManaDamageMultiplier;
                     }
 
-                    if (anyManaAvailable && stack.hasTagCompound()) {
+                    if (innateManaAvailable && stack.hasTagCompound()) {
                         Spell[] spells = WandHelper.getSpells(stack);
                         for (Spell spell : spells) {
                             if (spell instanceof Runeword && ((Runeword) spell).isAffectingAttributes()) {
