@@ -99,6 +99,29 @@ public final class AdaptationUpgradeHelper {
         return Math.min(MAX_ADAPTATION_LEVEL, getDefaultAdaptationLevel(stack) + getAppliedAdaptationUpgradeLevel(stack));
     }
 
+    /**
+     * Tooltip label for a focus's Abomination adaptation, or {@code null} when it has none.
+     *
+     * <p>Two labels for one capability, because it arrives by different means and the player can
+     * act on only one of them. Our own four foci are adapted by identity, and since
+     * {@link #MAX_ADAPTATION_LEVEL} is 1 and they already sit at it, the upgrade item can no longer
+     * be applied to them at all - so labelling their line "Adaptation Upgrade" advertised a purchase
+     * that does not exist. A foreign wand's line really is an upgrade: the player put one there.
+     *
+     * <p>Single source so the three tooltip handlers cannot drift apart again. They had already
+     * managed it - two said "Adaptation Upgrade", one said "Arcane Adaptation", and the spellblade
+     * path printed unconditionally on {@code instanceof} without consulting the level at all.
+     */
+    public static String getAdaptationLabel(ItemStack stack) {
+        if (getDefaultAdaptationLevel(stack) > 0) {
+            return "Arcane Adaptation";
+        }
+        if (getAppliedAdaptationUpgradeLevel(stack) > 0) {
+            return "Adaptation Upgrade";
+        }
+        return null;
+    }
+
     public static int getMaxAppliedAdaptationUpgrades(ItemStack stack) {
         return Math.max(0, MAX_ADAPTATION_LEVEL - getDefaultAdaptationLevel(stack));
     }

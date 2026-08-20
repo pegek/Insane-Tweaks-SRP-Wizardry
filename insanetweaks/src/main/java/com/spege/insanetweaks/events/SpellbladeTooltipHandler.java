@@ -163,8 +163,9 @@ public class SpellbladeTooltipHandler {
                 : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT" + TextFormatting.DARK_GRAY
                         + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
-        if (item instanceof com.spege.insanetweaks.items.spellblade.BridgeSpellblade) {
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade");
+        String adaptationLabel = com.spege.insanetweaks.util.AdaptationUpgradeHelper.getAdaptationLabel(stack);
+        if (adaptationLabel != null) {
+            myLines.add(TextFormatting.DARK_RED + "- " + adaptationLabel);
             if (isShiftPressed) {
                 String desc = com.spege.insanetweaks.util.PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {

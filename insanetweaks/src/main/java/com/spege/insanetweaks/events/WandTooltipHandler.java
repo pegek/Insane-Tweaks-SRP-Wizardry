@@ -109,9 +109,9 @@ public class WandTooltipHandler {
                         + TextFormatting.DARK_GRAY + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
 
-        int adaptationLevel = customWand.getArcaneAdaptationLevel(stack);
-        if (adaptationLevel > 0) {
-            myLines.add(TextFormatting.DARK_RED + "- Adaptation Upgrade");
+        String adaptationLabel = AdaptationUpgradeHelper.getAdaptationLabel(stack);
+        if (adaptationLabel != null) {
+            myLines.add(TextFormatting.DARK_RED + "- " + adaptationLabel);
             if (isShiftPressed) {
                 String desc = PropertyDescriptions.getDescription("adaptation_upgrade");
                 if (desc != null) {
@@ -168,7 +168,7 @@ public class WandTooltipHandler {
                 : TextFormatting.DARK_GRAY + "[Press " + TextFormatting.AQUA + "SHIFT"
                         + TextFormatting.DARK_GRAY + " to show details]";
         myLines.add(TextFormatting.GOLD + "Properties: " + shiftHint);
-        myLines.add(TextFormatting.DARK_RED + "- Arcane Adaptation");
+        myLines.add(TextFormatting.DARK_RED + "- " + AdaptationUpgradeHelper.getAdaptationLabel(stack));
 
         if (isShiftPressed) {
             String desc = PropertyDescriptions.getDescription("adaptation_upgrade");
