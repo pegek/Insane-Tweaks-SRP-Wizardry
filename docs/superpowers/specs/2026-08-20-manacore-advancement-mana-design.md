@@ -72,7 +72,7 @@ ma `category = ""`).
 |---|---|---|---|
 | `enabled` | boolean | `true` | Czytane **na żywo**. Wyłączone NIE oznacza „handler nie robi nic” — przeliczenie nadal leci, tylko traktuje tabelę jako pustą i daje 0, przez co modyfikator zostaje **usunięty**. Gdyby handler wychodził wcześnie na tej fladze, wyłączenie zostawiałoby ostatnią wartość zamrożoną na graczu aż do śmierci. |
 | `bonuses` | String[] | tabela z §5 | Wpisy `namespace:sciezka=ilosc`. |
-| `cap` | double | `200.0` | Sufit sumy ze wszystkich osiągnięć. |
+| `cap` | double | `250.0` | Sufit sumy ze wszystkich osiągnięć. |
 | `announce` | boolean | `true` | Komunikat na pasku akcji przy przyznaniu. |
 
 Żadne z pól nie potrzebuje `@Config.RequiresMcRestart` — nie ma tu mixinu ani rejestracji
@@ -103,8 +103,10 @@ config, nic się nie dzieje i nikt nie wie dlaczego.
 
 ## 5. Tabela domyślna
 
-Szesnaście wpisów, wszystkie z EBW, razem **160** przy sufcie **200** — zapas jest po to, żeby
-paczka mogła dopisać własne pozycje bez przebudowy jara.
+Dwadzieścia pięć wpisów, razem **230** przy sufcie **250** — zapas jest po to, żeby paczka mogła
+dopisać własne pozycje bez przebudowy jara.
+
+Szesnaście z EBW (**160**):
 
 | ID (`ebwizardry:`) | Ramka | + | Za co |
 |---|---|---|---|
@@ -128,9 +130,29 @@ paczka mogła dopisać własne pozycje bez przebudowy jara.
 Krzywa idzie za drzewkiem EBW: `task` 5–10, `goal` 15, `challenge` 10–20 za rzeczy naprawdę długie.
 Liczby są punktem startowym do wyważenia w rozgrywce — po to są w configu.
 
+Dziewięć z Ancient Spellcraft (**70**), wszystkie w widełkach 5–10:
+
+| ID (`ancientspellcraft:`) | + | Za co |
+|---|---|---|
+| `crystal_shards` | 5 | wydobyty żywiołowy odłamek kryształu |
+| `relics` | 5 | znaleziona kamienna tablica |
+| `scribing_desk` | 5 | zbudowane biurko do przepisywania |
+| `battlemage_camp` | 5 | odkryty obóz battlemage'ów |
+| `ancient_book` | 10 | wykuta Ancient Spell Book |
+| `sphere_of_cognizance` | 10 | stworzona Sphere of Cognizance |
+| `relic_research` | 10 | zbadana kamienna tablica |
+| `novice_spellblade` | 10 | wykuty pierwszy Spell Blade |
+| `grand_stone_tablet` | 10 | znaleziona Grand Stone Tablet |
+
+`ancientspellcraft:battlemage_camp` dziedziczy po `ebwizardry:arcane_initiate` — oba drzewka są
+zrośnięte, co jest kolejnym argumentem za jedną wspólną tabelą zamiast integracji per mod.
+
+**Trinkets and Baubles i Bountiful Baubles nie mają czego dołożyć:** T&B ma tylko dwa
+osiągnięcia (jedno z nich to odblokowanie przewodnika Patchouli), a Bountiful Baubles zero.
+
 **Świadomie pominięte:** jedenaście osiągnięć `ebwizardry:handbook/*`. Nie mają sekcji `display`,
 są wewnętrznymi znacznikami postępu w podręczniku — mana za nie byłaby niewidoczna i myląca.
-Pominięty też `root` (samo posiadanie moda) i drobne pozycje fabularne (`anger_wizard`,
+Pominięte też oba `root` (samo posiadanie moda) i drobne pozycje fabularne (`anger_wizard`,
 `wizard_trade`, `spell_failure`, `enchant_scroll`, `craft_lectern`).
 
 ## 6. Komponenty

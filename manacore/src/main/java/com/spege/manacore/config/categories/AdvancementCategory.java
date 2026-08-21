@@ -23,7 +23,12 @@ public class AdvancementCategory {
             "",
             "Deliberately omitted from the defaults: the eleven `ebwizardry:handbook/*` entries.",
             "They carry no display and exist to track reading progress inside the handbook, so a",
-            "reward for them would be invisible to the player and simply confusing."})
+            "reward for them would be invisible to the player and simply confusing. Both `root`",
+            "advancements are omitted for a related reason - they are granted for having the mod",
+            "installed, not for doing anything.",
+            "",
+            "Trinkets and Baubles has only two advancements (one of them a Patchouli guide unlock)",
+            "and Bountiful Baubles has none, so neither appears here."})
     public String[] bonuses = new String[] {
             "ebwizardry:crystal=5",
             "ebwizardry:arcane_initiate=5",
@@ -40,14 +45,26 @@ public class AdvancementCategory {
             "ebwizardry:max_out_wand=15",
             "ebwizardry:discover_master_spell=10",
             "ebwizardry:all_artefacts=15",
-            "ebwizardry:all_spells=20"};
+            "ebwizardry:all_spells=20",
+            "ancientspellcraft:crystal_shards=5",
+            "ancientspellcraft:relics=5",
+            "ancientspellcraft:scribing_desk=5",
+            "ancientspellcraft:battlemage_camp=5",
+            "ancientspellcraft:ancient_book=10",
+            "ancientspellcraft:sphere_of_cognizance=10",
+            "ancientspellcraft:relic_research=10",
+            "ancientspellcraft:novice_spellblade=10",
+            "ancientspellcraft:grand_stone_tablet=10"};
 
     @Config.Comment({
             "Ceiling on the total granted by all advancements together. Works live, no restart.",
-            "The defaults above sum to 160, so the gap to this value is deliberate headroom for a",
-            "pack to add its own entries without the total running away."})
+            "The defaults above sum to 230 (160 from Electroblob's Wizardry, 70 from Ancient",
+            "Spellcraft), so the gap to this value is deliberate headroom for a pack to add its own",
+            "entries without the total running away. Lowering this below the sum of the table is",
+            "allowed and simply trims the total - but note the trimming is invisible in game: a",
+            "player earning an advancement past the ceiling is told nothing and gains nothing."})
     @Config.RangeDouble(min = 0.0D, max = 1.0E6D)
-    public double cap = 200.0D;
+    public double cap = 250.0D;
 
     @Config.Comment({
             "Whether to tell the player on the action bar when an advancement grants mana.",

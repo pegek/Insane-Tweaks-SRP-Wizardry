@@ -10,6 +10,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -35,6 +36,20 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * spells and in {@code Finish} for continuous ones. Granting it per tick would add 10 permanent
  * points for ten seconds of channelling at the default {@code progressionPerCast = 0.05}, against
  * a default cap of 50.
+ *
+ * <p>🚨 <b>Every listener here runs at {@link EventPriority#LOWEST}, deliberately.</b> Other mods
+ * adjust a spell's cost by writing into the shared {@code SpellModifiers} from their own
+ * {@code SpellCastEvent.Pre} listener - Ancient Spellcraft does exactly that for its Crystal
+ * Pendant (-10%), Tranquil Crystal Orb (-15%), Crystal Ring (-7.5%) and the +25% rings. At the
+ * default priority the order between those listeners and this one is the order the mods happened
+ * to register in, so the affordability gate below could just as easily read the cost from before
+ * those adjustments. Running last means the number we gate on, and the number we charge, are the
+ * final ones.
+ *
+ * <p>The alternative - running FIRST, so a cancel happens before other listeners take effect -
+ * is worse and circular: Forge skips listeners with {@code receiveCanceled = false} once an event
+ * is cancelled, so cancelling early would suppress the very cost adjustment we needed to read to
+ * decide whether to cancel at all.
  *
  * <p>🚨 This handler only READS {@link electroblob.wizardry.util.SpellModifiers}, exactly like
  * {@link SpellCostResolver} - see that class's javadoc for why writing our multiplier back into
@@ -68,7 +83,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 public class EbwSpellCostHandler {
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onSpellPre(SpellCastEvent.Pre event) {
         if (!applies(event)) {
             return;
@@ -84,7 +99,7 @@ public class EbwSpellCostHandler {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onSpellTick(SpellCastEvent.Tick event) {
         if (!applies(event)) {
             return;
@@ -98,7 +113,7 @@ public class EbwSpellCostHandler {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onSpellPost(SpellCastEvent.Post event) {
         if (!applies(event)) {
             return;
@@ -123,7 +138,7 @@ public class EbwSpellCostHandler {
         ManaAPI.addCastProgression(player, ManaCoreConfig.pool.progressionPerCast);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onSpellFinish(SpellCastEvent.Finish event) {
         if (!applies(event)) {
             return;
