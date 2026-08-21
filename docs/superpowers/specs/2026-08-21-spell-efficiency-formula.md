@@ -1,5 +1,11 @@
 # Formuła efektywności czaru — wersja 1 (2026-08-21)
 
+> **ZASTĄPIONA przez [wersję 2](2026-08-21-spell-efficiency-formula-v2.md)** (ten sam dzień).
+> v1 przeliczała czas na manę po regeneracji gracza z `manacore`, więc była związana z naszym
+> modem; v2 wystawia ten kurs jako jawny parametr `λ`. v1 nie modelowała też obrażeń obszarowych,
+> w czasie ani skalowania z potency. Zostawiona dla historii rozumowania o zasięgu (`sqrt(zasięg/16)`),
+> który w v2 świadomie wypadł.
+
 Cel: policzalna miara „ile czar daje za to, co zabiera", żeby normalizacja kosztów między modami
 (faza 4) opierała się na liczbach, a nie na wyczuciu. Dane wejściowe pochodzą z plików
 `assets/ebwizardry/spells/*.json` z EBW 4.3.19.

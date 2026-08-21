@@ -80,6 +80,18 @@ To jedyny test na zmianę, która usuwa zależność od kolejności ładowania m
 - [ ] **F4. Tryby HUD.** `showBar`/`showNumber` w czterech kombinacjach; liczby nie mogą się
       przesuwać przy wyłączaniu paska.
 
+## F2. Kalibracja stałych DoT — dla formuły efektywności czaru
+
+Trzy stałe z [formuły v2](../specs/2026-08-21-spell-efficiency-formula-v2.md) są przyjęte z
+pamięci, nie zmierzone. Bez nich czołówka rankingu (`dart`, `ignite`, `poison`, `wither`) jest
+niepewna.
+
+- [ ] **K1. Podpalenie.** Podpal moba na 10 s (`ignite`), policz utracone HP. Oczekiwane ~10.
+- [ ] **K2. `effect_strength` = amplifier?** Rzuć `dart` (JSON: `effect_strength=1`) i sprawdź w
+      ekwipunku, czy efekt to **Poison II** (amplifier 1) czy **Poison I** (amplifier 0). Jeśli I,
+      przeliczenia DoT w formule są zawyżone dwukrotnie.
+- [ ] **K3. Wither.** `wither` (200 t, strength 1) — policz obrażenia przez 10 s.
+
 ## G. Log — jedno spojrzenie po starcie
 
 ```bash
