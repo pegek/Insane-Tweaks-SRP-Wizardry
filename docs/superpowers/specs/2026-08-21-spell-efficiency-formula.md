@@ -1,5 +1,10 @@
 # Formuła efektywności czaru — wersja 1 (2026-08-21)
 
+> **ZASTĄPIONA przez [wersję 3](2026-08-21-spell-efficiency-formula-v3.md).**
+> v1 i v2 sprowadzały czar do jednej liczby, co wymagało kursu wymiany many na czas. To było
+> postawienie problemu na głowie: mana jest osobnym wskaźnikiem, nie walutą wymienialną na czas.
+> v3 daje dwie liczby (DPS i D/mana) i nie ma żadnego kursu.
+
 > **ZASTĄPIONA przez [wersję 2](2026-08-21-spell-efficiency-formula-v2.md)** (ten sam dzień).
 > v1 przeliczała czas na manę po regeneracji gracza z `manacore`, więc była związana z naszym
 > modem; v2 wystawia ten kurs jako jawny parametr `λ`. v1 nie modelowała też obrażeń obszarowych,

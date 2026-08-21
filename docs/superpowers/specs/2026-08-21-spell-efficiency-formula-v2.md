@@ -1,5 +1,11 @@
 # Formuła efektywności czaru — wersja 2 (2026-08-21)
 
+> **ZASTĄPIONA przez [wersję 3](2026-08-21-spell-efficiency-formula-v3.md).**
+> Parametr `λ` był lepszy od ukrytego kursu z v1, ale nadal odpowiadał na złe pytanie. Mana i czas
+> to dwa niezależne wskaźniki, nie dwie waluty do wymiany. v3 rozdziela je i przy okazji naprawia
+> błąd wspólny dla v1 i v2: obrażenia w czasie były dzielone przez czas cyklu czaru zamiast przez
+> własny czas trwania efektu, co zawyżało czary DoT kilkukrotnie.
+
 Zastępuje [wersję 1](2026-08-21-spell-efficiency-formula.md). Trzy zmiany wobec niej:
 
 1. **Niezależna od `manacore`.** v1 przeliczała czas na manę po naszej regeneracji gracza. To
