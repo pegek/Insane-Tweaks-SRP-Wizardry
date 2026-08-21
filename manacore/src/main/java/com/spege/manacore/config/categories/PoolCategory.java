@@ -14,9 +14,13 @@ public class PoolCategory {
     public double baseMaxMana = 100.0D;
 
     @Config.Comment({
-            "Hard cap on maximum mana after summing all sources.",
-            "INACTIVE: nothing in the code reads this yet - wiring it up is a later task.",
-            "Intended to work live, without a restart."
+            "Hard cap on maximum mana after summing all sources. Works live, no restart.",
+            "A ceiling on the TOTAL, which is what distinguishes it from the per-source ceilings",
+            "(`castProgressionCap`, `itemProgressionCap`, `advancements.cap`): those limit one budget",
+            "each, this limits their sum plus the base and anything worn.",
+            "Applied when the maximum is read rather than baked into the attribute, so raising this",
+            "later restores a trimmed maximum instead of having permanently discarded it - progression",
+            "earned while capped is not lost, merely not visible."
     })
     @Config.RangeDouble(min = 1.0D, max = 1.0E7D)
     public double hardCap = 2000.0D;

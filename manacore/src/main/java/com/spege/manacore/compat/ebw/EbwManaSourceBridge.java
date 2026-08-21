@@ -3,6 +3,7 @@ package com.spege.manacore.compat.ebw;
 import com.spege.manacore.api.ManaAPI;
 import com.spege.manacore.config.ManaCoreConfig;
 
+import electroblob.wizardry.item.ItemArtefact;
 import electroblob.wizardry.item.ItemWand;
 import electroblob.wizardry.registry.WizardryItems;
 import electroblob.wizardry.util.WandHelper;
@@ -15,8 +16,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
- * Redirects the two remaining mana-flavoured wand upgrades - {@code condenser} and {@code siphon}
- * - into the player's unified mana pool. Both upgrades used to regenerate/refill the wand's own
+ * Redirects Electroblob's Wizardry's passive mana sources - the {@code condenser} and
+ * {@code siphon} wand upgrades, and the {@code ring_condensing} / {@code amulet_arcane_defence} /
+ * {@code ring_siphoning} artefacts - into the player's unified mana pool. Both upgrades used to regenerate/refill the wand's own
  * mana, which stopped mattering once {@link com.spege.manacore.mixins.ebw.MixinItemWand} cut the
  * wand's mana gates out of the cast path. The third mana upgrade, {@code storage}, is NOT handled
  * here - it is already remapped to a spell-cost refund in {@link EbwSpellCostHandler#applyRefund}.
@@ -39,7 +41,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * field read costs nothing on a path that already does far more expensive work (an NBT read via
  * {@link WandHelper#getUpgradeLevel}) a few lines later.
  */
-public class WandUpgradeBridge {
+public class EbwManaSourceBridge {
 
     /** Regen is accrued once a second, not every tick - counting upgrades means reading NBT. */
     private static final int CONDENSER_INTERVAL_TICKS = 20;
@@ -62,11 +64,23 @@ public class WandUpgradeBridge {
             return;
         }
 
-        int level = getUpgradeLevel(player, WizardryItems.condenser_upgrade);
-        if (level <= 0) {
-            return;
+        double perSecond = getUpgradeLevel(player, WizardryItems.condenser_upgrade)
+                * ManaCoreConfig.ebw.condenserRegenPerLevel;
+
+        // Both artefacts recharged ITEM mana in EBW - ring_condensing every wand on the hotbar,
+        // amulet_arcane_defence every worn piece of wizard armour - so both became silently
+        // pointless once spells stopped being paid for out of items. Same fix as the condenser
+        // upgrade above: pay the player instead. Their contributions ADD to the upgrade's and to
+        // each other's, unlike the two hands in getUpgradeLevel, because these are three distinct
+        // pieces of equipment a player had to acquire separately rather than one item carried
+        // twice.
+        if (ItemArtefact.isArtefactActive(player, WizardryItems.ring_condensing)) {
+            perSecond += ManaCoreConfig.ebw.ringCondensingRegenPerSecond;
         }
-        double perSecond = level * ManaCoreConfig.ebw.condenserRegenPerLevel;
+        if (ItemArtefact.isArtefactActive(player, WizardryItems.amulet_arcane_defence)) {
+            perSecond += ManaCoreConfig.ebw.amuletArcaneDefenceRegenPerSecond;
+        }
+
         if (perSecond > 0.0D) {
             ManaAPI.add(player, perSecond);
         }
@@ -90,6 +104,13 @@ public class WandUpgradeBridge {
             return;
         }
         double gain = level * ManaCoreConfig.ebw.siphonManaPerLevel;
+        // EBW multiplies siphoned mana by exactly 1.3 for this ring (confirmed as `fmul 1.3f` in
+        // WizardryEventHandler.onLivingDeathEvent), which is where the config default comes from.
+        // Applied only to the siphon payout, never to the condenser regen - the ring boosts what
+        // is siphoned from a kill, and EBW keeps those two apart too.
+        if (ItemArtefact.isArtefactActive(player, WizardryItems.ring_siphoning)) {
+            gain *= ManaCoreConfig.ebw.ringSiphoningMultiplier;
+        }
         if (gain > 0.0D) {
             ManaAPI.add(player, gain);
         }

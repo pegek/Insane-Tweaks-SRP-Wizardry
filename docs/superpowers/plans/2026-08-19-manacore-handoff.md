@@ -67,8 +67,9 @@ Komenda debugowa: `/mana <get|set|add|setmax|addprog|addprogitem> [ilość] [gra
 - **Bezcelowe, ale nieszkodliwe** — ładują manę różdżki, której nikt nie zużywa: `ebwizardry:condenser_upgrade`, `ring_condensing`, `amulet_arcane_defence`, trzy `mana_flask`, `ancientspellcraft:charm_mana_flask`, `ancient_mana_flask`.
 - **Kolizji mixinów z ASC nie ma** (sprawdzone 2026-08-21). ASC ma cztery configi mixinów; skompilowany `MixinItemWand` leży w jarze, ale **nie jest wymieniony w żadnym z nich** — martwa klasa. Nic z ASC nie dotyka `canCast`/`cast`/`consumeMana`.
 - **Efekty mana-owe innych modów** (ASC `PotionManaRegeneration`, bonus setowy SpellBundle, mana leech Necromancer's Delight, ArcaneApprentices) nadal celują w manę **itemu**, nie w pulę. Faza 5.
-- **`spellarchives`** pokazuje `Cost: %d mana` z niewłaściwego źródła.
-- **`pool.hardCap` jest zadeklarowane, ale nic go nie czyta.** Komentarz w configu to mówi.
+- **GUI pokazują koszt BAZOWY, nie nasz.** `spellarchives` woła `spell.getCost()` — to samo źródło co własna książka czarów EBW (`gui.ebwizardry:spell_book.mana_cost`). To nie jest błąd spellarchives, tylko luka wspólna dla obu GUI: nasze mnożniki (`ebw.costMultiplier`, atrybut `wizardryutils`) nigdzie się w nich nie pojawiają. Naprawa = mixin na **oba**. Sprawdzone 2026-08-21.
+- **`ring_extraction` nieprzepięty.** Jego bramka w `ItemArtefact.onLivingHurtEvent` miesza sprawdzenia `MagicDamage.DamageType.FORCE` i `EntityForceOrb`; nie dało się jej rzetelnie odczytać z bajtkodu bez głębszej analizy, więc świadomie pominięty zamiast zgadnięty. `ring_condensing`, `amulet_arcane_defence` i `ring_siphoning` są zrobione.
+- **`amulet_recovery` i `charm_hunger_casting`** należą do rodziny paliwa przy pustej różdżce — patrz punkt wyżej.
 - **`grantedMax` to jedna wspólna liczba, nie rejestr per źródło.** Nadaje się wyłącznie dla nagród jednokierunkowych. Źródło przeliczalne (poziom Reskillable, noszony item) nie potrafiłoby odjąć swojego poprzedniego wkładu — musi mieć własny modyfikator z własnym UUID.
 - **Bonus melee różdżki stał się stały**, bo bramkuje go „różdżka nie jest pusta", a nic jej już nie rozładowuje.
 

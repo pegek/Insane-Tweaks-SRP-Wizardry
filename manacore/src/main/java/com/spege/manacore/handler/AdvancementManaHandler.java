@@ -115,8 +115,13 @@ public final class AdvancementManaHandler {
         }
 
         // Read before and after rather than tracking per-player state: the difference is what the
-        // player actually gained, which is not the table value whenever the cap trims the total.
-        double before = ManaAttributes.getPersistentMaxMana(serverPlayer);
+        // player actually gained, which is not the table value whenever a ceiling trims it.
+        //
+        // getMaxMana, not getPersistentMaxMana: worn gear appears in both reads and cancels out of
+        // the subtraction, so including it costs nothing - but the effective figure is also the one
+        // pool.hardCap is applied to. Measuring the persistent half alone would announce "+10" to a
+        // player already at the hard cap, who would then watch their bar not move.
+        double before = ManaAttributes.getMaxMana(serverPlayer);
 
         double total = ManaCoreConfig.advancements.enabled ? sumCompleted(server, serverPlayer, table) : 0.0D;
         ManaAttributes.applyMaxModifier(serverPlayer, ADVANCEMENT_MODIFIER_ID, ADVANCEMENT_MODIFIER_NAME,
@@ -124,7 +129,7 @@ public final class AdvancementManaHandler {
 
         // Announce only for an advancement this mod actually pays for, or every vanilla
         // advancement earned would be a candidate for a message.
-        double gained = ManaAttributes.getPersistentMaxMana(serverPlayer) - before;
+        double gained = ManaAttributes.getMaxMana(serverPlayer) - before;
         if (earnedId != null && table.bonuses().containsKey(earnedId)
                 && gained > 0.0D && ManaCoreConfig.advancements.announce) {
             serverPlayer.sendStatusMessage(new TextComponentTranslation(

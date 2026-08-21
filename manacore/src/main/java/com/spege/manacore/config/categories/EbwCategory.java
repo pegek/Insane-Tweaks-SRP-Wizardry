@@ -50,4 +50,24 @@ public class EbwCategory {
     @Config.Comment("How much mana one level of the `siphon` upgrade grants per kill. Works live, no restart.")
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)
     public double siphonManaPerLevel = 5.0D;
+
+    @Config.Comment({
+            "How much mana per second the `ring_condensing` artefact grants. Works live, no restart.",
+            "In EBW the ring recharged every wand on the hotbar, which stopped mattering once spells",
+            "were paid for from the player's pool - this is that effect, redirected."})
+    @Config.RangeDouble(min = 0.0D, max = 1000.0D)
+    public double ringCondensingRegenPerSecond = 0.5D;
+
+    @Config.Comment({
+            "How much mana per second the `amulet_arcane_defence` artefact grants. Works live, no restart.",
+            "Same story as `ringCondensingRegenPerSecond`: in EBW it recharged worn wizard armour."})
+    @Config.RangeDouble(min = 0.0D, max = 1000.0D)
+    public double amuletArcaneDefenceRegenPerSecond = 0.5D;
+
+    @Config.Comment({
+            "Multiplier the `ring_siphoning` artefact applies to mana gained from kills. Works live.",
+            "The default is EBW's own figure - its handler multiplies siphoned mana by exactly 1.3.",
+            "Applies to the `siphon` payout only, never to passive regeneration; EBW keeps those apart."})
+    @Config.RangeDouble(min = 0.0D, max = 100.0D)
+    public double ringSiphoningMultiplier = 1.3D;
 }

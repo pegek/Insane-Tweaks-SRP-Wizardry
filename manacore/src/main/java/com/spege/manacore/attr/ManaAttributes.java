@@ -139,12 +139,26 @@ public final class ManaAttributes {
 
     /**
      * The player's effective maximum mana: the persistent attribute plus the dynamic gear bonus,
-     * clamped at zero. This is the number the HUD, the regen handler and every bridge use - the
-     * two attributes are an implementation detail everywhere except here.
+     * clamped into {@code [0, pool.hardCap]}. This is the number the HUD, the regen handler and
+     * every bridge use - the two attributes are an implementation detail everywhere except here.
+     *
+     * <p>The hard cap is applied HERE rather than on each contributing source, which is the only
+     * place it can mean what its name says: it is a ceiling on the total, and no individual
+     * source can know what the others already contributed. The per-source ceilings
+     * ({@code castProgressionCap}, {@code itemProgressionCap}, {@code advancements.cap}) limit
+     * their own budgets; this limits their sum.
+     *
+     * <p>Consequence worth knowing: because the clamp is on the READ and not on the attribute,
+     * raising {@code hardCap} later restores the trimmed maximum rather than having permanently
+     * discarded it. Progression earned while capped is not lost, just not visible.
      */
     public static double getMaxMana(@Nullable EntityPlayer player) {
         double total = getPersistentMaxMana(player) + getBonusMana(player);
-        return total < 0.0D ? 0.0D : total;
+        if (total < 0.0D) {
+            return 0.0D;
+        }
+        double cap = ManaCoreConfig.pool.hardCap;
+        return total > cap ? cap : total;
     }
 
     /** The persistent half only: config base + progression + flat grants. */
