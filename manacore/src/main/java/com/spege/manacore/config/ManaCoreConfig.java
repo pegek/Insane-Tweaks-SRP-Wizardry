@@ -3,6 +3,7 @@ package com.spege.manacore.config;
 import com.spege.manacore.ManaCoreMod;
 import com.spege.manacore.config.categories.AdvancementCategory;
 import com.spege.manacore.config.categories.EbwCategory;
+import com.spege.manacore.config.categories.EffectsCategory;
 import com.spege.manacore.config.categories.HudCategory;
 import com.spege.manacore.config.categories.PoolCategory;
 import com.spege.manacore.config.categories.RegenCategory;
@@ -47,6 +48,11 @@ public class ManaCoreConfig {
     @Config.LangKey("config.manacore.category.advancements")
     @Config.Comment("Advancements that permanently raise maximum mana, and the ceiling on their total.")
     public static final AdvancementCategory advancements = new AdvancementCategory();
+
+    @Config.Name("effects")
+    @Config.LangKey("config.manacore.category.effects")
+    @Config.Comment("Potion effects from other mods that regenerate the player's mana pool.")
+    public static final EffectsCategory effects = new EffectsCategory();
 
     @Config.Name("tab")
     @Config.LangKey("config.manacore.category.tab")

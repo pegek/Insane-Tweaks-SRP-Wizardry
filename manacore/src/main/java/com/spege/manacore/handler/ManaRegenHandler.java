@@ -28,6 +28,8 @@ public final class ManaRegenHandler {
      */
     private static final int SYNC_INTERVAL_TICKS = 10;
 
+    private static final int TICKS_PER_SECOND = 20;
+
     private ManaRegenHandler() {
     }
 
@@ -64,6 +66,17 @@ public final class ManaRegenHandler {
                 ManaCoreConfig.regen.amountPerCycle, ManaCoreConfig.regen.cycleSeconds);
         if (perTick > 0.0D) {
             pool.setCurrent(ManaMath.afterRegen(pool.getCurrent(), max, perTick));
+        }
+
+        // Foreign mana-regeneration effects, paid once a second rather than smeared over every
+        // tick: the config figure is per second, and paying it whole keeps it exact instead of
+        // accumulating rounding. Folded into this existing per-player tick on purpose - a second
+        // @SubscribeEvent walking every player every tick would cost more than the feature.
+        if (player.ticksExisted % TICKS_PER_SECOND == 0) {
+            double fromEffects = PotionManaRegen.perSecond(player);
+            if (fromEffects > 0.0D) {
+                pool.setCurrent(ManaMath.afterRegen(pool.getCurrent(), max, fromEffects));
+            }
         }
 
         // Deliberately outside the regen guard above: this is the only periodic flush of dirty

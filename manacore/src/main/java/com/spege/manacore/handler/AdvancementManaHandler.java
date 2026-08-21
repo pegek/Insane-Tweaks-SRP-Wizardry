@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 import com.spege.manacore.ManaCoreMod;
 import com.spege.manacore.attr.ManaAttributes;
 import com.spege.manacore.config.ManaCoreConfig;
-import com.spege.manacore.core.AdvancementBonusTable;
+import com.spege.manacore.core.BonusTable;
 
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
@@ -107,7 +107,7 @@ public final class AdvancementManaHandler {
             return;
         }
 
-        AdvancementBonusTable.Table table = AdvancementBonusTable.parse(ManaCoreConfig.advancements.bonuses);
+        BonusTable.Table table = BonusTable.parse(ManaCoreConfig.advancements.bonuses);
         if (logRejections) {
             for (String rejection : table.rejected()) {
                 ManaCoreMod.LOGGER.warn("[ManaCore] Ignoring malformed advancement bonus entry: {}", rejection);
@@ -120,7 +120,7 @@ public final class AdvancementManaHandler {
 
         double total = ManaCoreConfig.advancements.enabled ? sumCompleted(server, serverPlayer, table) : 0.0D;
         ManaAttributes.applyMaxModifier(serverPlayer, ADVANCEMENT_MODIFIER_ID, ADVANCEMENT_MODIFIER_NAME,
-                AdvancementBonusTable.clampTotal(total, ManaCoreConfig.advancements.cap), 0);
+                BonusTable.clampTotal(total, ManaCoreConfig.advancements.cap), 0);
 
         // Announce only for an advancement this mod actually pays for, or every vanilla
         // advancement earned would be a candidate for a message.
@@ -134,7 +134,7 @@ public final class AdvancementManaHandler {
 
     /** Sums the table entries for advancements this player has completed. */
     private static double sumCompleted(MinecraftServer server, EntityPlayerMP player,
-            AdvancementBonusTable.Table table) {
+            BonusTable.Table table) {
         double total = 0.0D;
         for (Map.Entry<String, Double> entry : table.bonuses().entrySet()) {
             Advancement advancement =

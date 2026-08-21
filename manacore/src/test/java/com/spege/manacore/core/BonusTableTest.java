@@ -8,14 +8,14 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.spege.manacore.core.AdvancementBonusTable.Table;
+import com.spege.manacore.core.BonusTable.Table;
 
-public class AdvancementBonusTableTest {
+public class BonusTableTest {
 
     private static final double EPS = 1.0e-9D;
 
     private static Table parse(String... entries) {
-        return AdvancementBonusTable.parse(entries);
+        return BonusTable.parse(entries);
     }
 
     @Test
@@ -49,7 +49,7 @@ public class AdvancementBonusTableTest {
 
     @Test
     public void odrzucaIdBezPrzestrzeniNazw() {
-        // Deliberately NOT defaulted to "minecraft:" - see AdvancementBonusTable.parseOne.
+        // Deliberately NOT defaulted to "minecraft:" - see BonusTable.parseOne.
         Table t = parse("crystal=5");
         assertTrue(t.isEmpty());
         assertEquals(1, t.rejected().size());
@@ -110,15 +110,15 @@ public class AdvancementBonusTableTest {
     @Test
     public void pomijaPusteINuloweLinieBezOstrzezenia() {
         // A blank line in a config file is not a mistake worth warning about.
-        Table t = AdvancementBonusTable.parse(new String[] {"", "   ", null, "ebwizardry:crystal=5"});
+        Table t = BonusTable.parse(new String[] {"", "   ", null, "ebwizardry:crystal=5"});
         assertEquals(1, t.bonuses().size());
         assertTrue(t.rejected().isEmpty());
     }
 
     @Test
     public void znosiPustaINulowaTablice() {
-        assertTrue(AdvancementBonusTable.parse(new String[0]).isEmpty());
-        assertTrue(AdvancementBonusTable.parse(null).isEmpty());
+        assertTrue(BonusTable.parse(new String[0]).isEmpty());
+        assertTrue(BonusTable.parse(null).isEmpty());
     }
 
     @Test
@@ -132,27 +132,27 @@ public class AdvancementBonusTableTest {
 
     @Test
     public void clampTotalPrzepuszczaWartoscPonizejSufitu() {
-        assertEquals(160.0D, AdvancementBonusTable.clampTotal(160.0D, 200.0D), EPS);
+        assertEquals(160.0D, BonusTable.clampTotal(160.0D, 200.0D), EPS);
     }
 
     @Test
     public void clampTotalScinaDoSufitu() {
-        assertEquals(200.0D, AdvancementBonusTable.clampTotal(260.0D, 200.0D), EPS);
+        assertEquals(200.0D, BonusTable.clampTotal(260.0D, 200.0D), EPS);
     }
 
     @Test
     public void clampTotalPodlogujeUjemnaSumeDoZera() {
-        assertEquals(0.0D, AdvancementBonusTable.clampTotal(-40.0D, 200.0D), EPS);
+        assertEquals(0.0D, BonusTable.clampTotal(-40.0D, 200.0D), EPS);
     }
 
     @Test
     public void clampTotalTraktujeUjemnySufitJakZero() {
-        assertEquals(0.0D, AdvancementBonusTable.clampTotal(50.0D, -5.0D), EPS);
-        assertEquals(0.0D, AdvancementBonusTable.clampTotal(50.0D, 0.0D), EPS);
+        assertEquals(0.0D, BonusTable.clampTotal(50.0D, -5.0D), EPS);
+        assertEquals(0.0D, BonusTable.clampTotal(50.0D, 0.0D), EPS);
     }
 
     @Test
     public void clampTotalOdrzucaNan() {
-        assertEquals(0.0D, AdvancementBonusTable.clampTotal(Double.NaN, 200.0D), EPS);
+        assertEquals(0.0D, BonusTable.clampTotal(Double.NaN, 200.0D), EPS);
     }
 }

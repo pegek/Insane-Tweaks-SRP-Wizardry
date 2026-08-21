@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Parses the {@code advancements.bonuses} config table - lines of {@code namespace:path=amount} -
- * into a lookup of advancement id to max-mana bonus.
+ * Parses a config table of {@code namespace:path=amount} lines into a lookup of id to amount.
  *
- * <p>ZERO Minecraft types, deliberately: advancement ids stay plain strings here and become
+ * <p>Shared by every id-to-number config table in this mod - the advancement bonuses and the
+ * potion regeneration list - because they are the same format and deserve the same handling of
+ * malformed input, rather than two parsers quietly drifting apart.
+ *
+ * <p>ZERO Minecraft types, deliberately: ids stay plain strings here and become
  * {@code ResourceLocation}s only in the handler. That is what lets this class carry the whole
  * fiddly part of the feature - the part with an actual chance of being wrong - under JUnit on a
  * plain JVM, the same split that gives {@code commandsuggest} its test suite.
@@ -19,9 +22,9 @@ import java.util.Map;
  * One typo must not disable the other fifteen lines, and a config edit is exactly where typos
  * happen.
  */
-public final class AdvancementBonusTable {
+public final class BonusTable {
 
-    private AdvancementBonusTable() {
+    private BonusTable() {
     }
 
     /** Result of parsing: the usable entries, plus a note for every line that was thrown out. */
@@ -35,7 +38,7 @@ public final class AdvancementBonusTable {
             this.rejected = rejected;
         }
 
-        /** Advancement id to bonus, in config order. Never null. */
+        /** Id to amount, in config order. Never null. */
         public Map<String, Double> bonuses() {
             return this.bonuses;
         }
@@ -91,14 +94,14 @@ public final class AdvancementBonusTable {
         String value = entry.substring(split + 1).trim();
 
         if (id.isEmpty()) {
-            rejected.add(entry + " (empty advancement id)");
+            rejected.add(entry + " (empty id)");
             return;
         }
         // Required, never defaulted to "minecraft:". Silently reinterpreting `crystal` as
         // `minecraft:crystal` would produce an entry that quietly matches nothing, which is
         // harder to notice than a warning.
         if (id.indexOf(':') < 0) {
-            rejected.add(entry + " (advancement id has no namespace, expected 'modid:path')");
+            rejected.add(entry + " (id has no namespace, expected 'modid:path')");
             return;
         }
 
