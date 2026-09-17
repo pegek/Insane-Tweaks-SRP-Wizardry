@@ -335,6 +335,9 @@ git commit -m "chore: bootstrap projektu tombtweaks na 1.20.1 (FG6, Java 17, JUn
 **Files:**
 - Create: `src/test/java/com/spege/tombtweaks/core/CoreHasNoForeignTypesTest.java`
 - Create: `src/main/java/com/spege/tombtweaks/core/DecaySchedule.java` (minimalna klasa, żeby katalog `core` w ogóle powstał)
+- Create: `src/main/resources/mixins.tombtweaks.json` (z **pustą** listą `mixins`)
+
+> **Poprawka do planu, wykryta po Tasku 1.** Jar deklaruje w manifeście `MixinConfigs: mixins.tombtweaks.json` (robi to plugin MixinGradle), a `mods.toml` ma `[[mixins]] config=...`. Dopóki ten plik nie istnieje, build przechodzi, ale **gra wywala się przy starcie**. To blokowałoby weryfikację w grze w Taskach 9 i 11, które żadnych mixinów nie potrzebują. Dlatego plik powstaje tutaj, z pustą listą `"mixins": []` — co jest w pełni poprawną konfiguracją — a Taski 12 i 13 tylko dopisują do niej wpisy.
 
 - [ ] **Step 1: Napisz test**
 
@@ -2337,30 +2340,22 @@ git commit -m "feat(restore): exact-slot grave restore na RestoreInventoryEvent,
 ## Task 12: Feature — grave decay
 
 **Files:**
-- Create: `src/main/resources/mixins.tombtweaks.json`
+- Modify: `src/main/resources/mixins.tombtweaks.json` (dopisz wpis do pustej listy założonej w Tasku 2)
 - Create: `src/main/java/com/spege/tombtweaks/mixin/MixinBlockEntityPlayerGrave.java`
 - Create: `src/main/java/com/spege/tombtweaks/feature/decay/GraveDecayService.java`
 - Create: `src/main/java/com/spege/tombtweaks/feature/decay/DecayHistory.java`
 
-- [ ] **Step 1: Napisz `mixins.tombtweaks.json`**
+- [ ] **Step 1: Dopisz mixin do `mixins.tombtweaks.json`**
+
+Plik istnieje od Tasku 2 z pustą listą. Zmień samą listę `mixins` na:
 
 ```json
-{
-  "required": true,
-  "minVersion": "0.8.5",
-  "package": "com.spege.tombtweaks.mixin",
-  "compatibilityLevel": "JAVA_17",
-  "refmap": "tombtweaks.refmap.json",
   "mixins": [
     "MixinBlockEntityPlayerGrave"
   ],
-  "injectors": {
-    "defaultRequire": 1
-  }
-}
 ```
 
-> Na liście jest **tylko** mixin z tego zadania. Przy `"required": true` klasa wymieniona, a nieistniejąca, to twardy crash przy starcie — dwa mixiny cooldownu dopisze Task 13 Step 1, gdy już będą istnieć.
+> Dopisujesz **tylko** mixin z tego zadania. Przy `"required": true` klasa wymieniona, a nieistniejąca, to twardy crash przy starcie — dwa mixiny cooldownu dopisze Task 13 Step 1, gdy już będą istnieć.
 
 - [ ] **Step 2: Napisz `DecayHistory`**
 
