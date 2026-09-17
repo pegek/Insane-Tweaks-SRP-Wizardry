@@ -25,7 +25,9 @@
     "perkinfo.MixinPerkShadowWalkerInfo",
     "perkinfo.MixinPerkTreasureSeekerInfo"
   ],
-  "client": [],
+  "client": [
+    "MixinTombstoneGuiScale"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

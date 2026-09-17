@@ -8,6 +8,16 @@ tombstone.perk.relief_for_the_damned=Relief for the Damned
 tombstone.perk.relief_for_the_damned.desc=The Ring of the Seven Curses still takes its due, but no longer all of it. Every one of the ring's penalties — the damage you suffer, the armour it unmakes, the harm it withholds from your blows — is eased by a share of its own weight.
 tombstone.perk.relief_for_the_damned.bonus=of every Cursed Ring penalty waived
 
+# Why a perk is greyed out. Corail Tombstone 4.8.0 draws disabled perks instead of hiding them
+# and asks the perk for a reason; before that these were never read. Keep them as lowercase
+# sentence fragments to match Tombstone's own (e.g. "the perk is disabled in config"), and keep
+# them free of '%' — ScreenKnowledge runs these through String.format, so a lone percent sign
+# renders the whole line as "Format error".
+tombtweaks.perk.disabled=disabled in the Tombstone Tweaks config
+tombstone.perk.assimilated_knowledge.disabled=disabled in the Tombstone Tweaks config
+tombstone.perk.relief_for_the_damned.disabled=disabled in the Tombstone Tweaks config
+tombstone.perk.relief_for_the_damned.disabled_no_mod=Enigmatic Legacy is not installed
+
 # Inventory tab that opens Corail Tombstone's perk tree (KnowledgeTabHandler).
 tombtweaks.tab.knowledge=Knowledge of Death
 
