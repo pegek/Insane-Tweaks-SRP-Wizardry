@@ -16,11 +16,14 @@
     "MixinSrpNeedlerPlayerKey",
     "MixinSrpMeteorTriggerPersist",
     "MixinSrpMeteorPlacement",
-    "MixinSrpMeteorAnnounce"
+    "MixinSrpMeteorAnnounce",
+    "MixinSrpMeteorPerDimCounter"
   ],
   "client": [
     "MixinSrpDistortionTooltipThread"
   ],
   "server": [],
-  "injectors": { "defaultRequire": 1 }
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

@@ -18,8 +18,8 @@ import net.minecraft.world.storage.WorldSavedData;
  * Fix B - honor the per-dimension starting POINTS token in SRP's
  * "Evolution Phases Dimension Starting Phase List" (format {@code dim;phase;points}).
  *
- * <p>On 1.10.7 the world-data init in {@code SRPSaveData.createData(World,MapStorage,int)} (called
- * once by {@code get()} on first creation) applies each dim's configured points by calling
+ * <p>The world-data init in {@code SRPSaveData.createData} (run once per world on first creation)
+ * applies each dim's configured points by calling
  * {@code setTotalKills(dim, value, /*canChangePhase*&#47;false, ...)}.
  * The diagnostic build proved that call returns {@code accepted=false} and never persists the
  * value: every configured dimension keeps {@code Default Points Start} (-300). For dim 111
@@ -36,6 +36,12 @@ import net.minecraft.world.storage.WorldSavedData;
  *
  * <p>{@code setTotalKills} is SRP's own method (not MCP-mapped), matched with {@code remap = false};
  * {@code markDirty} is MC's ({@code func_76185_a}) and reobf-maps automatically.
+ *
+ * <p>SRP VERSION PIN: verified against 1.10.9 with {@code javap -p -c}. 1.10.9 rewrote this class -
+ * {@code createData} went from {@code private static (World, MapStorage, int)} to
+ * {@code private void (World, int)}, called from the new {@code SRPSaveData(World, int)}
+ * constructor - so this handler is an instance method now. Both {@code setTotalKills(IIZ...ZI)Z}
+ * call sites inside {@code createData} survived the rewrite (bytecode offsets 158 and 191).
  */
 @Mixin(value = SRPSaveData.class, remap = false)
 public abstract class MixinSrpSaveDataPoints implements ISrpSaveDataDirectPoints {
@@ -52,7 +58,7 @@ public abstract class MixinSrpSaveDataPoints implements ISrpSaveDataDirectPoints
                     target = "Lcom/dhanantry/scapeandrunparasites/world/SRPSaveData;"
                             + "setTotalKills(IIZLnet/minecraft/world/World;ZI)Z"),
             remap = false)
-    private static boolean insanetweaks$applyStartingPoints(SRPSaveData self, int dim, int value,
+    private boolean insanetweaks$applyStartingPoints(SRPSaveData self, int dim, int value,
             boolean canChangePhase, World world, boolean flag, int code) {
         if (!SrpWizMixinsConfig.srpCompat.fixStartingPoints) {
             return self.setTotalKills(dim, value, canChangePhase, world, flag, code);

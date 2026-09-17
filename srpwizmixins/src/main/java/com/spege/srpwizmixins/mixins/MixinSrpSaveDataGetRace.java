@@ -1,7 +1,6 @@
 package com.spege.srpwizmixins.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -18,11 +17,10 @@ import net.minecraft.world.storage.MapStorage;
  * Fix D — serialize the server-side creation path of {@code SRPSaveData.get}.
  *
  * <p>{@code SRPSaveData.get(World, int)} is {@code static} and unsynchronized. On the server it
- * does {@code mapStorage.getOrLoadData(...)} and, when that returns {@code null},
- * {@code new SRPSaveData()} + {@code mapStorage.setData(...)} + {@code createData(...)}. It is
- * called from entity AI and block code — {@code EntityParasiteBase}, {@code EntityAINexusGrow}
- * and dozens more — i.e. exactly the code EntityThreading ticks on worker threads. Two races
- * follow:
+ * does {@code mapStorage.getOrLoadData(...)} and, when that returns {@code null}, creates the
+ * instance and registers it with {@code mapStorage.setData(...)}. It is called from entity AI and
+ * block code — {@code EntityParasiteBase}, {@code EntityAINexusGrow} and dozens more — i.e.
+ * exactly the code EntityThreading ticks on worker threads. Two races follow:
  *
  * <ol>
  * <li>{@code MapStorage.setData} appends to a plain {@code ArrayList} with no synchronization,
@@ -35,11 +33,27 @@ import net.minecraft.world.storage.MapStorage;
  * </ol>
  *
  * <p>Mixin 0.8 has no "wrap method" primitive, so the only way to hold a lock across the
- * check-then-create is to cancel at HEAD and replay the server branch. The replay mirrors SRP's
- * bytecode exactly (offsets 50–103 of {@code get}), including the order: {@code createData}
- * reads and writes the static {@code instance} field in every branch and returns it, so
- * {@code instance} must be assigned <em>before</em> the call. The client branch
- * ({@code clientInstance}) is left untouched — the handler returns without cancelling.
+ * check-then-create is to cancel at HEAD and replay the server branch.
+ *
+ * <p>SRP VERSION PIN — this mixin replays SRP's own {@code get} body, so it is tied to that
+ * body. Verified against <b>1.10.9</b> with {@code javap -p -c}; it does <b>not</b> work on
+ * 1.10.8 or earlier. What 1.10.9 changed:
+ *
+ * <ul>
+ * <li>the {@code private static instance} / {@code clientInstance} singleton fields are gone,
+ *     and with them the client branch — {@code get} is now purely
+ *     {@code getOrLoadData} → {@code new SRPSaveData(world, dim)} → {@code setData} → return;</li>
+ * <li>{@code createData} became {@code private void createData(World, int)} and is invoked from
+ *     the new {@code public SRPSaveData(World, int)} constructor (bytecode offset 170), so
+ *     constructing the object already seeds the per-dimension records. Nothing has to be
+ *     published before that call any more, which is why the old {@code @Shadow} on
+ *     {@code instance} and on the static {@code createData} is gone from this class.</li>
+ * </ul>
+ *
+ * <p>Order matters and mirrors SRP: construct first, register second. {@code createData} runs
+ * inside the constructor and calls {@code markDirty()} on an instance not yet known to the
+ * {@code MapStorage} — that only flips a dirty flag, so it is safe, and it is what SRP itself
+ * does.
  *
  * <p>Interaction with the other SaveData fixes: {@code createData} calls {@code setTotalKills},
  * so when creation happens on a worker thread Fix C ({@code MixinSrpSaveDataThreadSafety})
@@ -58,7 +72,7 @@ import net.minecraft.world.storage.MapStorage;
 @Mixin(value = SRPSaveData.class, remap = false)
 public abstract class MixinSrpSaveDataGetRace {
 
-    /** Verified against SRP 1.10.7 bytecode: {@code ldc "srparasites_global_data"} in {@code get}. */
+    /** Verified against SRP 1.10.9 bytecode: {@code ldc "srparasites_global_data"} in {@code get}. */
     private static final String INSANETWEAKS$DATA_NAME = "srparasites_global_data";
 
     // The monitor deliberately lives in SrpLocks, NOT in a field here. A `new Object()` field
@@ -69,14 +83,6 @@ public abstract class MixinSrpSaveDataGetRace {
     // See SrpLocks for the full rule.
 
     private static boolean insanetweaks$createLogged = false;
-
-    @Shadow
-    private static SRPSaveData instance;
-
-    @Shadow
-    private static SRPSaveData createData(World world, MapStorage storage, int dim) {
-        throw new AssertionError("shadow");
-    }
 
     @Inject(
             method = "get(Lnet/minecraft/world/World;I)"
@@ -90,7 +96,9 @@ public abstract class MixinSrpSaveDataGetRace {
         if (!SrpWizMixinsConfig.srpCompat.fixSaveDataGetRace) {
             return;
         }
-        // null world and the client branch stay on SRP's own code path.
+        // A null world and the client stay on SRP's own code path. SRP 1.10.9 no longer keeps a
+        // separate client instance, but leaving the client alone keeps this fix server-only,
+        // which is all it was ever meant to cover.
         if (world == null || world.isRemote) {
             return;
         }
@@ -100,11 +108,9 @@ public abstract class MixinSrpSaveDataGetRace {
             SRPSaveData data = (SRPSaveData) storage.getOrLoadData(SRPSaveData.class,
                     INSANETWEAKS$DATA_NAME);
             if (data == null) {
-                data = new SRPSaveData();
-                // createData() operates on the static field in every branch, so publish first.
-                instance = data;
+                // The constructor runs createData(world, dim) itself; register afterwards, as SRP does.
+                data = new SRPSaveData(world, dim);
                 storage.setData(INSANETWEAKS$DATA_NAME, data);
-                data = createData(world, storage, dim);
                 if (SrpWizMixinsConfig.srpCompat.debugLogging && !insanetweaks$createLogged) {
                     insanetweaks$createLogged = true;
                     SrpWizMixins.LOGGER.info(
@@ -113,7 +119,6 @@ public abstract class MixinSrpSaveDataGetRace {
                             Integer.valueOf(dim), Thread.currentThread().getName());
                 }
             }
-            instance = data;
             cir.setReturnValue(data);
         }
     }
