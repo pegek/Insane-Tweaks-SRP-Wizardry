@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AFA",
+    "CCC",
+    "CCC"
+  ],
+  "key": {
+    "A": [
+      {
+        "type": "forge:ore_dict",
+        "ore": "itMagicNucleus"
+      },
+      {
+        "item": "ancientspellcraft:astral_diamond_charged"
+      }
+    ],
+    "F": {
+      "item": "ebwizardry:large_mana_flask"
+    },
+    "C": {
+      "item": "ebwizardry:crystal_block",
+      "data": 0
+    }
+  },
+  "result": {
+    "item": "ebwizardry:imbuement_altar",
+    "count": 1
+  }
+}

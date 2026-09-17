@@ -6,6 +6,10 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.ISubtypeRegistry;
 import mezz.jei.api.JEIPlugin;
+import mezz.jei.api.recipe.IRecipeCategoryRegistration;
+import com.spege.insanetweaks.api.RitualRecipe;
+import com.spege.insanetweaks.api.RitualRegistry;
+import electroblob.wizardry.registry.WizardryBlocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -53,9 +57,38 @@ public class InsaneTweaksJEIPlugin implements IModPlugin {
         });
     }
 
+    /**
+     * Declares the 3x3 Imbuement Altar ritual category.
+     *
+     * <p>Must be its own category rather than more entries in {@code ebwizardry:imbuement_altar}: that
+     * one draws a single centre slot with four receptacles around it, which cannot express a nine-slot
+     * pattern. The rest of this plugin still injects into EB's category, because those recipes really
+     * are the four-receptacle kind.
+     */
+    @Override
+    public void registerCategories(@Nonnull IRecipeCategoryRegistration registry) {
+        registry.addRecipeCategories(
+                new RitualAltarCategory(registry.getJeiHelpers().getGuiHelper()));
+    }
+
     @Override
     @SuppressWarnings("null")
     public void register(@Nonnull IModRegistry registry) {
+        // Registered before the try block below, which is scoped to the EB item lookups that can
+        // legitimately be absent. A ritual list built from our own registry has no such excuse, and
+        // burying it in that catch would turn a real bug into a silent empty tab.
+        List<RitualAltarWrapper> ritualWrappers = new ArrayList<>();
+        for (RitualRecipe ritual : RitualRegistry.getRecipes()) {
+            ritualWrappers.add(new RitualAltarWrapper(ritual));
+        }
+        if (!ritualWrappers.isEmpty()) {
+            registry.addRecipes(ritualWrappers, RitualAltarCategory.UID);
+            // The catalyst is the altar itself, so looking up the block finds the rituals - the same
+            // route by which a player finds EB's own imbuement recipes.
+            registry.addRecipeCatalyst(new ItemStack(WizardryBlocks.imbuement_altar),
+                    RitualAltarCategory.UID);
+        }
+
         try {
             // Retrieve Spectral Dust item reference safely.
             Item spectralDust = ForgeRegistries.ITEMS.getValue(new ResourceLocation("ebwizardry", "spectral_dust"));

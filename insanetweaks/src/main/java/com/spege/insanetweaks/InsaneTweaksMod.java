@@ -118,7 +118,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.18.0";
+    public static final String VERSION = "1.20.1";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -303,6 +303,19 @@ public class InsaneTweaksMod implements IGuiHandler {
         // disappears from an existing world corrupts the save. Gate handlers, not registrations.
         // Never reuse/reorder network-stable IDs.
 
+
+        // Imbuement Altar rituals: the 3x3 structure-crafting system. Recipes are built once, here,
+        // because they capture the configured duration and resolve foreign items; the tick loop
+        // re-reads its own enable flag every tick, so the handler is registered unconditionally.
+        com.spege.insanetweaks.init.ModRituals.register();
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.RitualAltarHandler());
+
+        // Imbuement Altar: make EB's bedrock-hard altar minable, and gate reclaiming it as an item
+        // behind an artefact. Must run in init - AFTER EB's block registry event, and before any
+        // world exists. The handler is registered unconditionally: it early-returns on a block
+        // identity check, and its artefact list is read live so editing it needs no restart.
+        com.spege.insanetweaks.events.ImbuementAltarSalvageHandler.applyBlockProperties();
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImbuementAltarSalvageHandler());
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
@@ -522,6 +535,10 @@ public class InsaneTweaksMod implements IGuiHandler {
             // Client half of the enchant quest-gate; the server-side veto is registered
             // unconditionally above. Both flags it reads are live, so no config gate here.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
+            // Tells the player that this artefact is what reclaims an Imbuement Altar. The ability is
+            // ours, so EB's own description says nothing about it. Class-level @SideOnly - must stay
+            // inside this client block.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArtefactSalvageTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
