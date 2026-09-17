@@ -1,8 +1,12 @@
 package com.spege.insanetweaks.client.renderer.tile;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import org.lwjgl.opengl.GL11;
 
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.sanctuary.SanctuaryDebug;
 import com.spege.insanetweaks.sanctuary.SanctuaryStatus;
 import com.spege.insanetweaks.sanctuary.TileEntitySanctuaryCore;
 
@@ -48,18 +52,44 @@ public class RenderSanctuaryDome extends TileEntitySpecialRenderer<TileEntitySan
     /** Extra blocks beyond the radius within which we still bother drawing the dome. */
     private static final double RENDER_MARGIN = 24.0D;
 
-    private static long lastDiagMs;
+    /**
+     * What this renderer last reported about each dome, so a callback that runs once per FRAME
+     * reports transitions instead of state. Weak keys: an unloaded dome falls out by itself, which
+     * is what keeps the table bounded without any eviction policy of its own. Touched only from the
+     * client render thread, so it needs no synchronisation.
+     */
+    private static final Map<TileEntitySanctuaryCore, String> LAST_DIAG =
+            new WeakHashMap<TileEntitySanctuaryCore, String>();
 
-    private static void diag(boolean on, String msg) {
-        if (!on) {
+    /**
+     * Reports a CHANGE in what the dome renderer is doing, through the Sanctuary module's own
+     * deduplicating logger.
+     *
+     * <p>This used to be a bare LOGGER.info behind a hardcoded one-second throttle, which made it
+     * the one place in the module that ignored the player's own suppression settings: a line per
+     * second, every second, for as long as a dome was on screen. {@link SanctuaryDebug} already
+     * knows how to keep a repeat quiet and how to cap a burst - going through it means those
+     * settings mean here what they mean everywhere else.
+     *
+     * <p>Throttling alone would not have been enough. The render callback fires every frame, and
+     * the interesting thing about it is WHEN it starts or stops drawing, not that it is still
+     * drawing. Hence the comparison: {@code state} must hold nothing that varies continuously -
+     * the viewer's distance changes every frame, so keying on it would defeat the whole point.
+     * Varying numbers go in {@code detail}, which is printed but never compared.
+     *
+     * <p>Returning before touching the table when logging is off is deliberate: switching the flag
+     * on mid-session then reports the current state on the next frame, rather than staying silent
+     * until something happens to change.
+     */
+    private static void diag(TileEntitySanctuaryCore te, String state, String detail) {
+        if (!ModConfig.sanctuary.debugLogging) {
             return;
         }
-        long now = System.currentTimeMillis();
-        if (now - lastDiagMs < 1000L) {
+        if (state.equals(LAST_DIAG.get(te))) {
             return;
         }
-        lastDiagMs = now;
-        com.spege.insanetweaks.InsaneTweaksMod.LOGGER.info("[InsaneTweaks] Dome/render: {}", msg);
+        LAST_DIAG.put(te, state);
+        SanctuaryDebug.log("render", detail == null ? state : state + " " + detail);
     }
 
     @Override
@@ -68,19 +98,18 @@ public class RenderSanctuaryDome extends TileEntitySpecialRenderer<TileEntitySan
         if (te == null) {
             return;
         }
-        boolean dbg = ModConfig.sanctuary.debugLogging;
         if (!ModConfig.sanctuary.renderDome) {
-            diag(dbg, "skip: renderDome config OFF");
+            diag(te, "skip: renderDome config OFF", null);
             return;
         }
         SanctuaryStatus status = te.getStatus();
         if (status != SanctuaryStatus.ACTIVE) {
-            diag(dbg, "skip: status=" + status + " (not ACTIVE)");
+            diag(te, "skip: status=" + status + " (not ACTIVE)", null);
             return;
         }
         int radius = te.getEffectiveRadius();
         if (radius <= 0) {
-            diag(dbg, "skip: radius=" + radius);
+            diag(te, "skip: radius=" + radius, null);
             return;
         }
 
@@ -90,12 +119,13 @@ public class RenderSanctuaryDome extends TileEntitySpecialRenderer<TileEntitySan
             double reach = radius + RENDER_MARGIN;
             double distSq = te.getDistanceSq(viewer.posX, viewer.posY, viewer.posZ);
             if (distSq > reach * reach) {
-                diag(dbg, "skip: too far dist=" + (int) Math.sqrt(distSq) + " reach=" + (int) reach);
+                diag(te, "skip: too far",
+                        "dist=" + (int) Math.sqrt(distSq) + " reach=" + (int) reach);
                 return;
             }
-            diag(dbg, "DRAW radius=" + radius + " dist=" + (int) Math.sqrt(distSq));
+            diag(te, "DRAW radius=" + radius, "dist=" + (int) Math.sqrt(distSq));
         } else {
-            diag(dbg, "DRAW radius=" + radius + " (no viewer)");
+            diag(te, "DRAW radius=" + radius + " (no viewer)", null);
         }
 
         Tessellator tess = Tessellator.getInstance();
