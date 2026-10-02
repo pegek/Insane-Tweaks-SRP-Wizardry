@@ -30,9 +30,9 @@ public final class Config {
     public final ForgeConfigSpec.DoubleValue sentientCostReductionPerPiece;
     public final ForgeConfigSpec.DoubleValue sentientPotencyPerPiece;
     public final ForgeConfigSpec.BooleanValue lastStandEnabled;
-    public final ForgeConfigSpec.DoubleValue lastStandHealthFraction;
-    public final ForgeConfigSpec.DoubleValue lastStandMinHit;
-    public final ForgeConfigSpec.DoubleValue lastStandCappedDamage;
+    public final ForgeConfigSpec.DoubleValue lastStandHealth;
+    public final ForgeConfigSpec.IntValue lastStandImmunityTicks;
+    public final ForgeConfigSpec.IntValue lastStandCleanseTicks;
     public final ForgeConfigSpec.IntValue lastStandCooldownSeconds;
 
     // [spells]
@@ -90,20 +90,21 @@ public final class Config {
                 .comment("Spell potency bonus per worn Sentient piece.")
                 .defineInRange("sentientPotencyPerPiece", 0.03, 0.0, 0.25);
         lastStandEnabled = b
-                .comment("Full Sentient set: below the health threshold a big or lethal hit is cut down and",
-                         "harmful effects are removed, then the set goes on cooldown.")
+                .comment("Last Stand: with all four armour slots Grafted or Sentient (any mix), a death is",
+                         "cancelled like a Totem of Undying, then the set goes on cooldown. Damage that",
+                         "bypasses invulnerability (/kill, the void) is never stopped.")
                 .define("lastStandEnabled", true);
-        lastStandHealthFraction = b
-                .comment("Health fraction below which the set bonus may trigger. 0.25 = under 25% health.")
-                .defineInRange("lastStandHealthFraction", 0.25, 0.01, 1.0);
-        lastStandMinHit = b
-                .comment("A hit at least this big triggers the bonus. A lethal hit always does.")
-                .defineInRange("lastStandMinHit", 10.0, 0.0, 10_000.0);
-        lastStandCappedDamage = b
-                .comment("What the triggering hit is cut down to.")
-                .defineInRange("lastStandCappedDamage", 2.0, 0.0, 10_000.0);
+        lastStandHealth = b
+                .comment("Health the wearer is left with.")
+                .defineInRange("lastStandHealth", 3.0, 0.5, 1024.0);
+        lastStandImmunityTicks = b
+                .comment("Ticks of full damage immunity right after Last Stand. 10 = half a second.")
+                .defineInRange("lastStandImmunityTicks", 10, 0, 200);
+        lastStandCleanseTicks = b
+                .comment("Ticks of the Cleansing effect granted by Last Stand.")
+                .defineInRange("lastStandCleanseTicks", 40, 0, 1200);
         lastStandCooldownSeconds = b
-                .comment("Cooldown of the set bonus, in real seconds. Survives relog.")
+                .comment("Cooldown in game seconds (20 ticks each). Does not run while the server is off.")
                 .defineInRange("lastStandCooldownSeconds", 90, 0, 86_400);
         b.pop();
 

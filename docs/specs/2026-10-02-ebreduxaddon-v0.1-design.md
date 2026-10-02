@@ -17,7 +17,7 @@ sprzęt, który rośnie razem z graczem. To **nie jest port 1:1**. SRParasites n
 więc wszystko, co na 1.12.2 stało na mobach i atrybutach SRP, jest zastąpione albo pominięte.
 
 Zasada nadrzędna: **addon działa bez Spore.** Spore dokłada tylko warstwę: oczyszczanie jego bloków
-i efektów oraz podwójny postęp za zabijanie jego mobów. Bez niego treść magiczna jest kompletna.
+i efektów oraz dodatkowy postęp za zabijanie jego mobów. Bez niego treść magiczna jest kompletna.
 
 ## 2. Tożsamość i workspace
 
@@ -90,10 +90,14 @@ Uzasadnienie: zbroja jest „wszczepiona” w ciało, a różdżka żyje z magie
   na noszone części Grafted. Każda część ma licznik w NBT i ewoluuje osobno przy `armor.evolveAt`
   (domyślnie 1500, jak na 1.12.2). Podmiana stacka w slocie zachowuje NBT (enchanty, nazwę,
   uszkodzenie).
-- **Bonus pełnego zestawu Sentient** (z 1.12.2): gdy noszący ma < 25% HP, trafienie ≥ 10 albo
-  śmiertelne jest ścinane do 2,0, a negatywne efekty są zdejmowane. Cooldown 90 s, zegar w NBT
-  gracza (`getPersistentData`), więc przeżywa relog. Ze Spore zdejmuje też efekty z listy
-  `spore.cleansedEffects`.
+- **Last Stand**, bonus pełnego zestawu z 1.12.2 (tam „Grave Defiance”, aktualna wersja
+  w `ArmorEventHandler.onLivingDeath`, a nie zarchiwizowany hardcap trafień). Gdy wszystkie cztery
+  sloty zajmuje Grafted lub Sentient, w dowolnym miksie, `LivingDeathEvent` jest anulowany jak
+  przez Totem Nieśmiertelności. Noszący wstaje z 3 HP i dostaje 10 ticków pełnej nietykalności
+  oraz efekt Cleansing na 40 ticków (ten z Cleanse, więc obejmuje też efekty Spore). Gra dźwięk
+  totemu. Cooldown 90 s w tickach gry (`getGameTime`, wspólny dla wymiarów), zapisany w persistent
+  data gracza. Źródła omijające nietykalność (`/kill`, pustka) nie są zatrzymywane, żeby nie palić
+  cooldownu na nieuniknioną śmierć.
 
 ## 4. Zaklęcia (4)
 
@@ -128,11 +132,11 @@ zabezpieczenia. To ta sama klasa pułapki co na 1.12.2.
 Bez jednej klasy Spore w classpath. Wszystko przechodzi przez identyfikatory w configu, rozwiązywane
 w `ForgeRegistries` przy pierwszym użyciu. Nieznane id jest pomijane z jednym ostrzeżeniem w logu.
 
-- **Tag `spore:fungus_entities`:** podwójny postęp różdżki i obrażenia od Purifying Pulse.
+- **Tag `spore:fungus_entities`:** dodatkowy postęp różdżki i obrażenia od Purifying Pulse.
   Tag jest odczytywany przez `TagKey`, więc bez Spore jest po prostu pusty.
 - **`spore.cleansedEffects`:** domyślnie `spore:mycelium_ef`, `spore:marker`, `spore:corrosion`,
   `spore:uneasy`, `spore:madness`, `spore:frostbite`, `spore:biled`, `spore:stunt`,
-  `spore:starvation`. Obejmuje je Cleanse i bonus zestawu Sentient.
+  `spore:starvation`. Obejmuje je efekt Cleansing, czyli Cleanse i Last Stand.
 - **`spore.purifiedBlocks`:** pary `"źródło|cel"`, w tym samym formacie co lista konwersji Spore.
   Domyślnie:
   - `infested_*` → odpowiednik vanilla (dirt, stone, netherrack, soul_sand, end_stone, sand,
@@ -158,7 +162,7 @@ bo wnosi zależność kompilacji, bramkę `ModList` i rejestrację warunkową.
 `ForgeConfigSpec`, cztery sekcje, wszystko czytane na bieżąco poza rejestracjami:
 
 - `[wand]`: `evolveAt`, `fungalKillPoints`, mnożniki z tabeli 3.1;
-- `[armor]`: `evolveAt`, procenty atrybutów, próg HP, sufit trafienia i cooldown bonusu zestawu;
+- `[armor]`: `evolveAt`, procenty atrybutów, parametry Last Stand (HP, nietykalność, Cleansing, cooldown);
 - `[spells]`: `spineVolleyPuddleEvery` (4) i `cleanseTickInterval` (10). Reszta liczb siedzi
   w JSON zaklęć, czyli tam, gdzie Redux trzyma je dla swoich;
 - `[spore]`: `enabled`, `cleansedEffects`, `purifiedBlocks`.
@@ -170,8 +174,8 @@ przenosić, autor potwierdził licencję. `CREDITS.txt` w zasobach wymienia źr�
 
 ## 8. Weryfikacja
 
-- `./gradlew check build` w chmurze: JUnit dla `core` (krzywe, licznik serii, parser par, bonus
-  zestawu jako czysta funkcja).
+- `./gradlew check build` w chmurze: JUnit dla `core` (krzywe, licznik serii, parser par, Last Stand
+  jako czysta funkcja).
 - Serwer dedykowany ze skryptu, w trzech wariantach: (a) Redux, (b) Redux i Spore, (c) Redux, Spore
   i TombTweaks 0.1.0. W każdym wariancie:
   - start bez błędów i bez ostrzeżeń `[EbreduxAddon]`;
