@@ -1,7 +1,7 @@
 # Sim wizard: naturalny spawn w strefach skażenia (design)
 
-**Status:** szkic do akceptacji. Sekcja 8 to decyzje autora, a sekcja 7 to fakty z SRP, które
-trzeba **przeczytać w bytecode przed planem**.
+**Status:** zaakceptowany 2026-10-02. Autor przyjął wszystkie rekomendacje z sekcji 8.
+Plan: `docs/superpowers/plans/2026-10-02-sim-wizard-native-spawn.md`. Sekcja 7 to jego Task 0.
 **Data:** 2026-10-02. **Mod:** `insanetweaks` (1.17.0, bo to nowa funkcja).
 **Kontekst:** handoff `docs/superpowers/plans/2026-08-11-abomination-magic-system-handoff.md`,
 punkt C. Ekonomia: `docs/superpowers/specs/2026-08-08-abomination-economy-and-balance-design.md`.
@@ -119,7 +119,9 @@ ustawień sim wizarda (`EntitiesCategory.AssimilatedWizard`).
 | `Dimension Mode` / `Dimensions` | `WHITELIST` / `{0}` | tak | Decyzja autora (sekcja 8). |
 | `Min Phase` | `2` | tak | Faza SRP potrzebna do spawnu. |
 | `Battlemage Min Phase` | `4` | tak | |
+| `Require Infested Block Underfoot` | `true` | tak | Wyłączyć, jeśli sekcja 7, punkt 6 wykaże, że na skażonym gruncie nie da się spawnować. |
 | `Min Infested Ground (of 25)` | `8` | tak | 0 = wystarczy skażony blok pod stopami. |
+| `Ignore Light Level` | `true` | tak | Tylko gdy sekcja 7, punkt 2 potwierdzi dziedziczenie reguł światła po `EntityMob`. Strefa skażenia ma działać w dzień. |
 | `Exclusion Radius` | `48` | tak | Promień bez drugiego maga. 0 wyłącza test. |
 | `Debug Log` | `false` | tak | Liczniki prób, odmów per powód i spawnów, logowane co minutę. Bez tego nie da się skalibrować wagi. |
 
@@ -172,12 +174,20 @@ przeczytanie fragmentu i uogólnienie”. Te metody czytamy **do końca**.
 3. **`EntityParasiteBase.canDespawn` / `despawnEntity`.** Naturalny spawn **musi** despawnować się
    jak potwór, inaczej magowie się kumulują. Sprawdzić też, czy asymilowani są trwali i czy chcemy
    to rozróżnić (NBT flaga „natural”).
-4. **`isCreatureType(MONSTER, …)`.** Czy baza pasożyta liczy się jako `IMob`? Jeśli nie, wpis
-   `MONSTER` nie przejdzie filtra typu E2 w SpawnEngine (fix InControl z 1.6.2) i w wymiarach
-   silnika mag nie pojawi się nigdy.
+4. ~~**`isCreatureType(MONSTER, …)`.**~~ **Rozstrzygnięte bez bytecode:** `EntityParasiteBase
+   extends EntityMob`, co już wcześniej ustalono i zapisano w javadocu `reskilltweaks`
+   `EffectTwistPairs`. Pasożyt jest `IMob`, więc wpis `MONSTER` przechodzi filtr typu E2
+   w SpawnEngine. Z tego samego faktu wynika, że punkt 2 jest realnym ryzykiem: `EntityMob`
+   odmawia spawnu w jasnym świetle **dwa razy**, w `isValidLightLevel` i przez
+   `getBlockPathWeight = 0.5 − jasność` w `EntityCreature.getCanSpawnHere`.
 5. **Cull „SOO MANY PARASITES”.** Przy przekroczonym capie SRP usuwa pasożyty daleko od graczy.
    Mag spawnuje się blisko gracza, więc ryzyko jest małe. Trzeba jednak potwierdzić promień
    ochrony `capPurgeProtectRadius` w `srpwizmixins`.
+6. **`canCreatureSpawn` / `isSideSolid` na blokach skażenia** (`BlockInfestedStain`,
+   `BlockParasiteSpreading`, `BlockInfestedRemain`). Vanilla stawia moba tylko na bloku, który na
+   to pozwala. Jeśli skażony grunt **zabrania** spawnu, wymóg „skażony blok pod stopami” nie da
+   się spełnić nigdy. Wtedy przełącznik `Require Infested Block Underfoot` (sekcja 4) idzie na
+   `false` i o skażeniu decyduje sam kwadrat 5×5.
 
 ## 8. Decyzje autora (z moją rekomendacją)
 
@@ -188,7 +198,11 @@ przeczytanie fragmentu i uogólnienie”. Te metody czytamy **do końca**.
 3. **Cel podaży z sekcji 5:** 1 mag na 5–10 minut w środku skażenia.
 4. **`dispatcher_grasp` i `yelloweye_gland` z `npcs: true`.** Tak, ale jako **osobne** wydanie
    po kalibracji spawnu, żeby nie mieszać dwóch zmian trudności w jednym pomiarze.
-5. **Rozróżnienie despawnu** naturalny/asymilowany (zależy od sekcji 7, punkt 3).
+5. **Rozróżnienie despawnu** naturalny/asymilowany. **Przyjęte:** naturalny ma flagę NBT
+   i zawsze może zniknąć, a asymilowany zachowuje to, co daje mu SRP. Wynik sekcji 7, punkt 3
+   tylko potwierdza, czy flaga cokolwiek zmienia. Nie decyduje, czy powstaje.
+
+**Wszystkie pięć przyjęte przez autora 2026-10-02.**
 
 ## 9. Plan testu (in-game, DEv 1.2)
 
