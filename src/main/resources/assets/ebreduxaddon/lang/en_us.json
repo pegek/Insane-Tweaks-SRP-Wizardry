@@ -4,5 +4,7 @@
   "effect.ebreduxaddon.cleansing": "Cleansing",
   "spell.ebreduxaddon.spine_volley": "Spine Volley",
   "spell.ebreduxaddon.spine_volley.desc": "Fires a fan of poisoned spines. Every fourth volley, the middle spine bursts into a lingering poison cloud.",
-  "entity.ebreduxaddon.spine": "Spine"
+  "entity.ebreduxaddon.spine": "Spine",
+  "spell.ebreduxaddon.grasp": "Grasp",
+  "spell.ebreduxaddon.grasp.desc": "Seizes the first creature the beam touches and holds it in place while draining it. You cannot move while you hold on. Creatures brought low enough are finished off."
 }

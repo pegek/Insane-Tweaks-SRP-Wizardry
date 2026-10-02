@@ -1,5 +1,6 @@
 package com.spege.ebreduxaddon;
 
+import com.spege.ebreduxaddon.feature.GraspState;
 import com.spege.ebreduxaddon.feature.ModEffects;
 import com.spege.ebreduxaddon.feature.ModEntities;
 import com.spege.ebreduxaddon.feature.ModSpells;
@@ -32,6 +33,7 @@ public final class EbreduxAddon {
         ModEntities.register(modBus);
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
+        MinecraftForge.EVENT_BUS.register(new GraspState.Sweeper());
         // Listy id z configu przeliczone od razu po starcie, zeby ewentualne ostrzezenie o literowce
         // bylo w logu startu, a nie przy pierwszym rzucie.
         MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent e) -> IdLists.warmUp());
