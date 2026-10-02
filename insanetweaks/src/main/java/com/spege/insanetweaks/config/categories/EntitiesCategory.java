@@ -72,6 +72,109 @@ public class EntitiesCategory {
                 "are the deltas that make it read as a front-line caster instead of an artillery one."
         })
         public final Battlemage battlemage = new Battlemage();
+
+        @Config.Name("natural_spawn")
+        @Config.LangKey("config.insanetweaks.category.entities.assimilated_wizard.natural_spawn")
+        @Config.Comment({
+                "Natural spawning on SRP-infested ground. Without it the wizard exists only through",
+                "assimilation, which the pack does not control."
+        })
+        public final NaturalSpawn naturalSpawn = new NaturalSpawn();
+    }
+
+    /**
+     * Natural spawn on infested ground. Spec:
+     * docs/superpowers/specs/2026-10-02-sim-wizard-native-spawn-design.md.
+     *
+     * <p>Only the spawn-list values need a restart - the lists are built once, in postInit. Every
+     * gate below is read on each spawn attempt.
+     */
+    public static class NaturalSpawn {
+
+        @Config.Comment({
+                "Let the Assimilated Wizard spawn on its own on SRP-infested ground.",
+                "Also off whenever 'Enable Sim Wizard' is off."
+        })
+        @Config.Name("Enable Natural Spawn")
+        @Config.RequiresMcRestart
+        public boolean enabled = true;
+
+        @Config.Comment({
+                "Spawn-list weight of sim_wizard in every allowed biome. Zombies sit at 100.",
+                "Most picks are refused by the gates below, so this is NOT the real spawn rate -",
+                "measure it with 'Debug Log' before changing it. 0 removes the entry."
+        })
+        @Config.Name("Spawn Weight")
+        @Config.RangeInt(min = 0, max = 100)
+        @Config.RequiresMcRestart
+        public int weight = 4;
+
+        @Config.Comment("Spawn-list weight of sim_battlemage. 0 removes the entry.")
+        @Config.Name("Battlemage Spawn Weight")
+        @Config.RangeInt(min = 0, max = 100)
+        @Config.RequiresMcRestart
+        public int battlemageWeight = 1;
+
+        @Config.Comment({
+                "Biomes carrying any of these Forge BiomeDictionary types get no entry.",
+                "Names are matched case-insensitively; names no biome carries are logged once."
+        })
+        @Config.Name("Excluded Biome Types")
+        @Config.RequiresMcRestart
+        public String[] excludedBiomeTypes = { "NETHER", "END", "VOID", "MUSHROOM", "OCEAN", "RIVER" };
+
+        @Config.Comment("true: spawn ONLY in the dimensions listed below. false: everywhere EXCEPT them.")
+        @Config.Name("Dimension List Is Whitelist")
+        public boolean dimensionWhitelist = true;
+
+        @Config.Comment("Dimension ids for the list above. Start with the Overworld and add after measuring.")
+        @Config.Name("Dimensions")
+        public int[] dimensions = { 0 };
+
+        @Config.Comment("SRP evolution phase the world must have reached before sim_wizard spawns naturally.")
+        @Config.Name("Min Phase")
+        @Config.RangeInt(min = 0, max = 10)
+        public int minPhase = 2;
+
+        @Config.Comment("Same, for sim_battlemage.")
+        @Config.Name("Battlemage Min Phase")
+        @Config.RangeInt(min = 0, max = 10)
+        public int battlemageMinPhase = 4;
+
+        @Config.Comment({
+                "The block the wizard would stand on must itself be SRP-infested.",
+                "Turn off if infested ground turns out to forbid spawning on top of it - then the",
+                "5x5 count below decides alone."
+        })
+        @Config.Name("Require Infested Block Underfoot")
+        public boolean requireInfestedUnderfoot = true;
+
+        @Config.Comment({
+                "How many of the 25 blocks in the 5x5 patch under the wizard's feet must be infested.",
+                "0 skips the count."
+        })
+        @Config.Name("Min Infested Ground (of 25)")
+        @Config.RangeInt(min = 0, max = 25)
+        public int minInfestedGround = 8;
+
+        @Config.Comment({
+                "Spawn regardless of light, so infested ground works by day as well. Only has an",
+                "effect on natural spawns; summons, eggs and assimilation never check light."
+        })
+        @Config.Name("Ignore Light Level")
+        public boolean ignoreLightLevel = true;
+
+        @Config.Comment("No natural spawn within this many blocks of another sim_wizard or sim_battlemage. 0 disables.")
+        @Config.Name("Exclusion Radius")
+        @Config.RangeInt(min = 0, max = 128)
+        public int exclusionRadius = 48;
+
+        @Config.Comment({
+                "Log once a minute how many natural spawn attempts were refused, by reason, and how",
+                "many passed. This is how the weight gets calibrated."
+        })
+        @Config.Name("Debug Log")
+        public boolean debugLog = false;
     }
 
     /**
