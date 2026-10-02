@@ -1,7 +1,7 @@
 # Spell Architecture Rework — Design
 
 **Date:** 2026-07-03
-**Status:** Approved design, implementation NOT started
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`AbstractSrpSummonSpell`). Pierwotnie: Approved design, implementation NOT started
 **Scope:** Architecture refactor of the spell-creation layer (`spells/`). Zero in-game behavior changes. A separate follow-up spec will cover per-spell mechanics/visuals improvements.
 
 ## Context

@@ -1,6 +1,6 @@
 # Tombstone × Electroblob's Wizardry — soulbinding a wand with a grave's soul
 
-Date: 2026-08-05. Mod: **`tombtweaks`**. Status: design approved, not implemented.
+Date: 2026-08-05. Mod: **`tombtweaks`**. Status: **implemented** — sprawdzone w kodzie 2026-10-02 (`tombtweaks/wizardry/WandSoulbind*`). Pierwotnie: design approved, not implemented.
 
 ## Summary
 

@@ -71,7 +71,7 @@ public final class ModElements {
                     + "Wizardry's Element enum. Spell JSONs still declare \"element\": \"abomination\"; "
                     + "MixinElementFromName maps that to MAGIC so the spells still load, but they will "
                     + "show as 'None' and the casting gate falls back to a registry-domain check. If "
-                    + "that mixin also failed to apply, the fourteen spells will load with no "
+                    + "that mixin also failed to apply, the thirteen spells will load with no "
                     + "properties at all - check for \"Parsing error loading spell property file\" "
                     + "in the log.", t);
         }

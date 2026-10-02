@@ -1,7 +1,7 @@
 # ModConfig Rework — Design
 
 **Date:** 2026-07-07
-**Status:** Approved design, implementation NOT started
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`config/categories/`, `entities.assimilated_wizard`). Pierwotnie: Approved design, implementation NOT started
 **Scope:** Restructure `config/ModConfig.java` (746 lines, 7 categories, ~90 fields): clean category keys and sub-categories, a custom ordered config GUI, a truthful restart-annotation audit, Books-cooldown unit change, old-config backup with player notice, and a per-category code split.
 
 ## Decisions from brainstorming

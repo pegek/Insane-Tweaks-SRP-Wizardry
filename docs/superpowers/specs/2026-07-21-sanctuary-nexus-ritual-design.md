@@ -1,7 +1,7 @@
 # Sanctuary Nexus — Ritual Consumption System (Design)
 
 **Date:** 2026-07-21
-**Status:** Approved (design), pending implementation plan
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (the `evolutionlure` ritual in `TileEntitySanctuaryCore`). Pierwotnie: Approved (design), pending implementation plan
 **Scope of THIS iteration:** replace the diamond-pyramid multiblock with a progressive
 lure-offering ritual that permanently upgrades a single Nexus block. Fuel economy, upgrade
 components, crafting recipes, and GUI rework are explicitly OUT of scope (later iterations).
