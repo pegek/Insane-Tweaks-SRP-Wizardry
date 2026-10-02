@@ -3,6 +3,7 @@ package com.spege.tombtweaks.feature.decay;
 import com.spege.tombtweaks.TombTweaks;
 import com.spege.tombtweaks.platform.Config;
 import com.spege.tombtweaks.platform.PlayerData;
+import com.spege.tombtweaks.platform.StackViews;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,7 +20,11 @@ import java.util.UUID;
  *
  * <p>Wersja z 1.12.2 zapisywala historie przez wyszukanie gracza PO NAZWIE, wiec grob
  * gracza offline rozkladal sie bez sladu - dokladnie w scenariuszu, dla ktorego feature
- * powstal. Tutaj kluczem jest UUID; dla gracza offline wpis idzie na razie tylko do logu.
+ * powstal. Tutaj kluczem jest UUID; dla gracza offline wpis idzie na razie tylko do logu
+ * (na poziomie DEBUG - przy domyslnym interwale to linia na minute na kazdy grob).
+ *
+ * <p>Wpis trzyma tylko id i ilosc, nie pelne NBT stacka: historia nie ma w v1 zadnego
+ * konsumenta, a shulker box w kazdym wpisie potrafilby rozdac playerdata do megabajtow.
  */
 public final class DecayHistory {
 
@@ -35,8 +40,8 @@ public final class DecayHistory {
         }
         ServerPlayer owner = server.getPlayerList().getPlayer(ownerId);
         if (owner == null) {
-            TombTweaks.LOGGER.info("[TombTweaks] grave at {} lost {} x{} (owner {} offline)",
-                    pos, lost.getDescriptionId(), lost.getCount(), ownerId);
+            TombTweaks.LOGGER.debug("[TombTweaks] grave at {} lost {} x{} (owner {} offline)",
+                    pos, StackViews.idOf(lost), lost.getCount(), ownerId);
             return;
         }
 
@@ -47,7 +52,8 @@ public final class DecayHistory {
         entry.putLong("at", System.currentTimeMillis());
         entry.putString("pos", pos.getX() + "," + pos.getY() + "," + pos.getZ()
                 + "," + level.dimension().location());
-        entry.put("stack", lost.save(new CompoundTag()));
+        entry.putString("item", StackViews.idOf(lost));
+        entry.putInt("count", lost.getCount());
         history.add(entry);
 
         int max = Config.INSTANCE.decayMaxHistory.get();

@@ -3,7 +3,6 @@ package com.spege.tombtweaks.mixin;
 import com.spege.tombtweaks.feature.cooldown.BookCooldownService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import ovh.corail.tombstone.api.capability.ISoulConsumer;
 import ovh.corail.tombstone.block.BlockDecorativeGrave;
+import ovh.corail.tombstone.item.ItemBook;
 
 /**
  * Startuje cooldown dokladnie wtedy, gdy uzycie ksiegi sie powiodlo.
@@ -46,8 +46,10 @@ public class MixinBlockDecorativeGrave {
                                                                  ServerPlayer player,
                                                                  ItemStack stack, int soulStrength) {
         ISoulConsumer.ConsumeResult result = consumer.setEnchant(level, pos, player, stack, soulStrength);
+        // Tylko ItemBook: blokada siedzi wylacznie na ItemBook.canEnchant, wiec cooldown
+        // innego ISoulConsumer (zwoje, tablice, receptakle) startowalby i niczego nie blokowal.
         if (result != null && result.result() == ISoulConsumer.ConsumeResult.Result.SUCCESS
-                && consumer instanceof Item book) {
+                && consumer instanceof ItemBook book) {
             BookCooldownService.start(player, book);
         }
         return result;

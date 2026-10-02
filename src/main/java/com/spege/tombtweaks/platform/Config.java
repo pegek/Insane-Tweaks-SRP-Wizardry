@@ -63,8 +63,8 @@ public final class Config {
                 .comment("Ticks between each item removal. 1200 = 60 seconds. 0 disables decay.")
                 .defineInRange("intervalTicks", 1200, 0, Integer.MAX_VALUE);
         decayMaxHistory = builder
-                .comment("Max number of decay records kept per player.")
-                .defineInRange("maxHistory", 10, 0, 1000);
+                .comment("Max number of decay records kept per player (item id + count each).")
+                .defineInRange("maxHistory", 10, 0, 100);
         decayProtectedItems = builder
                 .comment("Full registry names that decay must not eat, e.g. \"mymod:relic_blade\".",
                          "An empty list protects NOTHING.")
@@ -94,7 +94,8 @@ public final class Config {
         cooldownBooks = builder
                 .comment("One entry per book, as \"registry_name;minutes\".",
                          "Minutes are clamped to 720 (12 h). 0 or a malformed entry means no cooldown.",
-                         "Any Tombstone book works here, not just the two below.")
+                         "Works for any of Tombstone's seven tombstone:book_of_* items, not just the",
+                         "two below. Other soul-consuming items (scrolls, tablets) are ignored.")
                 .defineList("books", Arrays.asList(
                         "tombstone:book_of_disenchantment;6",
                         "tombstone:book_of_magic_impregnation;6"), o -> o instanceof String);

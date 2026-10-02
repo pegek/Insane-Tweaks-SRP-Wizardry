@@ -53,6 +53,14 @@ public final class SlotRestoreHandler {
         if (!Config.INSTANCE.restoreEnabled.get()) {
             return;
         }
+        // Tombstone woła giveInventory takze dla gracza z kluczem do grobu i przy tomb raidingu,
+        // a getPlayer() to ten, kto OTWIERA grob. Snapshot jest per gracz, wiec dla obcego grobu
+        // wzielibysmy cudzy snapshot (np. dwoch graczy z jednego wybuchu, w 10 s tolerancji).
+        // Porownanie po nazwie, a nie przez BlockWritableGrave.isOwner: isOwner zwraca true
+        // dla grobu bez ownerId, a sciezka /tbrestoreinventory nie ma grobu w tym wymiarze.
+        if (!player.getGameProfile().getName().equals(event.getOwnerName())) {
+            return;
+        }
 
         SnapshotStore store = SnapshotCodec.load(player);
         SlotSnapshot snapshot = store.claimNearest(event.getOwnerDeathTime(), TOLERANCE_MILLIS);

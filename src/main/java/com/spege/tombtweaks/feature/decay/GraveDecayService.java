@@ -78,7 +78,9 @@ public final class GraveDecayService {
         // po wczytaniu jest i na ziemi, i z powrotem w grobie. Duplikacja.
         grave.setChanged();
 
-        Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, lost);
+        // Historia PRZED wyrzuceniem: Containers.dropItemStack zuzywa przekazany stack
+        // (dzieli go na encje w petli do pustego), wiec po nim zostaje minecraft:air x0.
         DecayHistory.record(level, pos, grave.getOwnerId(), lost);
+        Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, lost);
     }
 }
