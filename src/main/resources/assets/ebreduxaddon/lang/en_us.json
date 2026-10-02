@@ -6,5 +6,8 @@
   "spell.ebreduxaddon.spine_volley.desc": "Fires a fan of poisoned spines. Every fourth volley, the middle spine bursts into a lingering poison cloud.",
   "entity.ebreduxaddon.spine": "Spine",
   "spell.ebreduxaddon.grasp": "Grasp",
-  "spell.ebreduxaddon.grasp.desc": "Seizes the first creature the beam touches and holds it in place while draining it. You cannot move while you hold on. Creatures brought low enough are finished off."
+  "spell.ebreduxaddon.grasp.desc": "Seizes the first creature the beam touches and holds it in place while draining it. You cannot move while you hold on. Creatures brought low enough are finished off.",
+  "spell.ebreduxaddon.purifying_pulse": "Purifying Pulse",
+  "spell.ebreduxaddon.purifying_pulse.desc": "Sends out a purifying wave from where you look. It heals allies, drives enemies back, burns fungal creatures and turns infested ground clean again.",
+  "entity.ebreduxaddon.purifying_wave": "Purifying Wave"
 }

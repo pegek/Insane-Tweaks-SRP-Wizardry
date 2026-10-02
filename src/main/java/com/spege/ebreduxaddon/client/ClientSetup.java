@@ -3,6 +3,7 @@ package com.spege.ebreduxaddon.client;
 import com.binaris.wizardry.client.renderer.entity.MagicArrowRenderer;
 import com.spege.ebreduxaddon.EbreduxAddon;
 import com.spege.ebreduxaddon.feature.ModEntities;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -21,5 +22,7 @@ public final class ClientSetup {
         // Placeholder: tekstura darta z Redux. Docelowa w Tasku 8.
         event.registerEntityRenderer(ModEntities.SPINE.get(),
                 ctx -> new MagicArrowRenderer<>(ctx, new ResourceLocation("ebwizardry", "textures/entity/dart.png")));
+        // Fala nie ma modelu, rysuje tylko czasteczki - ale renderer musi byc, inaczej klient pada.
+        event.registerEntityRenderer(ModEntities.PURIFYING_WAVE.get(), NoopRenderer::new);
     }
 }

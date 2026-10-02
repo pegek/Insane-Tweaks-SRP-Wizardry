@@ -36,7 +36,7 @@ public final class SpineVolleyGameTests {
 
     @GameTest(template = EMPTY)
     public static void volleyFiresAFanOfFive(GameTestHelper helper) {
-        Player caster = casterAt(helper, 1.5, 1, 1.5, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 1.5, 0f, 0f);
         helper.assertTrue(ModSpells.SPINE_VOLLEY.get().cast(context(helper, caster)), "Spine Volley did not cast");
         List<SpineEntity> spines = spines(helper, caster);
         helper.assertTrue(spines.size() == 5, "expected 5 spines, got " + spines.size());
@@ -48,7 +48,7 @@ public final class SpineVolleyGameTests {
 
     @GameTest(template = EMPTY)
     public static void everyFourthVolleyCarriesOnePuddle(GameTestHelper helper) {
-        Player caster = casterAt(helper, 1.5, 1, 1.5, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 1.5, 0f, 0f);
         StringBuilder pattern = new StringBuilder();
         for (int cast = 0; cast < 8; cast++) {
             ModSpells.SPINE_VOLLEY.get().cast(context(helper, caster));
@@ -64,14 +64,14 @@ public final class SpineVolleyGameTests {
 
     @GameTest(template = EMPTY, timeoutTicks = 60)
     public static void spinePoisonsWhatItHits(GameTestHelper helper) {
-        // Pillager, nie wiesniak: Redux domyslnie uznaje moby pasywne (MobCategory.isFriendly) za
-        // sojusznikow gracza (passive_mobs_are_allies) i jego pociski przez nie przelatuja.
-        Pillager target = helper.spawnWithNoFreeWill(EntityType.PILLAGER, 1, 1, 2);
+        // Pillager. Wczesniejsza wersja z wiesniakiem byla niestabilna, ale nie przez Redux: wiesniak
+        // jest trafiany i zatruwany (sprawdzone osobno). Testy partii stoja obok siebie i sie zaburzaja.
+        Pillager target = helper.spawnWithNoFreeWill(EntityType.PILLAGER, 1, 2, 2);
         SpineEntity spine = new SpineEntity(helper.getLevel());
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         spine.setOwner(caster);
         // Strzal z bliska, poziomo, w srodek celu.
-        spine.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 2.0, 0.6)));
+        spine.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 3.0, 0.6)));
         spine.shoot(0, 0, 1, 1.5f, 0f);
         helper.getLevel().addFreshEntity(spine);
         helper.succeedWhen(() -> helper.assertTrue(target.hasEffect(MobEffects.POISON), "target not poisoned yet"));
@@ -81,7 +81,7 @@ public final class SpineVolleyGameTests {
     public static void puddleSpineLeavesAPoisonCloud(GameTestHelper helper) {
         SpineEntity spine = new SpineEntity(helper.getLevel());
         spine.setPuddle(true);
-        spine.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 2.5, 1.5)));
+        spine.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 3.5, 1.5)));
         spine.shoot(0, -1, 0, 1.0f, 0f);
         helper.getLevel().addFreshEntity(spine);
         AABB box = new AABB(helper.absolutePos(net.minecraft.core.BlockPos.ZERO)).inflate(6);

@@ -2,10 +2,13 @@
 
 **Spec:** `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`. **Gałąź:** `addon/redux-1.20.1`.
 
-**Stan (2026-10-02):** taski 0–4 zrobione. Następny: 5.
+**Stan (2026-10-02):** taski 0–5 zrobione (wszystkie 4 zaklęcia). Następny: 6.
 
 **Testy w świecie:** `./gradlew runGameTestServer` (wariant a) i `./gradlew runGameTestServer -PwithSpore`
-(wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`. Serwer
+(wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`.
+Dwie pułapki GameTestów, obie już raz ugryzły: (1) w koordynatach helpera y = 1 to podłoga areny,
+moby stawiamy na y = 2, inaczej duszą się w bloku i każda asercja o HP kłamie; (2) testy jednej
+partii stoją obok siebie i biegną naraz, więc liczymy tylko własne encje (np. po właścicielu). Serwer
 dedykowany (`tools/server-check.sh`) sprawdza już tylko jar produkcyjny: start i log.
 
 Zasady dla każdego taska:

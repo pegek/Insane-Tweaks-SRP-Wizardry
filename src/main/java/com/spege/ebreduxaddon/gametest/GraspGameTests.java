@@ -30,13 +30,13 @@ public final class GraspGameTests {
 
     /** Pillager przed rzucajacym; ticki 1..9 nie zadaja obrazen, wiec test chwytu ich nie zaburza. */
     private static Pillager target(GameTestHelper helper) {
-        return helper.spawnWithNoFreeWill(EntityType.PILLAGER, 1, 1, 2);
+        return helper.spawnWithNoFreeWill(EntityType.PILLAGER, 1, 2, 2);
     }
 
     @GameTest(template = EMPTY)
     public static void graspRootsBothAndEndCastReleases(GameTestHelper helper) {
         Pillager pillager = target(helper);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         PlayerCastContext ctx = tick(helper, caster, 1);
         helper.assertTrue(ModSpells.GRASP.get().cast(ctx), "Grasp did not cast");
         helper.assertTrue(GraspState.isRooted(pillager), "target not rooted");
@@ -50,7 +50,7 @@ public final class GraspGameTests {
     @GameTest(template = EMPTY)
     public static void holdSurvivesLookingAway(GameTestHelper helper) {
         Pillager pillager = target(helper);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         ModSpells.GRASP.get().cast(tick(helper, caster, 1));
         caster.setYRot(180f);
         caster.setYHeadRot(180f);
@@ -64,11 +64,14 @@ public final class GraspGameTests {
     @GameTest(template = EMPTY)
     public static void graspDamagesHealthyTarget(GameTestHelper helper) {
         Pillager pillager = target(helper);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         float before = pillager.getHealth();
         ModSpells.GRASP.get().cast(tick(helper, caster, 0));
         helper.assertTrue(pillager.isAlive(), "healthy target was executed");
         helper.assertTrue(pillager.getHealth() < before, "no damage on tick 0");
+        // Straznik na blad z podloga areny: obrazenia maja byc z zaklecia, nie z duszenia w bloku.
+        helper.assertTrue(pillager.getLastDamageSource() != null
+                && !"inWall".equals(pillager.getLastDamageSource().getMsgId()), "damage came from suffocation, not Grasp");
         ModSpells.GRASP.get().endCast(tick(helper, caster, 1));
         helper.succeed();
     }
@@ -77,7 +80,7 @@ public final class GraspGameTests {
     public static void graspExecutesWeakenedMob(GameTestHelper helper) {
         Pillager pillager = target(helper);
         pillager.setHealth(pillager.getMaxHealth() * 0.15f);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         ModSpells.GRASP.get().cast(tick(helper, caster, 0));
         helper.assertTrue(pillager.isDeadOrDying(), "weakened target survived, health " + pillager.getHealth());
         helper.assertTrue(GraspState.get(caster) == null, "hold kept after the execute");
@@ -88,7 +91,7 @@ public final class GraspGameTests {
     @GameTest(template = EMPTY, timeoutTicks = 40)
     public static void abandonedHoldIsSwept(GameTestHelper helper) {
         Pillager pillager = target(helper);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         ModSpells.GRASP.get().cast(tick(helper, caster, 1));
         helper.assertTrue(GraspState.isRooted(pillager), "target not rooted");
         // Brak endCast i kolejnych tickow zaklecia: sweeper ma zwolnic chwyt sam.

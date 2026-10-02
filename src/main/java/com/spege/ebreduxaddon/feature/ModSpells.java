@@ -5,6 +5,7 @@ import com.binaris.wizardry.core.registry.EBRegistries;
 import com.spege.ebreduxaddon.EbreduxAddon;
 import com.spege.ebreduxaddon.feature.spell.CleanseSpell;
 import com.spege.ebreduxaddon.feature.spell.GraspSpell;
+import com.spege.ebreduxaddon.feature.spell.PurifyingPulseSpell;
 import com.spege.ebreduxaddon.feature.spell.SpineVolleySpell;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -23,6 +24,7 @@ public final class ModSpells {
 
     public static final RegistryObject<Spell> CLEANSE = SPELLS.register("cleanse", CleanseSpell::new);
     public static final RegistryObject<Spell> GRASP = SPELLS.register("grasp", GraspSpell::new);
+    public static final RegistryObject<Spell> PURIFYING_PULSE = SPELLS.register("purifying_pulse", PurifyingPulseSpell::new);
     public static final RegistryObject<Spell> SPINE_VOLLEY = SPELLS.register("spine_volley", SpineVolleySpell::new);
 
     private ModSpells() {

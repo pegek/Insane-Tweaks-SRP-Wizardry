@@ -33,12 +33,16 @@ public final class CleanseGameTests {
      *  cudzej struktury (ebwizardry:...) uzyc sie nie da. */
     static final String EMPTY = "empty_3x3x3";
 
+    // 🚨 Wspolrzedne helpera: y = 1 to PODLOGA areny (blok). Moby i rzucajacy stoja na y = 2, bloki
+    // testowe kladziemy na y = 1. Mob postawiony na y = 1 siedzi w podlodze i dusi sie (inWall),
+    // co po cichu psulo kazda asercje o HP.
+
     private CleanseGameTests() {
     }
 
     @GameTest(template = EMPTY)
     public static void cleansingStripsHarmfulAndKeepsBeneficial(GameTestHelper helper) {
-        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 2, 1);
         zombie.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400));
         zombie.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 400));
         zombie.addEffect(new MobEffectInstance(ModEffects.CLEANSING.get(), 100));
@@ -50,8 +54,8 @@ public final class CleanseGameTests {
 
     @GameTest(template = EMPTY)
     public static void cleanseHitsTargetInFront(GameTestHelper helper) {
-        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 2);
-        Player caster = casterAt(helper, 1.5, 1, 0.2, 0f, 0f);
+        Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 2, 2);
+        Player caster = casterAt(helper, 1.5, 2, 0.2, 0f, 0f);
         boolean cast = ModSpells.CLEANSE.get().cast(context(helper, caster));
         helper.assertTrue(cast, "Cleanse did not cast");
         helper.assertTrue(zombie.hasEffect(ModEffects.CLEANSING.get()), "target in front got no Cleansing");
@@ -62,7 +66,7 @@ public final class CleanseGameTests {
     @GameTest(template = EMPTY)
     public static void cleanseFallsBackToCasterOnMiss(GameTestHelper helper) {
         // Patrzy w niebo: nic w zasiegu, wiec oczyszcza siebie.
-        Player caster = casterAt(helper, 1.5, 1, 1.5, 0f, -90f);
+        Player caster = casterAt(helper, 1.5, 2, 1.5, 0f, -90f);
         boolean cast = ModSpells.CLEANSE.get().cast(context(helper, caster));
         helper.assertTrue(cast, "Cleanse did not cast on a miss");
         MobEffectInstance effect = caster.getEffect(ModEffects.CLEANSING.get());

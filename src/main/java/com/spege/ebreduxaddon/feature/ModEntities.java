@@ -1,6 +1,7 @@
 package com.spege.ebreduxaddon.feature;
 
 import com.spege.ebreduxaddon.EbreduxAddon;
+import com.spege.ebreduxaddon.feature.entity.PurifyingWaveEntity;
 import com.spege.ebreduxaddon.feature.entity.SpineEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -18,6 +19,11 @@ public final class ModEntities {
             () -> EntityType.Builder.<SpineEntity>of(SpineEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f).clientTrackingRange(64).updateInterval(10)
                     .build(EbreduxAddon.id("spine").toString()));
+
+    public static final RegistryObject<EntityType<PurifyingWaveEntity>> PURIFYING_WAVE = ENTITIES.register("purifying_wave",
+            () -> EntityType.Builder.<PurifyingWaveEntity>of(PurifyingWaveEntity::new, MobCategory.MISC)
+                    .sized(0.5f, 0.5f).fireImmune().noSummon().clientTrackingRange(64).updateInterval(20)
+                    .build(EbreduxAddon.id("purifying_wave").toString()));
 
     private ModEntities() {
     }
