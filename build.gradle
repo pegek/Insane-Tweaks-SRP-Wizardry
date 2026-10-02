@@ -55,6 +55,13 @@ dependencies {
     // zaobfuskowany jar (to jest skladnia FG3).
     implementation fg.deobf('curse.maven:corail-tombstone-243707:8606942')
 
+    // Procesor adnotacji Mixin - MixinGradle 0.7 NIE dodaje go sam. Bez tej linii build jest
+    // cichy i zielony, ale jar wychodzi bez refmapy, a redirect w MixinBlockDecorativeGrave
+    // (cel: metoda Minecrafta `use`, w runtime `m_6227_`) wywala gre przy pierwszym zaladowaniu
+    // klasy. runClient tego NIE pokaze, bo w dev nazwy sa oficjalne - wychodzi dopiero
+    // w prawdziwej instancji. Dowod, ze dziala: tombtweaks.refmap.json w build/libs/*.jar.
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
