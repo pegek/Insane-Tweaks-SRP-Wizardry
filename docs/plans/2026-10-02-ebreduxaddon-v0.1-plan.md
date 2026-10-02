@@ -2,8 +2,15 @@
 
 **Spec:** `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`. **Gałąź:** `addon/redux-1.20.1`.
 
+**Stan (2026-10-02):** taski 0–2 zrobione (`b781be7`, `ecf8fcc`, `0de863d`). Następny: 3.
+
+**Testy w świecie:** `./gradlew runGameTestServer` (wariant a) i `./gradlew runGameTestServer -PwithSpore`
+(wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`. Serwer
+dedykowany (`tools/server-check.sh`) sprawdza już tylko jar produkcyjny: start i log.
+
 Zasady dla każdego taska:
-- Każdy task kończy się zielonym `./gradlew check build` i osobnym commitem. Tam, gdzie zaznaczono
+- Każdy task kończy się zielonym `./gradlew check build runGameTestServer` (z `-PwithSpore` i bez)
+  i osobnym commitem. Tam, gdzie zaznaczono
   „serwer”, task wymaga też startu serwera dedykowanego bez błędów.
 - Liczby i decyzje bez typów MC trafiają do `core` z testem JUnit.
 - Jary Redux i Spore nigdy nie trafiają do repo (`.gitignore`: `libs/*.jar`, `run/`).
