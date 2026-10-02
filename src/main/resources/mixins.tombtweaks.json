@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tombtweaks.refmap.json",
   "mixins": [
-    "MixinBlockEntityPlayerGrave"
+    "MixinBlockEntityPlayerGrave",
+    "MixinItemBook",
+    "MixinBlockDecorativeGrave"
   ],
   "injectors": {
     "defaultRequire": 1

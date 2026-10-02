@@ -5,6 +5,7 @@ import com.spege.tombtweaks.core.StackView;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -23,9 +24,13 @@ public final class StackViews {
     private StackViews() {
     }
 
-    public static String idOf(ItemStack stack) {
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+    public static String idOf(Item item) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
         return id == null ? UNKNOWN : id.toString();
+    }
+
+    public static String idOf(ItemStack stack) {
+        return idOf(stack.getItem());
     }
 
     /**
