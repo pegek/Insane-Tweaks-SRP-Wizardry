@@ -10,7 +10,7 @@ Trzy tweaki do [Corail Tombstone](https://www.curseforge.com/minecraft/mc-mods/c
 
 Config: `config/tombtweaks-common.toml`. Wszystkie wartości są czytane na bieżąco — bez restartu.
 
-Wymagania: Minecraft 1.20.1, Forge 47+, Corail Tombstone **9.1.4 – 9.1.x** (zakres jest celowo wąski: mixiny są zweryfikowane tylko na 9.1.4, a niezgodna wersja wolałaby nie wystartować, niż wywalić grę przy ładowaniu klasy).
+Wymagania: Minecraft 1.20.1, Forge **47.3.19+** (niżej sam Tombstone 9.1.4 wywraca się przy starcie — potrzebuje metody, którą Forge dostał w 47.3.19, choć deklaruje dowolne 47), Corail Tombstone **9.1.4 – 9.1.x** (zakres jest celowo wąski: mixiny są zweryfikowane tylko na 9.1.4, a niezgodna wersja wolałaby nie wystartować, niż wywalić grę przy ładowaniu klasy).
 
 ## Jak to działa
 

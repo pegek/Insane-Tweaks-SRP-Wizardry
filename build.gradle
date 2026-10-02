@@ -45,7 +45,12 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.2.20'
+    // 47.3.19, nie nizej: Tombstone 9.1.4 wola ResourceLocation.fromNamespaceAndPath, ktore Forge
+    // dostal dopiero w 47.3.19 (backport metod z 1.21). Na 47.2.x Tombstone wywraca sie juz przy
+    // rejestracji (NoSuchMethodError w PreciseMagicArrowFunction.<clinit>) - choc sam deklaruje
+    // forge [47,). Sprawdzone na serwerze dedykowanym 2026-10-02: 47.2.20 crash, 47.3.19 i
+    // 47.4.26 startuja. Trzymaj to zgodne z versionRange forge w mods.toml.
+    minecraft 'net.minecraftforge:forge:1.20.1-47.3.19'
 
     // Tombstone: deobf jest konieczny, bo referencje do MC w jego bajtkodzie sa SRG-owe.
     // Koordynat: curse.maven:<slug>-<projectId>:<fileId>. 243707 = corail-tombstone,

@@ -1,6 +1,6 @@
 # Weryfikacja w grze — tombtweaks 0.1.0
 
-Rób to na **zreobfuskowanym jarze z `build/libs/` wrzuconym do prawdziwej instancji** (Forge 47 + Tombstone 9.1.4), nie w `./gradlew runClient`. Dev używa nazw oficjalnych i ukrywa dokładnie ten błąd (brak refmapy), który jest dla tego moda najgroźniejszy.
+Rób to na **zreobfuskowanym jarze z `build/libs/` wrzuconym do prawdziwej instancji** (Forge 47.3.19+ + Tombstone 9.1.4), nie w `./gradlew runClient`. Dev używa nazw oficjalnych i ukrywa dokładnie ten błąd (brak refmapy), który jest dla tego moda najgroźniejszy.
 
 Zaznaczaj wynik obok każdego punktu. Wszystko, co wypadnie inaczej niż „Oczekiwane", to materiał na poprawkę.
 

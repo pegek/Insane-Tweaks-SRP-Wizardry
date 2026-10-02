@@ -12,10 +12,12 @@ description='''
 Tweaks for Corail Tombstone: items return to the slots they came from, unvisited graves slowly decay, and the magic books get a cooldown.
 '''
 
+# Minimum = to, czego naprawde potrzebuje Tombstone 9.1.4 (fromNamespaceAndPath, Forge 47.3.19),
+# a nie jego wlasne [47,). Nizej gracz dostaje czytelny ekran brakujacej zaleznosci zamiast crasha.
 [[dependencies.tombtweaks]]
     modId="forge"
     mandatory=true
-    versionRange="[47,)"
+    versionRange="[47.3.19,)"
     ordering="NONE"
     side="BOTH"
 
