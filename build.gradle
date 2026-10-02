@@ -65,6 +65,21 @@ test {
     testLogging { events 'passed', 'skipped', 'failed' }
 }
 
+// core ma sie przenosic kopiuj-wklej do portu na 1.16.5, czyli Java 8. Toolchain 17 przepusci
+// var, List.of czy rekord bez slowa - to zadanie kompiluje sam core z --release 8
+// i wywala `check`, gdy core przestanie byc Java 8.
+tasks.register('compileCoreJava8', JavaCompile) {
+    source = fileTree('src/main/java') { include 'com/spege/tombtweaks/core/**' }
+    classpath = files()
+    // Zadanie wlasne nie dziedziczy toolchaina projektu (Gradle chodzi na JDK 8, ktory nie zna
+    // --release), wiec kompilator wskazujemy jawnie.
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(17) }
+    destinationDirectory = layout.buildDirectory.dir('core-java8')
+    options.release = 8
+    options.encoding = 'UTF-8'
+}
+tasks.named('check') { dependsOn 'compileCoreJava8' }
+
 tasks.withType(JavaCompile).configureEach {
     // NIE dodawaj tu -proc:none - patrz notatka na gorze tego pliku.
     options.encoding = 'UTF-8'
