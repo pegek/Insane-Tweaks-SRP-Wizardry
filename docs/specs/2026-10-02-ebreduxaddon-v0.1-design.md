@@ -1,7 +1,7 @@
 # EbreduxAddon v0.1: design
 
 **Data:** 2026-10-02
-**Status:** szkic. Sekcja 9 to decyzje autora, przed planem implementacji.
+**Status:** decyzje autora przyjęte 2026-10-02 (sekcja 9). Następny krok: korekta specu według nich i plan.
 **Platforma:** Minecraft 1.20.1, Forge 47.3.19+, Java 17.
 **Zależności:** Electroblob's Wizardry Redux ≥ 0.8.9 (**wymagana**), Fungal Infection: Spore 2.2.x
 (**opcjonalna**).
@@ -127,6 +127,18 @@ mnożniki są w configu i czytane na bieżąco, poza rejestracjami.
 Własny żywioł (Abomination albo nowy motyw), przywołania mobów Spore jako sojuszników, Sanctuary
 (osłona przed rozrostem Spore), Thrall i Sentinel, Bauble Fruits przez Curios, artefakty
 (Klepsydra Zhonyi), Sculk Horde.
+
+## 9a. Rozstrzygnięcia (2026-10-02)
+
+1. **Zarażony mag: dopiero po v0.1.** W v0.1 most do Spore działa tylko przez tagi i efekty
+   (Cleanse i Purifying Pulse). Sekcja 5.1 przechodzi do 0.2.
+2. **Nazwy linii sprzętu:** **Grafted** i **Symbiotic** (→ Sentient). Którą linię nazywa która
+   nazwa (różdżka czy zbroja), ustalimy w korekcie specu.
+3. **Żywioły:** wstępnie Cleanse i Purifying Pulse → healing, Grasp → necromancy,
+   Spine Volley → earth.
+4. **Grafika:** placeholdery. Tekstury z 1.12.2 pochodzące z Faithful można przenosić, autor
+   potwierdził, że licencja nie jest problemem.
+5. **Świat ze Spore otwarty bez Spore:** zarażony mag znika z ostrzeżeniem w logu. Akceptowane.
 
 ## 9. Decyzje autora
 
