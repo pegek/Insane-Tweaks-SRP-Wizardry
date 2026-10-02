@@ -161,6 +161,28 @@ public final class ManaAPI {
     }
 
     /**
+     * Takes back permanent progression from consumed items, never below zero - the counterpart
+     * of {@link #addItemProgression}, for Trinkets and Baubles' Mana Reagent, whose whole purpose
+     * upstream is undoing a Mana Crystal.
+     *
+     * <p>Only the item budget is touched: progression earned by casting is a separate budget and
+     * no consumable can reach it. Current mana above the lowered maximum is not cut here - the
+     * regen handler confiscates any overflow on the next tick, the same as for unequipped gear.
+     */
+    public static void removeItemProgression(@Nullable EntityPlayer player, double amount) {
+        if (player == null || player.world.isRemote || !isFinite(amount) || amount <= 0.0D) {
+            return;
+        }
+        IManaPool pool = ManaCapabilities.get(player);
+        if (pool == null) {
+            return;
+        }
+        pool.setItemProgression(Math.max(0.0D, pool.getItemProgression() - amount));
+        ManaAttributes.refreshPersistentModifiers(player);
+        syncNow(player);
+    }
+
+    /**
      * The persistent half of the maximum only - config base, progression, flat grants - without
      * whatever the player happens to be wearing. Use {@link #getMaxMana} for the number that
      * actually gates casting; this is for code that needs to reason about the two halves apart,

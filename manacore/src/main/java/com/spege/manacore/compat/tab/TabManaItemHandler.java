@@ -12,8 +12,17 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
  * Bridges Trinkets and Baubles' consumable mana items into the player's unified pool: eating a
- * Mana Crystal grants permanent progression, and a Mana Reagent or Mana Candy restores current
- * mana.
+ * Mana Crystal grants permanent progression, a Mana Reagent takes it back, and a Mana Candy
+ * restores current mana.
+ *
+ * <p>🚨 <b>The Mana Reagent is NOT a restore item.</b> Upstream it is the Crystal's inverse:
+ * {@code Mana_Reagent.func_77654_b} subtracts from {@code MagicStats.bonusMana} where
+ * {@code Mana_Crystal} adds to it, then applies poison and hunger when {@code reagentHarmful} is
+ * set (TaB 0.33.4 bytecode; its tooltip says "Harmful when consumed / -Max Mana"). It is also
+ * what a Crystal turns into when smashed on stone. An earlier version of this handler grouped it
+ * with the Candy and restored mana instead, which contradicted the item's own tooltip and turned
+ * a penalty into a reward. TaB still applies its own poison and hunger; only the mana half is
+ * ours.
  *
  * <p>🚨 Registered only for the three items that actually exist as their own registry entries.
  * TaB's jar ships four inventory models under {@code assets/xat/models/item/} -
@@ -54,7 +63,9 @@ public class TabManaItemHandler {
 
         if (MANA_CRYSTAL.equals(registryName)) {
             ManaAPI.addItemProgression(player, ManaCoreConfig.tab.manaCrystalMaxBonus);
-        } else if (MANA_REAGENT.equals(registryName) || MANA_CANDY.equals(registryName)) {
+        } else if (MANA_REAGENT.equals(registryName)) {
+            ManaAPI.removeItemProgression(player, ManaCoreConfig.tab.manaReagentMaxPenalty);
+        } else if (MANA_CANDY.equals(registryName)) {
             ManaAPI.add(player, ManaCoreConfig.tab.restoreItemAmount);
         }
     }

@@ -70,4 +70,11 @@ public class EbwCategory {
             "Applies to the `siphon` payout only, never to passive regeneration; EBW keeps those apart."})
     @Config.RangeDouble(min = 0.0D, max = 100.0D)
     public double ringSiphoningMultiplier = 1.3D;
+
+    @Config.Comment({
+            "Whether Necromancer's Delight's Leechlink Amulet returns stolen mana to the owner's",
+            "mana pool instead of to the item in their hand. Read live, no restart - but the mixin",
+            "itself applies whenever Necromancer's Delight is installed; this flag only picks where",
+            "the mana goes. The amount is the mod's own: 50% of what the Mana Leech stole."})
+    public boolean leechlinkToPool = true;
 }

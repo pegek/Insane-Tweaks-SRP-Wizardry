@@ -24,7 +24,16 @@ public class TabCategory {
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)
     public double manaCrystalMaxBonus = 5.0D;
 
-    @Config.Comment("How much current mana a Mana Reagent or Mana Candy restores. Works live, no restart.")
+    @Config.Comment({
+            "How much permanent maximum eating a Mana Reagent takes back. Works live, no restart.",
+            "The Reagent is the Crystal's inverse in TaB itself, not a restore item. Never takes",
+            "progression below zero, and only from the consumed-item budget - mana earned by",
+            "casting cannot be lost this way."
+    })
+    @Config.RangeDouble(min = 0.0D, max = 10000.0D)
+    public double manaReagentMaxPenalty = 5.0D;
+
+    @Config.Comment("How much current mana a Mana Candy restores. Works live, no restart.")
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)
     public double restoreItemAmount = 25.0D;
 }

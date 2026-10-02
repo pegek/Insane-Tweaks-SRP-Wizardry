@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 /**
- * Late-loading route for the EBW and TaB mixin configs.
+ * Late-loading route for the EBW, TaB and Necromancer's Delight mixin configs.
  *
  * <p>Both {@code mixins.manacore.ebw.json} and {@code mixins.manacore.tab.json} target classes
  * belonging to optional mods (Electroblob's Wizardry and Trinkets and Baubles respectively), not
@@ -36,17 +36,21 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
 
     private static final String EBW_CONFIG = "mixins.manacore.ebw.json";
     private static final String TAB_CONFIG = "mixins.manacore.tab.json";
+    private static final String ND_CONFIG = "mixins.manacore.nd.json";
 
     /** Electroblob's Wizardry modid. */
     private static final String EBW_MODID = "ebwizardry";
     /** Trinkets and Baubles modid. */
     private static final String TAB_MODID = "xat";
+    /** Necromancer's Delight modid. */
+    private static final String ND_MODID = "necromancersdelight";
 
     @Override
     public List<String> getMixinConfigs() {
         List<String> configs = new ArrayList<String>();
         configs.add(EBW_CONFIG);
         configs.add(TAB_CONFIG);
+        configs.add(ND_CONFIG);
         return configs;
     }
 
@@ -60,6 +64,11 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
         if (TAB_CONFIG.equals(mixinConfig)) {
             boolean present = Loader.isModLoaded(TAB_MODID);
             ManaCoreMod.LOGGER.info("[ManaCore] TaB mixins queue = {}", Boolean.valueOf(present));
+            return present;
+        }
+        if (ND_CONFIG.equals(mixinConfig)) {
+            boolean present = Loader.isModLoaded(ND_MODID);
+            ManaCoreMod.LOGGER.info("[ManaCore] Necromancer's Delight mixins queue = {}", Boolean.valueOf(present));
             return present;
         }
         return false;
