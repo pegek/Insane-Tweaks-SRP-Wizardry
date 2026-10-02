@@ -1,10 +1,18 @@
 package com.spege.ebreduxaddon;
 
+import com.spege.ebreduxaddon.feature.ModEffects;
+import com.spege.ebreduxaddon.feature.ModSpells;
+import com.spege.ebreduxaddon.feature.effect.CleansingEffect;
 import com.spege.ebreduxaddon.platform.Config;
+import com.spege.ebreduxaddon.platform.IdLists;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +24,16 @@ public final class EbreduxAddon {
 
     public EbreduxAddon() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC, "ebreduxaddon-common.toml");
+
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModSpells.register(modBus);
+        ModEffects.register(modBus);
+
+        MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
+        // Listy id z configu przeliczone od razu po starcie, zeby ewentualne ostrzezenie o literowce
+        // bylo w logu startu, a nie przy pierwszym rzucie.
+        MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent e) -> IdLists.warmUp());
+
         // Wersja z kontenera moda (manifest jara), nie ze stalej: stala rozjezdza sie z build.gradle.
         LOGGER.info("[EbreduxAddon] {} loading",
                 ModLoadingContext.get().getActiveContainer().getModInfo().getVersion());

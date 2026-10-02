@@ -16,6 +16,13 @@ minecraft {
     copyIdeResources = true
 
     runs {
+        // Redux ma mixiny z refmapa w nazwach SRG, a w dev Minecraft ma nazwy oficjalne. Bez tych
+        // dwoch wlasciwosci jego @Inject nie znajduje celow (InvalidInjectionException na
+        // LivingEntity.tick) i zadne uruchomienie w dev nie wstaje.
+        configureEach {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
         client {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'debug'
@@ -24,6 +31,15 @@ minecraft {
         server {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'debug'
+            mods { ebreduxaddon { source sourceSets.main } }
+        }
+        // ./gradlew runGameTestServer [-PwithSpore]: stawia swiat, odpala wszystkie GameTesty addonu
+        // i konczy sie kodem bledu, gdy ktorys padnie. Jedyny sposob na testy w swiecie bez klienta:
+        // w jarze produkcyjnym Forge GameTestow nie wlacza.
+        gameTestServer {
+            workingDirectory project.file('run-gametest')
+            property 'forge.logging.console.level', 'info'
+            property 'forge.enabledGameTestNamespaces', 'ebreduxaddon'
             mods { ebreduxaddon { source sourceSets.main } }
         }
     }
@@ -51,7 +67,14 @@ dependencies {
     // UWAGA: fg.deobf(files(...)) NIE dziala na ForgeGradle 6 - tylko koordynaty Mavena.
     implementation fg.deobf('maven.modrinth:electroblobs-wizardry-redux:0.8.9-forge')
 
-    // Spore: w v0.1 CELOWO brak. Most do Spore to same identyfikatory z configu (spec, sekcja 5).
+    // Spore: w v0.1 CELOWO brak w kompilacji. Most do Spore to same identyfikatory z configu
+    // (spec, sekcja 5). -PwithSpore dokleja go tylko do uruchomien w dev (GameTesty wariantu b).
+    if (project.hasProperty('withSpore')) {
+        // Spore uzywa tego samego numeru 2.2.0j dla Forge 1.20.1 i NeoForge 1.21, a Maven Modrinth po
+        // numerze daje ten drugi (META-INF/neoforge.mods.toml, Forge go nie widzi). Dlatego ID wersji:
+        // PbOZOahW = spore_1.20.1_2.2.0j.jar, sha1 d52e5d36... (ten sam plik, ktory wstawal na serwerze).
+        runtimeOnly fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
+    }
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'

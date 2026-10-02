@@ -6,6 +6,10 @@
 #     a = Redux, b = Redux + Spore, c = Redux + Spore + Tombstone 9.1.4 + TombTweaks
 #
 # Zmienne: JAVA (domyslnie java, musi byc 17), TOMBTWEAKS_JAR (wymagany dla c).
+#
+# GameTesty NIE ida tutaj: Forge wylacza je w srodowisku produkcyjnym (ForgeGameTestHooks.
+# isGametestEnabled zwraca false, gdy FMLLoader.isProduction()), wiec /test nie istnieje nawet
+# z -Dforge.enableGameTest=true. Testy w swiecie: ./gradlew runGameTestServer [-PwithSpore].
 # Jary cudzych modow ida do katalogu roboczego, NIGDY do repo.
 set -euo pipefail
 
@@ -16,7 +20,8 @@ forge=1.20.1-47.3.19
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 
 redux_url=https://api.modrinth.com/maven/maven/modrinth/electroblobs-wizardry-redux/0.8.9-forge/electroblobs-wizardry-redux-0.8.9-forge.jar
-spore_url=https://api.modrinth.com/maven/maven/modrinth/fungal-infectionspore/2.2.0j/fungal-infectionspore-2.2.0j.jar
+# ID wersji, nie numer: "2.2.0j" w Maven Modrinth to wydanie NeoForge 1.21 (patrz build.gradle).
+spore_url=https://api.modrinth.com/maven/maven/modrinth/fungal-infectionspore/PbOZOahW/fungal-infectionspore-PbOZOahW.jar
 tombstone_url=https://www.cursemaven.com/curse/maven/corail-tombstone-243707/8606942/corail-tombstone-243707-8606942.jar
 
 cache="$work/cache"
@@ -75,6 +80,6 @@ echo "== wariant $variant: $status"
 grep -E '\[EbreduxAddon\]|ebreduxaddon' logs/latest.log | grep -v -i 'debug' | tail -40 || true
 echo "== bledy i ostrzezenia (bez szumu znanego z Redux i Spore)"
 grep -E '/(ERROR|WARN)\]|Exception' logs/latest.log \
-    | grep -v -E 'halogen_light|Ambiguity between arguments|Incorrect key|is not correct. Correcting|uses unexpected schema|OFFLINE/INSECURE|authenticate usernames|hackers to connect|"online-mode"' \
+    | grep -v -E 'is missing mods.toml file|ItemProperties|halogen_light|Ambiguity between arguments|Incorrect key|is not correct. Correcting|uses unexpected schema|OFFLINE/INSECURE|authenticate usernames|hackers to connect|"online-mode"' \
     | tail -40 || true
 [ "$status" = done ]

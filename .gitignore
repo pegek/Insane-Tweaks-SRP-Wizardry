@@ -2,6 +2,7 @@ build/
 bin/
 out/
 run/
+run-gametest/
 .gradle/
 .idea/
 *.iml

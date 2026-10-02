@@ -128,7 +128,7 @@ public final class Config {
                 .comment("Effects removed by Cleanse and by the Sentient set bonus, on top of every harmful effect.")
                 .defineListAllowEmpty("cleansedEffects", List.of(
                         "spore:mycelium_ef", "spore:marker", "spore:corrosion", "spore:uneasy",
-                        "spore:madness", "spore:frostbite", "spore:biled", "spore:stunt",
+                        "spore:madness", "spore:frostbite", "spore:biled",
                         "spore:starvation"), Config::isString);
         sporePurifiedBlocks = b
                 .comment("Blocks Purifying Pulse turns back, as \"source|target\" - the same format as Spore's own",

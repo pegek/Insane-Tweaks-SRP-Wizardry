@@ -135,7 +135,7 @@ w `ForgeRegistries` przy pierwszym użyciu. Nieznane id jest pomijane z jednym o
 - **Tag `spore:fungus_entities`:** dodatkowy postęp różdżki i obrażenia od Purifying Pulse.
   Tag jest odczytywany przez `TagKey`, więc bez Spore jest po prostu pusty.
 - **`spore.cleansedEffects`:** domyślnie `spore:mycelium_ef`, `spore:marker`, `spore:corrosion`,
-  `spore:uneasy`, `spore:madness`, `spore:frostbite`, `spore:biled`, `spore:stunt`,
+  `spore:uneasy`, `spore:madness`, `spore:frostbite`, `spore:biled`,
   `spore:starvation`. Obejmuje je efekt Cleansing, czyli Cleanse i Last Stand.
 - **`spore.purifiedBlocks`:** pary `"źródło|cel"`, w tym samym formacie co lista konwersji Spore.
   Domyślnie:

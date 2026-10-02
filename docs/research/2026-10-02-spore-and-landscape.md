@@ -76,7 +76,8 @@ listy Proto i Protector. Config `"The amount of needed Proto Hiveminds for the w
 ### Efekty (`effect.spore.*`)
 
 mycelium_ef (Mycelium Infection), marker, corrosion, symbiosis, uneasy, madness, frostbite, biled,
-ignitable, stunt, starvation.
+ignitable, starvation. Rejestr (`Core.Seffects`) ma tych 10. `effect.spore.stunt` istnieje tylko
+w pliku językowym, a efekt o takim id nie jest rejestrowany (wyłapał to GameTest addonu).
 
 ### Konfiguracja
 
@@ -94,3 +95,10 @@ wspólnego motywu.
 
 Spore 2.2.0j wstaje na Forge 47.4.26 bez błędów krytycznych. Dwa błędy parsowania receptur
 (`spore:halogen_light`, `broken_halogen_light`) są szumem samego Spore.
+
+### ⚠️ Maven Modrinth: numer wersji jest niejednoznaczny
+
+`maven.modrinth:fungal-infectionspore:2.2.0j` zwraca **wydanie NeoForge 1.21** (jar ma tylko
+`META-INF/neoforge.mods.toml`, więc Forge 1.20.1 po cichu go pomija), bo Spore daje ten sam numer obu
+platformom. Wydanie Forge 1.20.1 to ID wersji **`PbOZOahW`** (`spore_1.20.1_2.2.0j.jar`, sha1
+`d52e5d362e42e30bbfe05106ca8bf93b46729f37`, ten sam plik co wyżej). Zawsze przypinać ID, nie numer.

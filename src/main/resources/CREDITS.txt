@@ -1,0 +1,5 @@
+EbreduxAddon - credits
+
+- data/ebreduxaddon/structures/empty_3x3x3.nbt: copied from Electroblob's Wizardry Redux
+  (Binaris00, GPL-3.0-only), https://github.com/Binaris00/ElectroblobsWizardryRedux
+- Spell and item ideas: Insane Tweaks for Minecraft 1.12.2 (spege).
