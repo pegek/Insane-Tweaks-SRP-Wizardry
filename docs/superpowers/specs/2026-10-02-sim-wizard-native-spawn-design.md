@@ -2,6 +2,8 @@
 
 **Status:** zaakceptowany 2026-10-02. Autor przyjął wszystkie rekomendacje z sekcji 8.
 Plan: `docs/superpowers/plans/2026-10-02-sim-wizard-native-spawn.md`. Sekcja 7 to jego Task 0.
+Kod napisany 2026-10-02 (`insanetweaks 1.17.0`, jeszcze niezbudowany). Czeka na sekcję 7 i test
+w grze. Stan: tabela na górze planu.
 **Data:** 2026-10-02. **Mod:** `insanetweaks` (1.17.0, bo to nowa funkcja).
 **Kontekst:** handoff `docs/superpowers/plans/2026-08-11-abomination-magic-system-handoff.md`,
 punkt C. Ekonomia: `docs/superpowers/specs/2026-08-08-abomination-economy-and-balance-design.md`.

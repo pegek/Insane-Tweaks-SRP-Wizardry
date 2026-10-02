@@ -4,6 +4,26 @@
 > Jego wynik wybiera wariant Tasku 5 i może przestawić jedną wartość domyślną w Tasku 1.
 > Nie zaczynaj kodu przed Taskiem 0.
 
+## Stan realizacji (2026-10-02)
+
+Taski 1–6 są napisane i zacommitowane na `claude/dreamy-lamport-75ijpn`: `2d237a9`, `2aafa3a`,
+`9757d21`. Gałąź `feat/…` nie powstała. **Nic z tego nie było budowane:** w chmurze nie ma JDK 8
+ani `libs/`. `javac` potwierdził tylko poprawność składni.
+
+| Task | Stan |
+|---|---|
+| 0 | **otwarty**, autor zrobi lokalnie |
+| 1–4, 6 | napisane według planu |
+| 5 | **wariant 5A wpisany warunkowo**, przed odczytem P2. Jeśli P2 wskaże 5B albo 5C, popraw według Tasku 5. Zawsze możesz wyłączyć `Ignore Light Level`. |
+| 7 | składnia ✔, brak `net.minecraft.client` ✔, brak `getNamespace/getPath` ✔. **Build i lista jara do zrobienia lokalnie.** |
+| 8, 9 | otwarte |
+
+Odstępstwo od planu: `canDespawn` jest `public`, nie `protected`. `srpwizmixins` shadowuje tę
+metodę na `EntityParasiteBase` jako `public`, więc SRP mogło ją rozszerzyć. Nadpisanie metody
+publicznej metodą `protected` się nie kompiluje, a rozszerzenie dostępu jest legalne zawsze.
+
+---
+
 **Cel:** sim wizard (i rzadziej sim battlemage) pojawia się sam na skażonym gruncie, od fazy SRP 2
 (battlemage od 4), domyślnie tylko w Overworldzie. Dzięki temu pył abominacji przestaje zależeć
 od tego, czy SRP akurat zasymiluje maga EBW.
@@ -537,13 +557,12 @@ bramce.
      * its parasites (spec section 8, decision 5): an assimilated wizard is a story beat, not filler.
      */
     @Override
-    protected boolean canDespawn() {
+    public boolean canDespawn() {
         return this.naturalSpawn || super.canDespawn();
     }
 ```
 
-Jeśli build zgłosi „attempting to assign weaker access privileges”, SRP rozszerzyło
-`canDespawn` do `public`. Zmień wtedy modyfikator na `public` (P3 z Tasku 0 to pokaże).
+`public`, a nie `protected`: patrz „Stan realizacji” na górze.
 
 - [ ] **Krok 3: NBT.** W `writeEntityToNBT` po `WizardTier`:
 
