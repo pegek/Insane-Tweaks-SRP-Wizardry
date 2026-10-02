@@ -1,5 +1,8 @@
 {
   "spell.ebreduxaddon.cleanse": "Cleanse",
   "spell.ebreduxaddon.cleanse.desc": "Purges every harmful effect from the target, and keeps purging it for a while. Aim at nothing to cleanse yourself.",
-  "effect.ebreduxaddon.cleansing": "Cleansing"
+  "effect.ebreduxaddon.cleansing": "Cleansing",
+  "spell.ebreduxaddon.spine_volley": "Spine Volley",
+  "spell.ebreduxaddon.spine_volley.desc": "Fires a fan of poisoned spines. Every fourth volley, the middle spine bursts into a lingering poison cloud.",
+  "entity.ebreduxaddon.spine": "Spine"
 }

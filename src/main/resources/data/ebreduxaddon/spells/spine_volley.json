@@ -1,0 +1,30 @@
+{
+  "type": "ebwizardry:attack",
+  "base_properties": {
+    "damage": 3.0,
+    "range": 20.0,
+    "effect_duration": 100,
+    "effect_strength": 0,
+    "spines": 5,
+    "spread_degrees": 8.0,
+    "puddle_radius": 3.0,
+    "puddle_duration": 60
+  },
+  "chargeup": 10,
+  "cooldown": 60,
+  "cost": 25,
+  "element": "ebwizardry:earth",
+  "enabled": {
+    "book": true,
+    "commands": true,
+    "dispensers": true,
+    "looting": true,
+    "npcs": true,
+    "scroll": true,
+    "trades": true,
+    "treasure": true,
+    "wands": true
+  },
+  "spell_action": "ebwizardry:point",
+  "tier": "ebwizardry:advanced"
+}

@@ -1,6 +1,7 @@
 package com.spege.ebreduxaddon;
 
 import com.spege.ebreduxaddon.feature.ModEffects;
+import com.spege.ebreduxaddon.feature.ModEntities;
 import com.spege.ebreduxaddon.feature.ModSpells;
 import com.spege.ebreduxaddon.feature.effect.CleansingEffect;
 import com.spege.ebreduxaddon.platform.Config;
@@ -28,6 +29,7 @@ public final class EbreduxAddon {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModSpells.register(modBus);
         ModEffects.register(modBus);
+        ModEntities.register(modBus);
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
         // Listy id z configu przeliczone od razu po starcie, zeby ewentualne ostrzezenie o literowce
