@@ -41,7 +41,14 @@ class DecayScheduleTest {
 
     @Test
     void cofnietyLicznikMilczy() {
-        // countTicks moze wrocic do zera, gdy grob zostanie postawiony na nowo.
+        // countTicks wraca do 0, gdy pozniejsza smierc scala sie z grobem (resetDeathTime) -
+        // to tez restartuje decay.
         assertFalse(DecaySchedule.shouldDecay(10L, START, INTERVAL));
+    }
+
+    @Test
+    void ujemnyStartLiczySieOdZera() {
+        assertTrue(DecaySchedule.shouldDecay(0L, -1L, 1_200L));
+        assertFalse(DecaySchedule.shouldDecay(1_199L, -1L, 1_200L));
     }
 }

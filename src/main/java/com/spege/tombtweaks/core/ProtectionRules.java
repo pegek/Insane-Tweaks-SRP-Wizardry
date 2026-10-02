@@ -29,10 +29,10 @@ public final class ProtectionRules {
         this.nbtPairs = nbtPairs;
     }
 
-    public static ProtectionRules of(List<String> items, List<String> prefixes,
-                                     List<String> enchantments, List<String> nbtStrings) {
+    public static ProtectionRules of(List<?> items, List<?> prefixes,
+                                     List<?> enchantments, List<?> nbtStrings) {
         Set<String> parsedItems = new HashSet<String>();
-        for (String raw : items) {
+        for (String raw : strings(items)) {
             String value = raw.trim();
             if (!value.isEmpty()) {
                 parsedItems.add(value);
@@ -40,7 +40,7 @@ public final class ProtectionRules {
         }
 
         List<String> parsedPrefixes = new ArrayList<String>();
-        for (String raw : prefixes) {
+        for (String raw : strings(prefixes)) {
             String value = raw.trim();
             if (!value.isEmpty()) {
                 parsedPrefixes.add(value);
@@ -48,7 +48,7 @@ public final class ProtectionRules {
         }
 
         Set<String> parsedEnchantments = new HashSet<String>();
-        for (String raw : enchantments) {
+        for (String raw : strings(enchantments)) {
             String value = raw.trim();
             if (!value.isEmpty()) {
                 parsedEnchantments.add(value);
@@ -56,7 +56,7 @@ public final class ProtectionRules {
         }
 
         List<String[]> parsedPairs = new ArrayList<String[]>();
-        for (String raw : nbtStrings) {
+        for (String raw : strings(nbtStrings)) {
             int equals = raw.indexOf('=');
             if (equals <= 0 || equals == raw.length() - 1) {
                 continue; // popsuty wpis jest ignorowany, nigdy fatalny
@@ -69,6 +69,20 @@ public final class ProtectionRules {
         }
 
         return new ProtectionRules(parsedItems, parsedPrefixes, parsedEnchantments, parsedPairs);
+    }
+
+    /** Same Stringi z listy configu; null, nie-Stringi i cala lista null sa pomijane. */
+    private static List<String> strings(List<?> raw) {
+        List<String> out = new ArrayList<String>();
+        if (raw == null) {
+            return out;
+        }
+        for (Object element : raw) {
+            if (element instanceof String) {
+                out.add((String) element);
+            }
+        }
+        return out;
     }
 
     public boolean isProtected(StackView stack) {

@@ -2,6 +2,8 @@ package com.spege.tombtweaks.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,6 +25,15 @@ class SlotSnapshotTest {
         SlotSnapshot snapshot = new SlotSnapshot(1000L);
         assertTrue(snapshot.isEmpty());
         assertEquals(0, snapshot.entries().size());
+    }
+
+    @Test
+    void konstruktorKopiujeListe() {
+        SlotSnapshot snapshot = new SlotSnapshot(1L, Collections.<SlotEntry>emptyList());
+
+        snapshot.add(0, new ItemKey("minecraft:bread", 0), 1);
+
+        assertEquals(1, snapshot.entries().size());
     }
 
     @Test

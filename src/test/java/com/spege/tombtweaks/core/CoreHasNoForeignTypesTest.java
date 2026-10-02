@@ -25,6 +25,18 @@ class CoreHasNoForeignTypesTest {
         "net/minecraft", "net/minecraftforge", "ovh/corail"
     };
 
+    /** Zakazane nazwy typow, ktore constant pool danej klasy zawiera jako zwykly tekst. */
+    private static List<String> foreignTypesIn(Path classFile) throws IOException {
+        String bytes = new String(Files.readAllBytes(classFile), StandardCharsets.ISO_8859_1);
+        List<String> hits = new ArrayList<String>();
+        for (String forbidden : FORBIDDEN) {
+            if (bytes.contains(forbidden)) {
+                hits.add(classFile.getFileName() + " -> " + forbidden);
+            }
+        }
+        return hits;
+    }
+
     @Test
     void coreClassesNameNoForeignTypes() throws IOException {
         Path root = Paths.get("build", "classes", "java", "main",
@@ -41,26 +53,23 @@ class CoreHasNoForeignTypesTest {
 
         List<String> offenders = new ArrayList<String>();
         for (Path file : classFiles) {
-            String bytes = new String(Files.readAllBytes(file), StandardCharsets.ISO_8859_1);
-            for (String forbidden : FORBIDDEN) {
-                if (bytes.contains(forbidden)) {
-                    offenders.add(file.getFileName() + " -> " + forbidden);
-                }
-            }
+            offenders.addAll(foreignTypesIn(file));
         }
 
         assertTrue(offenders.isEmpty(), "core nazywa typy obce: " + offenders);
     }
 
     @Test
-    void theScanWouldActuallyCatchSomething() {
-        // Kontrola samego testu: gdyby warunek byl zawsze prawdziwy, test nic nie pilnuje.
-        String pretendClassFile = "some bytes net/minecraft/world/item/ItemStack more bytes";
-        boolean caught = false;
-        for (String forbidden : FORBIDDEN) {
-            if (pretendClassFile.contains(forbidden)) caught = true;
-        }
-        assertTrue(caught);
-        assertFalse("com/spege/tombtweaks/core/ItemKey".contains("net/minecraft"));
+    void theScanWouldActuallyCatchSomething() throws IOException {
+        // Kontrola samego skanu: klasa moda (poza core) nazywa net/minecraftforge, wiec ten
+        // sam skan MUSI cos na niej znalezc. Gdyby skan byl zepsuty, test powyzej przechodzilby
+        // pusto.
+        Path modClass = Paths.get("build", "classes", "java", "main",
+                                  "com", "spege", "tombtweaks", "TombTweaks.class");
+        assertTrue(Files.exists(modClass),
+                   "brak " + modClass.toAbsolutePath() + " - kontrola skanu nie ma na czym dzialac");
+
+        assertFalse(foreignTypesIn(modClass).isEmpty(),
+                    "skan nie znalazl typow obcych w klasie, ktora ich na pewno uzywa");
     }
 }

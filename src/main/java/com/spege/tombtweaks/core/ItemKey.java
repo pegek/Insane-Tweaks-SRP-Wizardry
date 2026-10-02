@@ -7,6 +7,10 @@ package com.spege.tombtweaks.core;
  * a wytrzymalosc siedzi w NBT - stad para (nazwa, hash NBT) i stad tez to, ze dopasowanie
  * musi miec stopien awaryjny: serializacja stacka do grobu i z powrotem potrafi
  * znormalizowac tag, a wtedy hash sie zmienia. Patrz {@link SlotPlan}.
+ *
+ * <p>{@code nbtHash} musi byc stabilny miedzy restartami JVM, bo snapshoty sa zapisywane
+ * miedzy sesjami. {@code CompoundTag.hashCode()} jest oparty na zawartosci i stabilny;
+ * hash tozsamosciowy (identity) nie bylby.
  */
 public final class ItemKey {
 

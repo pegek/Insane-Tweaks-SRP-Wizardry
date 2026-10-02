@@ -19,9 +19,10 @@ public final class DecaySchedule {
         if (intervalTicks <= 0L) {
             return false;
         }
-        if (countTicks < startTicks) {
+        long start = Math.max(0L, startTicks);
+        if (countTicks < start) {
             return false;
         }
-        return (countTicks - startTicks) % intervalTicks == 0L;
+        return (countTicks - start) % intervalTicks == 0L;
     }
 }

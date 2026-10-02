@@ -22,9 +22,16 @@ public final class CooldownRules {
         this.millisById = millisById;
     }
 
-    public static CooldownRules parse(List<String> entries) {
+    public static CooldownRules parse(List<?> entries) {
         Map<String, Long> parsed = new HashMap<String, Long>();
-        for (String raw : entries) {
+        if (entries == null) {
+            return new CooldownRules(parsed);
+        }
+        for (Object element : entries) {
+            if (!(element instanceof String)) {
+                continue; // null i nie-String z configu: pomijane, nigdy fatalne
+            }
+            String raw = (String) element;
             int separator = raw.indexOf(';');
             if (separator <= 0 || separator == raw.length() - 1) {
                 continue;

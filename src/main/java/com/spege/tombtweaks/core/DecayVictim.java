@@ -22,7 +22,9 @@ public final class DecayVictim {
      * @param unprotected indeksy slotow ze stackiem niechronionym
      * @param guarded     indeksy slotow ze stackiem chronionym
      * @param neverDecay  czy ochrona jest zwolnieniem, czy tylko kolejnoscia
-     * @param random      bound -&gt; wartosc z przedzialu [0, bound)
+     * @param random      bound -&gt; wartosc z przedzialu [0, bound); wartosc spoza przedzialu
+     *                    jest zawijana, nie rzucana - to dziala w ticku serwera grobu,
+     *                    a wyjatek tam wywalilby serwer
      */
     public static int pick(List<Integer> unprotected, List<Integer> guarded,
                            boolean neverDecay, IntUnaryOperator random) {
@@ -33,6 +35,6 @@ public final class DecayVictim {
             }
             pool = guarded;
         }
-        return pool.get(random.applyAsInt(pool.size())).intValue();
+        return pool.get(Math.floorMod(random.applyAsInt(pool.size()), pool.size())).intValue();
     }
 }

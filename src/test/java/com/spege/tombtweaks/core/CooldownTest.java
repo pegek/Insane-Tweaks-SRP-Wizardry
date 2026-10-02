@@ -64,6 +64,17 @@ class CooldownTest {
     }
 
     @Test
+    void nullINieStringiWKonfiguracjiSaPomijane() {
+        CooldownRules rules = CooldownRules.parse(Arrays.asList(null, 7, "tombstone:book_of_scribe;5"));
+        assertEquals(5L * MINUTE, rules.millisFor("tombstone:book_of_scribe"));
+    }
+
+    @Test
+    void nullowaListaToPusteReguly() {
+        assertTrue(CooldownRules.parse(null).isEmpty());
+    }
+
+    @Test
     void pozostalyCzasMalejeIDochodziDoZera() {
         long lastUse = 1_000_000L;
         long cooldown = 10L * MINUTE;

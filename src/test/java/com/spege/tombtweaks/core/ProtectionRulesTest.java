@@ -109,6 +109,15 @@ class ProtectionRulesTest {
     }
 
     @Test
+    void nullINieStringiWKonfiguracjiSaPomijane() {
+        ProtectionRules rules = ProtectionRules.of(
+                Arrays.asList(null, 5, "minecraft:stick"), none(), none(), none());
+
+        assertTrue(rules.isProtected(new FakeStack("minecraft:stick")));
+        assertFalse(rules.isProtected(new FakeStack("minecraft:dirt")));
+    }
+
+    @Test
     void bialeZnakiWKonfiguracjiSaWybaczane() {
         ProtectionRules rules = ProtectionRules.of(
                 Arrays.asList("  minecraft:stick  ", "", "   "), none(), none(), none());

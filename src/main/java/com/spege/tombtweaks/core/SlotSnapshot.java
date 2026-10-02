@@ -28,7 +28,7 @@ public final class SlotSnapshot {
 
     public SlotSnapshot(long capturedAt, List<SlotEntry> entries) {
         this.capturedAt = capturedAt;
-        this.entries = entries;
+        this.entries = new ArrayList<SlotEntry>(entries);
     }
 
     public void add(int slot, ItemKey key, int count) {

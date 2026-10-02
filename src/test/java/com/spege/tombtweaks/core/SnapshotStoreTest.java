@@ -83,6 +83,41 @@ class SnapshotStoreTest {
     }
 
     @Test
+    void ujemnyLimitCzysciWszystkoBezWyjatku() {
+        SnapshotStore store = new SnapshotStore();
+        store.add(at(1_000L));
+        store.add(at(2_000L));
+
+        store.prune(100_000L, -1, Long.MAX_VALUE);
+
+        assertEquals(0, store.all().size());
+    }
+
+    @Test
+    void przepelnienieOdlegolosciNieWiazeSnapshotu() {
+        SnapshotStore store = new SnapshotStore();
+        store.add(at(Long.MAX_VALUE));
+
+        assertNull(store.claimNearest(-1L, TOLERANCE));
+    }
+
+    @Test
+    void remisWygrywaWczesniejDodany() {
+        SnapshotStore store = new SnapshotStore();
+        SlotSnapshot first = new SlotSnapshot(1_000L);
+        first.add(0, new ItemKey("minecraft:stone", 0), 1);
+        SlotSnapshot second = new SlotSnapshot(3_000L);
+        second.add(1, new ItemKey("minecraft:stone", 0), 1);
+        store.add(first);
+        store.add(second);
+
+        SlotSnapshot claimed = store.claimNearest(2_000L, TOLERANCE);
+
+        assertNotNull(claimed);
+        assertEquals(0, claimed.entries().get(0).slot());
+    }
+
+    @Test
     void pustyMagazynNieWybucha() {
         SnapshotStore store = new SnapshotStore();
         store.prune(100_000L, 3, 1_000L);

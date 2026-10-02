@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.function.IntUnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DecayVictimTest {
 
@@ -54,7 +53,15 @@ class DecayVictimTest {
         for (int i = 0; i < 3; i++) {
             final int fixed = i;
             int picked = DecayVictim.pick(unprotected, none(), true, bound -> fixed);
-            assertTrue(unprotected.contains(picked));
+            assertEquals(unprotected.get(fixed).intValue(), picked);
         }
+    }
+
+    @Test
+    void losowanieZPozaZakresuJestZawijane() {
+        List<Integer> pool = Arrays.asList(1, 2, 3);
+
+        assertEquals(2, DecayVictim.pick(pool, none(), true, bound -> 7));
+        assertEquals(3, DecayVictim.pick(pool, none(), true, bound -> -1));
     }
 }
