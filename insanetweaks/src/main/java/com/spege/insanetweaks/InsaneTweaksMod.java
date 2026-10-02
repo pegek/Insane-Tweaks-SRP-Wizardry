@@ -106,7 +106,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.16.2";
+    public static final String VERSION = "1.17.0";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -453,6 +453,11 @@ public class InsaneTweaksMod implements IGuiHandler {
         // bridge conversion being enabled, so this must not hide behind enableSrpEbWizardryBridge).
         if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard.spawning.enabled) {
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SimWizardFactionHandler());
+            // Natural spawn gate. Same switch as ModEntitySpawns, which puts the entries on the
+            // spawn lists in postInit - one without the other is either inert or ungated.
+            if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard.naturalSpawn.enabled) {
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SimWizardNaturalSpawnHandler());
+            }
         }
 
         // Zhonyas Hourglass snapshot handler: applies NBT snapshots from MixinParasiteEventEntity
@@ -667,10 +672,17 @@ public class InsaneTweaksMod implements IGuiHandler {
         }
     }
 
-    // postInit used to live here for the single purpose of calling EffectTwistPairs.install(),
-    // which reaches into Reskillable's native Effect Twist trait by reflection. That went to
-    // reskilltweaks with the rest of the integration on 2026-08-06, and with it the last reason
-    // for this mod to have a postInit phase at all.
+    // -------------------------------------------------------------------------
+    // postInit
+    // -------------------------------------------------------------------------
+
+    @Mod.EventHandler
+    public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
+        // The sim wizard spawn entries go on every allowed biome, so this has to wait until all
+        // mods have registered theirs. (postInit was removed on 2026-08-06 when its last user,
+        // the Reskillable Effect Twist hook, left for reskilltweaks.)
+        com.spege.insanetweaks.init.ModEntitySpawns.register();
+    }
 
     // -------------------------------------------------------------------------
     // serverStarting
