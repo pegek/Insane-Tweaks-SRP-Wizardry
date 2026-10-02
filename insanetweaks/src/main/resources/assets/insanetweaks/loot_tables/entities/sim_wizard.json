@@ -30,9 +30,9 @@
           "name": "ebwizardry:spectral_dust",
           "weight": 2,
           "functions": [
-            { "function": "set_data", "data": 8 },
             { "function": "set_count", "count": { "min": 1, "max": 1 } },
-            { "function": "looting_enchant", "count": { "min": 0, "max": 1 } }
+            { "function": "looting_enchant", "count": { "min": 0, "max": 1 } },
+            { "function": "insanetweaks:abomination_meta" }
           ]
         },
         { "type": "empty", "weight": 4 }
