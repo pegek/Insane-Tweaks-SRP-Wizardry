@@ -120,12 +120,6 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
     /** Attribute base values before any scaling, so re-scaling never compounds. Negative = unset. */
     private double pristineMaxHealth = -1.0D;
     private double pristineArmor = -1.0D;
-    /**
-     * Set by SimWizardNaturalSpawnHandler for a wizard placed by the natural spawner; false for
-     * assimilation, spawn eggs and commands. Natural ones must be able to despawn, or they pile up
-     * on every infested field the player has ever walked past.
-     */
-    private boolean naturalSpawn;
 
     /** Per-tier loot tables. Registered in {@code InsaneTweaksMod.preInit}. */
     public static final net.minecraft.util.ResourceLocation LOOT_NOVICE =
@@ -280,49 +274,6 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         this.applyScaling();
         this.selfHealCooldown = 50;
         return data;
-    }
-
-    // ------------------------------------------------------------------------
-    // Natural spawn
-    // ------------------------------------------------------------------------
-
-    public void markNaturalSpawn() {
-        this.naturalSpawn = true;
-    }
-
-    /**
-     * A natural spawn despawns like any monster. Everything else keeps whatever SRP decides for
-     * its parasites (spec section 8, decision 5): an assimilated wizard is a story beat, not filler.
-     *
-     * <p>public, not vanilla's protected: srpwizmixins shadows this method on EntityParasiteBase as
-     * public, so SRP may have widened it - and a protected override of a public method does not
-     * compile. Widening is always legal, so public builds either way.
-     */
-    @Override
-    public boolean canDespawn() {
-        return this.naturalSpawn || super.canDespawn();
-    }
-
-    /**
-     * Infested ground has to work by day too, and EntityMob refuses bright light twice
-     * (isValidLightLevel, and getBlockPathWeight = 0.5 - brightness via EntityCreature). With
-     * 'Ignore Light Level' on, keep what remains of the chain - peaceful check and the block below
-     * - and drop both light tests. Only spawners ever call this; AI pathing is untouched.
-     *
-     * <p>🚨 Variant 5A of the plan, written before the SRP bytecode was read (Task 0, P2). It is
-     * right only if EntityParasiteBase / EntityInfHuman inherit these three methods from EntityMob
-     * unchanged. If SRP overrides getCanSpawnHere with logic of its own, this bypasses it: switch
-     * 'Ignore Light Level' off and go back to the author.
-     */
-    @Override
-    public boolean getCanSpawnHere() {
-        if (!ModConfig.entities.assimilatedWizard.naturalSpawn.ignoreLightLevel) {
-            return super.getCanSpawnHere();
-        }
-        if (this.world.getDifficulty() == EnumDifficulty.PEACEFUL) {
-            return false;
-        }
-        return this.world.getBlockState(new net.minecraft.util.math.BlockPos(this).down()).canEntitySpawn(this);
     }
 
     // ------------------------------------------------------------------------
@@ -886,7 +837,6 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         super.writeEntityToNBT(compound);
         compound.setInteger("WizardSelfHealCooldown", this.selfHealCooldown);
         compound.setInteger("WizardTier", this.getTier().ordinal());
-        compound.setBoolean("WizardNaturalSpawn", this.naturalSpawn);
         // v3.3: the spell pool is intentionally NOT persisted anymore. ModConfig.spellPool is
         // the single source of truth, so config edits apply to already-saved wizards after a
         // world reload. The legacy "WizardSpells" NBT tag on old entities is simply ignored.
@@ -906,8 +856,6 @@ public class EntitySimWizard extends EntityInfHuman implements ISpellCaster {
         if (compound.hasKey("WizardTier")) {
             this.setTier(SimWizardTier.fromId(compound.getInteger("WizardTier")));
         }
-        // Absent on every wizard saved before 1.17.0 - all of them assimilated, so false is right.
-        this.naturalSpawn = compound.getBoolean("WizardNaturalSpawn");
 
         this.spells.clear();
         this.ensureSpellPool();
