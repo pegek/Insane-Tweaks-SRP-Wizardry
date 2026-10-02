@@ -1,0 +1,99 @@
+plugins {
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+}
+
+version = '0.1.0'
+group   = 'com.spege.ebreduxaddon'
+base { archivesName = 'ebreduxaddon-1.20.1' }
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods { ebreduxaddon { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods { ebreduxaddon { source sourceSets.main } }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    // Maven Modrinth serwuje dokladnie te pliki, ktore sa na stronie projektu. To repo odpowiada
+    // tylko za grupe maven.modrinth. NIE exclusiveContent: fg.deobf wystawia przemapowany artefakt
+    // (..._mapped_official_1.20.1) w TEJ SAMEJ grupie z wlasnego lokalnego repo, a exclusiveContent
+    // zabrania szukac tej grupy gdziekolwiek poza Modrinth - build pada na compileJava.
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+}
+
+dependencies {
+    // 47.3.19 jak w porcie TombTweaks: wariant (c) testow chodzi z Tombstone 9.1.4, ktory nizej
+    // nie wstaje. Redux sam wymaga tylko [47.1.25,). Trzymaj zgodne z versionRange w mods.toml.
+    minecraft 'net.minecraftforge:forge:1.20.1-47.3.19'
+
+    // Wizardry Redux 0.8.9. Deobf jest konieczny, bo referencje do MC w jego bajtkodzie sa SRG-owe.
+    // UWAGA: fg.deobf(files(...)) NIE dziala na ForgeGradle 6 - tylko koordynaty Mavena.
+    implementation fg.deobf('maven.modrinth:electroblobs-wizardry-redux:0.8.9-forge')
+
+    // Spore: w v0.1 CELOWO brak. Most do Spore to same identyfikatory z configu (spec, sekcja 5).
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
+
+// core nie moze znac Minecrafta: kompilujemy go osobno z pustym classpathem. Import czegokolwiek
+// z net.minecraft albo com.binaris w core wywali `check`.
+tasks.register('compileCoreIsolated', JavaCompile) {
+    source = fileTree('src/main/java') { include 'com/spege/ebreduxaddon/core/**' }
+    classpath = files()
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(17) }
+    destinationDirectory = layout.buildDirectory.dir('core-isolated')
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+tasks.named('check') { dependsOn 'compileCoreIsolated' }
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filesMatching('META-INF/mods.toml') { expand props }
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'   : 'EbreduxAddon',
+            'Specification-Vendor'  : 'spege',
+            'Specification-Version' : "${version}",
+            'Implementation-Title'  : project.name,
+            'Implementation-Version': "${version}",
+            'Implementation-Vendor' : 'spege'
+        ])
+    }
+}

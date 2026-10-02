@@ -1,0 +1,46 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+# GPL-3.0-only, bo addon dziedziczy po klasach Redux (WandItem, RaySpell), a Redux jest na
+# GPL-3.0-only (strona projektu na Modrinth; jego wlasny mods.toml mowi MIT, ale to szablon).
+license="GPL-3.0-only"
+issueTrackerURL="https://github.com/pegek/Insane-Tweaks-SRP-Wizardry/issues"
+
+[[mods]]
+modId="ebreduxaddon"
+version="${version}"
+displayName="EbreduxAddon"
+authors="spege"
+description='''
+Purification and parasite magic for Electroblob's Wizardry Redux: four spells, and a wand and armour that grow with their wearer. Optional support for Fungal Infection: Spore.
+'''
+
+[[dependencies.ebreduxaddon]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.3.19,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ebreduxaddon]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="BOTH"
+
+# Dziedziczymy po WandItem i RaySpell, a 0.x Redux nie obiecuje stabilnego API. Gorna granica
+# podnoszona recznie po sprawdzeniu nowej wersji.
+[[dependencies.ebreduxaddon]]
+    modId="ebwizardry"
+    mandatory=true
+    versionRange="[0.8.9,0.9)"
+    ordering="AFTER"
+    side="BOTH"
+
+# Opcjonalny: v0.1 czyta tylko jego identyfikatory (tagi, efekty, bloki), wiec dziala z kazda 2.x.
+[[dependencies.ebreduxaddon]]
+    modId="spore"
+    mandatory=false
+    versionRange="*"
+    ordering="AFTER"
+    side="BOTH"

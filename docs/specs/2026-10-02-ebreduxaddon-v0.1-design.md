@@ -140,7 +140,7 @@ w `ForgeRegistries` przy pierwszym użyciu. Nieznane id jest pomijane z jednym o
   - `minecraft:mycelium` → `minecraft:grass_block`;
   - roślinność grzybowa (`growths_*`, `blomfung`, `bloomfung2`, `growth_mycelium`, `fungal_roots`,
     `wall_growths*`, `mycelium_veins`, `fungal_stem*`, `hanging_fungal_stem`, `fungal_stem_sapling`,
-    `underwater_fungal_stem_top`) → `minecraft:air`.
+    `underwater_fungal_stem_top`) → `minecraft:air`, a podwodny szczyt łodygi → `minecraft:water`.
 
   Celowo **poza** mapą: `overgrown_spawner`, bloki laboratoriów, `hive_spawn`, `brain_remnants`,
   biomasa i membrany. To elementy struktur i rdzeni roju, a ich zniszczenie zaklęciem byłoby
