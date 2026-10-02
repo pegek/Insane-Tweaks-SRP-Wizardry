@@ -15,7 +15,7 @@ public class ManaCoreMod {
     public static final String MODID = "manacore";
     public static final String NAME = "Mana Core";
     /** MUST be kept in sync by hand with `version` in build.gradle - the manifest is not visible to @Mod. */
-    public static final String VERSION = "0.8.0";
+    public static final String VERSION = "0.9.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -46,6 +46,8 @@ public class ManaCoreMod {
                     new com.spege.manacore.compat.ebw.EbwSpellCostHandler());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                     new com.spege.manacore.compat.ebw.EbwManaSourceBridge());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.manacore.compat.ebw.StorageUpgradeBonus());
             LOGGER.info("[ManaCore] EBW bridge registered");
         } else {
             LOGGER.info("[ManaCore] EBW bridge NOT registered (mod present={}, enabled={})",

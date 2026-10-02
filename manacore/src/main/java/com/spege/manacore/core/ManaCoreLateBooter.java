@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 /**
- * Late-loading route for the EBW, TaB and Necromancer's Delight mixin configs.
+ * Late-loading route for the EBW, TaB, Necromancer's Delight and Ancient Spellcraft mixin configs.
  *
  * <p>Both {@code mixins.manacore.ebw.json} and {@code mixins.manacore.tab.json} target classes
  * belonging to optional mods (Electroblob's Wizardry and Trinkets and Baubles respectively), not
@@ -37,6 +37,7 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
     private static final String EBW_CONFIG = "mixins.manacore.ebw.json";
     private static final String TAB_CONFIG = "mixins.manacore.tab.json";
     private static final String ND_CONFIG = "mixins.manacore.nd.json";
+    private static final String ASC_CONFIG = "mixins.manacore.asc.json";
 
     /** Electroblob's Wizardry modid. */
     private static final String EBW_MODID = "ebwizardry";
@@ -44,6 +45,8 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
     private static final String TAB_MODID = "xat";
     /** Necromancer's Delight modid. */
     private static final String ND_MODID = "necromancersdelight";
+    /** Ancient Spellcraft modid. */
+    private static final String ASC_MODID = "ancientspellcraft";
 
     @Override
     public List<String> getMixinConfigs() {
@@ -51,6 +54,7 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
         configs.add(EBW_CONFIG);
         configs.add(TAB_CONFIG);
         configs.add(ND_CONFIG);
+        configs.add(ASC_CONFIG);
         return configs;
     }
 
@@ -69,6 +73,11 @@ public class ManaCoreLateBooter implements ILateMixinLoader {
         if (ND_CONFIG.equals(mixinConfig)) {
             boolean present = Loader.isModLoaded(ND_MODID);
             ManaCoreMod.LOGGER.info("[ManaCore] Necromancer's Delight mixins queue = {}", Boolean.valueOf(present));
+            return present;
+        }
+        if (ASC_CONFIG.equals(mixinConfig)) {
+            boolean present = Loader.isModLoaded(ASC_MODID);
+            ManaCoreMod.LOGGER.info("[ManaCore] Ancient Spellcraft mixins queue = {}", Boolean.valueOf(present));
             return present;
         }
         return false;

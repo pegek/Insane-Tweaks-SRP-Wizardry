@@ -1,6 +1,8 @@
 # manacore — checklista testów w grze (2026-08-21)
 
-Wersje do przetestowania: **`manacore-0.8.0`**, **`reskilltweaks-1.1.0`** (obie już w instancji).
+Wersje do przetestowania: **`manacore-0.9.0`**, **`reskilltweaks-1.1.0`** (obie już w instancji).
+
+Sekcje A–G dotyczą zmian z 0.8.0 i pozostają ważne na 0.9.0. Sekcje H–J to nowości 0.9.0.
 
 Poniższe weszło **bez ani jednego uruchomienia gry**. Kolejność jest od rzeczy, których awaria jest
 najtrudniejsza do zauważenia później, do tych, które widać od razu.
@@ -92,13 +94,50 @@ niepewna.
       przeliczenia DoT w formule są zawyżone dwukrotnie.
 - [ ] **K3. Wither.** `wither` (200 t, strength 1) — policz obrażenia przez 10 s.
 
+## H. Paliwo przy pustej puli (0.9.0)
+
+Do każdego testu: **świeżo wykuta różdżka** (ma 0 many w NBT — to był warunek exploitu) i pula
+opróżniona do poziomu poniżej kosztu czaru (`/mana set 2`).
+
+- [ ] **H1. 🚨 Exploit zamknięty.** Demonic Seal **zdjęty**, pusta pula → czar się **nie** rzuca.
+      Demonic Seal założony, pełna pula → czar płaci z puli, głód **nie** spada.
+- [ ] **H2. Pierścień dopłaca różnicę.** `ring_mana_lesser` naładowany w workbenchu, pula 2,
+      `magic_missile` (5) → czar wchodzi, pula kończy na ~0, pierścień traci **15** (3 × 5).
+- [ ] **H3. Za mało w pierścieniu = nic nie znika.** Pierścień z < 15 many i bez Seala → czar się
+      nie rzuca, a ładunek pierścienia **zostaje nietknięty**.
+- [ ] **H4. Demonic Seal dopłaca głodem.** Pula 2, `magic_missile` → czar wchodzi, głód spada o
+      **1 punkt** (3 many / 5 zaokrąglone w górę). Przy czarze ciągłym Seal **nie** pomaga.
+- [ ] **H5. Pierścień + Seal razem.** Pierścień z 5 many (= 1 many puli), pula 0, czar za 5 →
+      pierścień daje 1, głód 1 punkt (4 / 5 w górę).
+- [ ] **H6. Czar ciągły z pierścienia.** Kanałuj z pustą pulą i naładowanym pierścieniem → kanał
+      trwa, ładunek pierścienia spada skokowo.
+- [ ] **H7. Opisy.** Tooltipy trzech artefaktów many, Demonic Seala i `storage_upgrade` pokazują
+      nowe teksty, nie oryginalne.
+
+## I. `storage_upgrade` → `bonusMana` (0.9.0)
+
+- [ ] **I1.** Weź do ręki różdżkę z `storage_upgrade` I → maksimum +15, `current` od razu +4,5.
+- [ ] **I2.** Odłóż różdżkę → maksimum wraca, nadwyżka ponad nie jest zabierana.
+- [ ] **I3. 🚨 Pętla zablokowana.** Weź ją znowu w ciągu 60 s → maksimum +15, ale **bez** +4,5.
+- [ ] **I4.** Dwie różdżki z różnym poziomem w obu rękach → liczy się wyższy poziom, nie suma.
+- [ ] **I5.** Śmierć z różdżką w ręce → po respawnie bonus wraca sam.
+
+## J. Drobne poprawki (0.9.0)
+
+- [ ] **J1. Mana Reagent.** Zjedz kryształ (+5 do maksimum), potem Reagent → maksimum wraca do
+      poprzedniej wartości, dostajesz truciznę (T&B). Reagent przy progresji 0 nie schodzi niżej.
+- [ ] **J2. Leechlink.** Pijawka z Necromancer's Delight + Leechlink Amulet, pijawka na mobie z
+      różdżką (np. czarodziej EBW) → pula gracza rośnie, gdy trzymasz różdżkę.
+
 ## G. Log — jedno spojrzenie po starcie
 
 ```bash
 grep -E "manacore|ReskillTweaks|InvalidInjectionException|Scanned 0" "$HOME/curseforge/minecraft/Instances/DEv 1.2/logs/cleanmix.log" "$HOME/curseforge/minecraft/Instances/DEv 1.2/logs/latest.log"
 ```
 
-- [ ] **G1.** Trzy `APPLY` dla `manacore` (`MixinItemWand`, `MixinMagicStats`, `MixinManaGui`).
+- [ ] **G1.** `APPLY` dla `manacore`: `MixinItemWand`, `MixinItemArtefact`, `MixinMagicStats`,
+      `MixinManaGui`, `MixinASEventHandler`. `MixinEntityManaLeechMinion` pojawi się dopiero po
+      pierwszym przywołaniu pijawki (mixiny stosują się przy ładowaniu klasy docelowej).
 - [ ] **G2.** Zero `InvalidInjectionException` / `Scanned 0`.
 - [ ] **G3.** `[ReskillTweaks] ManaCore found` — most refleksyjny się rozwiązał.
 - [ ] **G4.** Zero `Ignoring malformed advancement bonus entry` — dopisane ręcznie wpisy ASC są
@@ -110,9 +149,9 @@ grep -E "manacore|ReskillTweaks|InvalidInjectionException|Scanned 0" "$HOME/curs
 
 - `ring_extraction` nie daje many do puli. Świadomie pominięty: jego bramka miesza sprawdzenia
   `DamageType.FORCE` i `EntityForceOrb` i nie dała się rzetelnie odczytać z bajtkodu.
-- `ring_mana_lesser`, `ring_mana_greater`, `charm_majestic_mana`, `clockwork_heart`,
-  `voltaic_vessel`, `charm_hunger_casting`, `amulet_recovery` — cała rodzina „paliwo, gdy różdżka
-  pusta". Czeka na decyzję projektową.
+- `clockwork_heart`, `voltaic_vessel`, `amulet_recovery` działają po staremu, z własnego magazynu
+  lub many zbroi. To nie jest paliwo do czarów i nie wymagało zmian.
+- Pijawka przyczepiona do **gracza** wysysa jego zamrożoną manę różdżki, nie pulę (tylko PvP).
 - `ebwizardry:font_of_mana` nie wpływa na manę. Tak jest w EBW — skraca cooldown, mimo nazwy.
 - Książki czarów (EBW i `spellarchives`) pokazują koszt **bazowy**, bez naszych mnożników.
 - Bonusy rasowe T&B nie wliczają się do maksimum.

@@ -92,6 +92,9 @@ public class EbwSpellCostHandler {
         double cost = SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers());
 
         if (!ManaAPI.hasMana(player, cost)) {
+            if (coverFromReserves(player, cost, event.getSpell().isContinuous)) {
+                return;
+            }
             event.setCanceled(true);
             if (!player.world.isRemote) {
                 player.sendStatusMessage(new TextComponentTranslation("manacore.message.not_enough"), true);
@@ -108,9 +111,24 @@ public class EbwSpellCostHandler {
         double cost = SpellCostResolver.resolveContinuousTick(
                 player, event.getSpell(), event.getModifiers(), event.getCount());
 
-        if (cost > 0.0D && !ManaAPI.hasMana(player, cost)) {
+        if (cost > 0.0D && !ManaAPI.hasMana(player, cost) && !coverFromReserves(player, cost, true)) {
             event.setCanceled(true);
         }
+    }
+
+    /**
+     * Lets {@link EbwFuel} pay the part of {@code cost} the pool is missing. Drains reserves on the
+     * server only; on the client it just predicts, so both sides of the gate agree.
+     *
+     * <p>A cost above the maximum is never covered: the pool could not hold the topped-up amount,
+     * so {@code Post} would fail to charge it and the cast would be free.
+     */
+    private boolean coverFromReserves(EntityPlayer player, double cost, boolean continuous) {
+        if (cost > ManaAPI.getMaxMana(player)) {
+            return false;
+        }
+        double deficit = cost - ManaAPI.getMana(player);
+        return EbwFuel.cover(player, deficit, continuous, !player.world.isRemote);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

@@ -8,7 +8,7 @@ repositories {
     mavenCentral()
 }
 
-version = '0.8.0'
+version = '0.9.0'
 group = 'com.spege.manacore'
 archivesBaseName = 'manacore'
 
@@ -30,6 +30,10 @@ dependencies {
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
     // TaB: the mixin names the MagicStats type in its signature, so the jar must be deobfuscated.
     implementation fg.deobf(files(rootProject.file('libs/Trinkets and Baubles-Forge-1.12.2-0.33.3.jar')))
+    // BaublesEX: the fuel artefacts' stores live in bauble slots, and only the Baubles API hands out
+    // the stacks themselves (EBW's integration returns Items). Referenced from one lazily loaded
+    // nested class only - see compat/BaublesAccess.
+    implementation fg.deobf(files(rootProject.file('libs/BaublesEX-1.12.2-2.3.6.jar')))
     // The `core` package contains no Minecraft types at all, so it can be tested on a plain JVM.
     testImplementation 'junit:junit:4.12'
 }

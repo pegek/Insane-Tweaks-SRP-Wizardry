@@ -268,6 +268,19 @@ public final class ManaAttributes {
         applyModifier(player, BONUS_MANA, id, name, amount, operation, false);
     }
 
+    /** Amount of one bonus-mana modifier currently installed, or 0 when it is absent. */
+    public static double getBonusModifierAmount(@Nullable EntityPlayer player, UUID id) {
+        if (player == null) {
+            return 0.0D;
+        }
+        IAttributeInstance instance = player.getEntityAttribute(BONUS_MANA);
+        if (instance == null) {
+            return 0.0D;
+        }
+        AttributeModifier existing = instance.getModifier(id);
+        return existing == null ? 0.0D : existing.getAmount();
+    }
+
     private static void applyModifier(@Nullable EntityPlayer player, IAttribute attribute, UUID id,
             String name, double amount, int operation, boolean saved) {
         if (player == null || Double.isNaN(amount) || Double.isInfinite(amount)) {

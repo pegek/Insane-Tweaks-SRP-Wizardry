@@ -4,3 +4,7 @@ manacore.message.not_enough=Not enough mana
 manacore.message.advancement_bonus=+%s max mana
 manacore.command.usage=/mana <get|set|add|setmax|addprog|addprogitem> [amount] [player]
 manacore.command.report=Mana: %s / %s
+manacore.desc.mana_reserve=Mana reserve. When your mana pool cannot pay for a spell, pays the missing difference from its own store: %s stored mana per 1 mana. Recharge it with magic crystals at the Arcane Workbench
+manacore.desc.charm_hunger_casting=When your mana pool cannot pay for a one-shot spell, hunger pays the missing difference: 1 hunger point per %s mana
+manacore.desc.disabled=Has no effect in this pack
+manacore.desc.storage_upgrade=While you hold the wand, raises your maximum mana by %s per level. Picking the wand up also restores %s%% of that bonus at once, at most once every %s seconds

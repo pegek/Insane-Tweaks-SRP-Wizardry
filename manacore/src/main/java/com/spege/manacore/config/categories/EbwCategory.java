@@ -77,4 +77,57 @@ public class EbwCategory {
             "itself applies whenever Necromancer's Delight is installed; this flag only picks where",
             "the mana goes. The amount is the mod's own: 50% of what the Mana Leech stole."})
     public boolean leechlinkToPool = true;
+
+    @Config.Comment({
+            "Whether reserve sources may pay the part of a spell's cost the mana pool cannot.",
+            "In EBW and Ancient Spellcraft these artefacts fired when the WAND ran dry; with the pool",
+            "paying for spells that wand mana is frozen, so they now fire when the POOL cannot pay.",
+            "Off restores nothing upstream - the original wand-based triggers stay disabled either",
+            "way, because they read mana that no longer moves. Read live, no restart."})
+    public boolean fuelEnabled = true;
+
+    @Config.Comment({
+            "Equipped artefacts that act as a mana reserve, by registry name. Each must store mana",
+            "(EBW's IManaStoringItem). They pay only the missing difference, drawing from the first",
+            "one listed before the next. Read live, no restart."})
+    public String[] fuelArtefacts = new String[] {
+            "ancientspellcraft:ring_mana_lesser",
+            "ancientspellcraft:ring_mana_greater",
+            "ancientspellcraft:charm_majestic_mana"
+    };
+
+    @Config.Comment({
+            "How much mana stored in a reserve artefact pays for 1 mana of a spell. Read live.",
+            "The artefacts keep their upstream capacities (500 / 1000 / 2500) - those are stored as",
+            "item damage, so shrinking them would leave charged stacks with negative mana. At 5, the",
+            "Majestic Mana Charm's 2500 is worth 500 pool mana."})
+    @Config.RangeDouble(min = 0.01D, max = 1000.0D)
+    public double fuelArtefactManaPerPoolMana = 5.0D;
+
+    @Config.Comment({
+            "How much mana one hunger point pays while the Demonic Seal (charm_hunger_casting) is",
+            "worn. Read live. 5 is EBW's own rate (cost / 5); a full hunger bar then covers 100 mana.",
+            "Hunger is drawn after reserve artefacts, rounded up, and never for continuous spells."})
+    @Config.RangeDouble(min = 0.01D, max = 1000.0D)
+    public double hungerManaPerPoint = 5.0D;
+
+    @Config.Comment({
+            "How much maximum mana each level of the storage upgrade adds while the wand is held.",
+            "Read live. Holding two wands counts the higher level, not the sum. 0 disables."})
+    @Config.RangeDouble(min = 0.0D, max = 10000.0D)
+    public double storageBonusPerLevel = 15.0D;
+
+    @Config.Comment({
+            "Fraction of a newly gained storage bonus that is added to current mana at once, so",
+            "picking the wand up is immediately useful rather than only raising an empty ceiling.",
+            "Read live. 0 disables the refill; the cap increase still applies."})
+    @Config.RangeDouble(min = 0.0D, max = 1.0D)
+    public double storageFillFraction = 0.3D;
+
+    @Config.Comment({
+            "Minimum seconds between two storage refills for one player. Read live.",
+            "Without it, putting the wand away and taking it out again would be free mana: the",
+            "overflow above the lowered cap is confiscated, but the refill would come back each time."})
+    @Config.RangeInt(min = 0, max = 86400)
+    public int storageFillCooldownSeconds = 60;
 }
