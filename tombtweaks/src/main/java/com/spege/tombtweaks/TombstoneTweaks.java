@@ -37,7 +37,7 @@ public class TombstoneTweaks {
 
     public static final String MODID = "tombtweaks";
     public static final String NAME = "Tombstone Tweaks";
-    public static final String VERSION = "1.8.1";
+    public static final String VERSION = "1.9.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -88,6 +88,12 @@ public class TombstoneTweaks {
             if (Loader.isModLoaded("ebwizardry")) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.wizardry.WandSoulbindAttacher());
                 LOGGER.info("[TombstoneTweaks] Wand soulbinding armed — wands can now spend a grave's soul.");
+
+                // Concentration cooling stowed wands. Reads its own config and Wizardry's
+                // wandsMustBeHeldToDecrementCooldown live, so it costs a handful of comparisons per
+                // player per scan when either says it should do nothing.
+                MinecraftForge.EVENT_BUS.register(new com.spege.tombtweaks.wizardry.ConcentrationCooldownHandler());
+                LOGGER.info("[TombstoneTweaks] Concentration now cools stowed wands.");
             }
 
             // Exact slot restore: the snapshot is taken on LivingDeathEvent, the layout is

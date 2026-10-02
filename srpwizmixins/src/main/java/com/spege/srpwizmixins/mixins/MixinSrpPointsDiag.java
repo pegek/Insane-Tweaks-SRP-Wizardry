@@ -43,8 +43,11 @@ public abstract class MixinSrpPointsDiag {
     @Shadow(remap = false)
     public abstract byte getEvolutionPhase(int dim);
 
+    // SRP 1.10.9 made addDim an instance method (it was {@code private static} up to
+    // 1.10.8), so the handler had to lose {@code static} with it - Mixin requires the
+    // handler's staticness to match the target method's.
     @Inject(method = "addDim(I)V", at = @At("HEAD"), remap = false)
-    private static void insanetweaks$logAddDim(int dim, CallbackInfo ci) {
+    private void insanetweaks$logAddDim(int dim, CallbackInfo ci) {
         if (!SrpWizMixinsConfig.srpCompat.debugLogging) {
             return;
         }

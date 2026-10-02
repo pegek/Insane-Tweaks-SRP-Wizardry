@@ -79,6 +79,33 @@ public class GearCategory {
         @Config.RequiresMcRestart
         public double sentientAttackDamage = 22.0D;
 
+        @Config.Name("Living Spellblade Mana Capacity")
+        @Config.Comment({
+                "The mana pool a Living Spellblade reaches once a storage upgrade has been socketed",
+                "into it - not the pool it starts with. Ancient Spellcraft's battlemage swords hold",
+                "NO mana at all until then, unlike this mod's wands; that has always been true of",
+                "this blade and this config does not change it. Further storage upgrades scale on",
+                "top of this value exactly as they do for a wand.",
+                "Deliberately below the Living Wand's: a spellblade is a hybrid and casting is its",
+                "second job, so it trades pool for a melee profile the wand does not have.",
+                "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",
+                "Read live - no restart needed. Default 2500." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int livingSpellbladeManaCapacity = 2500;
+
+        @Config.Name("Sentient Spellblade Mana Capacity")
+        @Config.Comment({
+                "The mana pool a Sentient Spellblade reaches once a storage upgrade has been",
+                "socketed into it - not the pool it starts with. See the Living Spellblade entry",
+                "above for why: this has always been true of Ancient Spellcraft's battlemage swords",
+                "and this config does not change it.",
+                "Deliberately below the Sentient Wand's, for the same reason as the Living Spellblade",
+                "above: casting is this weapon's second job.",
+                "Lowering it is SAFE - see the clamp note on Living Wand Mana Capacity.",
+                "Read live - no restart needed. Default 3000." })
+        @Config.RangeInt(min = 100, max = 100000)
+        public int sentientSpellbladeManaCapacity = 3000;
+
         @Config.Name("Out Of Mana Damage Multiplier")
         @Config.Comment({
                 "What a Spellblade's melee damage drops to when its wielder has no mana left. This is",
@@ -294,54 +321,45 @@ public class GearCategory {
 
         @Config.Name("Living Wand Mana Capacity")
         @Config.Comment({
-                "How much mana a Living Wand holds before storage upgrades. This is the wand's",
-                "long-standing capacity - it used to be a hardcoded setMaxDamage(4000) in the item's",
-                "constructor and is now just exposed here instead. Storage upgrades still multiply on",
-                "top of it exactly as they do for any wand.",
-                "Mana is stored as (capacity - damage) with nothing clamping the result, so setting",
-                "this BELOW what a wand in an existing world already holds drives its stored mana",
-                "negative - the wand then reads as never-empty, keeps its melee bonuses and refuses",
-                "every spell. Lower it only with that in mind.",
-                "Read live - no restart needed. Default 4000." })
+                "How much mana a Living Wand holds before storage upgrades. Storage upgrades still",
+                "multiply on top of it exactly as they do for any wand.",
+                "Lowered from 4000 to 3000 in 1.18.0, when the Abomination spells were re-priced",
+                "against EB Wizardry's own numbers instead of against a percentage of this pool.",
+                "This wand is the yardstick the new prices were calibrated on.",
+                "Lowering it is SAFE despite what the arithmetic suggests: mana is stored as",
+                "(capacity - damage), so a wand charged above a newly lowered ceiling computes to",
+                "negative mana - but BaseCustomWandItem.onUpdate clamps that to zero, so the wand",
+                "pins to empty and recharges normally rather than reading as never-empty and",
+                "refusing every spell. Do not remove that clamp.",
+                "Read live - no restart needed. Default 3000." })
         @Config.RangeInt(min = 100, max = 100000)
-        public int livingManaCapacity = 4000;
+        public int livingManaCapacity = 3000;
 
         @Config.Name("Sentient Wand Mana Capacity")
         @Config.Comment({
-                "How much mana a Sentient Wand holds before storage upgrades. This is the wand's",
-                "long-standing capacity - it used to be a hardcoded setMaxDamage(6500) in the item's",
-                "constructor and is now just exposed here instead. This is the endgame wand, the one",
-                "meant to afford Call of Demise without being emptied.",
-                "Mana is stored as (capacity - damage) with nothing clamping the result, so setting",
-                "this BELOW what a wand in an existing world already holds drives its stored mana",
-                "negative - the wand then reads as never-empty, keeps its melee bonuses and refuses",
-                "every spell. Lower it only with that in mind.",
-                "Read live - no restart needed. Default 6500." })
+                "How much mana a Sentient Wand holds before storage upgrades. This is the endgame",
+                "wand. Lowered from 6500 to 3500 in 1.18.0 alongside the spell re-pricing.",
+                "Its margin over a FULLY EVOLVED Living Wand is this number and nothing else: both",
+                "cap at the same 0.20 cost reduction (BaseCustomWandItem.calculateModifiers gives",
+                "Living 0.05 + 0.15 * progress, Sentient a flat 0.20), so capacity is the whole of",
+                "the endgame advantage - plus getting the full discount immediately instead of",
+                "earning it. Bring this too close to the Living Wand's and the wand stops meaning",
+                "anything.",
+                "Lowering it is SAFE: see the clamp note on Living Wand Mana Capacity above.",
+                "Read live - no restart needed. Default 3500." })
         @Config.RangeInt(min = 100, max = 100000)
-        public int sentientManaCapacity = 6500;
+        public int sentientManaCapacity = 3500;
 
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation I)")
+        @Config.Name("Foreign Focus Abomination Cost")
         @Config.Comment({
                 "Mana cost multiplier when an Abomination spell is cast from a focus that is NOT one",
-                "of ours and only qualifies through an applied Adaptation upgrade at level I.",
+                "of ours and only qualifies through an applied Adaptation upgrade. The upgrade is",
+                "capped at one level (AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL), so there is no",
+                "per-level ladder here any more - a foreign focus either qualifies or it doesn't.",
                 "1.0 means no surcharge, which is the shipped default; 2.0 doubles the cost.",
                 "Read live - no restart needed. Default 1.0." })
         @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel1 = 1.0D;
-
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation II)")
-        @Config.Comment({
-                "As above, for an applied Adaptation upgrade at level II.",
-                "Read live - no restart needed. Default 1.0." })
-        @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel2 = 1.0D;
-
-        @Config.Name("Foreign Focus Abomination Cost (Adaptation III)")
-        @Config.Comment({
-                "As above, for an applied Adaptation upgrade at level III.",
-                "Read live - no restart needed. Default 1.0." })
-        @Config.RangeDouble(min = 1.0D, max = 16.0D)
-        public double foreignFocusAbominationCostLevel3 = 1.0D;
+        public double foreignFocusAbominationCost = 1.0D;
     }
 
     // =====================================================================

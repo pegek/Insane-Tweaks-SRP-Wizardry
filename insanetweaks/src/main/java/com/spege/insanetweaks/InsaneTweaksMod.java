@@ -83,7 +83,7 @@ import java.util.List;
  */
 @Mod(modid = InsaneTweaksMod.MODID, name = InsaneTweaksMod.NAME, version = InsaneTweaksMod.VERSION,
         guiFactory = "com.spege.insanetweaks.client.gui.config.InsaneTweaksGuiFactory",
-        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;after:player_mana;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites;"
+        dependencies = "required-after:forge@[14.23.5.2860,);after:somanyenchantments;required-after:ebwizardry;required-after:spartanweaponry;required-after:ancientspellcraft;after:swparasites;required-after:srparasites@[" + InsaneTweaksMod.MIN_SRPARASITES + ",);"
         +
         "after:srpextra;after:baubles;after:potioncore;after:locks;"
         +
@@ -96,6 +96,18 @@ public class InsaneTweaksMod implements IGuiHandler {
      * Using the package name here silently disables every SRP-gated feature — always use this.
      */
     public static final String SRP_MODID = "srparasites";
+    /**
+     * Lowest SRParasites this mod can even be LOADED against, not merely the lowest it is tuned
+     * for. Content names ~45 SRP classes, several of them as a superclass ({@code EntityInfHuman})
+     * or in a verifier-visible position, so a jar older than this does not degrade — it fails to
+     * link. A player's crash on 2026-08-16 (SRP 1.9.21, insanetweaks 1.16.1) came out as
+     * {@code NoClassDefFoundError: …ai/misc/EntityAICircleGroup} from the middle of preInit,
+     * because {@code required-after:srparasites} carried no version bound. With the bound, Forge
+     * refuses the load up front and says which mod is at fault.
+     *
+     * Keep in sync with the SRParasites jar in {@code libs/}.
+     */
+    public static final String MIN_SRPARASITES = "1.10.7";
     public static final String NAME  = "Insane Tweaks";
     /**
      * 🚨 Trzymaj to zgodne z 'version' w insanetweaks/build.gradle. To jest wartosc, ktora
@@ -106,7 +118,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.16.2";
+    public static final String VERSION = "1.20.3";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -296,6 +308,19 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Never reuse/reorder network-stable IDs.
 
 
+        // Imbuement Altar rituals: the 3x3 structure-crafting system. Recipes are built once, here,
+        // because they capture the configured duration and resolve foreign items; the tick loop
+        // re-reads its own enable flag every tick, so the handler is registered unconditionally.
+        com.spege.insanetweaks.init.ModRituals.register();
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.RitualAltarHandler());
+
+        // Imbuement Altar: make EB's bedrock-hard altar minable, and gate reclaiming it as an item
+        // behind an artefact. Must run in init - AFTER EB's block registry event, and before any
+        // world exists. The handler is registered unconditionally: it early-returns on a block
+        // identity check, and its artefact list is read live so editing it needs no restart.
+        com.spege.insanetweaks.events.ImbuementAltarSalvageHandler.applyBlockProperties();
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImbuementAltarSalvageHandler());
+
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());
@@ -382,7 +407,6 @@ public class InsaneTweaksMod implements IGuiHandler {
             // it; arcaneSundering.enabled is read per hit, so it toggles without a restart.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneSunderingHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.WandEventHandler());
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneBridgeEventHandler());
             // 🚨 SpellbladeTooltipHandler is @SideOnly(Side.CLIENT) at CLASS level, so merely
             // instantiating it on a dedicated server makes Forge's SideTransformer throw
             // ("Attempted to load class ... for invalid side SERVER"). Same for ArmorTooltipHandler
@@ -408,6 +432,18 @@ public class InsaneTweaksMod implements IGuiHandler {
             if (event.getSide() == net.minecraftforge.fml.relauncher.Side.CLIENT) {
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SpellbladeSoundHandler());
             }
+        }
+
+        // Natural spawning for sim_wizard / sim_battlemage. Deliberately NOT inside the
+        // enableSrpEbWizardryBridge block above: that flag governs turning EB Wizardry wizards
+        // into ours, and a pack may reasonably want the population without the conversion.
+        // Biomes are resolved once, here, because the config field is RequiresMcRestart and a
+        // registry lookup per spawn attempt would be absurd.
+        if (com.spege.insanetweaks.config.ModConfig.entities.assimilatedWizard
+                .naturalSpawn.enableNaturalSpawn) {
+            com.spege.insanetweaks.events.SimWizardNaturalSpawnHandler.resolveBiomes();
+            MinecraftForge.EVENT_BUS.register(
+                    new com.spege.insanetweaks.events.SimWizardNaturalSpawnHandler());
         }
 
         // The advanced-property tooltip ("Ashen Legacy" and friends) is generic, so it must not sit
@@ -503,6 +539,10 @@ public class InsaneTweaksMod implements IGuiHandler {
             // Client half of the enchant quest-gate; the server-side veto is registered
             // unconditionally above. Both flags it reads are live, so no config gate here.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
+            // Tells the player that this artefact is what reclaims an Imbuement Altar. The ability is
+            // ours, so EB's own description says nothing about it. Class-level @SideOnly - must stay
+            // inside this client block.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArtefactSalvageTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {
@@ -848,25 +888,26 @@ public class InsaneTweaksMod implements IGuiHandler {
         boolean hasSrpExtra = Loader.isModLoaded("srpextra");
         boolean hasBaubles = Loader.isModLoaded("baubles");
         boolean hasPotionCore = Loader.isModLoaded("potioncore");
-        boolean hasPlayerMana = Loader.isModLoaded("player_mana");
         boolean hasReskillTweaks = Loader.isModLoaded("reskilltweaks");
         boolean isBaublesEx = hasBaubles && com.spege.insanetweaks.init.ModItems.isBaublesExPresent();
 
-        // Check srparasites version.
-        // SRParasites split its versioning after 1.10: the "old" branch stayed at 1.0.x.x
-        // while the maintained branch moved to 1.9.x.x and later 1.10.x.x.
-        // A naive compareTo("1.10") incorrectly classifies 1.9.x.x as "old" because
-        // 1.9 < 1.10 numerically.  We also accept any version whose major.minor is
-        // at least 1.9 as the new scheme.
+        // Check srparasites version against MIN_SRPARASITES.
+        //
+        // 🚨 The previous form of this test could never fire, and that is why the 2026-08-16
+        // crash arrived with no warning ahead of it:
+        //     current < "1.9" && current < "1.10"
+        // Maven orders 1.9 below 1.10, so the left side implies the right and the whole
+        // expression collapses to `current < 1.9` — 1.9.21 passed as supported and then died
+        // linking EntitySimWizard. One comparison against the real floor, nothing else.
+        //
+        // Note SRParasites' own scheme agrees with Maven ordering here (1.9.21 < 1.10.7), so
+        // DefaultArtifactVersion is the right comparator and needs no special-casing.
         boolean oldSrparasites = false;
-        ModContainer srparasitesMod = Loader.instance().getIndexedModList().get("srparasites");
+        ModContainer srparasitesMod = Loader.instance().getIndexedModList().get(SRP_MODID);
         if (srparasitesMod != null) {
             try {
                 DefaultArtifactVersion current = new DefaultArtifactVersion(srparasitesMod.getVersion());
-                DefaultArtifactVersion minNew  = new DefaultArtifactVersion("1.9");  // new versioning scheme start
-                DefaultArtifactVersion minOld  = new DefaultArtifactVersion("1.10"); // old scheme "full" threshold
-                // Accept if >= 1.9 (new branch) OR >= 1.10 (old branch threshold).
-                oldSrparasites = current.compareTo(minNew) < 0 && current.compareTo(minOld) < 0;
+                oldSrparasites = current.compareTo(new DefaultArtifactVersion(MIN_SRPARASITES)) < 0;
             } catch (Exception e) {
                 LOGGER.warn("[InsaneTweaks] Could not parse srparasites version: {}", srparasitesMod.getVersion());
             }
@@ -882,8 +923,11 @@ public class InsaneTweaksMod implements IGuiHandler {
             LOGGER.info("   -> Fallback recipes active.");
 
         if (oldSrparasites && srparasitesMod != null) {
-            LOGGER.warn("  [!] SRParasites v{} is below the supported range. Fallback recipe mode active.",
-                    srparasitesMod.getVersion());
+            // Unreachable while the @Mod dependency bound holds - Forge rejects the load before
+            // preInit. Kept as a second line of defence for anyone stripping the bound.
+            LOGGER.warn("  [!] SRParasites v{} is BELOW the minimum {}. This mod cannot run on it -"
+                    + " expect NoClassDefFoundError on SRP classes. Update SRParasites.",
+                    srparasitesMod.getVersion(), MIN_SRPARASITES);
         }
         
         LOGGER.info("  baubles             ... {} ({})",
@@ -893,9 +937,6 @@ public class InsaneTweaksMod implements IGuiHandler {
         LOGGER.info("  potioncore          ... {}", status(hasPotionCore));
         if (hasPotionCore)
             LOGGER.info("   -> If crashing: set 'Fix Saturation = false' in potioncore.cfg");
-        LOGGER.info("  player_mana         ... {}", status(hasPlayerMana));
-        if (hasPlayerMana)
-            LOGGER.info("   -> Wand evolution and spellblade mana checks use player_mana compat.");
         // Reskillable itself is no longer this mod's business — the whole integration lives in
         // reskilltweaks, which is what actually needs it. Reported by presence rather than by
         // TraitGate.isArmed(): reskilltweaks declares required-after:insanetweaks, so it arms the

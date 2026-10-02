@@ -13,7 +13,7 @@
   "tier": "advanced",
   "element": "abomination",
   "type": "utility",
-  "cost": 140,
+  "cost": 75,
   "chargeup": 30,
   "cooldown": 300,
   "base_properties": {}

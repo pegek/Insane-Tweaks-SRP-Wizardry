@@ -1,5 +1,8 @@
 package com.spege.tombtweaks.slots;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.spege.tombtweaks.TombstoneTweaks;
 import com.spege.tombtweaks.config.TombTweaksConfig;
 import com.spege.tombtweaks.slots.SlotSnapshot.Entry;
@@ -60,7 +63,9 @@ public class SlotRestoreHandler {
             return; // Old grave, world from before this feature, or the snapshot already expired.
         }
 
-        int restored = restore(player, grave, snapshot);
+        List<String> absent = new ArrayList<String>();
+        List<String> blocked = new ArrayList<String>();
+        int restored = restore(player, grave, snapshot, absent, blocked);
 
         if (restored > 0) {
             player.inventory.markDirty();
@@ -72,20 +77,44 @@ public class SlotRestoreHandler {
                     "[TombstoneTweaks] Slot restore: returned {} of {} remembered items to {} at {}.",
                     Integer.valueOf(restored), Integer.valueOf(snapshot.getEntries().size()),
                     player.getName(), event.getGravePos());
+            // A short count on its own reads like a loss. Name what did not come back, and why.
+            if (!absent.isEmpty()) {
+                TombstoneTweaks.LOGGER.info(
+                        "[TombstoneTweaks] Slot restore: {} remembered item(s) never reached the grave: {}."
+                                + " Another mod kept them through death, so nothing was lost"
+                                + " (Enigmatic Legacy's IKeptBauble rings go straight back to the player).",
+                        Integer.valueOf(absent.size()), String.join(", ", absent));
+            }
+            if (!blocked.isEmpty()) {
+                TombstoneTweaks.LOGGER.info(
+                        "[TombstoneTweaks] Slot restore: {} item(s) stayed in the grave because their"
+                                + " original slot was already occupied: {}. Tombstone's own distribution"
+                                + " places those.",
+                        Integer.valueOf(blocked.size()), String.join(", ", blocked));
+            }
         }
     }
 
-    private static int restore(EntityPlayer player, IItemHandler grave, SlotSnapshot snapshot) {
+    /**
+     * @param absent  filled with entries the grave never held — an item another mod kept through
+     *                death, not a loss.
+     * @param blocked filled with entries found in the grave whose original slot was taken, which
+     *                stay behind for Tombstone's own distribution.
+     */
+    private static int restore(EntityPlayer player, IItemHandler grave, SlotSnapshot snapshot,
+            List<String> absent, List<String> blocked) {
         boolean[] taken = new boolean[grave.getSlots()];
         int restored = 0;
 
         for (Entry entry : snapshot.getEntries()) {
             int graveSlot = findMatch(grave, taken, entry);
             if (graveSlot < 0) {
+                absent.add(describe(entry));
                 continue;
             }
             ItemStack candidate = grave.getStackInSlot(graveSlot);
             if (!canRestore(player, entry.slot, candidate)) {
+                blocked.add(describe(entry));
                 continue;
             }
 
@@ -109,6 +138,25 @@ public class SlotRestoreHandler {
             }
         }
         return restored;
+    }
+
+    /** Registry name plus the seat it was remembered in, e.g. {@code enigmaticlegacy:cursed_ring (bauble 3)}. */
+    private static String describe(Entry entry) {
+        return entry.item + " (" + describeSlot(entry.slot) + ")";
+    }
+
+    /** Human-readable form of {@link SlotSnapshot}'s encoded slot space. */
+    private static String describeSlot(int encodedSlot) {
+        if (encodedSlot >= SlotSnapshot.BAUBLE_BASE) {
+            return "bauble " + (encodedSlot - SlotSnapshot.BAUBLE_BASE);
+        }
+        if (encodedSlot == SlotSnapshot.OFFHAND_SLOT) {
+            return "offhand";
+        }
+        if (encodedSlot >= SlotSnapshot.ARMOR_BASE) {
+            return "armour " + (encodedSlot - SlotSnapshot.ARMOR_BASE);
+        }
+        return "inventory " + encodedSlot;
     }
 
     /** First grave slot still holding the item this entry remembers. */

@@ -177,6 +177,57 @@ public class SrpCompatCategory {
     public boolean addonParasitesRespectOrigins = false;
 
     @Config.Comment({
+            "Applies the rule above to the BASE mod's own parasites as well, not just add-ons.",
+            "Scape and Run: Parasites has two ways of spawning. Its own spawner asks 'is this near an",
+            "infestation source' before every spawn - that is what keeps outbreaks local. The other",
+            "way is the ordinary game spawner, which SRP feeds through the biome spawn lists, and that",
+            "path never asks the question at all. The base mod uses BOTH, so its parasites turn up far",
+            "from any outbreak just as add-on ones do.",
+            "With this ON the rule covers everything; with it OFF only add-ons are affected, which is",
+            "how this mod behaved before.",
+            "This is a deliberate change to how SRP plays, not a bug fix - the mod means the ordinary",
+            "spawner to be governed by evolution phase rather than by geography. See the phase option",
+            "below for the intended way to have both.",
+            "Only used when the option above is ON. No restart needed. Default OFF."
+    })
+    @Config.Name("Origin Gate Includes Base Mod")
+    public boolean originGateIncludesBaseMod = false;
+
+    @Config.Comment({
+            "The evolution phase at which parasites stop having to stay near infestation sources.",
+            "Below this phase an outbreak is a place: you can find it, avoid it, or burn it out, and",
+            "the rest of the world stays clear. At or above it the restriction lifts entirely and",
+            "parasites spawn wherever the phase allows - which is how the mod normally behaves, and",
+            "what makes a late-game collapse feel like one.",
+            "Set to -1 to keep the restriction on at every phase.",
+            "If the phase cannot be read for any reason the restriction stays ON, never off - a failed",
+            "lookup must not quietly open up the whole world.",
+            "Only used when 'Fix: Addon Parasites Respect Origins' is ON. No restart needed."
+    })
+    @Config.Name("Origin Gate Opens At Phase")
+    @Config.RangeInt(min = -1, max = 10)
+    public int originGateOpensAtPhase = 7;
+
+    @Config.Comment({
+            "Dimension IDs where the restriction above never applies, whatever the phase.",
+            "Some dimensions are meant to be infested end to end rather than dotted with outbreaks -",
+            "a ruined city overrun by parasites is the destination, not a place you keep clear. The",
+            "gate exists to stop the OVERWORLD being blanketed early; applying it to a dimension whose",
+            "whole point is the infestation empties it instead.",
+            "That failure is quiet and total, so it is worth spelling out: the gate permits spawning",
+            "only near an infestation source, so in a dimension with no anchors it permits nothing at",
+            "all - no matter how high the phase or how many evolution points are banked. Measured",
+            "2026-08-18 in this pack: dimension 111 sitting at phase 6 with nine million points and",
+            "not one parasite alive in it, because no anchor had ever been created there.",
+            "Listing a dimension here does not spawn anything by itself - it only stops this mod",
+            "refusing what SRP would otherwise allow.",
+            "Empty by default: dimension IDs are pack-specific and guessing them for someone else's",
+            "setup would be worse than doing nothing. No restart needed."
+    })
+    @Config.Name("Origin Gate Exempt Dimensions")
+    public int[] originGateExemptDimensions = new int[0];
+
+    @Config.Comment({
             "Stops item tooltips going missing in JEI/HEI because of the bestiary's screen-distortion",
             "effect.",
             "That effect looks for nearby parasites by walking the list of loaded entities, and JEI/HEI",
@@ -189,6 +240,24 @@ public class SrpCompatCategory {
     })
     @Config.Name("Fix: Distortion Tooltip Crash")
     public boolean fixDistortionTooltipCrash = false;
+
+    @Config.Comment({
+            "Gives every dimension its own meteor countdown, so the meteor actually arrives on time.",
+            "SRP counts down once for the whole server, but that countdown is advanced by every loaded",
+            "dimension at once - and whichever one happens to tick as it runs out is the dimension the",
+            "meteor is then judged against. Land on a blacklisted dimension and the attempt is thrown",
+            "away, and because the countdown is reset before that check, it costs the full wait again.",
+            "In a pack that keeps several dimensions loaded, most attempts are lost this way: measured",
+            "on a fresh world with four of them ticking, no meteor arrived in eleven minutes against a",
+            "configured wait of five.",
+            "With this ON each dimension waits its own 'Meteor Ticks' and is judged on its own terms.",
+            "Nothing else changes - the wait, the chance and the blacklist all mean exactly what they",
+            "did. Note that this makes meteors arrive as often as you configured them to, which in a",
+            "pack with several eligible dimensions may be more often than you had got used to.",
+            "Takes effect immediately, no restart. Default OFF."
+    })
+    @Config.Name("Meteor Timer Per Dimension")
+    public boolean meteorTimerPerDimension = false;
 
     @Config.Comment({
             "Decides where the parasite meteor lands, instead of dropping it on top of whoever is",
@@ -209,20 +278,40 @@ public class SrpCompatCategory {
     @Config.Comment({
             "How far away, in blocks, the meteor must land at the very least.",
             "SRP's own limit tops out at 229; this replaces it and is not capped by SRP's config.",
+            "Keep this and the spread below inside 'Meteor Projectile Range' unless you have read",
+            "what that option says - past it the meteor stops being a falling object.",
             "Only used when 'Meteor Placement Guard' is ON. No restart needed."
     })
     @Config.Name("Meteor Minimum Distance")
     @Config.RangeInt(min = 0, max = 8192)
-    public int meteorMinDistance = 250;
+    public int meteorMinDistance = 110;
 
     @Config.Comment({
             "How much further out than the minimum the meteor may land, chosen at random.",
-            "250 minimum with 350 spread means somewhere between 250 and 600 blocks away.",
+            "110 minimum with 60 spread means somewhere between 110 and 170 blocks away - far enough",
+            "to clear the 96-block protected radius below, close enough to stay in loaded terrain.",
             "Only used when 'Meteor Placement Guard' is ON. No restart needed."
     })
     @Config.Name("Meteor Distance Spread")
     @Config.RangeInt(min = 1, max = 8192)
-    public int meteorDistanceSpread = 350;
+    public int meteorDistanceSpread = 60;
+
+    @Config.Comment({
+            "How far the meteor may be aimed and still be flown there as a falling object.",
+            "Beyond this the impact is applied outright - crater and infestation anchor appear at",
+            "once, with no meteor entity involved.",
+            "This is not cosmetic. A meteor is an entity, and an entity in an unloaded chunk does not",
+            "tick: aim one past your render distance and it is saved to disk in mid-flight, then",
+            "resumes - and detonates - when you next walk into that chunk. Measured here: an impact",
+            "twelve blocks from the player, eleven minutes after the meteor was launched 400 blocks",
+            "away. The default is one render distance at 16 chunks, less the crater and a little room",
+            "for you to move while it falls.",
+            "Raise it only if you play at a larger render distance. 0 applies every impact directly.",
+            "Only used when 'Meteor Placement Guard' is ON. No restart needed."
+    })
+    @Config.Name("Meteor Projectile Range")
+    @Config.RangeInt(min = 0, max = 8192)
+    public int meteorProjectileRange = 176;
 
     @Config.Comment({
             "How wide a berth the meteor gives anything it is told to keep away from.",

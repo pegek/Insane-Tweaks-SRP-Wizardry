@@ -38,7 +38,7 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
     public BaseCustomWandItem(Tier tier, Element element, float basePotencyBonus, int defaultAdaptationLevel) {
         super(tier, element);
         this.basePotencyBonus = basePotencyBonus;
-        this.defaultAdaptationLevel = Math.max(0, Math.min(3, defaultAdaptationLevel));
+        this.defaultAdaptationLevel = Math.max(0, Math.min(AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL, defaultAdaptationLevel));
     }
 
     @Override
@@ -190,7 +190,8 @@ public class BaseCustomWandItem extends ItemWand implements ITweaksPropertyHolde
     }
 
     public int getArcaneAdaptationLevel(ItemStack stack) {
-        return Math.min(3, this.defaultAdaptationLevel + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
+        return Math.min(AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL,
+                this.defaultAdaptationLevel + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 
     /** Scaled here rather than at the call site so the tooltip and the effect cannot disagree. */

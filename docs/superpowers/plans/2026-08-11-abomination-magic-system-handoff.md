@@ -67,7 +67,7 @@ Autor wybrał **własny spawn w strefach skażenia**. Dopóki go nie ma, ekonomi
 zapasowej, która jest celowo gorsza od dropu.
 
 W tej samej sesji: tiery i siła (czy master faktycznie jest groźny), AI, oraz które zaklęcia rzucają
-— dziś **10 z 13 naszych zaklęć ma `npcs: false`** (14. był `test_projectile`, usunięty w 1.16.2), więc sim wizard nie używa własnego żywiołu.
+— dziś **10 z 13 naszych zaklęć ma `npcs: false`** (14. był `test_projectile`, usunięty w 1.20.3), więc sim wizard nie używa własnego żywiołu.
 Otwarcie tego mocno zmienia trudność i jest osobną decyzją projektową.
 
 ### D. `living_warlock_armour` — furtka już otwarta
@@ -156,7 +156,7 @@ końca.
 - **`mixins.insanetweaks.altarguard.json` ma `required: true`,** w odróżnieniu od `late.json`.
   To celowe: guard jest jedynym mixinem, którego ciche zniknięcie **samo w sobie jest crashem**.
   Zmiana w EBW ma być głośnym błędem z naszą nazwą, nie `ClassCastException` w cudzym kodzie.
-- ~~**Trzy tablice lootu sim wizardów zaszywają metadaną `8`.**~~ *Naprawione w 1.16.2:* zamiast
+- ~~**Trzy tablice lootu sim wizardów zaszywają metadaną `8`.**~~ *Naprawione w 1.20.3:* zamiast
   `set_data 8` jest funkcja `insanetweaks:abomination_meta` (`util/AbominationMetaLootFunction`),
   która czyta `ABOMINATION.ordinal()` tak jak receptury. 🚨 Musi być **ostatnią** funkcją wpisu:
   bez żywiołu zeruje stos, a późniejszy `set_count`/`looting_enchant` by go wskrzesił.

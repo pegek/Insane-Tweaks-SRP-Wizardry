@@ -3,6 +3,10 @@ package com.spege.tombtweaks.perks;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+import net.minecraft.entity.player.EntityPlayer;
+
 import com.spege.tombtweaks.config.TombTweaksConfig;
 import com.spege.tombtweaks.config.categories.TombstoneCategory.ReliefForTheDamnedConfig;
 
@@ -66,6 +70,19 @@ public class PerkReliefForTheDamned extends PerkTombTweaksBase {
         return TombTweaksConfig.tombstone.enableTombstoneTweaks
                 && cfg().enabled
                 && Loader.isModLoaded("enigmaticlegacy");
+    }
+
+    /**
+     * This perk is the one in the mod with two genuinely different reasons to be off, and telling
+     * them apart is the whole value of Tombstone 4.8.0's disabled info: a player without Enigmatic
+     * Legacy should not be sent to a config file that would not help them.
+     */
+    @Override
+    public ITextComponent getDisabledInfo(@Nullable EntityPlayer player) {
+        if (!Loader.isModLoaded("enigmaticlegacy")) {
+            return new TextComponentTranslation(getTranslationKey() + ".disabled_no_mod");
+        }
+        return super.getDisabledInfo(player);
     }
 
     @Override

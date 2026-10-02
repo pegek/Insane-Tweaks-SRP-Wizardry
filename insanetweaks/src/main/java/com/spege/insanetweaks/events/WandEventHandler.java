@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import electroblob.wizardry.event.SpellCastEvent;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
-import com.spege.insanetweaks.util.PlayerManaCompat;
+import com.spege.insanetweaks.util.SpellManaAccounting;
 
 @SuppressWarnings("null")
 public class WandEventHandler {
@@ -90,7 +90,7 @@ public class WandEventHandler {
     }
 
     private void handleManaConsumption(EntityPlayer player, SpellCastEvent event) {
-        double consumed = PlayerManaCompat.getConsumedMana(event);
+        double consumed = SpellManaAccounting.getConsumedMana(event);
         if (consumed <= 0.0D) return;
 
         ItemStack wandStack = ItemStack.EMPTY;

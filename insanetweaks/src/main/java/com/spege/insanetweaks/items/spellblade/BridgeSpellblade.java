@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.spege.insanetweaks.util.AdaptationUpgradeHelper;
-import com.spege.insanetweaks.util.PlayerManaCompat;
 import com.spege.insanetweaks.util.SoManyEnchantmentsCompat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.Entity;
@@ -66,6 +65,88 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
         this.bridgeModId = modId;
         this.setRegistryName(new ResourceLocation(modId, name));
         this.setUnlocalizedName(name);
+    }
+
+    /**
+     * Mana capacity, read from config at call time - once a storage upgrade has been socketed.
+     *
+     * <p>🚨 {@code ItemBattlemageSword.hasManaStorage(stack)} - true only once
+     * {@code WandHelper.getUpgradeLevel(stack, WizardryItems.storage_upgrade) > 0} - is Ancient
+     * Spellcraft's own design, not an accident: a battlemage sword carries no mana pool at all
+     * until the player sockets a storage upgrade into it, unlike this mod's wands. Both
+     * {@code LivingSpellblade} and {@code SentientSpellblade} ask that exact question themselves
+     * ({@code innateManaAvailable = hasManaStorage(stack) && !isManaEmpty(stack)}) to decide the
+     * {@code melee_upgrade} damage bonus, the out-of-mana penalty, and whether Runeword Fury runs.
+     * An earlier version of this override answered with a config-driven pool regardless of that
+     * gate, which made a fresh blade read as "has mana" for casting while {@code hasManaStorage}
+     * was still false - so it took the out-of-mana melee penalty and never ran Runeword Fury
+     * despite a full pool. Keep the gate: everything downstream of {@code hasManaStorage} depends
+     * on this method agreeing with it.
+     *
+     * <p>Once the gate is open, the base is resolved from config by registry name and scaled the
+     * same way {@link com.spege.insanetweaks.items.wand.BaseCustomWandItem#getMaxDamage(ItemStack)}
+     * scales the two wands, rather than reading the Java field default {@code setMaxDamage} used to
+     * set in the constructor.
+     *
+     * <p>We cannot set that base from config in the constructor for the identical reason
+     * {@code BaseCustomWandItem} documents: {@code ModItems} is a {@code @Mod.EventBusSubscriber},
+     * so its {@code <clinit>} can run before Forge's first {@code ConfigManager.sync}, and a
+     * {@code setMaxDamage(config)} there would silently capture the Java field default instead of
+     * the value in the file.
+     *
+     * <p>Scaling factor and rounding: Ancient Spellcraft hardcodes {@code 0.15f} per storage level
+     * and rounds ({@code + 0.5f} before truncating) in its own {@code getMaxDamage}. EBW's
+     * {@code Constants.STORAGE_INCREASE_PER_LEVEL} is a config-adjustable field, not a compile-time
+     * constant, but its shipped default - read out of {@code Settings}'s own initialiser in the EBW
+     * jar - is the identical {@code 0.15f}, and {@code BaseCustomWandItem} already scales the two
+     * wands by that constant. Using it here too, with the same {@code + 0.5F} rounding, keeps a
+     * Spellblade's storage-upgrade progression consistent with the rest of this mod's gear instead
+     * of splitting it onto AS's separately-configured number for one weapon pair alone.
+     */
+    @Override
+    public int getMaxDamage(ItemStack stack) {
+        if (!ItemBattlemageSword.hasManaStorage(stack)) {
+            return super.getMaxDamage(stack);
+        }
+        int base = this.getBaseManaCapacity();
+        if (base <= 0) {
+            return super.getMaxDamage(stack);
+        }
+        int storage = electroblob.wizardry.util.WandHelper.getUpgradeLevel(
+                stack, electroblob.wizardry.registry.WizardryItems.storage_upgrade);
+        return (int) (base * (1.0F + electroblob.wizardry.constants.Constants.STORAGE_INCREASE_PER_LEVEL * storage) + 0.5F);
+    }
+
+    /** Zero means "not one of ours" - fall back to whatever ItemBattlemageSword says. */
+    private int getBaseManaCapacity() {
+        ResourceLocation reg = this.getRegistryName();
+        if (reg != null) {
+            if ("living_spellblade".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.spellblades.livingSpellbladeManaCapacity;
+            }
+            if ("sentient_spellblade".equals(reg.getResourcePath())) {
+                return com.spege.insanetweaks.config.ModConfig.gear.spellblades.sentientSpellbladeManaCapacity;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Insurance against a config lowered under a blade that already has more mana spent than the
+     * new capacity allows. Mana is stored as {@code capacity - damage} with nothing clamping the
+     * result, so a blade charged above a newly lowered ceiling computes to negative mana - but
+     * {@code isManaEmpty} (an exact {@code == 0} check) does not recognise that as empty, so the
+     * blade would keep its melee bonuses and refuse every spell instead of just being empty.
+     * Mirrors {@code BaseCustomWandItem.onUpdate}, which carries the identical clamp for the two
+     * wands. Do not remove this.
+     */
+    @Override
+    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
+            boolean isSelected) {
+        super.onUpdate(stack, world, entity, itemSlot, isSelected);
+        if (this.getMana(stack) < 0) {
+            this.setMana(stack, 0);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -231,25 +312,6 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     @Override
-    public void onUpdate(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull Entity entity, int itemSlot,
-            boolean isSelected) {
-        super.onUpdate(stack, world, entity, itemSlot, isSelected);
-
-        if (world.isRemote || !(entity instanceof EntityPlayer) || !PlayerManaCompat.isAvailable()) {
-            return;
-        }
-
-        if (!stack.hasTagCompound()) {
-            stack.setTagCompound(new NBTTagCompound());
-        }
-
-        NBTTagCompound nbt = stack.getTagCompound();
-        if (nbt != null && PlayerManaCompat.hasUsableMana((EntityPlayer) entity)) {
-            nbt.setBoolean("mana_available", true);
-        }
-    }
-
-    @Override
     @Nonnull
     @SuppressWarnings("null")
     public SpellModifiers calculateModifiers(@Nonnull ItemStack stack, @Nonnull EntityPlayer player,
@@ -347,7 +409,7 @@ public abstract class BridgeSpellblade extends ItemBattlemageSword
     }
 
     public int getArcaneAdaptationLevel(ItemStack stack) {
-        return Math.min(3, this.getDefaultAdaptationLevel()
+        return Math.min(AdaptationUpgradeHelper.MAX_ADAPTATION_LEVEL, this.getDefaultAdaptationLevel()
                 + AdaptationUpgradeHelper.getAppliedAdaptationUpgradeLevel(stack));
     }
 

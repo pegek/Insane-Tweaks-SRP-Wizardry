@@ -1,0 +1,213 @@
+package com.spege.manacore.compat.ebw;
+
+import com.spege.manacore.api.ManaAPI;
+import com.spege.manacore.config.ManaCoreConfig;
+import com.spege.manacore.core.CostMath;
+
+import electroblob.wizardry.event.SpellCastEvent;
+import electroblob.wizardry.item.ItemWand;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+/**
+ * Bridges Electroblob's Wizardry spell casting into the player's unified mana pool.
+ *
+ * <p>🚨 {@code Pre} and {@code Tick} are gates ONLY - they must never subtract mana. EBW posts
+ * {@code Post} only after {@code Spell.cast()} returns {@code true}, so a spell that never
+ * actually fires (interrupted, out of range, vetoed by another mod's {@code Pre} listener) costs
+ * nothing. All spending happens in {@code Post} (and, for continuous spells, the refund and
+ * progression happen once in {@code Finish}). This is the central difference from the
+ * {@code player_mana} mod this project started from, which spent in {@code Pre}.
+ *
+ * <p>🚨 <b>{@code Post} fires once per cast, NOT once per tick of a channelled spell.</b> An
+ * earlier version of this file asserted the opposite and drove continuous upkeep from here, which
+ * made channelled spells very nearly free. {@code ItemWand.cast} IS called every tick while
+ * channelling, but the event it posts is gated on {@code castingTick == 0} ({@code 48: ifne 72} in
+ * EBW 4.3.19 bytecode). Continuous upkeep therefore lives in {@link EbwContinuousUpkeep}, charged
+ * from the {@code consumeMana} call site that {@code MixinItemWand} redirects - the only per-tick
+ * point that is still downstream of {@code Spell.cast()} returning {@code true}. This handler
+ * charges one-shot spells only.
+ *
+ * <p>Progression is granted once per cast for both spell kinds: in {@code Post} for one-shot
+ * spells and in {@code Finish} for continuous ones. Granting it per tick would add 10 permanent
+ * points for ten seconds of channelling at the default {@code progressionPerCast = 0.05}, against
+ * a default cap of 50.
+ *
+ * <p>🚨 <b>Every listener here runs at {@link EventPriority#LOWEST}, deliberately.</b> Other mods
+ * adjust a spell's cost by writing into the shared {@code SpellModifiers} from their own
+ * {@code SpellCastEvent.Pre} listener - Ancient Spellcraft does exactly that for its Crystal
+ * Pendant (-10%), Tranquil Crystal Orb (-15%), Crystal Ring (-7.5%) and the +25% rings. At the
+ * default priority the order between those listeners and this one is the order the mods happened
+ * to register in, so the affordability gate below could just as easily read the cost from before
+ * those adjustments. Running last means the number we gate on, and the number we charge, are the
+ * final ones.
+ *
+ * <p>The alternative - running FIRST, so a cancel happens before other listeners take effect -
+ * is worse and circular: Forge skips listeners with {@code receiveCanceled = false} once an event
+ * is cancelled, so cancelling early would suppress the very cost adjustment we needed to read to
+ * decide whether to cancel at all.
+ *
+ * <p>🚨 This handler only READS {@link electroblob.wizardry.util.SpellModifiers}, exactly like
+ * {@link SpellCostResolver} - see that class's javadoc for why writing our multiplier back into
+ * the modifiers would make EBW's own wand-capacity gate reject casts that the player's actual
+ * mana pool could easily afford.
+ *
+ * <p>🚨 <b>Known, deliberately unpatched gap: no {@code Finish} (and therefore no refund or
+ * progression) when {@code onSpellTick} cancels a channel.</b> {@code ItemWand.onUsingTick}
+ * bytecode (EBW 4.3.19):
+ * <pre>
+ * onUsingTick:
+ *   121: canCast(...)
+ *   124: ifeq 149
+ *   149..151: func_184597_cx()    &lt;- resetActiveHand, NOT stopActiveHand
+ * </pre>
+ * When our {@link #onSpellTick} handler cancels the event (the player's unified pool can't afford
+ * the next tick's upkeep), EBW's own {@code canCast} check inside {@code onUsingTick} takes the
+ * same branch it would if the *wand's* mana had run dry, and calls {@code resetActiveHand()} -
+ * which, unlike {@code stopActiveHand()}, never calls {@code onPlayerStoppedUsing}
+ * ({@code func_77615_a}, the method {@link com.spege.manacore.mixins.ebw.MixinItemWand}'s third
+ * redirect targets). No {@code onPlayerStoppedUsing} means no {@code SpellCastEvent.Finish}, so a
+ * player who runs out of mana mid-channel gets neither the capacity-based refund nor the
+ * once-per-cast progression for that cast.
+ *
+ * <p>This is intentionally left as-is, not a bug to chase: it is exactly how vanilla EBW behaves
+ * when a wand's own mana runs out mid-channel (the code path is identical - only which pool is
+ * checked differs), so this mod is consistent with the mechanic it's built on top of, not broken
+ * relative to it. If this is ever reported as "progression sometimes doesn't arrive for a
+ * continuous spell", this paragraph is the answer - it is not a regression to fix, and fixing it
+ * would mean diverging from upstream EBW's own out-of-mana behaviour.
+ */
+public class EbwSpellCostHandler {
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onSpellPre(SpellCastEvent.Pre event) {
+        if (!applies(event)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getCaster();
+        double cost = SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers());
+
+        if (!ManaAPI.hasMana(player, cost)) {
+            event.setCanceled(true);
+            if (!player.world.isRemote) {
+                player.sendStatusMessage(new TextComponentTranslation("manacore.message.not_enough"), true);
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onSpellTick(SpellCastEvent.Tick event) {
+        if (!applies(event)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getCaster();
+        double cost = SpellCostResolver.resolveContinuousTick(
+                player, event.getSpell(), event.getModifiers(), event.getCount());
+
+        if (cost > 0.0D && !ManaAPI.hasMana(player, cost)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onSpellPost(SpellCastEvent.Post event) {
+        if (!applies(event)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getCaster();
+        if (player.world.isRemote) {
+            return;
+        }
+
+        if (event.getSpell().isContinuous) {
+            // Nothing to do: this event only ever fires on the FIRST tick of a channel (see class
+            // javadoc), so upkeep is charged per tick by EbwContinuousUpkeep instead, and the
+            // refund and progression are granted once in Finish.
+            return;
+        }
+
+        double cost = SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers());
+        if (cost > 0.0D) {
+            ManaAPI.spend(player, cost);
+        }
+        applyRefund(player, cost);
+        ManaAPI.addCastProgression(player, ManaCoreConfig.pool.progressionPerCast);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onSpellFinish(SpellCastEvent.Finish event) {
+        if (!applies(event)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) event.getCaster();
+        if (player.world.isRemote || !event.getSpell().isContinuous) {
+            return;
+        }
+
+        // The refund basis must match what was actually deducted tick by tick in Post, not the
+        // raw resolved cost: Post spends CostMath.continuousSecondCost(resolve(...)) per second
+        // (ceiling-rounded), never the fractional resolve(...) value itself. Rebuilding the same
+        // per-second figure here keeps the refund consistent with the real spend.
+        double perSecondCost = CostMath.continuousSecondCost(
+                SpellCostResolver.resolve(player, event.getSpell(), event.getModifiers()));
+        double totalCost = perSecondCost * (event.getCount() / 20.0D);
+
+        applyRefund(player, totalCost);
+        ManaAPI.addCastProgression(player, ManaCoreConfig.pool.progressionPerCast);
+    }
+
+    /**
+     * Refunds a fraction of {@code cost} based on the casting wand's capacity surplus (the
+     * {@code storage} upgrade). Checks both hands - EBW allows casting from the off hand - and
+     * prefers the main hand when both happen to hold a wand.
+     */
+    private void applyRefund(EntityPlayer player, double cost) {
+        if (!ManaCoreConfig.ebw.refundEnabled || cost <= 0.0D) {
+            return;
+        }
+        ItemStack wandStack = wandStackOf(player);
+        if (wandStack.isEmpty()) {
+            return;
+        }
+
+        ItemWand wand = (ItemWand) wandStack.getItem();
+        double fraction = CostMath.refundFraction(
+                wand.getManaCapacity(wandStack),
+                ManaCoreConfig.ebw.refundBaselineCapacity,
+                ManaCoreConfig.ebw.refundCapacityStep,
+                ManaCoreConfig.ebw.refundFractionPerStep);
+        if (fraction <= 0.0D) {
+            return;
+        }
+
+        ManaAPI.add(player, cost * fraction);
+    }
+
+    /** Returns the wand stack casting the spell: main hand first, then off hand, else empty. */
+    private ItemStack wandStackOf(EntityPlayer player) {
+        ItemStack main = player.getHeldItemMainhand();
+        if (!main.isEmpty() && main.getItem() instanceof ItemWand) {
+            return main;
+        }
+        ItemStack off = player.getHeldItemOffhand();
+        if (!off.isEmpty() && off.getItem() instanceof ItemWand) {
+            return off;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private boolean applies(SpellCastEvent event) {
+        if (!ManaCoreConfig.ebw.enabled) {
+            return false;
+        }
+        if (event.getSource() != SpellCastEvent.Source.WAND) {
+            return false;
+        }
+        EntityLivingBase caster = event.getCaster();
+        return caster instanceof EntityPlayer;
+    }
+}

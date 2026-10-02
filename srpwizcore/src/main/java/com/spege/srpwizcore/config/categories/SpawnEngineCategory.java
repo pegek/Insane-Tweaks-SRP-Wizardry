@@ -3,8 +3,8 @@ package com.spege.srpwizcore.config.categories;
 import net.minecraftforge.common.config.Config;
 
 /**
- * SpawnEngine v1 — native per-dimension spawn control (reference:
- * {@code docs/superpowers/specs/2026-10-02-spawnengine-v1-reference.md}).
+ * SpawnEngine v1 — native per-dimension spawn control (spec:
+ * {@code docs/superpowers/specs/2026-07-27-spawnengine-v1-spec.md}).
  *
  * <p>Every value is read live: {@code mixins.srpwizcore.early.json} declares no
  * {@code IMixinConfigPlugin}, so {@code MixinWorldEntitySpawner} applies unconditionally and

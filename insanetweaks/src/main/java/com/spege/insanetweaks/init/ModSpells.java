@@ -70,7 +70,7 @@ public class ModSpells {
      * metadata - shifting it would turn existing books into different spells.
      */
     private static final java.util.Set<String> RETIRED = java.util.Collections.singleton(
-            "test_projectile"); // dev-only fireball, every source flag off; removed in 1.16.2
+            "test_projectile"); // dev-only fireball, every source flag off; removed in 1.20.3
 
     @SubscribeEvent
     public static void onMissingSpells(RegistryEvent.MissingMappings<Spell> event) {

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * SpawnEngine E1 + E4 (reference: {@code docs/superpowers/specs/2026-10-02-spawnengine-v1-reference.md}).
+ * SpawnEngine E1 + E4 (spec: {@code docs/superpowers/specs/2026-07-27-spawnengine-v1-spec.md}).
  *
  * <p><b>HEAD</b>: in engine dimensions the cap decision is ours and runs before vanilla's own
  * comparison — which in dim 150 is bypassed by an unidentified mechanism (measured 2026-07-21:

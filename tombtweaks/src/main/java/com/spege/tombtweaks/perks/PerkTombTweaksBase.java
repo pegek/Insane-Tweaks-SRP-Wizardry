@@ -4,6 +4,8 @@ import javax.annotation.Nullable;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
 import ovh.corail.tombstone.api.capability.Perk;
 
 /**
@@ -65,6 +67,19 @@ public abstract class PerkTombTweaksBase extends Perk {
     @Override
     public boolean isDisabled(@Nullable EntityPlayer player) {
         return !configEnabled() || configMaxLevel() <= 0;
+    }
+
+    /**
+     * Why this perk is greyed out. Tombstone 4.8.0 draws disabled perks rather than hiding them,
+     * so the question is now asked and deserves a real answer.
+     *
+     * <p>Follows the idiom of {@code PerkJailer}, the one native perk with a specific reason: a
+     * per-perk lang key built off the translation key, rather than the base class's generic
+     * {@code tombstone.perk.disabled}. On Tombstone 4.7.x nothing calls this and it costs nothing.
+     */
+    @Override
+    public ITextComponent getDisabledInfo(@Nullable EntityPlayer player) {
+        return new TextComponentTranslation(getTranslationKey() + ".disabled");
     }
 
     /** Formats a percentage without a trailing ".0", e.g. "6" and "7.5". */

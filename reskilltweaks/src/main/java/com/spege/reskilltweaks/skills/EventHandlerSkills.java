@@ -645,14 +645,25 @@ public class EventHandlerSkills {
 
             if (player.ticksExisted % 20 == 0) {
                 if (currentIdle >= 20 && TraitHandle.MEDITATION.has(player)) {
-                    for (ItemStack stack : player.getArmorInventoryList()) {
-                        if (!stack.isEmpty() && stack.getItem() instanceof ItemWizardArmour) {
-                            ((IManaStoringItem) stack.getItem()).rechargeMana(stack, 2);
+                    double amount = com.spege.reskilltweaks.config.ReskillTweaksConfig
+                            .traits.meditationManaPerSecond;
+
+                    // With ManaCore installed, item mana is a number nothing spends any more -
+                    // spells are paid from the player's pool - so topping up armour and the
+                    // off-hand would leave this trait doing visibly nothing. Fall back to the
+                    // original behaviour only when the bridge reports it could not deliver, so
+                    // this mod keeps working on its own exactly as before.
+                    if (!com.spege.reskilltweaks.util.ManaCoreBridge.addMana(player, amount)) {
+                        int itemAmount = (int) Math.round(amount);
+                        for (ItemStack stack : player.getArmorInventoryList()) {
+                            if (!stack.isEmpty() && stack.getItem() instanceof ItemWizardArmour) {
+                                ((IManaStoringItem) stack.getItem()).rechargeMana(stack, itemAmount);
+                            }
                         }
-                    }
-                    ItemStack offhand = player.getHeldItemOffhand();
-                    if (!offhand.isEmpty() && offhand.getItem() instanceof IManaStoringItem) {
-                        ((IManaStoringItem) offhand.getItem()).rechargeMana(offhand, 2);
+                        ItemStack offhand = player.getHeldItemOffhand();
+                        if (!offhand.isEmpty() && offhand.getItem() instanceof IManaStoringItem) {
+                            ((IManaStoringItem) offhand.getItem()).rechargeMana(offhand, itemAmount);
+                        }
                     }
                 }
             }

@@ -70,6 +70,25 @@ import com.spege.srpwizmixins.config.SrpWizMixinsConfig;
  *
  * <p>Gated on {@code srpCompat.fixMeteorTriggerPersistence}; with the flag off the original static
  * is written and the save file is byte-identical to unmodified SRP.
+ *
+ * <h2>Already fixed upstream in SRP 1.10.8</h2>
+ *
+ * <p>1.10.8 writes the right variable:
+ *
+ * <pre>
+ * 1.10.7:  ldc "srpmeteor"; getstatic SRPWorldEntitySpawner.triggerSPAWNING:Z
+ * 1.10.8:  ldc "srpmeteor"; getfield  this.dimMeteor:Z
+ * </pre>
+ *
+ * <p>Worth knowing that its changelog does not mention this at all - the fix was found by
+ * disassembling the shipped jar, not by reading release notes.
+ *
+ * <p>The {@code GETSTATIC} this redirect is anchored to therefore no longer exists there, so the
+ * injector is {@code require = 0}: it patches 1.10.7 and quietly finds nothing on 1.10.8, rather
+ * than aborting start-up on a version that has already fixed the bug for us. Nothing is lost by
+ * that - on 1.10.8 the redirect would only have written the value SRP now writes by itself.
+ *
+ * <p>This mixin can be deleted outright once 1.10.7 is no longer supported.
  */
 @Mixin(value = SRPWorldData.class, remap = false)
 public abstract class MixinSrpMeteorTriggerPersist {
@@ -83,6 +102,7 @@ public abstract class MixinSrpMeteorTriggerPersist {
                     target = "Lcom/dhanantry/scapeandrunparasites/world/SRPWorldEntitySpawner;"
                             + "triggerSPAWNING:Z",
                     opcode = Opcodes.GETSTATIC),
+            require = 0,
             remap = false)
     private boolean insanetweaks$saveOwnTriggerFlag() {
         if (!SrpWizMixinsConfig.srpCompat.fixMeteorTriggerPersistence) {

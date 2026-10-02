@@ -37,6 +37,21 @@ public class TombstoneCategory {
     @Config.RequiresMcRestart
     public boolean fixMissingParticleSprites = true;
 
+    @Config.Comment({
+            "Stops Tombstone from overwriting your Video Settings GUI Scale when you close one of",
+            "its own screens (Knowledge of Death, Compendium).",
+            "Tombstone 4.8.0 enlarges the GUI scale while those screens are open and puts your value",
+            "back on close - but the resize call it makes right after restoring immediately re-runs",
+            "the enlarging code on the closing screen, so your setting is overwritten instead.",
+            "This is a workaround for a bug reported upstream, not a feature. It disarms itself on",
+            "any version where that call is gone, so it is safe to leave on across updates - but",
+            "delete it from your config worries entirely once a fixed Tombstone ships.",
+            "Turning Tombstone's own scaleGuiscreens option off avoids the bug too, at the cost of",
+            "the larger screens. Client side, read live."
+    })
+    @Config.Name("Fix Gui Scale Reset")
+    public boolean fixGuiScaleReset = true;
+
     @Config.Comment("Removes the vanilla Tombstone recipe to craft an Enchanted Grave Key using an Ender Pearl.")
     @Config.Name("Disable Enchant Key Recipe")
     @Config.RequiresMcRestart
@@ -189,6 +204,17 @@ public class TombstoneCategory {
             "Needs Electroblob's Wizardry for the wand, and whichever mod owns the upgrade named",
             "below. Without them the whole section is inert."})
     public WandSoulbindingConfig wandSoulbinding = new WandSoulbindingConfig();
+
+    @Config.Name("concentrationcooldown")
+    @Config.Comment({"Lets the Concentration perk cool down wands in your main inventory that you",
+            "are not currently holding. Wands in a Baubles slot or inside a backpack mod's",
+            "container are not covered.",
+            "Only does anything when Electroblob's Wizardry is set to stop cooldowns on stowed",
+            "wands (its own wandsMustBeHeldToDecrementCooldown option). With that off, cooldowns",
+            "already run everywhere and there is nothing for the perk to restore.",
+            "A wand in your off hand counts as held by Wizardry's own rule, so it already cools at",
+            "full rate and this never touches it."})
+    public ConcentrationCooldownConfig concentrationCooldown = new ConcentrationCooldownConfig();
 
     @Config.Name("firstkillrewards")
     @Config.Comment({"A one-off knowledge reward the first time a player kills a named enemy.",
@@ -515,6 +541,40 @@ public class TombstoneCategory {
         @Config.Name("Debug Logging")
         @Config.Comment("Log every accepted binding and every refusal, with the reason.")
         public boolean debugLogging = false;
+    }
+
+    /**
+     * Concentration's reach into Electroblob's Wizardry.
+     *
+     * <p>The perk's own description promises two things — shorter casting and immunity to
+     * interruption. Wizardry has no interruption at all (verified: nothing in the mod calls
+     * {@code stopActiveHand} or {@code resetActiveHand}), and its casting time is a per-spell
+     * balance value we deliberately leave alone. What is left, and what this section governs, is an
+     * axis Wizardry itself does not offer: whether a stowed wand cools down.
+     */
+    public static class ConcentrationCooldownConfig {
+
+        @Config.Name("Enabled")
+        @Config.Comment("Let Concentration cool stowed wands. Read live - no restart needed.")
+        public boolean enabled = true;
+
+        @Config.Name("Percent Per Level")
+        @Config.RangeInt(min = 0, max = 100)
+        @Config.Comment({"Share of the normal cooldown rate each Concentration level gives back to a",
+                "wand in your main inventory. Concentration caps at 2 levels, not the 5 most",
+                "Tombstone perks allow, so the default 10 means a stowed wand cools at one fifth of",
+                "the speed it would in your hand. Raise it to 25 if you want a fully levelled perk",
+                "to reach half speed.",
+                "0 switches the effect off without disabling the feature."})
+        public int percentPerLevel = 10;
+
+        @Config.Name("Scan Interval Ticks")
+        @Config.RangeInt(min = 1, max = 100)
+        @Config.Comment({"How often the inventory is walked, in ticks. Purely a cost dial: the rate",
+                "above is preserved whatever this is set to, because the fractional remainder is",
+                "carried between scans rather than rounded away.",
+                "Raise it on a busy server, lower it if you want cooldowns to move more smoothly."})
+        public int scanIntervalTicks = 10;
     }
 
     // ========================================================================

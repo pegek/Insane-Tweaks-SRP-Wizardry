@@ -1,6 +1,6 @@
 # Insane Tweaks — SRP & Wizardry
 
-Gradle multi-project repo containing **six** Minecraft **1.12.2** Forge mods. They share a source tree and a build, but ship separately.
+Gradle multi-project repo containing **seven** Minecraft **1.12.2** Forge mods. They share a source tree and a build, but ship separately.
 
 | Module | Modid | Where it ships | What it is |
 |---|---|---|---|
@@ -10,8 +10,9 @@ Gradle multi-project repo containing **six** Minecraft **1.12.2** Forge mods. Th
 | `srpwizcore/` | `srpwizcore` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/srp-wiz-core) | Pack glue: concurrency fixes for threaded entity ticking and chunk generation, OpenTerrainGenerator and FutureMC worldgen crash guards, per-dimension Ice & Fire worldgen control, a per-dimension spawn engine, performance guards for Doomlike Dungeons / CQR / Raids / Defiled Lands / Enigmatic Legacy, a CQR × Spartan Weaponry integration, and the dormant-waystone travel system. |
 | `enchanteraser/` | `enchanteraser` | — | Makes a configured list of enchantments unobtainable **without unregistering them**, so gear that already carries one keeps working instead of crashing. Closes the enchanting table, `enchant_with_levels` and `enchant_randomly` loot, fishing treasure, librarian trades, the anvil, and Infernal Mobs elite drops; optionally hides the books from JEI/HEI and the creative tabs, and marks any surviving copy in the tooltip. Mixin-only, one config list, not pack-specific. |
 | `reskilltweaks/` | `reskilltweaks` | — | The Reskillable integration: 20 custom traits across all eight skill trees, two rewritten native trait descriptions, a tuned `reskillable.cfg` deployed with a backup, and a middle-click trait refund. Split out of `insanetweaks` in 1.13.0 so the content mod boots without Reskillable. Depends on `insanetweaks`. |
+| `manacore/` | `manacore` | — | A unified player mana pool with bridges to Electroblob's Wizardry and Trinkets and Baubles: EBW wands and mana artefacts and other mods' mana-regeneration potions feed the same pool. No compile dependency in either direction; `reskilltweaks` finds it at runtime by reflection. |
 
-`tombtweaks`, `srpwizmixins`, `srpwizcore` and `enchanteraser` never depend on the content mod and ship alone. Two compile edges exist, both `compileOnly` and both pointing *towards* an extracted mod's API, never back: `insanetweaks → srpwizmixins` (the Sanctuary hands it a `ProtectedAreaProvider` so meteors miss protected areas) and `reskilltweaks → insanetweaks` (an add-on that requires it at runtime).
+`tombtweaks`, `srpwizmixins`, `srpwizcore`, `enchanteraser` and `manacore` never depend on the content mod and ship alone. Two compile edges exist, both `compileOnly` and both pointing *towards* an extracted mod's API, never back: `insanetweaks → srpwizmixins` (the Sanctuary hands it a `ProtectedAreaProvider` so meteors miss protected areas) and `reskilltweaks → insanetweaks` (an add-on that requires it at runtime).
 
 > **Note on `tombtweaks` and the two custom perks.** They are still registered under the `insanetweaks:` namespace on purpose — Corail Tombstone persists a player's perk levels by numeric registry id, and that id map lives in `level.dat` keyed by registry name. Renaming them would silently wipe every player's invested levels. Forge logs a non-matching-prefix warning for this; it is expected.
 
@@ -20,7 +21,7 @@ Gradle multi-project repo containing **six** Minecraft **1.12.2** Forge mods. Th
 Requires **JDK 8** and ForgeGradle 3 (targets Forge `1.12.2-14.23.5.2860`).
 
 ```sh
-./gradlew build                 # all six jars
+./gradlew build                 # all seven jars
 ./gradlew :insanetweaks:build   # just one
 ./gradlew runClient             # dev client (working dir ./run)
 ```

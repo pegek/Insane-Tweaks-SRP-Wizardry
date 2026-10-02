@@ -54,6 +54,15 @@ public class TraitsCategory {
     public TraitConfig meditation = new TraitConfig(6, "agility",
             new String[] { "reskillable:agility|18", "reskillable:magic|10" });
 
+    @Config.Name("Meditation Mana Per Second")
+    @Config.Comment({
+            "Mana Meditation restores each second while the player stands still. Works live, no restart.",
+            "Where it goes depends on what is installed: with ManaCore present it fills the player's",
+            "mana pool, which is what spells are actually paid from. Without it, the mana goes into",
+            "worn wizard armour and an off-hand mana-storing item, as it always did."})
+    @Config.RangeDouble(min = 0.0D, max = 1000.0D)
+    public double meditationManaPerSecond = 2.0D;
+
     @Config.Name("Coiled Spring")
     public TraitConfig coiledSpring = new TraitConfig(8, "agility",
             new String[] { "reskillable:agility|40" });

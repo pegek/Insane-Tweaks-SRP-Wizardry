@@ -3,11 +3,13 @@
 **Status:** dokument referencyjny. Opisuje to, co jest w kodzie `srpwizcore` 1.15.1, a nie plan.
 **Data:** 2026-10-02.
 
-Oryginalny spec (`notes/spawnengine_v1_spec_2026-07-27.md`) leży w instancji DEv 1.2, w katalogu
-`notes/`. Ten katalog jest w `.gitignore`, więc spec nigdy nie trafił do repo. Javadoki odsyłały
-do pliku, którego nikt poza jedną maszyną nie widział. Ten dokument jest jego zastępstwem,
-spisanym z kodu. Jeśli oryginał się odnajdzie, przenieś go obok i zostaw tu link. Gdy opis z
-oryginału rozjedzie się z tym dokumentem, rację ma **kod**.
+**Oryginalny spec jest obok:** `2026-07-27-spawnengine-v1-spec.md`, skopiowany 2026-10-02 z
+`pegek/SRP-Wizardry` (`notes/spawnengine_v1_spec_2026-07-27.md`), gdzie leżał dotąd. Javadoki
+`srpwizcore` odsyłały do `notes/` w repo modów, którego tu nie ma. Teraz wskazują na kopię obok.
+
+Ten dokument to krótsze streszczenie stanu spisane z kodu `srpwizcore` 1.15.1, a nie z planu.
+Gdy rozjedzie się ze specem, rację ma **kod**: spec opisuje zamiar z 2026-07-27, a kod obejmuje
+też poprawki 1.6.1 i 1.6.2.
 
 ## Po co
 

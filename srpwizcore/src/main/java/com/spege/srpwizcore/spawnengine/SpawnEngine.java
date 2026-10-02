@@ -15,8 +15,8 @@ import java.util.Set;
 
 /**
  * SpawnEngine v1 core: config parsing/validation and the {@code findChunksForSpawning} gate
- * (E1) plus the refill token bucket (E4). Reference:
- * {@code docs/superpowers/specs/2026-10-02-spawnengine-v1-reference.md}.
+ * (E1) plus the refill token bucket (E4). Spec:
+ * {@code docs/superpowers/specs/2026-07-27-spawnengine-v1-spec.md}.
  *
  * <p>Lives outside the mixin package on purpose — {@code MixinWorldEntitySpawner} is pure
  * delegation with no fields, so nothing is merged into the target's {@code <clinit>}.
