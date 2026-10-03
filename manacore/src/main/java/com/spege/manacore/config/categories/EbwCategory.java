@@ -115,7 +115,7 @@ public class EbwCategory {
             "How much maximum mana each level of the storage upgrade adds while the wand is held.",
             "Read live. Holding two wands counts the higher level, not the sum. 0 disables."})
     @Config.RangeDouble(min = 0.0D, max = 10000.0D)
-    public double storageBonusPerLevel = 15.0D;
+    public double storageBonusPerLevel = 40.0D;
 
     @Config.Comment({
             "Fraction of a newly gained storage bonus that is added to current mana at once, so",

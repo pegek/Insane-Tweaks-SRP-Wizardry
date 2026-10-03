@@ -116,9 +116,9 @@ opróżniona do poziomu poniżej kosztu czaru (`/mana set 2`).
 
 ## I. `storage_upgrade` → `bonusMana` (0.9.0)
 
-- [ ] **I1.** Weź do ręki różdżkę z `storage_upgrade` I → maksimum +15, `current` od razu +4,5.
+- [ ] **I1.** Weź do ręki różdżkę z `storage_upgrade` I → maksimum +40, `current` od razu +12.
 - [ ] **I2.** Odłóż różdżkę → maksimum wraca, nadwyżka ponad nie jest zabierana.
-- [ ] **I3. 🚨 Pętla zablokowana.** Weź ją znowu w ciągu 60 s → maksimum +15, ale **bez** +4,5.
+- [ ] **I3. 🚨 Pętla zablokowana.** Weź ją znowu w ciągu 60 s → maksimum +40, ale **bez** +12.
 - [ ] **I4.** Dwie różdżki z różnym poziomem w obu rękach → liczy się wyższy poziom, nie suma.
 - [ ] **I5.** Śmierć z różdżką w ręce → po respawnie bonus wraca sam.
 
