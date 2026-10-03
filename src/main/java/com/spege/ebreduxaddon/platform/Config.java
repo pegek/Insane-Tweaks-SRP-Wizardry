@@ -39,6 +39,11 @@ public final class Config {
     public final ForgeConfigSpec.IntValue spineVolleyPuddleEvery;
     public final ForgeConfigSpec.IntValue cleanseTickInterval;
 
+    // [infectedWizard]
+    public final ForgeConfigSpec.IntValue infectedSpellCount;
+    public final ForgeConfigSpec.BooleanValue infectedAlwaysSpineVolley;
+    public final ForgeConfigSpec.DoubleValue infectedWandDropChance;
+
     // [spore]
     public final ForgeConfigSpec.BooleanValue sporeEnabled;
     public final ForgeConfigSpec.ConfigValue<List<? extends String>> sporeCleansedEffects;
@@ -118,6 +123,20 @@ public final class Config {
         cleanseTickInterval = b
                 .comment("How often, in ticks, the Cleansing effect strips harmful effects.")
                 .defineInRange("cleanseTickInterval", 10, 1, 200);
+        b.pop();
+
+        b.comment("Infected Wizard (needs Fungal Infection: Spore). A Redux wizard that dies infected with",
+                  "Mycelium rises as one. Its spell tier grows with the number of Proto Hiveminds in the world.")
+         .push("infectedWizard");
+        infectedSpellCount = b
+                .comment("Spells of the wizard's element it knows, on top of Spine Volley.")
+                .defineInRange("spellCount", 3, 0, 10);
+        infectedAlwaysSpineVolley = b
+                .comment("Every infected wizard also knows Spine Volley.")
+                .define("alwaysSpineVolley", true);
+        infectedWandDropChance = b
+                .comment("Chance the wizard drops the Redux wand it carries.")
+                .defineInRange("wandDropChance", 0.05, 0.0, 1.0);
         b.pop();
 
         b.comment("Fungal Infection: Spore. Only identifiers are used, so these work with any Spore 2.x and",

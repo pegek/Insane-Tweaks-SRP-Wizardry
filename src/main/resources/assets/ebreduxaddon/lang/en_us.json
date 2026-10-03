@@ -27,5 +27,7 @@
   "item.ebreduxaddon.grafted.progress": "Absorbed: %s / %s (%s%%)",
   "item.ebreduxaddon.armor.last_stand": "Full set (any Grafted or Sentient): Last Stand",
   "message.ebreduxaddon.armor_evolved": "Your armour has become sentient.",
-  "itemGroup.ebreduxaddon": "EbreduxAddon"
+  "itemGroup.ebreduxaddon": "EbreduxAddon",
+  "entity.ebreduxaddon.infected_wizard": "Infected Wizard",
+  "item.ebreduxaddon.infected_wizard_spawn_egg": "Infected Wizard Spawn Egg"
 }

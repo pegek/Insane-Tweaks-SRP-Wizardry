@@ -3,7 +3,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
 }
 
-version = '0.1.0'
+version = '0.2.0'
 group   = 'com.spege.ebreduxaddon'
 base { archivesName = 'ebreduxaddon-1.20.1' }
 
@@ -74,12 +74,14 @@ dependencies {
     // UWAGA: fg.deobf(files(...)) NIE dziala na ForgeGradle 6 - tylko koordynaty Mavena.
     implementation fg.deobf('maven.modrinth:electroblobs-wizardry-redux:0.8.9-forge')
 
-    // Spore: w v0.1 CELOWO brak w kompilacji. Most do Spore to same identyfikatory z configu
-    // (spec, sekcja 5). -PwithSpore dokleja go tylko do uruchomien w dev (GameTesty wariantu b).
+    // Spore (ARR, jar nigdy w repo). Od 0.2 compileOnly: zarazony mag dziedziczy po jego Infected.
+    // Klasy z typami Spore laduje tylko bramka compat.spore.SporeCompat, wiec bez Spore w runtime
+    // nic sie nie sypie. -PwithSpore dokleja go do uruchomien w dev (GameTesty wariantu b).
+    // Spore uzywa tego samego numeru 2.2.0j dla Forge 1.20.1 i NeoForge 1.21, a Maven Modrinth po
+    // numerze daje ten drugi (META-INF/neoforge.mods.toml, Forge go nie widzi). Dlatego ID wersji:
+    // PbOZOahW = spore_1.20.1_2.2.0j.jar, sha1 d52e5d36... (ten sam plik, ktory wstawal na serwerze).
+    compileOnly fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
     if (project.hasProperty('withSpore')) {
-        // Spore uzywa tego samego numeru 2.2.0j dla Forge 1.20.1 i NeoForge 1.21, a Maven Modrinth po
-        // numerze daje ten drugi (META-INF/neoforge.mods.toml, Forge go nie widzi). Dlatego ID wersji:
-        // PbOZOahW = spore_1.20.1_2.2.0j.jar, sha1 d52e5d36... (ten sam plik, ktory wstawal na serwerze).
         runtimeOnly fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
     }
 

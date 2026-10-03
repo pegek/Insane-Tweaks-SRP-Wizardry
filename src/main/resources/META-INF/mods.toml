@@ -37,10 +37,11 @@ Purification and parasite magic for Electroblob's Wizardry Redux: four spells, a
     ordering="AFTER"
     side="BOTH"
 
-# Opcjonalny: v0.1 czyta tylko jego identyfikatory (tagi, efekty, bloki), wiec dziala z kazda 2.x.
+# Opcjonalny. Od 0.2 zarazony mag dziedziczy po klasie Spore (Infected), wiec zakres jest waski:
+# sprawdzone tylko na 2.2.0j (Forge 1.20.1). "2.2.0j" w porownaniu Mavena jest powyzej 2.2.0.
 [[dependencies.ebreduxaddon]]
     modId="spore"
     mandatory=false
-    versionRange="*"
+    versionRange="[2.2,2.3)"
     ordering="AFTER"
     side="BOTH"

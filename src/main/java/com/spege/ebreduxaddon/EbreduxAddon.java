@@ -1,5 +1,6 @@
 package com.spege.ebreduxaddon;
 
+import com.spege.ebreduxaddon.compat.spore.SporeCompat;
 import com.spege.ebreduxaddon.feature.ArmorHandler;
 import com.spege.ebreduxaddon.feature.GraspState;
 import com.spege.ebreduxaddon.feature.ModCreativeTab;
@@ -37,6 +38,7 @@ public final class EbreduxAddon {
         ModEntities.register(modBus);
         ModItems.register(modBus);
         ModCreativeTab.register(modBus);
+        SporeCompat.init(modBus);
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
         MinecraftForge.EVENT_BUS.register(new GraspState.Sweeper());

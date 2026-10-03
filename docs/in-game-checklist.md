@@ -1,13 +1,13 @@
-# EbreduxAddon 0.1.0: testy w grze
+# EbreduxAddon 0.2.0: testy w grze
 
 **Instalacja:** Forge 1.20.1 **47.3.19 lub nowszy**, Electroblob's Wizardry Redux **0.8.9**, jar
-`ebreduxaddon-1.20.1-0.1.0.jar`. Do części B dodatkowo Fungal Infection: Spore **2.2.0j (Forge 1.20.1)**.
+`ebreduxaddon-1.20.1-0.2.0.jar`. Do części B dodatkowo Fungal Infection: Spore **2.2.0j (Forge 1.20.1)**.
 
 ## Co już sprawdzono automatycznie (nie trzeba powtarzać)
 
 - **Serwer dedykowany** w trzech wariantach: (a) Redux, (b) Redux i Spore, (c) Redux, Spore, Tombstone
   9.1.4 i TombTweaks 0.1.0. Start bez jednego błędu i ostrzeżenia od addonu (`tools/server-check.sh`).
-- **29 GameTestów w świecie**, z samym Redux i ze Spore (`./gradlew runGameTestServer [-PwithSpore]`):
+- **35 GameTestów w świecie**, z samym Redux i ze Spore (`./gradlew runGameTestServer [-PwithSpore]`):
   - promień Cleanse trafia cel albo rzucającego, a Cleansing zdejmuje złe efekty i zostawia dobre;
   - wachlarz 5 kolców, kałuża co 4. salwę, trucizna, jedna chmura;
   - Grasp: chwyt, unieruchomienie obu stron, trzymanie po odwróceniu wzroku, obrażenia, egzekucja,
@@ -74,10 +74,34 @@
 - [ ] **B3. Zabicie zarażonego** z Symbiotic Wand w ręce: +40 punktów symbiozy.
 - [ ] **B4. Log startu** nie ma ostrzeżeń `[EbreduxAddon] config`.
 
-## Znane ograniczenia 0.1.0
+## C. Zarażony mag (0.2, tylko ze Spore)
+
+Automatycznie sprawdzone (GameTesty ze Spore): konwersja maga Redux z Mycelium Infection, losowanie
+żywiołu, tieru i zaklęć z różdżką, predykat roju w obie strony, rzucanie zaklęć w cel, zapis i odczyt
+NBT oraz dolosowanie po `/summon` z NBT. Klient pod Xvfb: magowie renderują się z różdżkami.
+
+- [ ] **C1. Konwersja w naturze.** Zaraź maga Redux (np. zarodnikami Spore albo
+      `/effect give @e[type=ebwizardry:wizard] spore:mycelium_ef`) i zabij go → wstaje zarażony mag
+      z tą samą nazwą.
+- [ ] **C2. Walka.** Zarażony mag rzuca zaklęcia swojego żywiołu i Spine Volley. Czy cooldowny i
+      zasięg (14 bloków) nie są przesadzone? Czy melee z bliska wygląda sensownie?
+- [ ] **C3. Rój.** Stoi obok zarażonych Spore i nie walczą ze sobą. Atakuje graczy, wieśniaków i
+      zwykłe moby jak reszta roju.
+- [ ] **C4. Skalowanie.** Bez Proto Hivemindów magowie mają co najwyżej advanced. Po kilku Hivemindach
+      (`/summon spore:proto`) pojawiają się master.
+- [ ] **C5. Purifying Pulse** rani zarażonego maga, a jego zabicie z Symbiotic Wand daje +40 symbiozy.
+- [ ] **C6. Wygląd.** Tekstury to przebarwiony zły mag z Redux. Zanotuj, czy czytelnie odróżnia się
+      od zwykłego maga.
+- [ ] **C7. Świat bez Spore.** Świat z zarażonymi magami otwarty bez Spore: Forge ostrzega
+      o nieznanej encji, magowie znikają, reszta działa.
+
+## Znane ograniczenia 0.2.0
 
 - Placeholderowa grafika: modele zbroi na graczu, ikony zaklęć z Redux z innym odcieniem,
   tekstura kolca to dart z Redux.
+- Zarażony mag nie ewoluuje dalej w formy Spore (brak `EvolvingInfected`); to temat na później.
+- Spore loguje przy starcie klienta ostrzeżenia „Could not apply custom armor” dla encji kolca
+  i fali (próbuje doklejać warstwy zbroi do wszystkich rendererów). Nieszkodliwe.
 - Brak własnych dźwięków (używane są vanilla: zombie villager cure, llama spit, warden heartbeat,
   totem).
 - **Błąd Redux 0.8.9** (nie nasz, ale dotyka graczy): zniżki kosztu z atrybutów zaklęć (np. zbroje

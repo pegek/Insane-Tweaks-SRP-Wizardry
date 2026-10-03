@@ -110,8 +110,10 @@ public final class PurifyingPulseGameTests {
 
     @GameTest(template = EMPTY)
     public static void spellNeedsAPointToStrike(GameTestHelper helper) {
-        // Wysoko nad arena: nad samym testem GameTest moze stac cos, w co promien trafi.
-        Player skyward = casterAt(helper, 1.5, 120, 1.5, 0f, -90f);
+        // Tuz pod limitem budowania: arena GameTestow stoi w zwyklym terenie, wiec "wysoko nad nia"
+        // potrafilo wypasc w kamieniu (y = 61). Nad max build height nie ma juz zadnego bloku.
+        int skyY = helper.getLevel().getMaxBuildHeight() - 3 - helper.absolutePos(BlockPos.ZERO).getY();
+        Player skyward = casterAt(helper, 1.5, skyY, 1.5, 0f, -90f);
         helper.assertFalse(ModSpells.PURIFYING_PULSE.get().cast(context(helper, skyward)), "cast at the sky should fail");
         Player downward = casterAt(helper, 1.5, 2, 1.5, 0f, 90f);
         helper.assertTrue(ModSpells.PURIFYING_PULSE.get().cast(context(helper, downward)), "cast at the floor failed");

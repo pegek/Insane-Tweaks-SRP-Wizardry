@@ -2,6 +2,8 @@ package com.spege.ebreduxaddon.client;
 
 import com.binaris.wizardry.client.renderer.entity.MagicArrowRenderer;
 import com.spege.ebreduxaddon.EbreduxAddon;
+import com.spege.ebreduxaddon.compat.spore.SporeClient;
+import com.spege.ebreduxaddon.compat.spore.SporeCompat;
 import com.spege.ebreduxaddon.feature.ModEntities;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -24,5 +26,15 @@ public final class ClientSetup {
                 ctx -> new MagicArrowRenderer<>(ctx, new ResourceLocation("ebwizardry", "textures/entity/dart.png")));
         // Fala nie ma modelu, rysuje tylko czasteczki - ale renderer musi byc, inaczej klient pada.
         event.registerEntityRenderer(ModEntities.PURIFYING_WAVE.get(), NoopRenderer::new);
+        if (SporeCompat.present()) {
+            SporeClient.renderers(event);
+        }
+    }
+
+    @SubscribeEvent
+    public static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        if (SporeCompat.present()) {
+            SporeClient.layers(event);
+        }
     }
 }

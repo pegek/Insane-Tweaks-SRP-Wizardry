@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "ebreduxaddon:infected_wizard",
+      "required": false
+    }
+  ]
+}

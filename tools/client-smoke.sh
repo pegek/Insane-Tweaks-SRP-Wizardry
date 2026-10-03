@@ -7,6 +7,7 @@
 #
 # <swiat-zrodlowy>: dowolny zapis swiata 1.20.1 (np. world/ z serwera tools/server-check.sh).
 # Wymaga: Xvfb, ImageMagick (import), Mesa. Dzwiek nie startuje (brak urzadzenia) - to oczekiwane.
+# SMOKE_WITH_SPORE=1: klient ze Spore (-PwithSpore) i zarazeni magowie na scenie.
 set -euo pipefail
 
 src=${1:?swiat zrodlowy}
@@ -21,6 +22,14 @@ cp -r "$src" "$repo/run-smoke/saves/smoke"
 rm -f "$repo/run-smoke/saves/smoke/session.lock"
 mkdir -p "$repo/run-smoke/saves/smoke/datapacks"
 cp -r "$repo/tools/smoke-pack" "$repo/run-smoke/saves/smoke/datapacks/ebtest"
+pack="$repo/run-smoke/saves/smoke/datapacks/ebtest"
+rm -f "$pack/setup_spore.mcfunction"
+gradle_extra=()
+if [ "${SMOKE_WITH_SPORE:-0}" = 1 ]; then
+    gradle_extra=(-PwithSpore)
+    cp "$repo/tools/smoke-pack/setup_spore.mcfunction" "$pack/data/ebtest/functions/setup_spore.mcfunction"
+    sed -i 's/^say ebtest:setup done$/function ebtest:setup_spore\nsay ebtest:setup done/' "$pack/data/ebtest/functions/setup.mcfunction"
+fi
 # Bez samouczka i ekranow powitalnych, mniejsze ustawienia dla programowego renderera.
 cat >"$repo/run-smoke/options.txt" <<OPT
 tutorialStep:none
@@ -38,7 +47,7 @@ sleep 2
 
 log="$out/client.log"
 (cd "$repo" && DISPLAY=$display LIBGL_ALWAYS_SOFTWARE=1 MESA_GL_VERSION_OVERRIDE=4.5 \
-    bash gradlew --no-daemon --max-workers=2 runSmokeClient >"$log" 2>&1) &
+    bash gradlew --no-daemon --max-workers=2 "${gradle_extra[@]}" runSmokeClient >"$log" 2>&1) &
 
 for _ in $(seq 1 240); do
     grep -q 'ebtest:setup done' "$log" 2>/dev/null && break
@@ -50,5 +59,5 @@ sleep 10
 DISPLAY=$display import -window root "$out/scene2.png"
 
 echo "== addon i zasoby w logu klienta"
-grep -v '/DEBUG\]' "$log" | grep -E 'ebreduxaddon|ebtest|Missing textures|Unable to load model|Exception' \
+grep -v '/DEBUG\]' "$log" | grep -E 'ebreduxaddon|ebtest|Missing textures|Unable to load model|Exception|Unknown function|Failed to load function' \
     | grep -v -E 'Mod file|Reflective setAccessible|io.netty' | tail -40 || true

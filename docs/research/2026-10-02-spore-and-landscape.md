@@ -56,6 +56,11 @@ Sam wpis w configu tylko powstrzyma ataki w jedną stronę.
   z dowolnego moda.**
 - Gracz też może zostać zarażony po śmierci (`"Should the player be infected on death?"`).
 
+**Uzupełnienie 2026-10-03:** obok listy z configu Spore 2.2.0j ma konwersje **z danych**:
+`data/<namespace>/spore_mob_conversion/*.json` (format `"źródło": "cel"` albo `"#tag": "cel"`, plik
+`tutorial` w jarze), czytane przez `SporeMobConversionReloadListener`. Ścieżka wykonania jest ta sama
+(`create`, nazwa, pozycja, `finalizeSpawn(CONVERSION)`, `setOrigin`). Addon używa tego od 0.2.
+
 ### Ewolucja
 
 Config `["Mob Evolutions and Infection System".Evolutions]`: ścieżki per typ, np. Infected Human →
@@ -63,7 +68,7 @@ knight, griefer, braiomil albo busser. Timer 300 s (Hyper 600 s), minimum zabój
 
 ### Stan świata
 
-`SporeSavedData` (public): `static get(ServerLevel)` → `getAmountOfHiveminds()`, plus statyczne
+`SporeSavedData` (public): `static get(ServerLevel)` i `static getDataLocation(ServerLevel)` (tej używa sam Spore) → `getAmountOfHiveminds()`, plus statyczne
 listy Proto i Protector. Config `"The amount of needed Proto Hiveminds for the world to change
 (Proto World Modifier)" = 3`. **To odpowiednik faz SRP, odczytywalny bez mixina.**
 
