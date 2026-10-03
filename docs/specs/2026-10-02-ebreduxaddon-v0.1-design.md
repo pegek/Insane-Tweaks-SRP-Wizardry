@@ -1,7 +1,7 @@
 # EbreduxAddon v0.1: design
 
 **Data:** 2026-10-02
-**Status:** zaakceptowany. Decyzje autora z 2026-10-02 są wpisane w treść (sekcja 10 to ich zapis).
+**Status:** zaimplementowany jako 0.1.0 (2026-10-03). Decyzje autora z 2026-10-02 są wpisane w treść (sekcja 10 to ich zapis).
 Plan: `docs/plans/2026-10-02-ebreduxaddon-v0.1-plan.md`.
 **Platforma:** Minecraft 1.20.1, Forge 47.3.19+, Java 17.
 **Zależności:** Electroblob's Wizardry Redux ≥ 0.8.9 (**wymagana**), Fungal Infection: Spore 2.2.x
