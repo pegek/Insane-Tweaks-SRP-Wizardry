@@ -14,5 +14,17 @@
   "item.ebreduxaddon.sentient_wand": "Sentient Wand",
   "item.ebreduxaddon.symbiotic_wand.progress": "Symbiosis: %s / %s (%s%%)",
   "item.ebreduxaddon.wand.bonus": "-%s%% mana cost, +%s%% duration, +%s%% potency",
-  "message.ebreduxaddon.wand_evolved": "Your wand has become sentient."
+  "message.ebreduxaddon.wand_evolved": "Your wand has become sentient.",
+  "item.ebreduxaddon.grafted_helmet": "Grafted Helmet",
+  "item.ebreduxaddon.grafted_chestplate": "Grafted Chestplate",
+  "item.ebreduxaddon.grafted_leggings": "Grafted Leggings",
+  "item.ebreduxaddon.grafted_boots": "Grafted Boots",
+  "item.ebreduxaddon.sentient_helmet": "Sentient Helmet",
+  "item.ebreduxaddon.sentient_chestplate": "Sentient Chestplate",
+  "item.ebreduxaddon.sentient_leggings": "Sentient Leggings",
+  "item.ebreduxaddon.sentient_boots": "Sentient Boots",
+  "item.ebreduxaddon.armor.bonus": "Spells: -%s%% mana cost, +%s%% potency",
+  "item.ebreduxaddon.grafted.progress": "Absorbed: %s / %s (%s%%)",
+  "item.ebreduxaddon.armor.last_stand": "Full set (any Grafted or Sentient): Last Stand",
+  "message.ebreduxaddon.armor_evolved": "Your armour has become sentient."
 }

@@ -87,10 +87,12 @@ Uzasadnienie: zbroja jest „wszczepiona” w ciało, a różdżka żyje z magie
 - `ArmorItem` z własnymi `ArmorMaterial`: Grafted na poziomie żelaza, Sentient na poziomie
   diamentu. Przepis na Grafted: zbroja żelazna + `ebwizardry:magic_crystal` (zakuwanie w stole
   rzemieślniczym, bez kowala).
-- **Bonusy magiczne** przez atrybuty Redux (`EBAttributes`: `CAST_COST`, `CAST_COOLDOWN`,
-  `CAST_POTENCY`), przypięte do slotu w `getAttributeModifiers`. Redux sam zamienia je na
-  modyfikatory zaklęć (`WizardryAttributeModifier`), więc nie trzeba własnego kodu zdarzeń.
-  Domyślnie na jedną część: Grafted −3% koszt, Sentient −5% koszt i +3% potency.
+- **Bonusy magiczne** przez ten sam słuchacz `Pre` co różdżki (jeden znacznik na cały bonus addonu),
+  a **nie** przez atrybuty `EBAttributes`. Redux 0.8.9 dokłada atrybuty przy każdym `Pre`, także
+  w każdym ticku kanału na tej samej instancji, więc zniżka narasta (research, sekcja 3). Bonus działa
+  na każde źródło rzutu (różdżka, zwój), a nie tylko na różdżki. Domyślnie na jedną część:
+  Grafted −3% kosztu, Sentient −5% kosztu i +3% potency. Łączny mnożnik kosztu z zbroi ma dolną
+  granicę 0,5. Tooltip części pokazuje bonus i postęp.
 - **Postęp:** obrażenia pochłonięte przez noszącego, liczone w `LivingDamageEvent` i rozdzielane
   na noszone części Grafted. Każda część ma licznik w NBT i ewoluuje osobno przy `armor.evolveAt`
   (domyślnie 1500, jak na 1.12.2). Podmiana stacka w slocie zachowuje NBT (enchanty, nazwę,

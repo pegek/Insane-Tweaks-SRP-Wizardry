@@ -1,5 +1,6 @@
 package com.spege.ebreduxaddon;
 
+import com.spege.ebreduxaddon.feature.ArmorHandler;
 import com.spege.ebreduxaddon.feature.GraspState;
 import com.spege.ebreduxaddon.feature.ModEffects;
 import com.spege.ebreduxaddon.feature.ModEntities;
@@ -37,7 +38,8 @@ public final class EbreduxAddon {
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
         MinecraftForge.EVENT_BUS.register(new GraspState.Sweeper());
-        MinecraftForge.EVENT_BUS.register(new WandBonusHandler.ForgeEvents());
+        MinecraftForge.EVENT_BUS.register(new WandBonusHandler.WandForgeEvents());
+        MinecraftForge.EVENT_BUS.register(new ArmorHandler.ArmorForgeEvents());
         WandBonusHandler.registerRedux();
         // Listy id z configu przeliczone od razu po starcie, zeby ewentualne ostrzezenie o literowce
         // bylo w logu startu, a nie przy pierwszym rzucie.

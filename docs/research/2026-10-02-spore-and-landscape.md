@@ -102,3 +102,18 @@ Spore 2.2.0j wstaje na Forge 47.4.26 bez błędów krytycznych. Dwa błędy pars
 `META-INF/neoforge.mods.toml`, więc Forge 1.20.1 po cichu go pomija), bo Spore daje ten sam numer obu
 platformom. Wydanie Forge 1.20.1 to ID wersji **`PbOZOahW`** (`spore_1.20.1_2.2.0j.jar`, sha1
 `d52e5d362e42e30bbfe05106ca8bf93b46729f37`, ten sam plik co wyżej). Zawsze przypinać ID, nie numer.
+
+## 3. Błąd w Redux 0.8.9: atrybuty zaklęć narastają w kanale
+
+Sprawdzone GameTestem 2026-10-03 (sonda, nie trwały test). `WizardryAttributeModifier.onPreCast`
+(słuchacz `SpellCastEvent.Pre`) dokłada modyfikatory z atrybutów `EBAttributes` (`CAST_COST`,
+`CAST_POTENCY`…) do `SpellModifiers` przy **każdym** `Pre`. Dla zaklęć ciągłych `WandItem.canCast`
+odpala `Pre` w każdym ticku na **tej samej** instancji modyfikatorów (dla `castingTicks > 0`
+`createContext` zwraca instancję z `WizardData`). Atrybut −10% kosztu dał po trzech ticku
+współczynnik 0,9 → 0,81 → 0,729. Koszt kanału liczony przy puszczeniu (`releaseUsing`) bierze tę
+instancję, więc każda zniżka kosztu z atrybutu (np. zbroja maga Redux) w długim kanale schodzi
+praktycznie do zera.
+
+Wniosek dla EbreduxAddon: zbroja **nie** daje bonusów przez `EBAttributes`, tylko przez własny
+słuchacz `Pre` ze znacznikiem „już zastosowano” (ten sam mechanizm co różdżki). Błąd warto
+zgłosić upstream (Binaris00/ElectroblobsWizardryRedux).

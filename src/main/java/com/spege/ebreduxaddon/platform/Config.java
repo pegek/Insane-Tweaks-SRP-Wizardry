@@ -80,8 +80,10 @@ public final class Config {
                          "the Grafted pieces worn at the time.")
                 .defineInRange("evolveAt", 1500, 1, 10_000_000);
         graftedCostReductionPerPiece = b
-                .comment("Mana cost reduction per worn Grafted piece. 0.03 = 3%. Applied as a Redux attribute,",
-                         "so it shows on the tooltip. Takes effect when the piece is next equipped.")
+                .comment("Mana cost reduction per worn Grafted piece. 0.03 = 3%. Applies to every spell the",
+                         "wearer casts. The armour's total cost reduction never goes below a 0.5 multiplier.",
+                         "Not a Redux attribute on purpose: Redux 0.8.9 re-applies attributes on every tick of a",
+                         "channelled spell, so an attribute discount compounds towards free channelling.")
                 .defineInRange("graftedCostReductionPerPiece", 0.03, 0.0, 0.25);
         sentientCostReductionPerPiece = b
                 .comment("Mana cost reduction per worn Sentient piece.")

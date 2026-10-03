@@ -52,11 +52,11 @@ public final class WandGameTests {
         ItemStack wand = new ItemStack(ModItems.SYMBIOTIC_WAND.get());
         WandProgress.set(wand, 3000);
         SpellModifiers modifiers = new SpellModifiers();
-        helper.assertTrue(WandBonusHandler.applyBonus(wand, modifiers), "bonus not applied");
+        helper.assertTrue(WandBonusHandler.applyBonus(null, wand, modifiers), "bonus not applied");
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.COST), 0.925), "cost " + modifiers.getFactor(SpellModifiers.COST));
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.DURATION), 1.125), "duration " + modifiers.getFactor(SpellModifiers.DURATION));
         // Drugi Pre na tym samym obiekcie (kolejny tick kanalu) nie moze mnozyc ponownie.
-        helper.assertFalse(WandBonusHandler.applyBonus(wand, modifiers), "bonus applied twice");
+        helper.assertFalse(WandBonusHandler.applyBonus(null, wand, modifiers), "bonus applied twice");
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.COST), 0.925), "cost compounded: " + modifiers.getFactor(SpellModifiers.COST));
         helper.succeed();
     }
@@ -64,7 +64,7 @@ public final class WandGameTests {
     @GameTest(template = EMPTY)
     public static void sentientBonusIsFlat(GameTestHelper helper) {
         SpellModifiers modifiers = new SpellModifiers();
-        WandBonusHandler.applyBonus(new ItemStack(ModItems.SENTIENT_WAND.get()), modifiers);
+        WandBonusHandler.applyBonus(null, new ItemStack(ModItems.SENTIENT_WAND.get()), modifiers);
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.COST), 0.8), "cost " + modifiers.getFactor(SpellModifiers.COST));
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.DURATION), 1.3), "duration");
         helper.assertTrue(near(modifiers.getFactor(SpellModifiers.POTENCY), 1.1), "potency");
@@ -76,7 +76,7 @@ public final class WandGameTests {
         ItemStack redux = new ItemStack(RegistryUtils.getWand(SpellTiers.ADVANCED, Elements.MAGIC));
         helper.assertTrue(redux.getItem() instanceof WandItem, "Redux advanced wand not found");
         SpellModifiers modifiers = new SpellModifiers();
-        helper.assertFalse(WandBonusHandler.applyBonus(redux, modifiers), "bonus applied to a Redux wand");
+        helper.assertFalse(WandBonusHandler.applyBonus(null, redux, modifiers), "bonus applied to a Redux wand");
         helper.assertTrue(modifiers.getFactor(SpellModifiers.COST) == 1.0f, "Redux wand cost changed");
         helper.succeed();
     }
@@ -92,7 +92,7 @@ public final class WandGameTests {
         PlayerCastContext ctx = new PlayerCastContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, 0, new SpellModifiers());
         WizardryEventBus.fireEvent(new SpellCastEvent.Pre(SpellCastEvent.Sources.WAND, ModSpells.CLEANSE.get(), ctx));
         // Postep 0: mnozniki 1.0, ale znacznik musi juz siedziec w modyfikatorach.
-        helper.assertFalse(WandBonusHandler.applyBonus(wand, ctx.modifiers()), "Pre listener did not run on the Redux bus");
+        helper.assertFalse(WandBonusHandler.applyBonus(player, wand, ctx.modifiers()), "Pre listener did not run on the Redux bus");
 
         PlayerCastContext post = new PlayerCastContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, 0, new SpellModifiers());
         WizardryEventBus.fireEvent(new SpellCastEvent.Post(SpellCastEvent.Sources.WAND, ModSpells.CLEANSE.get(), post));

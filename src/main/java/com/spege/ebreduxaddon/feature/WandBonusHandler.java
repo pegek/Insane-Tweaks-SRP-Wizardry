@@ -6,6 +6,7 @@ import com.binaris.wizardry.api.content.spell.internal.PlayerCastContext;
 import com.binaris.wizardry.api.content.spell.internal.SpellModifiers;
 import com.binaris.wizardry.api.content.util.CastItemUtils;
 import com.binaris.wizardry.core.event.WizardryEventBus;
+import com.spege.ebreduxaddon.core.ArmorBonus;
 import com.spege.ebreduxaddon.core.SymbiosisCurve;
 import com.spege.ebreduxaddon.feature.entity.PurifyingWaveEntity;
 import com.spege.ebreduxaddon.feature.item.SentientWandItem;
@@ -21,7 +22,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
- * Bonusy i postep rozdzek Symbiotic/Sentient.
+ * Bonusy do zaklec (rozdzki Symbiotic/Sentient i zbroja Grafted/Sentient) oraz postep rozdzek.
  *
  * <ul>
  *   <li><b>Pre</b> (szyna Redux): mnozniki kosztu, czasu trwania i potency. 🚨 Pre leci w KAZDYM
@@ -51,17 +52,41 @@ public final class WandBonusHandler {
     }
 
     static void onPre(SpellCastEvent.Pre event) {
-        if (event.getSource() != SpellCastEvent.Sources.WAND || !(event.getContext() instanceof PlayerCastContext ctx)) {
+        LivingEntity caster = event.getCaster();
+        if (caster == null) {
             return;
         }
-        applyBonus(ctx.caster().getItemInHand(ctx.hand()), event.getModifiers());
+        ItemStack wand = event.getSource() == SpellCastEvent.Sources.WAND && event.getContext() instanceof PlayerCastContext ctx
+                ? ctx.caster().getItemInHand(ctx.hand()) : ItemStack.EMPTY;
+        applyBonus(caster, wand, event.getModifiers());
     }
 
-    /** Publiczne dla GameTestow. Zwraca, czy cokolwiek zmieniono. */
-    public static boolean applyBonus(ItemStack wand, SpellModifiers modifiers) {
+    /**
+     * Caly bonus addonu dla jednego rzutu: rozdzka (tylko przy rzucie rozdzka) i zbroja (kazde zrodlo).
+     * Publiczne dla GameTestow. Zwraca, czy cokolwiek zmieniono.
+     */
+    public static boolean applyBonus(LivingEntity caster, ItemStack wand, SpellModifiers modifiers) {
         if (modifiers.getFactor(MARKER) != 1.0f) {
             return false;
         }
+        boolean changed = applyWand(wand, modifiers);
+        int[] pieces = caster == null ? new int[] {0, 0} : ArmorHandler.countPieces(caster);
+        if (pieces[0] + pieces[1] > 0) {
+            modifiers.multiply(SpellModifiers.COST, (float) ArmorBonus.costMultiplier(pieces[0], pieces[1],
+                    Config.INSTANCE.graftedCostReductionPerPiece.get(), Config.INSTANCE.sentientCostReductionPerPiece.get()));
+            if (pieces[1] > 0) {
+                modifiers.multiply(SpellModifiers.POTENCY, (float) ArmorBonus.potencyMultiplier(pieces[1],
+                        Config.INSTANCE.sentientPotencyPerPiece.get()));
+            }
+            changed = true;
+        }
+        if (changed) {
+            modifiers.set(MARKER, 2.0f);
+        }
+        return changed;
+    }
+
+    private static boolean applyWand(ItemStack wand, SpellModifiers modifiers) {
         if (wand.getItem() instanceof SymbioticWandItem) {
             double p = SymbiosisCurve.progress(WandProgress.get(wand), Config.INSTANCE.wandEvolveAt.get());
             modifiers.multiply(SpellModifiers.COST, (float) SymbiosisCurve.costMultiplier(p, Config.INSTANCE.symbioticMaxCostReduction.get()));
@@ -73,7 +98,6 @@ public final class WandBonusHandler {
         } else {
             return false;
         }
-        modifiers.set(MARKER, 2.0f);
         return true;
     }
 
@@ -104,10 +128,17 @@ public final class WandBonusHandler {
     }
 
     /** Nasluch na szynie Forge: zabojstwa mobow Spore i ewolucja. */
-    public static final class ForgeEvents {
+    /**
+     * 🚨 Nazwy klas-nasluchow i ich metod trzymamy w calym modzie unikalne. Dwie klasy wewnetrzne
+     * o tej samej nazwie (ForgeEvents) z metoda onDeath(LivingDeathEvent) skonczyly sie na EventBus
+     * Forge 6.0.5 ClassCastException przy pierwszej smierci (jeden wygenerowany handler wolal
+     * instancje drugiej klasy; wylapal to GameTest egzekucji Grasp). Mechanizmu w samym EventBus
+     * nie rozbieralismy - unikalne nazwy usuwaja objaw, sprawdzone tym samym testem.
+     */
+    public static final class WandForgeEvents {
 
         @SubscribeEvent
-        public void onDeath(LivingDeathEvent event) {
+        public void onFungalKill(LivingDeathEvent event) {
             int bonus = Config.INSTANCE.wandFungalKillPoints.get();
             LivingEntity victim = event.getEntity();
             if (bonus <= 0 || victim.level().isClientSide || !Config.INSTANCE.sporeEnabled.get()
@@ -125,7 +156,7 @@ public final class WandBonusHandler {
         }
 
         @SubscribeEvent
-        public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        public void evolveHeldWands(TickEvent.PlayerTickEvent event) {
             if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide
                     || event.player.isUsingItem() || event.player.tickCount % 10 != 0) {
                 return;

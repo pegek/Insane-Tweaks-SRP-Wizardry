@@ -2,7 +2,7 @@
 
 **Spec:** `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`. **Gałąź:** `addon/redux-1.20.1`.
 
-**Stan (2026-10-02):** taski 0–6 zrobione. Następny: 7.
+**Stan (2026-10-02):** taski 0–7 zrobione. Następny: 8 (zasoby).
 
 **Testy w świecie:** `./gradlew runGameTestServer` (wariant a) i `./gradlew runGameTestServer -PwithSpore`
 (wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`.
@@ -27,7 +27,7 @@ Zasady dla każdego taska:
 | 4 | **Grasp.** Ciągły `RaySpell`, stan chwytu w mapie po stronie serwera (`GraspState`), czyszczonej w `endCast` i przez sweeper porzuconych chwytów. Root przez modyfikator `MOVEMENT_SPEED` z UUID, zdejmowany przy końcu i przy śmierci celu. | `feature/spell/GraspSpell.java`, `feature/GraspState.java`, JSON | build + serwer |
 | 5 | **Purifying Pulse.** `PurifyingWaveEntity` (bez modelu, `NoopRenderer`), fala przez 20 ticków, mapa bloków z `PairList`, tag `spore:fungus_entities`. Zamiana bloków tylko po stronie serwera i z limitem na tick. | `feature/spell/PurifyingPulseSpell.java`, `feature/entity/PurifyingWaveEntity.java`, `platform/BlockPurifier.java`, JSON | build + serwer (b): bez ostrzeżeń o nieznanych id Spore |
 | 6 | **Różdżki.** `SymbioticWandItem` / `SentientWandItem` (blokada `applyTierUpgrade`), `WandBonusHandler` (Pre: mnożniki, Post: punkty), zabójstwa z tagu, ewolucja z kopią NBT. Słuchacze przez `WizardryEventBus`. | `feature/item/*WandItem.java`, `feature/WandBonusHandler.java`, `feature/ModItems.java`, `platform/WandProgress.java` | build + serwer |
-| 7 | **Zbroje.** `ModArmorMaterials`, `GraftedArmorItem` / `SentientArmorItem` z atrybutami `EBAttributes`, `ArmorProgressHandler` (`LivingDamageEvent`), Last Stand (`LivingDeathEvent` + `LivingAttackEvent` dla nietykalności, tick w persistent data). | `feature/item/*ArmorItem.java`, `feature/ArmorHandler.java` | build + serwer |
+| 7 | **Zbroje.** `ModArmorMaterials`, `AddonArmorItem` (Grafted / Sentient), bonus do zaklęć przez słuchacz `Pre` ze znacznikiem (nie `EBAttributes` - błąd Redux, research §3), `ArmorProgressHandler` (`LivingDamageEvent`), Last Stand (`LivingDeathEvent` + `LivingAttackEvent` dla nietykalności, tick w persistent data). | `feature/item/*ArmorItem.java`, `feature/ArmorHandler.java` | build + serwer |
 | 8 | **Zasoby.** Modele, placeholdery tekstur (generowane skryptem z tekstur vanilla i Redux), ikony zaklęć, przepisy (wand i 4 części Grafted), zakładka kreatywna, lang `en_us`. | `assets/ebreduxaddon/**`, `data/ebreduxaddon/recipes/**`, `tools/placeholders.py` | build + serwer: zero błędów receptur |
 | 9 | **Weryfikacja i wydanie 0.1.0.** Skrypt serwera dla wariantów (a), (b), (c), `docs/in-game-checklist.md`, README z instalacją i listą treści. | `tools/server-check.sh`, `docs/in-game-checklist.md`, `README.md` | trzy warianty zielone |
 
