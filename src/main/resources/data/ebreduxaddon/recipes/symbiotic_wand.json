@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    { "item": "ebwizardry:wand_advanced" },
+    { "item": "minecraft:fermented_spider_eye" },
+    { "item": "minecraft:rotten_flesh" },
+    { "item": "ebwizardry:magic_crystal" }
+  ],
+  "result": { "item": "ebreduxaddon:symbiotic_wand" },
+  "show_notification": true
+}

@@ -33,6 +33,13 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
             mods { ebreduxaddon { source sourceSets.main } }
         }
+        // Uzywane przez tools/client-smoke.sh: klient w dev, wchodzi od razu do swiata run-smoke/saves/smoke.
+        smokeClient {
+            parent runs.client
+            workingDirectory project.file('run-smoke')
+            args '--quickPlaySingleplayer', 'smoke', '--username', 'Dev'
+            mods { ebreduxaddon { source sourceSets.main } }
+        }
         // ./gradlew runGameTestServer [-PwithSpore]: stawia swiat, odpala wszystkie GameTesty addonu
         // i konczy sie kodem bledu, gdy ktorys padnie. Jedyny sposob na testy w swiecie bez klienta:
         // w jarze produkcyjnym Forge GameTestow nie wlacza.

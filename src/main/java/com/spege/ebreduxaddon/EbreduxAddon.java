@@ -2,6 +2,7 @@ package com.spege.ebreduxaddon;
 
 import com.spege.ebreduxaddon.feature.ArmorHandler;
 import com.spege.ebreduxaddon.feature.GraspState;
+import com.spege.ebreduxaddon.feature.ModCreativeTab;
 import com.spege.ebreduxaddon.feature.ModEffects;
 import com.spege.ebreduxaddon.feature.ModEntities;
 import com.spege.ebreduxaddon.feature.ModItems;
@@ -35,6 +36,7 @@ public final class EbreduxAddon {
         ModEffects.register(modBus);
         ModEntities.register(modBus);
         ModItems.register(modBus);
+        ModCreativeTab.register(modBus);
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
         MinecraftForge.EVENT_BUS.register(new GraspState.Sweeper());

@@ -3,6 +3,7 @@ bin/
 out/
 run/
 run-gametest/
+run-smoke/
 .gradle/
 .idea/
 *.iml

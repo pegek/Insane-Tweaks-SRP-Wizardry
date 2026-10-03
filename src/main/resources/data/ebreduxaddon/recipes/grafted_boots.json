@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    { "item": "minecraft:iron_boots" },
+    { "item": "minecraft:rotten_flesh" },
+    { "item": "ebwizardry:magic_crystal" },
+    { "item": "ebwizardry:magic_crystal" }
+  ],
+  "result": { "item": "ebreduxaddon:grafted_boots" },
+  "show_notification": true
+}

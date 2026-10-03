@@ -2,7 +2,7 @@
 
 **Spec:** `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`. **Gałąź:** `addon/redux-1.20.1`.
 
-**Stan (2026-10-02):** taski 0–7 zrobione. Następny: 8 (zasoby).
+**Stan (2026-10-02):** taski 0–8 zrobione. Następny: 9 (weryfikacja i wydanie).
 
 **Testy w świecie:** `./gradlew runGameTestServer` (wariant a) i `./gradlew runGameTestServer -PwithSpore`
 (wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`.
@@ -10,6 +10,9 @@ Dwie pułapki GameTestów, obie już raz ugryzły: (1) w koordynatach helpera y 
 moby stawiamy na y = 2, inaczej duszą się w bloku i każda asercja o HP kłamie; (2) testy jednej
 partii stoją obok siebie i biegną naraz, więc liczymy tylko własne encje (np. po właścicielu). Serwer
 dedykowany (`tools/server-check.sh`) sprawdza już tylko jar produkcyjny: start i log.
+Klient: `tools/client-smoke.sh <świat> <katalog>` uruchamia klienta w dev pod Xvfb (Mesa llvmpipe),
+wchodzi do świata z datapackiem `tools/smoke-pack` (scena z przedmiotami addonu) i robi zrzuty
+ekranu. To jedyna kontrola modeli, tekstur i rendererów bez prawdziwego klienta.
 
 Zasady dla każdego taska:
 - Każdy task kończy się zielonym `./gradlew check build runGameTestServer` (z `-PwithSpore` i bez)

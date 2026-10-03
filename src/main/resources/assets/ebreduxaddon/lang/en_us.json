@@ -26,5 +26,6 @@
   "item.ebreduxaddon.armor.bonus": "Spells: -%s%% mana cost, +%s%% potency",
   "item.ebreduxaddon.grafted.progress": "Absorbed: %s / %s (%s%%)",
   "item.ebreduxaddon.armor.last_stand": "Full set (any Grafted or Sentient): Last Stand",
-  "message.ebreduxaddon.armor_evolved": "Your armour has become sentient."
+  "message.ebreduxaddon.armor_evolved": "Your armour has become sentient.",
+  "itemGroup.ebreduxaddon": "EbreduxAddon"
 }
