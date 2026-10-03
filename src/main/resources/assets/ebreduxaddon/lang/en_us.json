@@ -9,5 +9,10 @@
   "spell.ebreduxaddon.grasp.desc": "Seizes the first creature the beam touches and holds it in place while draining it. You cannot move while you hold on. Creatures brought low enough are finished off.",
   "spell.ebreduxaddon.purifying_pulse": "Purifying Pulse",
   "spell.ebreduxaddon.purifying_pulse.desc": "Sends out a purifying wave from where you look. It heals allies, drives enemies back, burns fungal creatures and turns infested ground clean again.",
-  "entity.ebreduxaddon.purifying_wave": "Purifying Wave"
+  "entity.ebreduxaddon.purifying_wave": "Purifying Wave",
+  "item.ebreduxaddon.symbiotic_wand": "Symbiotic Wand",
+  "item.ebreduxaddon.sentient_wand": "Sentient Wand",
+  "item.ebreduxaddon.symbiotic_wand.progress": "Symbiosis: %s / %s (%s%%)",
+  "item.ebreduxaddon.wand.bonus": "-%s%% mana cost, +%s%% duration, +%s%% potency",
+  "message.ebreduxaddon.wand_evolved": "Your wand has become sentient."
 }

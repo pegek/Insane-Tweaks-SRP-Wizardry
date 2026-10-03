@@ -63,9 +63,14 @@ Uzasadnienie: zbroja jest „wszczepiona” w ciało, a różdżka żyje z magie
   - punkty = koszt many rzuconego zaklęcia, liczony w `SpellCastEvent.Post` dla rzutów z tej różdżki;
   - zabójstwo moba z tagu `spore:fungus_entities` w trakcie trzymania różdżki daje
     `wand.fungalKillPoints` (domyślnie 40). Bez Spore tag jest pusty, więc ta ścieżka nic nie daje.
-- **Ewolucja** przy `wand.evolveAt` punktach (domyślnie 6000). Po stronie serwera stack w ręce jest
+- **Ewolucja** przy `wand.evolveAt` punktach (domyślnie 6000). Po stronie serwera, gdy gracz nie używa przedmiotu (sprawdzane co 10 ticków), stack w ręce jest
   podmieniany na Sentient Wand z **kopią całego NBT** (zaklęcia, ulepszenia, mana, progres Redux),
   z dźwiękiem i komunikatem. Wzorzec z 1.12.2: ewolucja to podmiana przedmiotu, nie flaga.
+- 🚨 **`Pre` odpala się w każdym ticku kanału na tym samym obiekcie modyfikatorów.** Dla `castingTicks > 0`
+  `WandItem.createContext` zwraca instancję zapisaną w `WizardData`, więc mnożnik bez znacznika
+  narastałby wykładniczo. Bonus zostawia w modyfikatorach znacznik `ebreduxaddon.wand_bonus`
+  i stosuje się raz. Punkty za kanał liczy `Finish` (mana schodzi dopiero przy puszczeniu), a za
+  zaklęcia jednorazowe `Post`.
 - **Bonusy** w `SpellCastEvent.Pre` (tylko gdy rzucamy jedną z naszych różdżek), przez
   `SpellModifiers`. Pre widzi koszt, cooldown, potency, zasięg i czas trwania, **nie** chargeup
   (ten liczy się wcześniej, patrz spec etapu 2 TombTweaks, §2):

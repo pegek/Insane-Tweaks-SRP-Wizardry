@@ -3,6 +3,8 @@ package com.spege.ebreduxaddon;
 import com.spege.ebreduxaddon.feature.GraspState;
 import com.spege.ebreduxaddon.feature.ModEffects;
 import com.spege.ebreduxaddon.feature.ModEntities;
+import com.spege.ebreduxaddon.feature.ModItems;
+import com.spege.ebreduxaddon.feature.WandBonusHandler;
 import com.spege.ebreduxaddon.feature.ModSpells;
 import com.spege.ebreduxaddon.feature.effect.CleansingEffect;
 import com.spege.ebreduxaddon.platform.Config;
@@ -31,9 +33,12 @@ public final class EbreduxAddon {
         ModSpells.register(modBus);
         ModEffects.register(modBus);
         ModEntities.register(modBus);
+        ModItems.register(modBus);
 
         MinecraftForge.EVENT_BUS.register(new CleansingEffect.Ticker());
         MinecraftForge.EVENT_BUS.register(new GraspState.Sweeper());
+        MinecraftForge.EVENT_BUS.register(new WandBonusHandler.ForgeEvents());
+        WandBonusHandler.registerRedux();
         // Listy id z configu przeliczone od razu po starcie, zeby ewentualne ostrzezenie o literowce
         // bylo w logu startu, a nie przy pierwszym rzucie.
         MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent e) -> IdLists.warmUp());

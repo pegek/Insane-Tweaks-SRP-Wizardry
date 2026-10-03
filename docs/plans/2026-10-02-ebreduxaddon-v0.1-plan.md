@@ -2,7 +2,7 @@
 
 **Spec:** `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`. **Gałąź:** `addon/redux-1.20.1`.
 
-**Stan (2026-10-02):** taski 0–5 zrobione (wszystkie 4 zaklęcia). Następny: 6.
+**Stan (2026-10-02):** taski 0–6 zrobione. Następny: 7.
 
 **Testy w świecie:** `./gradlew runGameTestServer` (wariant a) i `./gradlew runGameTestServer -PwithSpore`
 (wariant b). Każdy task z zaklęciem albo przedmiotem dokłada GameTesty w `gametest/`.
