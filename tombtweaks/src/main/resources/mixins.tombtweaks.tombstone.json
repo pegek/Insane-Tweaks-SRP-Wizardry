@@ -17,6 +17,8 @@
     "MixinTombstoneLootHelper",
     "MixinTombstonePlayerStatus",
     "MixinTombstoneTablet",
+    "MixinTombstoneSoulboundKeys",
+    "MixinTombstoneSoulboundOnKey",
     "perkinfo.MixinPerkGladiatorInfo",
     "perkinfo.MixinPerkJailerInfo",
     "perkinfo.MixinPerkMementoMoriInfo",
