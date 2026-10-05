@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-08
 **Mod:** `insanetweaks` (content)
-**Status:** designed, not implemented
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`init/ModElements`; shipped in insanetweaks 1.15.x-1.16.1). Pierwotnie: designed, not implemented
 **Target EBW:** 4.3.19 (CurseMaven file id `8320066`) — every bytecode claim below was read off that jar
 
 ## Problem

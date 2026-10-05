@@ -2,7 +2,7 @@
 
 Date: 2026-07-21
 Branch: `feat/sanctuary-dome`
-Status: approved (brainstorm), pending implementation plan
+Status: **implemented** — sprawdzone w kodzie 2026-10-02 (`SanctuaryCostCategory`). Pierwotnie: approved (brainstorm), pending implementation plan
 
 ## Motivation
 

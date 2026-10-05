@@ -1,7 +1,7 @@
 # Spell Mechanics & Visuals Rework — Design (part 2)
 
 **Date:** 2026-07-07
-**Status:** Approved design, implementation NOT started
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`network/PacketSrpParticle`). Pierwotnie: Approved design, implementation NOT started
 **Scope:** Part 2 of the spell rework: gameplay mechanics for three spells (Yelloweye Gland, Parasite Shroud, Purifying Pulse) + a minimal visual-feedback layer for all spells, built on SRP 1.10.7 particles and EBW 4.3.19 APIs. Part 1 (architecture) is done: `docs/superpowers/specs/2026-07-03-spell-architecture-rework-design.md`.
 
 ## Decisions from brainstorming

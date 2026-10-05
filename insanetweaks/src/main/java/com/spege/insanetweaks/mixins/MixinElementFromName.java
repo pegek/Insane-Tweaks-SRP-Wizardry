@@ -14,7 +14,7 @@ import electroblob.wizardry.constants.Element;
  *
  * <p>{@code SpellProperties} uses the one-argument {@code Element.fromName}, which ends in
  * {@code throw new IllegalArgumentException}. That is caught upstream and logged rather than
- * crashing, so with {@code ModElements.EXTENDED == false} and no mixin the fourteen spells would
+ * crashing, so with {@code ModElements.EXTENDED == false} and no mixin the thirteen spells would
  * load with no properties at all - hollow spells with no tier, cost, cooldown or source flags, and
  * only a log line to say so. Mapping the name to MAGIC turns that into the graceful degradation the
  * design promises.

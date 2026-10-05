@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-08
 **Mod:** `insanetweaks` (content) — every change below is gameplay, so content owns all of it
-**Status:** designed, not implemented
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`magic_nucleus`, `GearCategory.Wands`; shipped in insanetweaks 1.16.0-1.16.1). Pierwotnie: designed, not implemented
 **Target EBW:** 4.3.19 (CurseMaven file id `8320066`) — every bytecode claim was read off that jar
 **Predecessor:** `2026-08-08-ebw-abomination-element-design.md`. That spec made Abomination a real
 `Element`; read it first, because its §9 exclusion table is what this spec partly undoes.

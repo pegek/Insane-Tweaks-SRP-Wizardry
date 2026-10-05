@@ -1,17 +1,18 @@
 # Insane Tweaks — SRP & Wizardry
 
-Gradle multi-project repo containing **five** Minecraft **1.12.2** Forge mods. They share a source tree and a build, but ship separately.
+Gradle multi-project repo containing **seven** Minecraft **1.12.2** Forge mods. They share a source tree and a build, but ship separately.
 
 | Module | Modid | Where it ships | What it is |
 |---|---|---|---|
-| `insanetweaks/` | `insanetweaks` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/srpwizardry-insanetweaks) · [Modrinth](https://modrinth.com/mod/srpwizardry-insanetweaks) | All gameplay content: the evolving Living/Sentient gear line, custom Electroblob's Wizardry spells, the Sanctuary Nexus, companions (Thrall / Sentinel / Sim Wizard / Assimilated Battlemage), Bauble Fruits, the Sentient Codex, Mmmm and Swift Picking enchantments, Property Books, and the Reskillable trait tree. |
+| `insanetweaks/` | `insanetweaks` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/srpwizardry-insanetweaks) · [Modrinth](https://modrinth.com/mod/srpwizardry-insanetweaks) | All gameplay content: the evolving Living/Sentient gear line, custom Electroblob's Wizardry spells, the Sanctuary Nexus, companions (Thrall / Sentinel / Sim Wizard / Assimilated Battlemage), Bauble Fruits, the Sentient Codex, Mmmm and Swift Picking enchantments, Property Books, the Abomination spell element, and the Auto Lock Picker. |
 | `tombtweaks/` | `tombtweaks` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ctombstone-tweaks) | Everything for Corail Tombstone: random-effect whitelist, exact-slot grave restore, grave item decay, the Curse of Possession fix, ritual-book cooldowns, per-perk caps for the ten native perks, two custom perks, a raid-mod alignment bridge, and the Knowledge of Death inventory tab. Split out of `insanetweaks` in 1.9.0. |
 | `srpwizmixins/` | `srpwizmixins` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/srp-wiz-mixins) | Mixin-only native fixes for Scape and Run: Parasites 1.10.7 — cap-purge protection, per-dimension mob caps, dimension starting points, thread-safe save data, infestation spread throttle. No registry objects, every fix off by default. |
 | `srpwizcore/` | `srpwizcore` | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/srp-wiz-core) | Pack glue: concurrency fixes for threaded entity ticking and chunk generation, OpenTerrainGenerator and FutureMC worldgen crash guards, per-dimension Ice & Fire worldgen control, a per-dimension spawn engine, performance guards for Doomlike Dungeons / CQR / Raids / Defiled Lands / Enigmatic Legacy, a CQR × Spartan Weaponry integration, and the dormant-waystone travel system. |
-
 | `enchanteraser/` | `enchanteraser` | — | Makes a configured list of enchantments unobtainable **without unregistering them**, so gear that already carries one keeps working instead of crashing. Closes the enchanting table, `enchant_with_levels` and `enchant_randomly` loot, fishing treasure, librarian trades, the anvil, and Infernal Mobs elite drops; optionally hides the books from JEI/HEI and the creative tabs, and marks any surviving copy in the tooltip. Mixin-only, one config list, not pack-specific. |
+| `reskilltweaks/` | `reskilltweaks` | — | The Reskillable integration: 20 custom traits across all eight skill trees, two rewritten native trait descriptions, a tuned `reskillable.cfg` deployed with a backup, and a middle-click trait refund. Split out of `insanetweaks` in 1.13.0 so the content mod boots without Reskillable. Depends on `insanetweaks`. |
+| `manacore/` | `manacore` | — | A unified player mana pool with bridges to Electroblob's Wizardry and Trinkets and Baubles: EBW wands and mana artefacts and other mods' mana-regeneration potions feed the same pool. No compile dependency in either direction; `reskilltweaks` finds it at runtime by reflection. |
 
-The four sibling mods have **zero compile dependency** on the content mod, in both directions.
+`tombtweaks`, `srpwizmixins`, `srpwizcore`, `enchanteraser` and `manacore` never depend on the content mod and ship alone. Two compile edges exist, both `compileOnly` and both pointing *towards* an extracted mod's API, never back: `insanetweaks → srpwizmixins` (the Sanctuary hands it a `ProtectedAreaProvider` so meteors miss protected areas) and `reskilltweaks → insanetweaks` (an add-on that requires it at runtime).
 
 > **Note on `tombtweaks` and the two custom perks.** They are still registered under the `insanetweaks:` namespace on purpose — Corail Tombstone persists a player's perk levels by numeric registry id, and that id map lives in `level.dat` keyed by registry name. Renaming them would silently wipe every player's invested levels. Forge logs a non-matching-prefix warning for this; it is expected.
 
@@ -20,12 +21,12 @@ The four sibling mods have **zero compile dependency** on the content mod, in bo
 Requires **JDK 8** and ForgeGradle 3 (targets Forge `1.12.2-14.23.5.2860`).
 
 ```sh
-./gradlew build                 # all five jars
+./gradlew build                 # all seven jars
 ./gradlew :insanetweaks:build   # just one
 ./gradlew runClient             # dev client (working dir ./run)
 ```
 
-Jars land in `<module>/build/libs/`, reobfuscated. `gradle.properties` pins `org.gradle.java.home` to a local JDK 8 path — change it to yours.
+Jars land in `<module>/build/libs/`, reobfuscated. Gradle has to run on JDK 8: set `org.gradle.java.home` in your **user** `~/.gradle/gradle.properties`, not in the repo's one. Most third-party mod jars are read from a local `libs/` folder, which is git-ignored.
 
 Version numbers are per-mod. Bumping a mod means editing its `build.gradle` (`version` + manifest `Specification-Version`), its `VERSION` constant, and its `mcmod.info`.
 

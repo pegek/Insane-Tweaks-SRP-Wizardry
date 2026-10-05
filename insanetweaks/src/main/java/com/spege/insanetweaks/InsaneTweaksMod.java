@@ -118,7 +118,7 @@ public class InsaneTweaksMod implements IGuiHandler {
      * widoczny dla @Mod w czasie kompilacji, wiec nie da sie jej wyprowadzic - zostaje
      * recznie, ale co najmniej w jednym pliku z reszta metadanych.
      */
-    public static final String VERSION = "1.20.2";
+    public static final String VERSION = "1.20.3";
 
     /** GUI ID for the Thrall inventory screen (used with NetworkRegistry / player.openGui). */
     public static final int GUI_ID_THRALL_INV = 1;
@@ -212,6 +212,10 @@ public class InsaneTweaksMod implements IGuiHandler {
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_NOVICE);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_ADEPT);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_MASTER);
+        // Used by those three tables. Must be registered before any table is parsed (world load);
+        // an unknown function name makes the WHOLE table fail to load, not just the entry.
+        net.minecraft.world.storage.loot.functions.LootFunctionManager.registerFunction(
+                new com.spege.insanetweaks.util.AbominationMetaLootFunction.Serializer());
 
         // Sanctuary Dome is an SRP-compat feature end-to-end (blocks, spawn veto, TE logic
         // all key off SRParasites). Defensively disable if SRP isn't present so the module

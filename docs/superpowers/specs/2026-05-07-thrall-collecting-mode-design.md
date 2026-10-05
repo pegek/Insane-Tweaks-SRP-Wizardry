@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Module:** `insanetweaks` — Minecraft 1.12.2 Forge mod
-**Status:** Draft for implementation
+**Status:** **implemented** — sprawdzone w kodzie 2026-10-02 (`ThrallAICollecting`). Pierwotnie: Draft for implementation
 
 ## 1. Goal
 

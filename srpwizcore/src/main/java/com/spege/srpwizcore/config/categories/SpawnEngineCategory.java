@@ -4,7 +4,7 @@ import net.minecraftforge.common.config.Config;
 
 /**
  * SpawnEngine v1 — native per-dimension spawn control (spec:
- * {@code notes/spawnengine_v1_spec_2026-07-27.md} in the DEv 1.2 instance).
+ * {@code docs/superpowers/specs/2026-07-27-spawnengine-v1-spec.md}).
  *
  * <p>Every value is read live: {@code mixins.srpwizcore.early.json} declares no
  * {@code IMixinConfigPlugin}, so {@code MixinWorldEntitySpawner} applies unconditionally and
