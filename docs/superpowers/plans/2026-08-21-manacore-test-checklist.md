@@ -102,13 +102,16 @@ opróżniona do poziomu poniżej kosztu czaru (`/mana set 2`).
 - [ ] **H1. 🚨 Exploit zamknięty.** Demonic Seal **zdjęty**, pusta pula → czar się **nie** rzuca.
       Demonic Seal założony, pełna pula → czar płaci z puli, głód **nie** spada.
 - [ ] **H2. Pierścień dopłaca różnicę.** `ring_mana_lesser` naładowany w workbenchu, pula 2,
-      `magic_missile` (5) → czar wchodzi, pula kończy na ~0, pierścień traci **15** (3 × 5).
-- [ ] **H3. Za mało w pierścieniu = nic nie znika.** Pierścień z < 15 many i bez Seala → czar się
+      `magic_missile` (5) → czar wchodzi, pula kończy na ~0, pierścień traci **12** (3 × 3.75 w górę).
+- [ ] **H3. Za mało w pierścieniu = nic nie znika.** Pierścień z < 12 many i bez Seala → czar się
       nie rzuca, a ładunek pierścienia **zostaje nietknięty**.
 - [ ] **H4. Demonic Seal dopłaca głodem.** Pula 2, `magic_missile` → czar wchodzi, głód spada o
-      **1 punkt** (3 many / 5 zaokrąglone w górę). Przy czarze ciągłym Seal **nie** pomaga.
-- [ ] **H5. Pierścień + Seal razem.** Pierścień z 5 many (= 1 many puli), pula 0, czar za 5 →
-      pierścień daje 1, głód 1 punkt (4 / 5 w górę).
+      **1 punkt** (3 many / 6.5 zaokrąglone w górę). Przy czarze ciągłym Seal **nie** pomaga.
+- [ ] **H5. Pierścień + Seal razem.** Pierścień z 5 many (= ~1.33 many puli), pula 0, czar za 5 →
+      pierścień daje ~1.33, głód 1 punkt (3.67 / 6.5 w górę).
+
+Kursy od 0.9.1: rezerwy **3.75** many artefaktu za 1 manę puli (było 5), Seal **6.5** many za
+punkt głodu (było 5) - buff ~30-35%.
 - [ ] **H6. Czar ciągły z pierścienia.** Kanałuj z pustą pulą i naładowanym pierścieniem → kanał
       trwa, ładunek pierścienia spada skokowo.
 - [ ] **H7. Opisy.** Tooltipy trzech artefaktów many, Demonic Seala i `storage_upgrade` pokazują

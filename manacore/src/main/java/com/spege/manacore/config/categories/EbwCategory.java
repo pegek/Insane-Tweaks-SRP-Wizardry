@@ -99,17 +99,19 @@ public class EbwCategory {
     @Config.Comment({
             "How much mana stored in a reserve artefact pays for 1 mana of a spell. Read live.",
             "The artefacts keep their upstream capacities (500 / 1000 / 2500) - those are stored as",
-            "item damage, so shrinking them would leave charged stacks with negative mana. At 5, the",
-            "Majestic Mana Charm's 2500 is worth 500 pool mana."})
+            "item damage, so shrinking them would leave charged stacks with negative mana. At 3.75,",
+            "the Majestic Mana Charm's 2500 is worth ~667 pool mana. (Was 5 until 0.9.1; lowered for",
+            "a one-third buff, since a reserve only ever pays a difference the pool could not.)"})
     @Config.RangeDouble(min = 0.01D, max = 1000.0D)
-    public double fuelArtefactManaPerPoolMana = 5.0D;
+    public double fuelArtefactManaPerPoolMana = 3.75D;
 
     @Config.Comment({
             "How much mana one hunger point pays while the Demonic Seal (charm_hunger_casting) is",
-            "worn. Read live. 5 is EBW's own rate (cost / 5); a full hunger bar then covers 100 mana.",
-            "Hunger is drawn after reserve artefacts, rounded up, and never for continuous spells."})
+            "worn. Read live. EBW's own rate is 5 (cost / 5); 6.5 is that plus 30%, so a full hunger",
+            "bar covers 130 mana. Hunger is drawn after reserve artefacts, rounded up, and never for",
+            "continuous spells."})
     @Config.RangeDouble(min = 0.01D, max = 1000.0D)
-    public double hungerManaPerPoint = 5.0D;
+    public double hungerManaPerPoint = 6.5D;
 
     @Config.Comment({
             "How much maximum mana each level of the storage upgrade adds while the wand is held.",

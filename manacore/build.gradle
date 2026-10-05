@@ -8,7 +8,7 @@ repositories {
     mavenCentral()
 }
 
-version = '0.9.0'
+version = '0.9.1'
 group = 'com.spege.manacore'
 archivesBaseName = 'manacore'
 
