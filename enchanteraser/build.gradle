@@ -32,7 +32,7 @@ dependencies {
     // IIngredientBlacklist.addIngredientToBlacklist) name no Minecraft type, so nothing needs
     // remapping - same reasoning as srpwizcore's dldungeonsjbg. Runtime is HEI, whose IModPlugin has
     // extra methods; they are all `default`, so compiling against the older API is forward-compatible.
-    compileOnly files(rootProject.file('libs/jei_1.12.2-4.16.1.1013.jar'))
+    compileOnly 'curse.maven:jei-238222:5846804'
     implementation 'zone.rong:mixinbooter:7.1'
 }
 

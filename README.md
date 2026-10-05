@@ -26,7 +26,7 @@ Requires **JDK 8** and ForgeGradle 3 (targets Forge `1.12.2-14.23.5.2860`).
 ./gradlew runClient             # dev client (working dir ./run)
 ```
 
-Jars land in `<module>/build/libs/`, reobfuscated. Gradle has to run on JDK 8: set `org.gradle.java.home` in your **user** `~/.gradle/gradle.properties`, not in the repo's one. Most third-party mod jars are read from a local `libs/` folder, which is git-ignored.
+Jars land in `<module>/build/libs/`, reobfuscated. Gradle has to run on JDK 8: set `org.gradle.java.home` in your **user** `~/.gradle/gradle.properties`, not in the repo's one. Every third-party mod jar is resolved by Gradle from [CurseMaven](https://www.cursemaven.com) (`curse.maven:<slug>-<projectId>:<fileId>`), so a fresh clone builds without any local jars. Never commit a mod jar: most of them are All Rights Reserved.
 
 Version numbers are per-mod. Bumping a mod means editing its `build.gradle` (`version` + manifest `Specification-Version`), its `VERSION` constant, and its `mcmod.info`.
 

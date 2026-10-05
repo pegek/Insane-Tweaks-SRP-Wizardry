@@ -70,13 +70,30 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2860'
 
-    // Doomlike Dungeons stays srpwizcore-only (Builder null-map guard). Ice and Fire USED to be
-    // excluded here for the same reason, but the dragonsteel nunchaku need it: CompatLoadUtil
-    // comes from Ice and Fire and RLDragonsteel's DragonsteelHitEffect references its dragon
-    // entity types.
-    // JourneyMap is in libs for srpwizmixins alone (its meteor waypoints); nothing here needs it,
-    // and leaving a whole map mod on this compile classpath only invites accidental coupling.
-    implementation fg.deobf(fileTree(dir: rootProject.file('libs'), include: '*.jar', exclude: ['ElectroblobsWizardry-*.jar', 'dldungeonsjbg-*.jar', 'journeymap-*.jar']))
+    // Every mod this one names a type from, pinned to the exact CurseForge file the pack ships.
+    // Used to be a fileTree over a local, git-ignored libs/ folder; that classpath was whatever
+    // happened to sit in the folder, so a fresh clone could not build. Add a line here (and only
+    // here) when the code starts importing from another mod.
+    //   SRP            - parasite types, configs and events (most of the integration)
+    //   Ancient Spellcraft, Spartan Weaponry, Better Survival - spellblades, aegis, nunchaku
+    //   Ice and Fire   - CompatLoadUtil; RLDragonsteel's DragonsteelHitEffect names its dragons
+    //   RLDragonsteel  - the dragonsteel nunchaku
+    //   BaublesEX      - BaubleTypeEx and the bauble registries/attributes
+    //   Locks, JEI     - the optional LocksCompat and the JEI plugin
+    //   Morph Spell Pack (Rise of the Animagus) - one instanceof ILichSpell in NpcCastVetoArbiter;
+    //                    not in the pack, the check only runs when the mod is loaded
+    // Doomlike Dungeons and JourneyMap stay off this classpath on purpose (srpwizcore- and
+    // srpwizmixins-only), so nothing here can couple to them by accident.
+    implementation fg.deobf('curse.maven:scape-and-run-parasites-348025:8787918')
+    implementation fg.deobf('curse.maven:ancient-spellcraft-358124:8555709')
+    implementation fg.deobf('curse.maven:spartan-weaponry-278141:6839689')
+    implementation fg.deobf('curse.maven:better-survival-mod-260360:5729552')
+    implementation fg.deobf('curse.maven:iceandfire-rlcraft-888556:8350620')
+    implementation fg.deobf('curse.maven:rldragonsteel-1234346:7280687')
+    implementation fg.deobf('curse.maven:baubles-ex-1096600:8500331')
+    implementation fg.deobf('curse.maven:locks-253456:3568569')
+    compileOnly 'curse.maven:jei-238222:5846804'
+    compileOnly 'curse.maven:rise-of-the-animagus-690655:7266002'
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
 
     // Meteor placement guard: this mod hands srpwizmixins a ProtectedAreaProvider so the parasite

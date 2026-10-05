@@ -48,12 +48,11 @@ dependencies {
 
     // Reskillable - caly powod istnienia tego moda. Trait, Unlockable, Skill, PlayerData,
     // GuiSkillInfo, MessageLockUnlockable: typy stoja w sygnaturach, wiec musza byc deobf.
-    implementation fg.deobf(files(rootProject.file('libs/Reskillable-1.12.2-1.13.1.jar')))
+    implementation fg.deobf('curse.maven:reskillable-fork-976391:5117948')
 
     // Electroblob's Wizardry - traity magiczne (SpellCastEvent, Spell, SpellModifiers,
     // SpellType, ItemWizardArmour, IManaStoringItem) plus SummonDurationStat.
-    // Ciagniete z CurseMaven dokladnie tak, jak robi to content; ten jar jest w calym repo
-    // celowo wykluczony z libs/, wiec NIE dodawac go tam.
+    // Ta sama wspolrzedna CurseMaven co w content i reszcie modow.
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
 
     // 🚨 Jedyne w repo odstepstwo od reguly "zero zaleznosci od contentu" - patrz CLAUDE.md.
