@@ -43,6 +43,13 @@ public final class Config {
     public final ForgeConfigSpec.IntValue infectedSpellCount;
     public final ForgeConfigSpec.BooleanValue infectedAlwaysSpineVolley;
     public final ForgeConfigSpec.DoubleValue infectedWandDropChance;
+    public final ForgeConfigSpec.BooleanValue infectedEvolutionEnabled;
+    public final ForgeConfigSpec.DoubleValue infectedEvolveChance;
+    public final ForgeConfigSpec.ConfigValue<List<? extends String>> infectedEvolutions;
+    public final ForgeConfigSpec.DoubleValue mycomancerWardRadius;
+    public final ForgeConfigSpec.IntValue mycomancerWardInterval;
+    public final ForgeConfigSpec.IntValue mycomancerWardDuration;
+    public final ForgeConfigSpec.IntValue mycomancerWardAmplifier;
 
     // [spore]
     public final ForgeConfigSpec.BooleanValue sporeEnabled;
@@ -137,6 +144,29 @@ public final class Config {
         infectedWandDropChance = b
                 .comment("Chance the wizard drops the Redux wand it carries.")
                 .defineInRange("wandDropChance", 0.05, 0.0, 1.0);
+        infectedEvolutionEnabled = b
+                .comment("The wizard evolves like Spore's basic infected: after a kill and Spore's evolution timer",
+                         "(Spore config, section Evolutions) it turns into one of the types below.")
+                .define("evolutionEnabled", true);
+        infectedEvolveChance = b
+                .comment("Chance to evolve into a type from the list; otherwise a Scamper, as in Spore.")
+                .defineInRange("evolveChance", 0.9, 0.0, 1.0);
+        infectedEvolutions = b
+                .comment("Entity types the wizard can evolve into. Spore's evolved forms work too (e.g. spore:knight).",
+                         "Unknown ids are skipped with one log warning; an empty list always gives a Scamper.")
+                .defineListAllowEmpty("evolutions", List.of("ebreduxaddon:mycomancer"), Config::isString);
+        mycomancerWardRadius = b
+                .comment("Mycomancer: radius of the Mycelial Ward that grants Resistance to nearby infected.")
+                .defineInRange("wardRadius", 12.0, 0.0, 64.0);
+        mycomancerWardInterval = b
+                .comment("Ticks between two wards. Only while the Mycomancer has a target.")
+                .defineInRange("wardInterval", 200, 20, 12_000);
+        mycomancerWardDuration = b
+                .comment("Ticks of Resistance granted by one ward.")
+                .defineInRange("wardDuration", 120, 1, 12_000);
+        mycomancerWardAmplifier = b
+                .comment("Resistance level minus one (0 = Resistance I).")
+                .defineInRange("wardAmplifier", 0, 0, 4);
         b.pop();
 
         b.comment("Fungal Infection: Spore. Only identifiers are used, so these work with any Spore 2.x and",

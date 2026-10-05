@@ -4,7 +4,7 @@ Addon do [Electroblob's Wizardry Redux](https://modrinth.com/mod/electroblobs-wi
 inspirowany modem Insane Tweaks z 1.12.2: magia oczyszczania i pasożytów oraz sprzęt, który rośnie
 razem z graczem. Opcjonalnie współpracuje z [Fungal Infection: Spore](https://modrinth.com/mod/fungal-infectionspore).
 
-**Wersja:** 0.2.0. **Licencja:** GPL-3.0-only (jak Redux, po którym dziedziczy).
+**Wersja:** 0.3.0. **Licencja:** GPL-3.0-only (jak Redux, po którym dziedziczy).
 
 ## Wymagania
 
@@ -22,6 +22,7 @@ razem z graczem. Opcjonalnie współpracuje z [Fungal Infection: Spore](https://
 | **Purifying Pulse** (healing, master) | Fala: leczy ciebie i sojuszników, odpycha wrogów, oczyszcza teren Spore. |
 | **Symbiotic Wand → Sentient Wand** | Rośnie z wydaną maną, ewoluuje przy 6000; tańsze i dłuższe zaklęcia. |
 | **Zarażony mag** (ze Spore) | Mag Redux zmarły z Mycelium Infection wstaje jako członek roju; rzuca zaklęcia, tier rośnie z liczbą Hivemindów. |
+| **Mykomanta** (ze Spore) | Zarażony mag po zabójstwie i czasie ewolucji Spore staje się Mykomantą: master, więcej zaklęć, osłania rój Resistance. |
 | **Grafted → Sentient** (4 części) | Rośnie z przyjętymi obrażeniami, ewoluuje częściami; Last Stand przy pełnym zestawie. |
 
 Wszystkie liczby: `config/ebreduxaddon-common.toml` i `data/ebreduxaddon/spells/*.json` (datapack).
@@ -30,7 +31,7 @@ Wszystkie liczby: `config/ebreduxaddon-common.toml` i `data/ebreduxaddon/spells/
 
 ```bash
 ./gradlew check build                    # JUnit dla core + jar w build/libs
-./gradlew runGameTestServer              # 35 testów w świecie, sam Redux
+./gradlew runGameTestServer              # 42 testy w świecie, sam Redux
 ./gradlew runGameTestServer -PwithSpore  # to samo ze Spore
 tools/server-check.sh a|b|c <katalog>    # jar produkcyjny na serwerze dedykowanym
 tools/client-smoke.sh <świat> <katalog>  # klient pod Xvfb, zrzuty ekranu (SMOKE_WITH_SPORE=1: ze Spore)
@@ -40,7 +41,8 @@ Jary Redux i Spore pobiera Gradle z Maven Modrinth; nigdy nie trafiają do repo.
 
 ## Dokumenty
 
-- Spec: `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`, `docs/specs/2026-10-03-ebreduxaddon-v0.2-infected-wizard-design.md`
+- Spec: `docs/specs/2026-10-02-ebreduxaddon-v0.1-design.md`, `docs/specs/2026-10-03-ebreduxaddon-v0.2-infected-wizard-design.md`,
+  `docs/specs/2026-10-05-ebreduxaddon-v0.3-mycomancer-design.md`
 - Plan: `docs/plans/2026-10-02-ebreduxaddon-v0.1-plan.md`
 - Research (Spore, błąd Redux): `docs/research/2026-10-02-spore-and-landscape.md`
 - Testy w grze: `docs/in-game-checklist.md`

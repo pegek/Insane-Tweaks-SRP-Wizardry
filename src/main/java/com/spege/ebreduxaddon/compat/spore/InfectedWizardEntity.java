@@ -1,52 +1,50 @@
 package com.spege.ebreduxaddon.compat.spore;
 
 import com.Harbinger.Spore.Core.SConfig;
+import com.Harbinger.Spore.Core.Sentities;
 import com.Harbinger.Spore.ExtremelySusThings.SporeSavedData;
 import com.Harbinger.Spore.Sentities.BaseEntities.Infected;
+import com.Harbinger.Spore.Sentities.EvolvedInfected.Scamper;
+import com.Harbinger.Spore.Sentities.EvolvingInfected;
+import com.Harbinger.Spore.Sentities.Variants.ScamperVariants;
 import com.binaris.wizardry.api.content.entity.living.ISpellCaster;
 import com.binaris.wizardry.api.content.spell.Element;
 import com.binaris.wizardry.api.content.spell.Spell;
-import com.binaris.wizardry.api.content.spell.SpellContexts;
-import com.binaris.wizardry.api.content.spell.SpellTier;
-import com.binaris.wizardry.api.content.util.CastItemDataHelper;
-import com.binaris.wizardry.api.content.util.RegistryUtils;
 import com.binaris.wizardry.content.entity.goal.AttackSpellGoal;
 import com.binaris.wizardry.core.platform.Services;
-import com.binaris.wizardry.setup.registries.Elements;
-import com.binaris.wizardry.setup.registries.SpellTiers;
 import com.binaris.wizardry.setup.registries.Spells;
 import com.spege.ebreduxaddon.EbreduxAddon;
+import com.spege.ebreduxaddon.core.EvolutionPick;
 import com.spege.ebreduxaddon.core.InfectedTiers;
-import com.spege.ebreduxaddon.feature.ModSpells;
 import com.spege.ebreduxaddon.platform.Config;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Zarazony mag: mag Redux przejety przez Spore (spec 0.2). Dziedziczy po Infected, wiec jest czlonkiem
@@ -55,8 +53,11 @@ import java.util.List;
  *
  * <p>Powstaje z konwersji Spore (data/ebreduxaddon/spore_mob_conversion), ktora wola finalizeSpawn
  * z MobSpawnType.CONVERSION - tam losujemy zywiol, tier i zaklecia.
+ *
+ * <p>Od 0.3 to {@link EvolvingInfected}: zbiera punkty ewolucji jak kazdy podstawowy zarazony Spore
+ * i po czasie z configu Spore ewoluuje, domyslnie w Mykomante (spec 0.3).
  */
-public class InfectedWizardEntity extends Infected implements ISpellCaster {
+public class InfectedWizardEntity extends Infected implements ISpellCaster, EvolvingInfected {
 
     private static final EntityDataAccessor<String> CONTINUOUS_SPELL =
             SynchedEntityData.defineId(InfectedWizardEntity.class, EntityDataSerializers.STRING);
@@ -67,14 +68,10 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
 
     public static final int TEXTURE_COUNT = 6;
 
-    private final List<Spell> spells = new ArrayList<>();
-    private Element element = Elements.EARTH;
-    private int maxTier = InfectedTiers.APPRENTICE;
-    /**
-     * Czy zywiol, tier i zaklecia sa juz wylosowane. Osobna flaga zamiast "lista pusta": przy
-     * spellCount = 0 i bez Spine Volley pusta lista jest poprawnym wynikiem i nie moze losowac w kolko.
-     */
-    private boolean rolled;
+    /** Nieznane id z listy ewolucji, juz zalogowane - jedno ostrzezenie na id, nie co ewolucje. */
+    private static final Set<String> WARNED = new HashSet<>();
+
+    private final WizardLoadout loadout = new WizardLoadout();
 
     public InfectedWizardEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -115,7 +112,7 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty,
                                         @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag tag) {
         this.entityData.set(TEXTURE_INDEX, this.random.nextInt(TEXTURE_COUNT));
-        if (!rolled) {
+        if (!loadout.rolled()) {
             roll(level.getLevel());
         }
         return super.finalizeSpawn(level, difficulty, reason, data, tag);
@@ -127,47 +124,23 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
      */
     @Override
     public void tick() {
-        if (!rolled && this.level() instanceof ServerLevel server) {
+        if (!loadout.rolled() && this.level() instanceof ServerLevel server) {
             this.entityData.set(TEXTURE_INDEX, this.random.nextInt(TEXTURE_COUNT));
             roll(server);
         }
         super.tick();
+        if (!this.level().isClientSide && this.isAlive() && Config.INSTANCE.infectedEvolutionEnabled.get()) {
+            // Lista idzie do naszego Evolve; ScamperVariants.VILLAGER jak u wiedzmy Spore (ludzka sylwetka).
+            this.tickEvolution(this, Config.INSTANCE.infectedEvolutions.get(), ScamperVariants.VILLAGER);
+        }
     }
 
     /** Losuje zywiol, tier i zaklecia. Publiczne dla GameTestow. */
     public void roll(ServerLevel level) {
-        List<Element> elements = new ArrayList<>(Services.REGISTRY_UTIL.getElements());
-        elements.remove(Elements.MAGIC);
-        elements.remove(Elements.HEALING);
-        this.element = elements.isEmpty() ? Elements.EARTH : elements.get(this.random.nextInt(elements.size()));
-        this.maxTier = InfectedTiers.maxTier(hiveminds(level), protoThreshold(), this.random.nextDouble());
-
-        spells.clear();
-        SpellTier cap = tierOf(maxTier);
-        List<Spell> pool = RegistryUtils.getSpells(spell -> spell.getElement() == element
-                && spell.getTier().getLevel() <= cap.getLevel()
-                && spell.canCastByEntity()
-                && spell.isEnabled(SpellContexts.NPCS));
-        int wanted = Config.INSTANCE.infectedSpellCount.get();
-        while (spells.size() < wanted && !pool.isEmpty()) {
-            spells.add(pool.remove(this.random.nextInt(pool.size())));
-        }
-        if (Config.INSTANCE.infectedAlwaysSpineVolley.get() && !spells.contains(ModSpells.SPINE_VOLLEY.get())) {
-            spells.add(ModSpells.SPINE_VOLLEY.get());
-        }
-        equipWand(cap);
-        this.rolled = true;
-    }
-
-    private void equipWand(SpellTier tier) {
-        Item item = RegistryUtils.getWand(tier, element);
-        if (item == Items.AIR) {
-            return;
-        }
-        ItemStack wand = new ItemStack(item);
-        CastItemDataHelper.setSpells(wand, spells);
-        this.setItemSlot(EquipmentSlot.MAINHAND, wand);
-        this.setDropChance(EquipmentSlot.MAINHAND, Config.INSTANCE.infectedWandDropChance.get().floatValue());
+        int tier = InfectedTiers.maxTier(hiveminds(level), protoThreshold(), this.random.nextDouble());
+        loadout.roll(this.random, tier, Config.INSTANCE.infectedSpellCount.get(),
+                Config.INSTANCE.infectedAlwaysSpineVolley.get());
+        loadout.equipWand(this, Config.INSTANCE.infectedWandDropChance.get().floatValue());
     }
 
     private static int hiveminds(ServerLevel level) {
@@ -186,19 +159,89 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
         }
     }
 
-    static SpellTier tierOf(int tier) {
-        return switch (tier) {
-            case InfectedTiers.MASTER -> SpellTiers.MASTER;
-            case InfectedTiers.ADVANCED -> SpellTiers.ADVANCED;
-            default -> SpellTiers.APPRENTICE;
-        };
+    // ------------------------------------------------------------------ ewolucja
+
+    /**
+     * Zamiast domyslnego Evolve Spore: ta sama regula (z szansa typ z listy, inaczej Scamper) i to
+     * samo przeniesienie stanu, ale Mykomanta dostaje zywiol i zaklecia maga PRZED finalizeSpawn,
+     * zeby nie losowala ich od nowa. Domyslne Evolve wywala sie tez na nieznanym id z listy.
+     */
+    @Override
+    public void Evolve(Infected self, List<? extends String> ids, ScamperVariants variant) {
+        if (!(this.level() instanceof ServerLevel server) || this.isRemoved()) {
+            return;
+        }
+        List<EntityType<?>> types = resolveEvolutions(ids);
+        int pick = EvolutionPick.choose(this.random.nextDouble(), Config.INSTANCE.infectedEvolveChance.get(),
+                types.size(), this.random.nextDouble());
+        Entity next;
+        if (pick == EvolutionPick.SCAMPER) {
+            Scamper scamper = new Scamper(Sentities.SCAMPER.get(), server);
+            scamper.setVariant(variant);
+            next = scamper;
+        } else {
+            next = types.get(pick).create(server);
+        }
+        if (next == null) {
+            return;
+        }
+        evolveInto(server, next, pick != EvolutionPick.SCAMPER);
+    }
+
+    /** Przeniesienie stanu jak w EvolvingInfected.Evolve (Spore 2.2.0j). Publiczne dla GameTestow. */
+    public void evolveInto(ServerLevel server, Entity next, boolean finalize) {
+        next.moveTo(this.getX(), this.getY() + 0.5, this.getZ(), this.getYRot(), this.getXRot());
+        next.setCustomName(this.getCustomName());
+        if (next instanceof LivingEntity living) {
+            for (MobEffectInstance effect : this.getActiveEffects()) {
+                living.addEffect(new MobEffectInstance(effect));
+            }
+        }
+        if (next instanceof Infected infected) {
+            infected.setKills(this.getKills());
+            infected.setEvoPoints(this.getEvoPoints());
+            infected.setSearchPos(this.getSearchPos());
+            infected.setLinked(this.getLinked());
+        }
+        if (next instanceof MycomancerEntity mycomancer) {
+            mycomancer.inheritFrom(this);
+        }
+        if (finalize && next instanceof Infected infected) {
+            infected.finalizeSpawn(server, server.getCurrentDifficultyAt(this.blockPosition()),
+                    MobSpawnType.CONVERSION, null, null);
+        }
+        server.addFreshEntity(next);
+        this.discard();
+        server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, this.getX(), this.getY() + 0.5, this.getZ(),
+                2, 0.0, 0.0, 0.0, 1.0);
+    }
+
+    /**
+     * Typy z listy ewolucji; nieznane id pomija z jednym ostrzezeniem. Wolane tez na starcie serwera
+     * (SporeContent), zeby literowka w configu byla w logu startu, a nie przy pierwszej ewolucji.
+     */
+    static List<EntityType<?>> resolveEvolutions(List<? extends String> ids) {
+        List<EntityType<?>> types = new ArrayList<>();
+        for (String id : ids) {
+            ResourceLocation key = ResourceLocation.tryParse(id);
+            EntityType<?> type = key == null ? null : ForgeRegistries.ENTITY_TYPES.getValue(key);
+            // getValue zwraca domyslny typ (pig) dla nieznanego klucza, stad containsKey.
+            if (type == null || !ForgeRegistries.ENTITY_TYPES.containsKey(key)) {
+                if (WARNED.add(id)) {
+                    EbreduxAddon.LOGGER.warn("[EbreduxAddon] config infectedWizard.evolutions: unknown entity '{}', skipped", id);
+                }
+                continue;
+            }
+            types.add(type);
+        }
+        return types;
     }
 
     // ------------------------------------------------------------------ ISpellCaster
 
     @Override
     public @NotNull List<Spell> getSpells() {
-        return spells;
+        return loadout.spells();
     }
 
     @Override
@@ -222,16 +265,20 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
         this.entityData.set(SPELL_COUNTER, count);
     }
 
+    WizardLoadout loadout() {
+        return loadout;
+    }
+
     public Element getElement() {
-        return element;
+        return loadout.element();
     }
 
     public int getMaxTier() {
-        return maxTier;
+        return loadout.maxTier();
     }
 
     public boolean isRolled() {
-        return rolled;
+        return loadout.rolled();
     }
 
     public int getTextureIndex() {
@@ -256,33 +303,14 @@ public class InfectedWizardEntity extends Infected implements ISpellCaster {
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putString("ebreduxaddon:element", element.getLocation().toString());
-        tag.putInt("ebreduxaddon:max_tier", maxTier);
+        loadout.save(tag);
         tag.putInt("ebreduxaddon:texture", getTextureIndex());
-        tag.putBoolean("ebreduxaddon:rolled", rolled);
-        ListTag list = new ListTag();
-        spells.forEach(s -> list.add(StringTag.valueOf(s.getLocation().toString())));
-        tag.put("ebreduxaddon:spells", list);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        Element saved = Services.REGISTRY_UTIL.getElement(ResourceLocation.tryParse(tag.getString("ebreduxaddon:element")));
-        if (saved != null) {
-            this.element = saved;
-        }
-        this.maxTier = Math.max(InfectedTiers.APPRENTICE, Math.min(InfectedTiers.MASTER, tag.getInt("ebreduxaddon:max_tier")));
+        loadout.load(tag);
         this.entityData.set(TEXTURE_INDEX, tag.getInt("ebreduxaddon:texture"));
-        this.rolled = tag.getBoolean("ebreduxaddon:rolled");
-        spells.clear();
-        for (Tag t : tag.getList("ebreduxaddon:spells", Tag.TAG_STRING)) {
-            Spell spell = Services.REGISTRY_UTIL.getSpell(ResourceLocation.tryParse(t.getAsString()));
-            if (spell != null && spell != Spells.NONE) {
-                spells.add(spell);
-            } else {
-                EbreduxAddon.LOGGER.debug("[EbreduxAddon] infected wizard: dropping unknown spell {}", t.getAsString());
-            }
-        }
     }
 }

@@ -4,6 +4,10 @@
     {
       "id": "ebreduxaddon:infected_wizard",
       "required": false
+    },
+    {
+      "id": "ebreduxaddon:mycomancer",
+      "required": false
     }
   ]
 }

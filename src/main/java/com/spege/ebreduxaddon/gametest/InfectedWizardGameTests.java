@@ -12,7 +12,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import static com.spege.ebreduxaddon.gametest.CleanseGameTests.EMPTY;
 
 /**
- * Zarazony mag. Bez Spore kazdy test sprawdza tylko, ze moba nie ma, i konczy sie sukcesem. Ciala ze
+ * Zarazony mag i Mykomanta. Bez Spore kazdy test sprawdza tylko, ze moba nie ma, i konczy sie sukcesem. Ciala ze
  * Spore sa w compat.spore.SporeGameTestBodies - ta klasa nie moze nazywac typow Spore.
  */
 @GameTestHolder(EbreduxAddon.MODID)
@@ -28,6 +28,8 @@ public final class InfectedWizardGameTests {
         }
         helper.assertFalse(ForgeRegistries.ENTITY_TYPES.containsKey(EbreduxAddon.id("infected_wizard")),
                 "infected_wizard registered without Spore");
+        helper.assertFalse(ForgeRegistries.ENTITY_TYPES.containsKey(EbreduxAddon.id("mycomancer")),
+                "mycomancer registered without Spore");
         helper.succeed();
         return true;
     }
@@ -71,6 +73,55 @@ public final class InfectedWizardGameTests {
     public static void saveAndLoadKeepsTheRoll(GameTestHelper helper) {
         if (!skipWithoutSpore(helper)) {
             SporeGameTestBodies.saveAndLoadKeepsTheRoll(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY, timeoutTicks = 60)
+    public static void evolutionFiresOnSporesTimer(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.evolutionFiresOnSporesTimer(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY)
+    public static void evolutionKeepsLoadoutAndSporeState(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.evolutionKeepsLoadoutAndSporeState(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY)
+    public static void wardShieldsTheHiveOnly(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.wardShieldsTheHiveOnly(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY, timeoutTicks = 40)
+    public static void mycomancerSummonRollsAsMaster(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.mycomancerSummonRollsAsMaster(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY)
+    public static void mycomancerSaveAndLoad(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.mycomancerSaveAndLoad(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY, timeoutTicks = 400)
+    public static void mycomancerCastsAtTarget(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.mycomancerCastsAtTarget(helper);
+        }
+    }
+
+    @GameTest(template = EMPTY)
+    public static void hiveAndMycomancerAreAllies(GameTestHelper helper) {
+        if (!skipWithoutSpore(helper)) {
+            SporeGameTestBodies.hiveAndMycomancerAreAllies(helper);
         }
     }
 }

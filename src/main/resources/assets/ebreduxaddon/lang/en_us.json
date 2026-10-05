@@ -29,5 +29,7 @@
   "message.ebreduxaddon.armor_evolved": "Your armour has become sentient.",
   "itemGroup.ebreduxaddon": "EbreduxAddon",
   "entity.ebreduxaddon.infected_wizard": "Infected Wizard",
-  "item.ebreduxaddon.infected_wizard_spawn_egg": "Infected Wizard Spawn Egg"
+  "item.ebreduxaddon.infected_wizard_spawn_egg": "Infected Wizard Spawn Egg",
+  "entity.ebreduxaddon.mycomancer": "Mycomancer",
+  "item.ebreduxaddon.mycomancer_spawn_egg": "Mycomancer Spawn Egg"
 }

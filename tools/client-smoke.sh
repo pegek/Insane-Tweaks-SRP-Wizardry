@@ -28,7 +28,7 @@ gradle_extra=()
 if [ "${SMOKE_WITH_SPORE:-0}" = 1 ]; then
     gradle_extra=(-PwithSpore)
     cp "$repo/tools/smoke-pack/setup_spore.mcfunction" "$pack/data/ebtest/functions/setup_spore.mcfunction"
-    sed -i 's/^say ebtest:setup done$/function ebtest:setup_spore\nsay ebtest:setup done/' "$pack/data/ebtest/functions/setup.mcfunction"
+    sed -i 's/^say ebtest:setup done$/function ebtest:setup_spore\nsay ebtest:setup done/' "$pack/data/ebtest/functions/build.mcfunction"
 fi
 # Bez samouczka i ekranow powitalnych, mniejsze ustawienia dla programowego renderera.
 cat >"$repo/run-smoke/options.txt" <<OPT
