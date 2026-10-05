@@ -67,7 +67,7 @@ Autor wybrał **własny spawn w strefach skażenia**. Dopóki go nie ma, ekonomi
 zapasowej, która jest celowo gorsza od dropu.
 
 W tej samej sesji: tiery i siła (czy master faktycznie jest groźny), AI, oraz które zaklęcia rzucają
-— dziś **11 z 14 naszych zaklęć ma `npcs: false`**, więc sim wizard nie używa własnego żywiołu.
+— dziś **10 z 13 naszych zaklęć ma `npcs: false`** (14. był `test_projectile`, usunięty w 1.20.3), więc sim wizard nie używa własnego żywiołu.
 Otwarcie tego mocno zmienia trudność i jest osobną decyzją projektową.
 
 ### D. `living_warlock_armour` — furtka już otwarta
@@ -156,10 +156,10 @@ końca.
 - **`mixins.insanetweaks.altarguard.json` ma `required: true`,** w odróżnieniu od `late.json`.
   To celowe: guard jest jedynym mixinem, którego ciche zniknięcie **samo w sobie jest crashem**.
   Zmiana w EBW ma być głośnym błędem z naszą nazwą, nie `ClassCastException` w cudzym kodzie.
-- **Trzy tablice lootu sim wizardów zaszywają metadaną `8`,** bo JSON nie umie policzyć
-  `ABOMINATION.ordinal()`; receptury czytają ordinal i celowo tego nie zaszywają. Jeśli paczka
-  kiedykolwiek dostanie drugi mod dodający żywioł, **receptury pójdą za nowym ordinalem, a dropy
-  nie** — te trzy pliki są pierwszym miejscem do sprawdzenia.
+- ~~**Trzy tablice lootu sim wizardów zaszywają metadaną `8`.**~~ *Naprawione w 1.20.3:* zamiast
+  `set_data 8` jest funkcja `insanetweaks:abomination_meta` (`util/AbominationMetaLootFunction`),
+  która czyta `ABOMINATION.ordinal()` tak jak receptury. 🚨 Musi być **ostatnią** funkcją wpisu:
+  bez żywiołu zeruje stos, a późniejszy `set_count`/`looting_enchant` by go wskrzesił.
 - **`NativeElements` to jedyny punkt rozszerzenia.** Zwraca żywioły EBW minus abominacja i jest tym,
   czym zwężamy podtypy i generatory. Drugi własny żywioł musi tam dojść, inaczej wraca crash
   pedestału.
@@ -178,7 +178,7 @@ końca.
 - **Pula ksiąg jest jednorodna tierowo.** Z 12 kwalifikujących się zaklęć **11 jest na master**,
   a `immune_bond` jest jedynym `advanced` — więc będzie nieproporcjonalnie rzadki. Nie błąd, ale
   jeśli chcesz zróżnicować łupy z niższych tierów, tu jest przyczyna.
-- **`npcs: false` na 11 z 14 zaklęć** — patrz punkt C.
+- **`npcs: false` na 10 z 13 zaklęć** — patrz punkt C.
 
 ---
 
