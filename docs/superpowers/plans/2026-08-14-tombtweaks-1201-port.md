@@ -188,6 +188,13 @@ dependencies {
 
     // Tombstone: deobf jest konieczny, bo referencje do MC w jego bajtkodzie sa SRG-owe.
     implementation fg.deobf(files('libs/tombstone-1.20.1-9.1.4.jar'))
+    // ^ BLAD PLANU: fg.deobf(files(...)) to skladnia FG3, na FG6 cicho nic nie robi.
+    //   W repo: maven CurseMaven + fg.deobf('curse.maven:corail-tombstone-243707:8606942').
+
+    // BRAKOWALO W PLANIE (wykryte 2026-10-02 po Taskach 12-13): MixinGradle 0.7 NIE dodaje
+    // procesora adnotacji sam. Bez tej linii jar nie ma refmapy, a redirect na `use`
+    // wywala gre w prawdziwej instancji (runClient tego nie pokaze).
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -689,6 +696,8 @@ git commit -m "feat(core): ItemKey, SlotEntry i SlotSnapshot - plan miejsc zamia
 ---
 
 ## Task 4: `core` — dopasowanie trójstopniowe
+
+> **Zastąpione po recenzji `core` (2026-10-02).** Poniższe `claimSeat` dopasowywało zachłannie, przedmiot po przedmiocie, i przedmiot z rozjechanym hashem NBT mógł zająć miejsce, które późniejszy przedmiot trafiał dokładnie. Realny wyzwalacz w Tombstone 9.1.4: druga śmierć w promieniu 20 bloków od nieodebranego grobu **scala się z nim** (`findExistingGraveLocation` + `resetDeathTime()`), więc grób zawiera przedmioty z dwóch śmierci, a wiąże się tylko ze snapshotem ostatniej. Obowiązujące API to statyczne `SlotPlan.assign(snapshot, graveKeys, seatFree)` — dwa przebiegi po całym grobie (najpierw wszystkie dopasowania dokładne, potem awaryjne), a zajęte sloty gracza nie biorą udziału w dopasowaniu. Task 11 jest już przepisany pod nowe API. Kod poniżej zostaje jako zapis historyczny.
 
 **Files:**
 - Create: `src/main/java/com/spege/tombtweaks/core/SlotPlan.java`
@@ -2197,6 +2206,7 @@ public final class SnapshotCaptureHandler {
 package com.spege.tombtweaks.feature.restore;
 
 import com.spege.tombtweaks.TombTweaks;
+import com.spege.tombtweaks.core.ItemKey;
 import com.spege.tombtweaks.core.SlotPlan;
 import com.spege.tombtweaks.core.SlotSnapshot;
 import com.spege.tombtweaks.core.SnapshotStore;
@@ -2211,6 +2221,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.IItemHandler;
 import ovh.corail.tombstone.api.event.RestoreInventoryEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Odklada zawartosc odzyskanego grobu tam, skad przyszla.
  *
@@ -2219,8 +2232,13 @@ import ovh.corail.tombstone.api.event.RestoreInventoryEvent;
  * rozdzialu. Dostajemy zywy ItemStackHandler grobu, wiec przedmiot wyjety tutaj po prostu
  * nie istnieje dla sciezki standardowej.
  *
- * <p>Kazde wstawienie jest warunkowe na tym, ze docelowy slot jest pusty. Dzieki temu
- * najgorszym przypadkiem jest zachowanie standardowe, nigdy zgubiony ani zduplikowany przedmiot.
+ * <p>Rozsadzenie liczy {@link SlotPlan#assign} dla calego grobu naraz (dwa przebiegi), bo
+ * Tombstone scala groby: druga smierc w promieniu 20 blokow dorzuca przedmioty do starego
+ * grobu, a ten wiaze sie tylko ze snapshotem ostatniej smierci.
+ *
+ * <p>Kazde wstawienie jest warunkowe na tym, ze docelowy slot jest pusty, sprawdzone ponownie
+ * tuz przed wstawieniem. To ten warunek - nie {@code NO_SEAT} - gwarantuje, ze najgorszym
+ * przypadkiem jest zachowanie standardowe, nigdy zgubiony ani zdublowany przedmiot.
  */
 @Mod.EventBusSubscriber(modid = TombTweaks.MODID)
 public final class SlotRestoreHandler {
@@ -2252,18 +2270,25 @@ public final class SlotRestoreHandler {
         }
         SnapshotCodec.save(player, store);
 
-        SlotPlan plan = new SlotPlan(snapshot);
         IItemHandler grave = event.getInventory();
         Inventory inventory = player.getInventory();
-        int seated = 0;
 
+        List<ItemKey> graveKeys = new ArrayList<>(grave.getSlots());
         for (int i = 0; i < grave.getSlots(); i++) {
             ItemStack inGrave = grave.getStackInSlot(i);
-            if (inGrave.isEmpty()) {
+            graveKeys.add(inGrave.isEmpty() ? null : StackViews.keyOf(inGrave));
+        }
+        int[] seats = SlotPlan.assign(snapshot, graveKeys, seat -> isSeatFree(inventory, seat));
+
+        int seated = 0;
+        for (int i = 0; i < seats.length; i++) {
+            int seat = seats[i];
+            // Ponowne sprawdzenie to warunek niezmiennika, nie ostroznosc na zapas.
+            if (seat == SlotPlan.NO_SEAT || !isSeatFree(inventory, seat)) {
                 continue;
             }
-            int seat = plan.claimSeat(StackViews.keyOf(inGrave));
-            if (seat == SlotPlan.NO_SEAT || !isSeatFree(inventory, seat)) {
+            ItemStack inGrave = grave.getStackInSlot(i);
+            if (inGrave.isEmpty()) {
                 continue;
             }
             ItemStack taken = grave.extractItem(i, inGrave.getCount(), false);
@@ -2447,7 +2472,6 @@ public final class GraveDecayService {
     private GraveDecayService() {
     }
 
-    @SuppressWarnings("unchecked")
     public static void tick(Level level, BlockPos pos, BlockEntityPlayerGrave grave) {
         if (level == null || level.isClientSide()) {
             return;
@@ -2466,11 +2490,13 @@ public final class GraveDecayService {
             return;
         }
 
+        // ProtectionRules.of przyjmuje List<?> i sam pomija null oraz nie-Stringi,
+        // wiec wartosci z configu ida wprost, bez rzutowania.
         ProtectionRules rules = ProtectionRules.of(
-                (List<String>) Config.INSTANCE.decayProtectedItems.get(),
-                (List<String>) Config.INSTANCE.decayProtectedItemPrefixes.get(),
-                (List<String>) Config.INSTANCE.decayProtectedEnchantments.get(),
-                (List<String>) Config.INSTANCE.decayProtectedNbtStrings.get());
+                Config.INSTANCE.decayProtectedItems.get(),
+                Config.INSTANCE.decayProtectedItemPrefixes.get(),
+                Config.INSTANCE.decayProtectedEnchantments.get(),
+                Config.INSTANCE.decayProtectedNbtStrings.get());
 
         List<Integer> unprotected = new ArrayList<>();
         List<Integer> guarded = new ArrayList<>();
@@ -2497,6 +2523,12 @@ public final class GraveDecayService {
         if (lost.isEmpty()) {
             return;
         }
+        // Inwentarz grobu to gole ItemStackHandler bez onContentsChanged - samo wyjecie NIE
+        // oznacza block entity jako zmienionego. Bez tego chunk moze sie zapisac ze starym
+        // stanem grobu, a wyrzucony przedmiot (encja, zapisywana osobno) przetrwa restart:
+        // po wczytaniu jest i na ziemi, i z powrotem w grobie. Duplikacja.
+        // (Dopisane 2026-10-02 po sprawdzeniu bajtkodu konstruktora BlockEntityPlayerGrave.)
+        grave.setChanged();
 
         Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, lost);
         DecayHistory.record(level, pos, grave.getOwnerId(), lost);
@@ -2564,6 +2596,8 @@ git commit -m "feat(decay): rozklad grobu na wlasnym tickerze, bezstanowy harmon
 
 ## Task 13: Feature — cooldowny ksiąg
 
+> **Poprawka 2026-10-02 — kod poniżej jest częściowo nieaktualny.** Cooldown był kluczowany po `StackViews.idOf(stack)` i startowany *po* udanym `setEnchant`. Księga zużywa się przy użyciu, a pusty `ItemStack` w 1.20.1 raportuje swój item jako `minecraft:air` — dla pojedynczej księgi cooldown po cichu by nie wystartował. W implementacji kluczem jest **sam `Item` księgi**: `(Item) (Object) this` w `MixinItemBook` i receiver `ISoulConsumer` (sprawdzony `instanceof Item`) w `MixinBlockDecorativeGrave`. `BookCooldownService.remaining/start` przyjmują `Item`, a `StackViews` dostało przeciążenie `idOf(Item)`.
+
 **Files:**
 - Create: `src/main/java/com/spege/tombtweaks/feature/cooldown/BookCooldownService.java`
 - Create: `src/main/java/com/spege/tombtweaks/mixin/MixinItemBook.java`
@@ -2598,8 +2632,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.List;
-
 /** Odczyt i zapis cooldownu jednej ksiegi. Zegar scienny, ta sama skala co Tombstone. */
 public final class BookCooldownService {
 
@@ -2608,9 +2640,8 @@ public final class BookCooldownService {
     private BookCooldownService() {
     }
 
-    @SuppressWarnings("unchecked")
     private static CooldownRules rules() {
-        return CooldownRules.parse((List<String>) Config.INSTANCE.cooldownBooks.get());
+        return CooldownRules.parse(Config.INSTANCE.cooldownBooks.get());
     }
 
     /** @return ile ms zostalo, 0 gdy wolne albo gdy feature jest wylaczony */
