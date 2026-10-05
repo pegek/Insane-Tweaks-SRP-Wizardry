@@ -58,6 +58,20 @@ public class TombstoneCategory {
     public boolean disableEnchantKeyRecipe = true;
 
     @Config.Comment({
+            "Whether the grave keys you are carrying stay with you when you die.",
+            "Tombstone treats every grave key as soulbound no matter what - with or without the",
+            "Soulbound enchantment, and even when Soulbound is disabled in Tombstone's own config.",
+            "true  = Tombstone's behaviour: carried keys survive every death.",
+            "false = keys are immune to Soulbound: carried keys go into the new grave like any other",
+            "        item (even with the enchantment on them), and an anvil refuses to put Soulbound",
+            "        on a key, so nobody wastes a book. The key to the grave you just made is still",
+            "        handed to you as usual.",
+            "Read live - no restart needed."
+    })
+    @Config.Name("Grave Keys Survive Death")
+    public boolean graveKeysSurviveDeath = true;
+
+    @Config.Comment({
             "Adds a Knowledge of Death tab under Reskillable's inventory tabs, opening Tombstone's",
             "perk tree without the keybind. Needs both Reskillable and Tombstone; also follows",
             "Reskillable's own \"Enable Reskillable Tabs\" switch."
