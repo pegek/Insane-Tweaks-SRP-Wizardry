@@ -31,20 +31,29 @@ import net.minecraftforge.fml.relauncher.Side;
  * flipping it would break the swap silently, with nothing in the log. Syntax verified against
  * AkashicTome, Quark and unseens-nether-backport, which all use {@code required-before:}.
  *
- * <p>{@code required-after:insanetweaks} because {@link com.spege.reskilltweaks.skills.TraitGateProvider}
- * implements an interface from it. That dependency is this repo's one deliberate exception to
- * "extracted mods never depend on content" — see CLAUDE.md and the comment in {@code build.gradle}.
+ * <h3>Everything but Reskillable is optional (1.2.0)</h3>
+ * Electroblob's Wizardry, Scape and Run: Parasites and Insane Tweaks are all {@code after:}, never
+ * {@code required-after:}. Each one's traits are simply left out of the skill tree when it is
+ * absent ({@link com.spege.reskilltweaks.skills.SkillsModule}), and each one's code sits in a class
+ * nothing loads unless the mod is there: {@link com.spege.reskilltweaks.skills.WizardrySkillsHandler},
+ * {@link com.spege.reskilltweaks.skills.ScarredFleshHandler} and
+ * {@link com.spege.reskilltweaks.skills.InsaneTweaksBridge}. Before 1.2.0 Insane Tweaks was
+ * required, and since that mod itself requires Wizardry, Spartan Weaponry, Ancient Spellcraft and
+ * SRP, wanting the traits meant installing the whole stack.
+ *
+ * <p>The Insane Tweaks link is still this repo's one deliberate exception to "extracted mods never
+ * depend on content" - now an optional one. See CLAUDE.md and the comment in {@code build.gradle}.
  */
 @Mod(modid = ReskillTweaks.MODID,
         name = ReskillTweaks.NAME,
         version = ReskillTweaks.VERSION,
-        dependencies = "required-after:insanetweaks;required-after:ebwizardry;required-before:reskillable;after:srparasites",
+        dependencies = "required-before:reskillable;after:insanetweaks;after:ebwizardry;after:srparasites",
         acceptableRemoteVersions = "*")
 public class ReskillTweaks {
 
     public static final String MODID = "reskilltweaks";
     public static final String NAME = "Reskill Tweaks";
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.2.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -70,15 +79,24 @@ public class ReskillTweaks {
         MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.skills.AdaptedVegetationSkill());
         MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.skills.StoneFistsHandler());
 
-        if (Loader.isModLoaded("srparasites")) {
+        // Each 'new X()' below goes straight into register(Object), so the verifier never loads X
+        // while linking this class - the Loader check in front of it is enough on its own.
+        if (Loader.isModLoaded(com.spege.reskilltweaks.skills.SkillsModule.WIZARDRY)) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.skills.WizardrySkillsHandler());
+        }
+
+        if (Loader.isModLoaded(com.spege.reskilltweaks.skills.SkillsModule.PARASITES)) {
             MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.skills.ScarredFleshHandler());
         }
 
         // Hand Insane Tweaks its answers for Coiled Spring and Assimilated Warfare. Until this
         // runs, TraitGate answers false for everything, which is what makes the core safe to ship
-        // without this mod.
-        com.spege.insanetweaks.api.TraitGate.setProvider(new com.spege.reskilltweaks.skills.TraitGateProvider());
-        LOGGER.info("[ReskillTweaks] Trait gate armed for Insane Tweaks (charge jump, parasite XP fallback).");
+        // without this mod. 🚨 Through InsaneTweaksBridge, never inline - see that class for why an
+        // inlined call breaks this class on a pack without Insane Tweaks despite the check.
+        if (Loader.isModLoaded(com.spege.reskilltweaks.skills.SkillsModule.INSANE_TWEAKS)) {
+            com.spege.reskilltweaks.skills.InsaneTweaksBridge.arm();
+            LOGGER.info("[ReskillTweaks] Trait gate armed for Insane Tweaks (charge jump, parasite XP fallback).");
+        }
 
         // 🚨 ReskillableGuiHandler carries a CLASS-level @SideOnly(Side.CLIENT), which makes
         // 'new ReskillableGuiHandler()' fatal on a dedicated server regardless of what the class
@@ -86,6 +104,13 @@ public class ReskillTweaks {
         if (event.getSide() == Side.CLIENT
                 && com.spege.reskilltweaks.config.ReskillTweaksConfig.modules.enableGuiRefundFallback) {
             MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.client.ReskillableGuiHandler());
+        }
+
+        // Same class-level @SideOnly(Side.CLIENT) as above, same load-bearing side check. Registered
+        // unconditionally on the client: it does nothing unless preInit skipped the swap for want
+        // of a choice.
+        if (event.getSide() == Side.CLIENT) {
+            MinecraftForge.EVENT_BUS.register(new com.spege.reskilltweaks.client.ReskillableConfigPromptHandler());
         }
 
         LOGGER.info("[ReskillTweaks] Reskillable traits module enabled.");

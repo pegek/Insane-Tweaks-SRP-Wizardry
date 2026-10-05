@@ -11,7 +11,7 @@ repositories {
     maven { url = 'https://www.cursemaven.com' }
 }
 
-version = '1.1.0'
+version = '1.2.0'
 group = 'com.spege.reskilltweaks'
 archivesBaseName = 'reskilltweaks'
 
@@ -52,11 +52,17 @@ dependencies {
 
     // Electroblob's Wizardry - traity magiczne (SpellCastEvent, Spell, SpellModifiers,
     // SpellType, ItemWizardArmour, IManaStoringItem) plus SummonDurationStat.
+    // Od 1.2.0 w RUNTIME opcjonalny: caly kod EBW siedzi w WizardrySkillsHandler +
+    // SummonDurationStat, rejestrowanych tylko przy zaladowanym ebwizardry. Nie wolno
+    // wstawic typu EBW do sygnatury metody publicznej zadnego innego handlera - patrz
+    // javadoc WizardrySkillsHandler.
     // Ciagniete z CurseMaven dokladnie tak, jak robi to content; ten jar jest w calym repo
     // celowo wykluczony z libs/, wiec NIE dodawac go tam.
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
 
     // 🚨 Jedyne w repo odstepstwo od reguly "zero zaleznosci od contentu" - patrz CLAUDE.md.
+    // Od 1.2.0 w RUNTIME opcjonalne ('after:insanetweaks'): jedyne odwolanie do contentu idzie
+    // przez skills/InsaneTweaksBridge, wolany tylko przy zaladowanym insanetweaks.
     // Powod: charge jump zostaje w insanetweaks (PacketChargeJump to dyskryminator 5 na
     // kanale 'insanetweaks', przeniesienie = nowy kanal), ale bramkuje sie na tracie
     // Coiled Spring, ktory jest tutaj. Content wystawia wiec fasade api/TraitGate bez ani

@@ -1,7 +1,10 @@
 package com.spege.reskilltweaks.config;
 
 import com.spege.reskilltweaks.ReskillTweaks;
+import com.spege.reskilltweaks.config.categories.ModulesCategory;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -25,7 +28,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Deploys the bundled optimized reskillable.cfg during preInit.
+ * Deploys the bundled optimized reskillable.cfg during preInit - if
+ * {@link ModulesCategory#tunedReskillableConfig} allows it. The default, {@code ASK}, deploys
+ * nothing until someone has chosen: the client prompt ({@code GuiReskillableConfigPrompt}) or the
+ * config value. Replacing another mod's config unasked was fine while this only shipped inside one
+ * modpack; it is not for a player who installed the mod for its traits and has tuned Reskillable
+ * to their own taste.
  *
  * Design goals:
  * - keep InsaneTweaks in control of the bundled Reskillable balance
@@ -43,6 +51,7 @@ public class ReskillableConfigSwapper {
     private static String lastBackupFileName = null;
     private static int preservedCustomLocksCount = 0;
     private static boolean loginWarningRegistered = false;
+    private static boolean promptPending = false;
 
     private static final class LockExtractionResult {
         private final boolean success;
@@ -71,6 +80,11 @@ public class ReskillableConfigSwapper {
         wasVersionUpdate = false;
         lastBackupFileName = null;
         preservedCustomLocksCount = 0;
+        promptPending = false;
+
+        if (!resolveMode(flagFile)) {
+            return;
+        }
 
         if (flagFile.exists() && reskillableConfig.exists()) {
             String deployedVersion = readFlagVersion(flagFile);
@@ -133,6 +147,72 @@ public class ReskillableConfigSwapper {
         } catch (Exception e) {
             ReskillTweaks.LOGGER.error("[ReskillTweaks] Exception while deploying reskillable_optimized.cfg!", e);
         }
+    }
+
+    /**
+     * Settles {@link TunedConfigMode} for this launch and answers whether the swap may go ahead.
+     *
+     * <p>{@code ASK} with the flag file already present means the tuned config was installed
+     * before - by a version that had no choice to offer, or after an earlier {@code APPLY}. Asking
+     * that install whether it wants what it already has would be noise, so the answer is written
+     * down as {@code APPLY} and the swap proceeds (which still re-deploys on a version change,
+     * exactly as it always did).
+     */
+    private static boolean resolveMode(File flagFile) {
+        TunedConfigMode mode = ReskillTweaksConfig.modules.tunedReskillableConfig;
+        if (mode == null) {
+            mode = TunedConfigMode.ASK;
+        }
+
+        switch (mode) {
+            case KEEP:
+                ReskillTweaks.LOGGER.info(
+                        "[ReskillTweaks] Tuned Reskillable Config = KEEP - reskillable.cfg left untouched.");
+                return false;
+            case APPLY:
+                return true;
+            case ASK:
+            default:
+                if (flagFile.exists()) {
+                    ReskillTweaks.LOGGER.info(
+                            "[ReskillTweaks] Tuned reskillable.cfg was installed before - recording "
+                                    + "Tuned Reskillable Config = APPLY instead of asking.");
+                    setMode(TunedConfigMode.APPLY);
+                    return true;
+                }
+                promptPending = true;
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] ================================================");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] reskillable.cfg was NOT replaced with this mod's tuned version:");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] nobody has chosen yet. A client asks on the main menu. On a");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] dedicated server, set modules > \"Tuned Reskillable Config\" in");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] config/reskilltweaks.cfg to APPLY (or KEEP to stop this message)");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] and restart.");
+                ReskillTweaks.LOGGER.info("[ReskillTweaks] ================================================");
+                return false;
+        }
+    }
+
+    /** True when this launch skipped the swap because nobody has chosen yet - the prompt's cue. */
+    public static boolean isPromptPending() {
+        return promptPending;
+    }
+
+    /**
+     * Records the player's answer to the prompt. Only writes the choice down: the file itself is
+     * swapped at the next launch's preInit, because Reskillable has already read reskillable.cfg by
+     * the time any screen can ask, and has no way to re-read its unlockable costs.
+     */
+    public static void choose(TunedConfigMode mode) {
+        promptPending = false;
+        setMode(mode);
+        ReskillTweaks.LOGGER.info("[ReskillTweaks] Tuned Reskillable Config set to {} from the main menu{}.",
+                mode, mode == TunedConfigMode.APPLY ? " - reskillable.cfg is replaced on the next launch" : "");
+    }
+
+    /** Sets the field and saves reskilltweaks.cfg - {@code ConfigManager.sync} writes fields to disk. */
+    private static void setMode(TunedConfigMode mode) {
+        ReskillTweaksConfig.modules.tunedReskillableConfig = mode;
+        ConfigManager.sync(ReskillTweaks.MODID, Config.Type.INSTANCE);
     }
 
     /**
