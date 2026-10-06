@@ -98,6 +98,33 @@ public class ClientProxy extends CommonProxy {
                         return new com.spege.insanetweaks.client.renderer.entity.RenderSimBattlemage(manager);
                     }
                 });
+        RenderingRegistry.registerEntityRenderingHandler(
+                com.spege.insanetweaks.entities.magic.EntityMagicLongarms.class,
+                new IRenderFactory<com.spege.insanetweaks.entities.magic.EntityMagicLongarms>() {
+                    @Override
+                    public Render<? super com.spege.insanetweaks.entities.magic.EntityMagicLongarms> createRenderFor(
+                            RenderManager manager) {
+                        return new com.spege.insanetweaks.client.renderer.entity.magic.RenderMagicLongarms(manager);
+                    }
+                });
+        RenderingRegistry.registerEntityRenderingHandler(
+                com.spege.insanetweaks.entities.magic.EntityMagicManducater.class,
+                new IRenderFactory<com.spege.insanetweaks.entities.magic.EntityMagicManducater>() {
+                    @Override
+                    public Render<? super com.spege.insanetweaks.entities.magic.EntityMagicManducater> createRenderFor(
+                            RenderManager manager) {
+                        return new com.spege.insanetweaks.client.renderer.entity.magic.RenderMagicManducater(manager);
+                    }
+                });
+        RenderingRegistry.registerEntityRenderingHandler(
+                com.spege.insanetweaks.entities.magic.EntityMagicSummoner.class,
+                new IRenderFactory<com.spege.insanetweaks.entities.magic.EntityMagicSummoner>() {
+                    @Override
+                    public Render<? super com.spege.insanetweaks.entities.magic.EntityMagicSummoner> createRenderFor(
+                            RenderManager manager) {
+                        return new com.spege.insanetweaks.client.renderer.entity.magic.RenderMagicSummoner(manager);
+                    }
+                });
         RenderingRegistry.registerEntityRenderingHandler(EntityFerCowMinion.class,
                 new IRenderFactory<EntityFerCowMinion>() {
                     @Override
