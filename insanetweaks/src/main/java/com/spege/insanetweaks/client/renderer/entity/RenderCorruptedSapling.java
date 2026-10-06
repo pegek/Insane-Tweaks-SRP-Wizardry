@@ -21,10 +21,13 @@ public class RenderCorruptedSapling extends RenderLiving<EntityCorruptedSapling>
         super(manager, new ModelCorruptedSapling(), 0.3f);
     }
 
+    /** Height of ModelCorruptedSapling in blocks: stem 14 px + bulb 8 px = 22 px. */
+    private static final float MODEL_HEIGHT = 22.0F / 16.0F;
+
     @Override
     protected void preRenderCallback(@Nonnull EntityCorruptedSapling entity, float partialTickTime) {
-        // Stage 0 = small sprout, MAX_STAGE = full size.
-        float s = 0.35f + 0.65f * (entity.getStage() / (float) EntityCorruptedSapling.MAX_STAGE);
+        // Scale the model around its feet so it is exactly as tall as the synced hitbox.
+        float s = com.spege.insanetweaks.entities.sapling.SaplingStats.height(entity.getProgress()) / MODEL_HEIGHT;
         GlStateManager.scale(s, s, s);
     }
 

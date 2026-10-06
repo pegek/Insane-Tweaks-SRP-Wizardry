@@ -72,44 +72,11 @@ public class BaubleFruitsCategory {
             "srparasites:bogle", "srparasites:haunter", "srparasites:seeker",
             "srparasites:architect", "srparasites:succor", "srparasites:carrier_colony" };
 
-    @Config.Comment({"Total valid-condition growth time of the Corrupted Sapling, in ticks",
-            "(default 24000 = 20 min). Growth pauses while conditions are unmet."})
-    @Config.Name("Sapling Growth Ticks")
-    @Config.RangeInt(min = 20)
-    public int saplingGrowthTicks = 24000;
-
     @Config.Comment({"How far the planting owner may stray from the Corrupted Sapling before the",
             "defense pauses (no growth, no new waves; parasites keep attacking)."})
     @Config.Name("Sapling Condition Radius")
     @Config.RangeInt(min = 4, max = 64)
     public int saplingConditionRadius = 32;
-
-    @Config.Comment({"Minimum living parasites within the radius for the 'active infestation'",
-            "condition (alternative: any srparasites block within 8 blocks)."})
-    @Config.Name("Sapling Min Parasites")
-    @Config.RangeInt(min = 0)
-    public int saplingMinParasites = 2;
-
-    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 1-3 (also the phase-0",
-            "fallback, though planting is blocked at phase 0). Read live; re-evaluated every 20t."})
-    @Config.Name("Sapling HP Phase 1-3")
-    @Config.RangeInt(min = 1)
-    public int saplingHpPhase1 = 50;
-
-    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 4-5."})
-    @Config.Name("Sapling HP Phase 4-5")
-    @Config.RangeInt(min = 1)
-    public int saplingHpPhase4 = 80;
-
-    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 6-8."})
-    @Config.Name("Sapling HP Phase 6-8")
-    @Config.RangeInt(min = 1)
-    public int saplingHpPhase6 = 100;
-
-    @Config.Comment({"Corrupted Sapling max health at SRP evolution phase 9-10."})
-    @Config.Name("Sapling HP Phase 9-10")
-    @Config.RangeInt(min = 1)
-    public int saplingHpPhase9 = 140;
 
     // =========================================================================
     // Corrupted Sapling defense (1.21.0) — all read live
