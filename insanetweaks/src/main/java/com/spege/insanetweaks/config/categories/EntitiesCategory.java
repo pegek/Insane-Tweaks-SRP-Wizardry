@@ -16,6 +16,11 @@ public class EntitiesCategory {
     @Config.Comment("The Sentinel ally battlemage: target priorities, pickup filter, regeneration.")
     public final Sentinel sentinel = new Sentinel();
 
+    @Config.Name("magic_parasites")
+    @Config.LangKey("config.insanetweaks.category.entities.magic_parasites")
+    @Config.Comment("Arcane Blinker / Warden / Conjurer: purple magic-touched variants of SRP primitive parasites.")
+    public final MagicParasites magicParasites = new MagicParasites();
+
     public static class Sentinel {
         @Config.Comment({ "Registry-name prefixes defining target priority, highest first.",
                 "Entities matching an earlier prefix are attacked before later ones;",
@@ -33,6 +38,151 @@ public class EntitiesCategory {
         @Config.Name("Sentinel: Regen Amount")
         @Config.RangeDouble(min = 0.0, max = 20.0)
         public double regenAmount = 3.75;
+    }
+
+    /**
+     * Ability numbers are read live; multipliers apply when an entity is created (existing ones
+     * keep the attributes saved in their NBT).
+     */
+    public static class MagicParasites {
+        @Config.Comment({ "Master switch for the magic parasites' abilities and drop rules.",
+                "The three entities stay registered either way (their ids are save-stable);",
+                "with this off they fight like their SRP base. Spectral summons always expire." })
+        @Config.Name("Enable Magic Parasites")
+        public boolean enableMagicParasites = true;
+
+        @Config.Comment("Chance (0-1) that each stack of a magic parasite's normal SRP drops is lost. The bonus loot table is never reduced.")
+        @Config.Name("Shared: Base Drop Penalty")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double baseDropPenalty = 0.3;
+
+        @Config.Comment("Client-side colour multiplier (red, green, blue; 0-1) applied over SRP's own textures.")
+        @Config.Name("Shared: Tint RGB")
+        public double[] tintRgb = { 0.78, 0.55, 1.0 };
+
+        @Config.Comment("Multiplier on magic damage taken (EBW spells, potions).")
+        @Config.Name("Shared: Magic Damage Taken")
+        @Config.RangeDouble(min = 0.0, max = 4.0)
+        public double magicDamageTaken = 0.75;
+
+        @Config.Comment("Multiplier on fire damage taken. Stacks with the magic multiplier for EBW fire spells.")
+        @Config.Name("Shared: Fire Damage Taken")
+        @Config.RangeDouble(min = 0.0, max = 4.0)
+        public double fireDamageTaken = 1.25;
+
+        @Config.Name("Blinker: Health Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double blinkerHealthMultiplier = 1.2;
+
+        @Config.Name("Blinker: Damage Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double blinkerDamageMultiplier = 1.0;
+
+        @Config.Comment("Seconds between Blink Strikes.")
+        @Config.Name("Blinker: Blink Cooldown Seconds")
+        @Config.RangeInt(min = 1, max = 600)
+        public int blinkCooldownSeconds = 8;
+
+        @Config.Name("Blinker: Blink Min Range")
+        @Config.RangeDouble(min = 0.0, max = 64.0)
+        public double blinkMinRange = 6.0;
+
+        @Config.Name("Blinker: Blink Max Range")
+        @Config.RangeDouble(min = 0.0, max = 64.0)
+        public double blinkMaxRange = 20.0;
+
+        @Config.Comment("Extra damage (0.3 = +30%) on the first hit within 2 s of a blink.")
+        @Config.Name("Blinker: Blink Bonus Damage")
+        @Config.RangeDouble(min = 0.0, max = 5.0)
+        public double blinkBonusDamage = 0.3;
+
+        @Config.Comment("Chance (0-1) to dodge a projectile by teleporting sideways.")
+        @Config.Name("Blinker: Dodge Chance")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double dodgeChance = 0.3;
+
+        @Config.Name("Blinker: Dodge Cooldown Seconds")
+        @Config.RangeInt(min = 0, max = 600)
+        public int dodgeCooldownSeconds = 6;
+
+        @Config.Name("Warden: Health Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double wardenHealthMultiplier = 2.0;
+
+        @Config.Name("Warden: Armor Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double wardenArmorMultiplier = 2.0;
+
+        @Config.Name("Warden: Damage Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double wardenDamageMultiplier = 1.0;
+
+        @Config.Comment("Seconds between wards, counted from the end of the previous one.")
+        @Config.Name("Warden: Ward Cooldown Seconds")
+        @Config.RangeInt(min = 1, max = 600)
+        public int wardCooldownSeconds = 20;
+
+        @Config.Name("Warden: Ward Duration Seconds")
+        @Config.RangeInt(min = 1, max = 60)
+        public int wardDurationSeconds = 6;
+
+        @Config.Comment("Multiplier on non-projectile damage taken while warded. Projectiles are always fully blocked and sent back.")
+        @Config.Name("Warden: Ward Damage Taken")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double wardDamageTaken = 0.5;
+
+        @Config.Comment("Radius in which other parasites get Resistance I while the ward is up.")
+        @Config.Name("Warden: Bastion Radius")
+        @Config.RangeDouble(min = 0.0, max = 32.0)
+        public double bastionRadius = 6.0;
+
+        @Config.Comment("Seconds of Slowness I put on an entity the Warden starts pulling (0 disables).")
+        @Config.Name("Warden: Pull Slowness Seconds")
+        @Config.RangeInt(min = 0, max = 60)
+        public int pullSlownessSeconds = 3;
+
+        @Config.Name("Conjurer: Health Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double conjurerHealthMultiplier = 1.25;
+
+        @Config.Name("Conjurer: Damage Multiplier")
+        @Config.RangeDouble(min = 0.1, max = 10.0)
+        public double conjurerDamageMultiplier = 1.0;
+
+        @Config.Comment("Entity ids a Spectral Swarm picks from. Spectrals drop nothing, give no XP and vanish when they expire.")
+        @Config.Name("Conjurer: Spectral Pool")
+        public String[] spectralPool = { "srparasites:rupter", "srparasites:buglin" };
+
+        @Config.Name("Conjurer: Spectral Min")
+        @Config.RangeInt(min = 0, max = 16)
+        public int spectralMin = 2;
+
+        @Config.Name("Conjurer: Spectral Max")
+        @Config.RangeInt(min = 0, max = 16)
+        public int spectralMax = 3;
+
+        @Config.Comment("Most spectrals one Conjurer keeps alive at once.")
+        @Config.Name("Conjurer: Spectral Limit")
+        @Config.RangeInt(min = 0, max = 32)
+        public int spectralLimit = 4;
+
+        @Config.Name("Conjurer: Spectral Lifetime Seconds")
+        @Config.RangeInt(min = 1, max = 600)
+        public int spectralLifetimeSeconds = 20;
+
+        @Config.Comment("Seconds between Spectral Swarm casts.")
+        @Config.Name("Conjurer: Spectral Cooldown Seconds")
+        @Config.RangeInt(min = 1, max = 600)
+        public int spectralCooldownSeconds = 12;
+
+        @Config.Comment("Radius in which a hurt parasite (under 50% health) gets Absorption II.")
+        @Config.Name("Conjurer: Ward Allies Radius")
+        @Config.RangeDouble(min = 0.0, max = 32.0)
+        public double wardAlliesRadius = 10.0;
+
+        @Config.Name("Conjurer: Ward Allies Cooldown Seconds")
+        @Config.RangeInt(min = 1, max = 600)
+        public int wardAlliesCooldownSeconds = 12;
     }
 
     public static class AssimilatedWizard {

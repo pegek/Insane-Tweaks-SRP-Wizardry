@@ -172,6 +172,9 @@ entity.wizard_minion.name=Wizard Minion
 entity.insanetweaks.sim_wizard.name=Assimilated Wizard
 entity.sim_wizard.name=Assimilated Wizard
 entity.insanetweaks.sim_battlemage.name=Assimilated Battlemage
+entity.insanetweaks.magic_longarms.name=Arcane Blinker
+entity.insanetweaks.magic_manducater.name=Arcane Warden
+entity.insanetweaks.magic_summoner.name=Arcane Conjurer
 entity.sim_battlemage.name=Assimilated Battlemage
 entity.insanetweaks.primitive_summoner_minion.name=Primitive Summoner Minion
 entity.primitive_summoner_minion.name=Primitive Summoner Minion
@@ -218,6 +221,7 @@ gui.insanetweaks.sentinel.pickup.all=Pickup: Everything
 gui.insanetweaks.sentinel.pickup.valuables=Pickup: Valuables
 container.insanetweaks.sentinel_loot=Sentinel Loot
 config.insanetweaks.category.entities.sentinel=Sentinel
+config.insanetweaks.category.entities.magic_parasites=Magic Parasites
 
 # Thrall
 spell.insanetweaks:summon_thrall=Summon Thrall
