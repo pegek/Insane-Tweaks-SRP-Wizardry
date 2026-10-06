@@ -59,12 +59,17 @@ public class CorruptedSeedItem extends Item
             return EnumActionResult.FAIL;
         }
 
-        // Gate on SRP evolution: at phase 0 the hive has not begun to evolve, so the seed refuses
-        // to take root (no spawn, no seed consumed) and the player is told why.
-        if (com.spege.insanetweaks.util.SrpPhaseHelper.getEvolutionPhase(world) < 1) {
+        // Every site rule (dimension, SRP phase, infestation, ground, roof, crowding, sanctuary),
+        // then one active sapling per player. A refusal names the reason and keeps the seed.
+        com.spege.insanetweaks.entities.sapling.SiteProblem problem =
+                com.spege.insanetweaks.entities.sapling.SaplingSiteCheck.checkSite(world, above);
+        if (problem == null && com.spege.insanetweaks.entities.sapling.SaplingSiteCheck
+                .hasActiveSapling(player.getUniqueID())) {
+            problem = com.spege.insanetweaks.entities.sapling.SiteProblem.ALREADY_ACTIVE;
+        }
+        if (problem != null) {
             player.sendStatusMessage(
-                    new net.minecraft.util.text.TextComponentTranslation("msg.insanetweaks.sapling.phase_too_low"),
-                    true);
+                    new net.minecraft.util.text.TextComponentTranslation(problem.langKey()), true);
             return EnumActionResult.FAIL;
         }
 
@@ -90,7 +95,7 @@ public class CorruptedSeedItem extends Item
     }
 
     /**
-     * Four fragments went into this seed and a sapling has to survive twenty minutes after it.
+     * Three fragments went into this seed and a sapling has to survive a siege after it.
      * Same lava protection as the fruits it eventually becomes.
      */
     @Override
@@ -102,21 +107,27 @@ public class CorruptedSeedItem extends Item
     @SideOnly(Side.CLIENT)
     public void addInformation(@Nonnull ItemStack stack, @Nullable World world,
             @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
+        com.spege.insanetweaks.config.categories.BaubleFruitsCategory cfg =
+                com.spege.insanetweaks.config.ModConfig.baubleFruits;
+        int minutes = Math.max(1, Math.round(new com.spege.insanetweaks.entities.sapling.SaplingDefensePlan(
+                cfg.saplingLureSeconds, cfg.saplingWaveCount, cfg.saplingWaveIntervalSeconds).totalTicks() / 1200.0F));
+
         tooltip.add(TextFormatting.DARK_PURPLE + "It pulses. It listens. It waits for tainted soil.");
         tooltip.add("");
         tooltip.add(TextFormatting.GOLD + "How to grow:");
-        tooltip.add(TextFormatting.GRAY + "1. Plant it (right-click the ground) inside an active");
-        tooltip.add(TextFormatting.GRAY + "   parasite infestation.");
-        tooltip.add(TextFormatting.GRAY + "2. Stay close, wearing the " + TextFormatting.LIGHT_PURPLE
-                + "Blessed Ring" + TextFormatting.GRAY + " or the " + TextFormatting.DARK_RED
-                + "Ring of the Seven Curses" + TextFormatting.GRAY + " —");
-        tooltip.add(TextFormatting.GRAY + "   it grows only under your protection.");
-        tooltip.add(TextFormatting.GRAY + "3. The hive will try to reclaim it. " + TextFormatting.RED
-                + "Defend the sapling.");
-        tooltip.add(TextFormatting.GRAY + "4. In time it bears a " + TextFormatting.DARK_PURPLE
+        tooltip.add(TextFormatting.GRAY + "1. Plant it on parasite-infested ground, in the open:");
+        tooltip.add(TextFormatting.GRAY + "   nothing above it, room around it, no Sanctuary nearby.");
+        tooltip.add(TextFormatting.GRAY + "2. Stay within " + cfg.saplingConditionRadius + " blocks wearing the "
+                + TextFormatting.LIGHT_PURPLE + "Blessed Ring" + TextFormatting.GRAY + " or the");
+        tooltip.add("   " + TextFormatting.DARK_RED + "Ring of the Seven Curses" + TextFormatting.GRAY + ".");
+        tooltip.add(TextFormatting.GRAY + "3. The hive comes for it: " + TextFormatting.RED + "survive "
+                + cfg.saplingWaveCount + " waves" + TextFormatting.GRAY + " (~" + minutes + " min).");
+        tooltip.add(TextFormatting.GRAY + "4. It bears a " + TextFormatting.DARK_PURPLE
                 + "Corrupted Fruit" + TextFormatting.GRAY + ".");
         tooltip.add("");
         tooltip.add(TextFormatting.DARK_GRAY + "" + TextFormatting.ITALIC
                 + "If it dies, the seed is lost with it.");
+        tooltip.add(TextFormatting.DARK_GRAY + "" + TextFormatting.ITALIC
+                + "Sneak + right-click it with an empty hand to uproot it.");
     }
 }
