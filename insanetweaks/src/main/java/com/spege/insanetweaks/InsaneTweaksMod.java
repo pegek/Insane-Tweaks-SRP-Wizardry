@@ -212,6 +212,8 @@ public class InsaneTweaksMod implements IGuiHandler {
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_NOVICE);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_ADEPT);
         net.minecraft.world.storage.loot.LootTableList.register(EntitySimWizard.LOOT_MASTER);
+        net.minecraft.world.storage.loot.LootTableList.register(
+                com.spege.insanetweaks.events.MagicParasiteHandler.BONUS_TABLE);
         // Used by those three tables. Must be registered before any table is parsed (world load);
         // an unknown function name makes the WHOLE table fail to load, not just the entry.
         net.minecraft.world.storage.loot.functions.LootFunctionManager.registerFunction(
@@ -301,7 +303,18 @@ public class InsaneTweaksMod implements IGuiHandler {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "sim_battlemage"),
                 com.spege.insanetweaks.entities.EntitySimBattlemage.class, "sim_battlemage", 120, this, 64, 3, true,
                 0x1A0A2E, 0xC94FD9);
-        // IDs 100-120 used; next free 121.
+        // Magic parasites (2026-10-06): purple subclasses of SRP primitives. Egg colours are
+        // looked up at render time, never saved.
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "magic_longarms"),
+                com.spege.insanetweaks.entities.magic.EntityMagicLongarms.class, "magic_longarms", 121, this, 64, 3,
+                true, 0x2B0F3D, 0xB45CFF);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "magic_manducater"),
+                com.spege.insanetweaks.entities.magic.EntityMagicManducater.class, "magic_manducater", 122, this, 64,
+                3, true, 0x1E0B33, 0x7A3CE0);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "magic_summoner"),
+                com.spege.insanetweaks.entities.magic.EntityMagicSummoner.class, "magic_summoner", 123, this, 64, 3,
+                true, 0x33103D, 0xE05CFF);
+        // IDs 100-123 used; next free 124.
         // 🚨 Tracking IDs are network- and save-stable: APPEND only, never reuse or reorder.
         // registerModEntity must never be gated on a config flag either - a registry object that
         // disappears from an existing world corrupts the save. Gate handlers, not registrations.
@@ -651,6 +664,8 @@ public class InsaneTweaksMod implements IGuiHandler {
             // method bodies (lazy resolution), so registering without SRP would not crash - but
             // the handler cannot fire either, since it bails on any non-srparasites entity.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ParasiteXPFixHandler());
+            // Magic parasites: drop penalty + bonus loot, spectral summons' expiry and empty drops.
+            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.MagicParasiteHandler());
         }
 
         // Sanctuaries are off-limits to the parasite meteor. srpwizmixins owns the meteor hook and
