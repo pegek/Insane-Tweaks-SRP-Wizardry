@@ -245,3 +245,24 @@ All read live unless noted. Removed: `saplingGrowthTicks`, `saplingMinParasites`
 - The first generated structure (3×3 Imbuement Altar showcase + strong enemies) — its own spec next.
 - Rewards beyond the existing Corrupted Fruit.
 - Several saplings sharing one event.
+
+## 15. Revision 1.21.1 (after the first playtest, 2026-10-06)
+
+The first run was lost two seconds after the lure started: every parasite within 24 blocks was
+pinned onto a 50 HP sapling. Changes:
+
+- **Attacker cap** — `saplingMaxAttackers` (4): the lure pins at most this many parasites onto the
+  sapling, nearest first; the rest keep their own AI (usually the player). Wave mobs are no longer
+  pinned at spawn — the next lure pass hands out the free slots.
+- **Provocation** — a bound parasite hit by a player gets SRP's `targetNewCool` cleared, the player
+  as its locked target for `saplingProvokeSeconds` (10), and is skipped by the lure meanwhile
+  (`SaplingParasiteHandler`, `LivingAttackEvent`).
+- **Drop penalty** — every parasite the lure sees or a wave spawns is tagged
+  `InsaneTweaksSaplingBound` (`SaplingTags`). On death each dropped stack is lost with
+  `saplingDropPenalty` (0.5) and XP is scaled by `1 − penalty`; fragments too, decided inside
+  `CorruptedFragmentDropHandler` so a lost fragment counts as a dry kill for pity.
+- **Balance** — HP 250 → 350; wave base count 3; spawn ring 16–22; pools one tier lighter
+  (no grunt/seeker/marauder; elites ada_longarms / ada_manducater / ada_bolster).
+- **Visuals** — client-side purple aura (SPELL_WITCH, PORTAL above 50%) thickening with growth;
+  new model (roots, twisting three-segment trunk, swaying branches with leaf clusters, thorned
+  pod) and a generated 64×64 texture.
