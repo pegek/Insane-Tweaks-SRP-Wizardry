@@ -633,6 +633,8 @@ public class InsaneTweaksMod implements IGuiHandler {
                 // Corrupted fruit loop (fragment drops + corrupted-eat doom).
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFragmentDropHandler());
                 MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.CorruptedFruitDoomHandler());
+                // Sapling defense: provoked parasites and the drop penalty for parasites it drew in.
+                MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SaplingParasiteHandler());
             }
         }
 

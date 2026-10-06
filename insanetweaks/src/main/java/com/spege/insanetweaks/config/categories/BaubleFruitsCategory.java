@@ -99,8 +99,9 @@ public class BaubleFruitsCategory {
     @Config.RangeInt(min = 10, max = 600)
     public int saplingWaveIntervalSeconds = 105;
 
-    @Config.Comment({"Radius in which living parasites are pulled onto the sapling (every 2 s) and",
-            "counted when sizing a wave."})
+    @Config.Comment({"Radius in which living parasites are pulled onto the sapling (every 2 s, at most",
+            "Sapling Max Attackers at a time) and counted when sizing a wave. Parasites in this radius",
+            "also get the drop penalty."})
     @Config.Name("Sapling Lure Radius")
     @Config.RangeInt(min = 4, max = 64)
     public int saplingLureRadius = 24;
@@ -109,7 +110,7 @@ public class BaubleFruitsCategory {
             "phase, counting the ones already within the lure radius."})
     @Config.Name("Sapling Wave Base Count")
     @Config.RangeInt(min = 0, max = 32)
-    public int saplingWaveBaseCount = 4;
+    public int saplingWaveBaseCount = 3;
 
     @Config.Comment({"Most parasites one wave may spawn (the elite comes on top)."})
     @Config.Name("Sapling Wave Max Spawn")
@@ -119,52 +120,71 @@ public class BaubleFruitsCategory {
     @Config.Comment({"Wave parasites appear on a ring this many blocks from the sapling (inner edge)."})
     @Config.Name("Sapling Spawn Ring Min")
     @Config.RangeInt(min = 2, max = 48)
-    public int saplingSpawnRingMin = 10;
+    public int saplingSpawnRingMin = 16;
 
     @Config.Comment({"Outer edge of the wave spawn ring."})
     @Config.Name("Sapling Spawn Ring Max")
     @Config.RangeInt(min = 3, max = 64)
-    public int saplingSpawnRingMax = 16;
+    public int saplingSpawnRingMax = 22;
 
     @Config.Comment({"Wave parasites at SRP evolution phase 1-3. Full entity ids."})
     @Config.Name("Sapling Wave Pool Early")
     public String[] saplingWavePoolEarly = {
-            "srparasites:pri_longarms", "srparasites:pri_manducater", "srparasites:pri_arachnida",
-            "srparasites:pri_reeker", "srparasites:rupter", "srparasites:buglin" };
+            "srparasites:rupter", "srparasites:buglin", "srparasites:pri_longarms",
+            "srparasites:pri_arachnida" };
 
     @Config.Comment({"Wave parasites at SRP evolution phase 4-6. Full entity ids."})
     @Config.Name("Sapling Wave Pool Mid")
     public String[] saplingWavePoolMid = {
-            "srparasites:pri_longarms", "srparasites:pri_manducater", "srparasites:ada_longarms",
-            "srparasites:ada_manducater", "srparasites:ada_arachnida", "srparasites:ada_reeker" };
+            "srparasites:pri_longarms", "srparasites:pri_arachnida", "srparasites:pri_manducater",
+            "srparasites:pri_reeker", "srparasites:ada_longarms" };
 
     @Config.Comment({"Wave parasites at SRP evolution phase 7 and above. Full entity ids."})
     @Config.Name("Sapling Wave Pool Late")
     public String[] saplingWavePoolLate = {
-            "srparasites:ada_longarms", "srparasites:ada_manducater", "srparasites:ada_arachnida",
-            "srparasites:ada_reeker", "srparasites:grunt", "srparasites:seeker" };
+            "srparasites:pri_manducater", "srparasites:ada_longarms", "srparasites:ada_arachnida",
+            "srparasites:ada_reeker", "srparasites:ada_manducater" };
 
     @Config.Comment({"Elite added to the last wave at SRP evolution phase 1-3."})
     @Config.Name("Sapling Elite Early")
-    public String saplingEliteEarly = "srparasites:ada_manducater";
+    public String saplingEliteEarly = "srparasites:ada_longarms";
 
     @Config.Comment({"Elite added to the last wave at SRP evolution phase 4-6."})
     @Config.Name("Sapling Elite Mid")
-    public String saplingEliteMid = "srparasites:ada_bolster";
+    public String saplingEliteMid = "srparasites:ada_manducater";
 
     @Config.Comment({"Elite added to the last wave at SRP evolution phase 7 and above."})
     @Config.Name("Sapling Elite Late")
-    public String saplingEliteLate = "srparasites:marauder";
+    public String saplingEliteLate = "srparasites:ada_bolster";
+
+    @Config.Comment({"At most this many parasites are pinned onto the sapling at once. The rest are left",
+            "to their own AI - which usually means they come for the player."})
+    @Config.Name("Sapling Max Attackers")
+    @Config.RangeInt(min = 0, max = 32)
+    public int saplingMaxAttackers = 4;
+
+    @Config.Comment({"A parasite drawn to the sapling that a player hits turns on that player for this",
+            "many seconds (refreshed by every hit); the lure leaves it alone meanwhile."})
+    @Config.Name("Sapling Provoke Seconds")
+    @Config.RangeInt(min = 0, max = 120)
+    public int saplingProvokeSeconds = 10;
+
+    @Config.Comment({"Parasites drawn into a sapling defense (lured or spawned by a wave) drop less: each",
+            "dropped stack - Corrupted Seed Fragments included - is lost with this chance, and their",
+            "experience is scaled by (1 - this). 0 disables, 1 drops nothing."})
+    @Config.Name("Sapling Drop Penalty")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double saplingDropPenalty = 0.5;
 
     @Config.Comment({"Sapling max health when planted. Grows linearly to the end value with the event."})
     @Config.Name("Sapling HP Start")
     @Config.RangeInt(min = 1, max = 1024)
-    public int saplingHpStart = 50;
+    public int saplingHpStart = 250;
 
     @Config.Comment({"Sapling max health at full growth."})
     @Config.Name("Sapling HP End")
     @Config.RangeInt(min = 1, max = 1024)
-    public int saplingHpEnd = 80;
+    public int saplingHpEnd = 350;
 
     @Config.Comment({"Sapling armor at full growth (0 when planted, linear in between)."})
     @Config.Name("Sapling Armor End")

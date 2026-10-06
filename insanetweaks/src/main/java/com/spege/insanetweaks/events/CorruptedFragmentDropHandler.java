@@ -2,6 +2,8 @@ package com.spege.insanetweaks.events;
 
 import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.entities.sapling.SaplingDropPenalty;
+import com.spege.insanetweaks.entities.sapling.SaplingTags;
 import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.util.EnigmaticLegacyCompat;
 import com.spege.insanetweaks.util.FragmentPity;
@@ -51,6 +53,11 @@ public class CorruptedFragmentDropHandler {
         int dryKills = persisted.getInteger(PITY_TAG);
         boolean drop = FragmentPity.drops(killed.world.rand.nextDouble(),
                 ModConfig.baubleFruits.fragmentDropChance, dryKills, ModConfig.baubleFruits.fragmentPityKills);
+        // Sapling-defense drop penalty: a lost fragment counts as a dry kill, so pity still catches it.
+        if (drop && SaplingTags.isBound(killed) && !SaplingDropPenalty.keepsDrop(
+                killed.world.rand.nextDouble(), ModConfig.baubleFruits.saplingDropPenalty)) {
+            drop = false;
+        }
         persisted.setInteger(PITY_TAG, FragmentPity.nextDryKills(dryKills, drop));
         if (!drop) return;
 

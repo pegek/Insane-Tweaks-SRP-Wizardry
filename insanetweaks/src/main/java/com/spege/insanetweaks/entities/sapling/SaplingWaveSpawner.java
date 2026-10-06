@@ -1,6 +1,10 @@
 package com.spege.insanetweaks.entities.sapling;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -27,6 +31,9 @@ import net.minecraftforge.fml.common.Loader;
  *
  * <p>Targeting uses SRP's own {@code EntityParasiteBase.setAttackTarget(target, ticks)}, which sets
  * the target and locks it against changes for {@code ticks} ({@code targetNewCool}). No mixin.
+ * At most {@code maxAttackers} parasites are pinned at a time, nearest first; the rest keep their
+ * own AI. Every parasite the lure sees, and every one a wave spawns, is marked
+ * {@link SaplingTags#BOUND} for the drop penalty.
  *
  * <p>Spawning goes through {@code world.spawnEntity}, which bypasses {@code CheckSpawn} and so
  * srpwizmixins' parasite origin gate — the sapling's dimension blacklist is what keeps dimension
@@ -38,8 +45,6 @@ import net.minecraftforge.fml.common.Loader;
  */
 public final class SaplingWaveSpawner {
 
-    /** Spawned wave parasites stay locked on the sapling this long before their own AI may retarget. */
-    private static final int SPAWN_LOCK_TICKS = 200;
     private static final int POSITION_ATTEMPTS = 10;
     private static final int VERTICAL_SEARCH = 6;
 
@@ -61,12 +66,15 @@ public final class SaplingWaveSpawner {
         return srpLoaded() ? Srp.countLiving(world, box) : 0;
     }
 
-    /** Points every living parasite within {@code radius} that is not already on it at {@code target}. */
-    public static void lure(EntityLivingBase target, double radius, int lockTicks) {
+    /**
+     * Marks every living parasite within {@code radius} as bound, then pins the nearest free ones
+     * onto {@code target} until {@code maxAttackers} are on it. Provoked parasites are skipped.
+     */
+    public static void lure(EntityLivingBase target, double radius, int lockTicks, int maxAttackers) {
         if (!srpLoaded()) {
             return;
         }
-        Srp.lure(target.world, target.getEntityBoundingBox().grow(radius), target, lockTicks);
+        Srp.lure(target.world, target.getEntityBoundingBox().grow(radius), target, lockTicks, maxAttackers);
     }
 
     /**
@@ -138,9 +146,9 @@ public final class SaplingWaveSpawner {
         if (!world.spawnEntity(mob)) {
             return false;
         }
-        if (srpLoaded()) {
-            Srp.lock(mob, target, SPAWN_LOCK_TICKS);
-        }
+        // Not pinned here: the next lure pass (every 2 s) hands out the attacker slots, so a wave
+        // never pushes the sapling past maxAttackers.
+        SaplingTags.markBound(mob);
         return true;
     }
 
@@ -195,19 +203,37 @@ public final class SaplingWaveSpawner {
             return alive;
         }
 
-        static void lure(World world, AxisAlignedBB box, EntityLivingBase target, int lockTicks) {
+        static void lure(World world, AxisAlignedBB box, final EntityLivingBase target, int lockTicks,
+                int maxAttackers) {
+            long now = world.getTotalWorldTime();
+            int attacking = 0;
+            List<com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase> free =
+                    new ArrayList<com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase>();
             for (com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase p : world.getEntitiesWithinAABB(
                     com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase.class, box)) {
-                if (p.isEntityAlive() && p.getAttackTarget() != target) {
-                    p.setAttackTarget(target, lockTicks);
+                if (!p.isEntityAlive()) {
+                    continue;
+                }
+                SaplingTags.markBound(p);
+                if (p.getAttackTarget() == target) {
+                    attacking++;
+                } else if (!SaplingTags.isProvoked(p, now)) {
+                    free.add(p);
                 }
             }
-        }
-
-        static void lock(Entity mob, EntityLivingBase target, int lockTicks) {
-            if (mob instanceof com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase) {
-                ((com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase) mob)
-                        .setAttackTarget(target, lockTicks);
+            int slots = Math.min(free.size(), SaplingStats.freeAttackerSlots(maxAttackers, attacking));
+            if (slots <= 0) {
+                return;
+            }
+            Collections.sort(free, new Comparator<com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase>() {
+                @Override
+                public int compare(com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase a,
+                        com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase b) {
+                    return Double.compare(a.getDistanceSq(target), b.getDistanceSq(target));
+                }
+            });
+            for (int i = 0; i < slots; i++) {
+                free.get(i).setAttackTarget(target, lockTicks);
             }
         }
     }

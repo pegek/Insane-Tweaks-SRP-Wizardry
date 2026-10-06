@@ -197,7 +197,13 @@ public class EntityCorruptedSapling extends EntityLiving {
         this.motionX = 0.0D;
         this.motionZ = 0.0D;
 
-        if (this.world.isRemote || this.ticksExisted % 20 != 0) {
+        if (this.world.isRemote) {
+            if (this.ticksExisted % 4 == 0) {
+                spawnAuraParticles();
+            }
+            return;
+        }
+        if (this.ticksExisted % 20 != 0) {
             return;
         }
 
@@ -208,7 +214,7 @@ public class EntityCorruptedSapling extends EntityLiving {
         regenerate(cfg);
         this.setGlowing(cfg.saplingGlow);
         if (this.ticksExisted % 40 == 0) {
-            SaplingWaveSpawner.lure(this, cfg.saplingLureRadius, LURE_LOCK_TICKS);
+            SaplingWaveSpawner.lure(this, cfg.saplingLureRadius, LURE_LOCK_TICKS, cfg.saplingMaxAttackers);
         }
 
         SiteProblem pause = pauseReason(cfg);
@@ -223,6 +229,28 @@ public class EntityCorruptedSapling extends EntityLiving {
             }
         }
         updateBossBar(plan, pause);
+    }
+
+    /**
+     * Client side: a purple haze around the sapling that thickens as it grows. Plain client-world
+     * particles, nothing sent over the network.
+     */
+    private void spawnAuraParticles() {
+        double progress = getProgress();
+        int count = 1 + (int) Math.round(progress * 3.0D);
+        double radius = this.width * 0.5D + 0.4D + progress;
+        for (int i = 0; i < count; i++) {
+            double angle = this.rand.nextDouble() * Math.PI * 2.0D;
+            double r = radius * (0.4D + this.rand.nextDouble() * 0.6D);
+            this.world.spawnParticle(EnumParticleTypes.SPELL_WITCH,
+                    this.posX + Math.cos(angle) * r, this.posY + this.rand.nextDouble() * this.height,
+                    this.posZ + Math.sin(angle) * r, 0.0D, 0.02D, 0.0D);
+        }
+        if (progress > 0.5D && this.rand.nextInt(3) == 0) {
+            this.world.spawnParticle(EnumParticleTypes.PORTAL,
+                    this.posX, this.posY + this.height * 0.8D, this.posZ,
+                    (this.rand.nextDouble() - 0.5D) * 1.5D, -0.3D, (this.rand.nextDouble() - 0.5D) * 1.5D);
+        }
     }
 
     private void keepImmune() {
