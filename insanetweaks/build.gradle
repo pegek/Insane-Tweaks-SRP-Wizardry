@@ -18,6 +18,9 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
+    // JUnit for the test source set only. The pure classes under test take no Minecraft types,
+    // so they run on a plain JVM; everything else in this mod is verified in game.
+    mavenCentral()
 }
 
 version = '1.20.3'
@@ -90,6 +93,8 @@ dependencies {
     compileOnly project(':srpwizmixins').sourceSets.main.output
 
     implementation 'zone.rong:mixinbooter:7.1'
+
+    testImplementation 'junit:junit:4.12'
 }
 
 jar {
@@ -120,6 +125,10 @@ jar {
 }
 
 jar.finalizedBy('reobfJar')
+
+test {
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
 
 publishing {
     publications {
