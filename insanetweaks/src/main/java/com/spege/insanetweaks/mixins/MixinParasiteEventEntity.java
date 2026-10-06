@@ -128,7 +128,7 @@ public abstract class MixinParasiteEventEntity {
     @Inject(method = SPAWN_INSIDER, at = @At("RETURN"), remap = false, require = 0)
     private static void insanetweaks$clearAfterInsider(EntityLivingBase entity, World world,
             NBTTagCompound tags, CallbackInfo ci) {
-        SrpOriginCaptureState.clear();
+        SrpOriginCaptureState.clear(entity);
     }
 
     // ── convertEntity: known host -> assimilated form ────────────────────────────────────────
@@ -164,7 +164,7 @@ public abstract class MixinParasiteEventEntity {
     @Inject(method = CONVERT_ENTITY, at = @At("RETURN"), remap = false, require = 0)
     private static void insanetweaks$clearAfterConvert(EntityLivingBase entityin, NBTTagCompound tags,
             boolean ignoreKey, String[] list, CallbackInfo ci) {
-        SrpOriginCaptureState.clear();
+        SrpOriginCaptureState.clear(entityin);
     }
 
     // ── convertEntityFeral / hijackEntity: guard only, no snapshot ───────────────────────────

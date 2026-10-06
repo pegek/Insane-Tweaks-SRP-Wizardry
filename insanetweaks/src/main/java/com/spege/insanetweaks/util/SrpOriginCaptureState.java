@@ -34,6 +34,8 @@ public final class SrpOriginCaptureState {
 
     /** How many orphan warnings are still worth emitting before they become noise. */
     private static int orphanWarningsLeft = 3;
+    /** Whether this session has logged its one positive "the redirect is live" line yet. */
+    private static boolean confirmedLive;
 
     private SrpOriginCaptureState() {
     }
@@ -53,22 +55,48 @@ public final class SrpOriginCaptureState {
      * looks exactly like everything working. So if a conversion armed a snapshot and finished
      * without the spawn redirect ever consuming it, say so out loud: that is the signal to raise
      * these to {@code require = 1}, or evidence that SRP moved the call.
+     *
+     * <p>"Finished without a spawn" alone is <b>not</b> that signal. Both SRP methods return early
+     * without spawning on most calls (bytecode of SRP 1.10.9, 2026-10-06): {@code spawnInsider}
+     * is staged - each call bumps a counter in the victim's tags and returns at offset 191 until
+     * the counter reaches its threshold - and both methods bail on immunity, disabled forms and
+     * caps. The old check warned on every one of those, so the first three infection steps of any
+     * modded mob used up the warning budget (seen live: ghoul, zombiechicken, fly). The real failure
+     * is narrower: the victim was <i>removed</i> (SRP always calls removeEntity right before the
+     * spawn) yet nothing was stamped. The one false positive left is {@code spawnInsider}'s
+     * incomplete-form cap branch (83-86), which removes the victim and spawns nothing - rare, and
+     * the message names it.
+     *
+     * @param victim the entity SRP was converting; null skips the orphan check
      */
-    public static void clear() {
+    public static void clear(@Nullable EntityLivingBase victim) {
         OriginalSnapshot armed = CAPTURE.get();
         boolean stamped = Boolean.TRUE.equals(STAMPED.get());
         CAPTURE.remove();
         STAMPED.remove();
 
-        if (armed != null && !stamped && orphanWarningsLeft > 0) {
-            orphanWarningsLeft--;
-            InsaneTweaksMod.LOGGER.warn(
-                    "[InsaneTweaks][Restoration] Snapshot of '{}' was captured but no SRP spawn consumed it - "
-                    + "the World.spawnEntity redirect in MixinParasiteEventEntity did not fire. Restoring this "
-                    + "parasite will fall back to a guess. Check cleanmix.log for the mixin's APPLY line.{}",
-                    armed.resourceId,
-                    orphanWarningsLeft == 0 ? " (further warnings suppressed)" : "");
+        if (armed == null) {
+            return;
         }
+        if (stamped) {
+            if (!confirmedLive) {
+                confirmedLive = true;
+                InsaneTweaksMod.LOGGER.info("[InsaneTweaks][Restoration] Spawn redirect confirmed live: "
+                        + "snapshot of '{}' stamped onto its parasite.", armed.resourceId);
+            }
+            return;
+        }
+        if (victim == null || !victim.isDead || orphanWarningsLeft <= 0) {
+            return; // SRP returned before converting - nothing was spawned, nothing to stamp
+        }
+        orphanWarningsLeft--;
+        InsaneTweaksMod.LOGGER.warn(
+                "[InsaneTweaks][Restoration] '{}' was removed by an SRP conversion but no spawned parasite "
+                + "received its snapshot - either the World.spawnEntity redirect in MixinParasiteEventEntity "
+                + "did not fire, or SRP's incomplete-form cap deleted it without a replacement. Check "
+                + "cleanmix.log for the mixin's APPLY line.{}",
+                armed.resourceId,
+                orphanWarningsLeft == 0 ? " (further warnings suppressed)" : "");
     }
 
     /**
