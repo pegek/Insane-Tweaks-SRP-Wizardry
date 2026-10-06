@@ -4,6 +4,7 @@ import com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModItems;
 import com.spege.insanetweaks.util.EnigmaticLegacyCompat;
+import com.spege.insanetweaks.util.FragmentPity;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -21,10 +22,14 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * ONLY when the killing player wears a qualifying ring (Blessed Ring or the plain
  * Cursed Ring — full parity per spec 2026-07-10). Registered when both
  * enableBaubleFruits and SRP are present.
+ *
+ * <p>Since 1.21.0 the roll has bad-luck protection ({@link FragmentPity}): eligible kills without a
+ * drop are counted in persisted player NBT and the {@code fragmentPityKills}-th one always drops.
  */
 public class CorruptedFragmentDropHandler {
 
     private static final String HINT_SHOWN_TAG = "InsaneTweaksCorruptedHintShown";
+    private static final String PITY_TAG = "InsaneTweaksFragmentPity";
 
     @SubscribeEvent
     @SuppressWarnings("null")
@@ -42,7 +47,12 @@ public class CorruptedFragmentDropHandler {
 
         sendOneTimeHint(killer);
 
-        if (killed.world.rand.nextDouble() >= ModConfig.baubleFruits.fragmentDropChance) return;
+        NBTTagCompound persisted = persistedData(killer);
+        int dryKills = persisted.getInteger(PITY_TAG);
+        boolean drop = FragmentPity.drops(killed.world.rand.nextDouble(),
+                ModConfig.baubleFruits.fragmentDropChance, dryKills, ModConfig.baubleFruits.fragmentPityKills);
+        persisted.setInteger(PITY_TAG, FragmentPity.nextDryKills(dryKills, drop));
+        if (!drop) return;
 
         event.getDrops().add(new EntityItem(killed.world,
                 killed.posX, killed.posY + 0.3D, killed.posZ,
@@ -58,14 +68,19 @@ public class CorruptedFragmentDropHandler {
         return false;
     }
 
-    /** One-time flavor hint (per player, persists through death) the first time a
-     *  qualifying-ring wearer kills a fragment-eligible parasite. */
-    private static void sendOneTimeHint(EntityPlayer player) {
+    /** The player's persisted (death-surviving) Forge data compound, created on first use. */
+    private static NBTTagCompound persistedData(EntityPlayer player) {
         NBTTagCompound entityData = player.getEntityData();
         if (!entityData.hasKey(EntityPlayer.PERSISTED_NBT_TAG)) {
             entityData.setTag(EntityPlayer.PERSISTED_NBT_TAG, new NBTTagCompound());
         }
-        NBTTagCompound persisted = entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+        return entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+    }
+
+    /** One-time flavor hint (per player, persists through death) the first time a
+     *  qualifying-ring wearer kills a fragment-eligible parasite. */
+    private static void sendOneTimeHint(EntityPlayer player) {
+        NBTTagCompound persisted = persistedData(player);
         if (persisted.getBoolean(HINT_SHOWN_TAG)) return;
         persisted.setBoolean(HINT_SHOWN_TAG, true);
         player.sendMessage(new TextComponentTranslation("msg.insanetweaks.corrupted_hint"));

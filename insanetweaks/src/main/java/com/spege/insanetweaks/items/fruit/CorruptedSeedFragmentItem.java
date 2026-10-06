@@ -21,7 +21,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * Corrupted Seed Fragment — rare drop from high-tier parasites, ONLY while the
  * killer wears the Blessed Ring (see CorruptedFragmentDropHandler).
- * 4 fragments craft into a Corrupted Seed (recipes/corrupted_seed.json).
+ * 3 fragments craft into a Corrupted Seed (recipes/corrupted_seed.json).
  */
 public class CorruptedSeedFragmentItem extends Item {
 
@@ -45,7 +45,7 @@ public class CorruptedSeedFragmentItem extends Item {
         tooltip.add(TextFormatting.DARK_PURPLE + "A splinter of something that was never meant to sprout.");
         tooltip.add(TextFormatting.GRAY + "It only reveals itself to hands marked by blessing — or by curse.");
         tooltip.add("");
-        tooltip.add(TextFormatting.GRAY + "Combine " + TextFormatting.LIGHT_PURPLE + "4 fragments"
+        tooltip.add(TextFormatting.GRAY + "Combine " + TextFormatting.LIGHT_PURPLE + "3 fragments"
                 + TextFormatting.GRAY + " into a Corrupted Seed.");
     }
 }

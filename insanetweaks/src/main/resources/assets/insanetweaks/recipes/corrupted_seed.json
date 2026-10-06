@@ -3,7 +3,6 @@
   "ingredients": [
     { "item": "insanetweaks:corrupted_seed_fragment" },
     { "item": "insanetweaks:corrupted_seed_fragment" },
-    { "item": "insanetweaks:corrupted_seed_fragment" },
     { "item": "insanetweaks:corrupted_seed_fragment" }
   ],
   "result": { "item": "insanetweaks:corrupted_seed" }
