@@ -57,4 +57,12 @@ public class SaplingStatsTest {
     public void negativePhaseCountsAsZero() {
         assertEquals(4, SaplingStats.waveSpawnCount(4, -3, 0, 8));
     }
+
+    @Test
+    public void attackerSlotsNeverGoNegative() {
+        assertEquals(4, SaplingStats.freeAttackerSlots(4, 0));
+        assertEquals(1, SaplingStats.freeAttackerSlots(4, 3));
+        assertEquals(0, SaplingStats.freeAttackerSlots(4, 9));
+        assertEquals(0, SaplingStats.freeAttackerSlots(0, 0));
+    }
 }

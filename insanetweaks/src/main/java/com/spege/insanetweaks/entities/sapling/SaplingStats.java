@@ -47,4 +47,9 @@ public final class SaplingStats {
         int wanted = base + Math.max(0, phase) / 2;
         return Math.max(0, Math.min(max, wanted - alreadyNearby));
     }
+
+    /** How many more parasites may be pinned onto the sapling, given how many already are. */
+    public static int freeAttackerSlots(int maxAttackers, int currentlyAttacking) {
+        return Math.max(0, maxAttackers - Math.max(0, currentlyAttacking));
+    }
 }
