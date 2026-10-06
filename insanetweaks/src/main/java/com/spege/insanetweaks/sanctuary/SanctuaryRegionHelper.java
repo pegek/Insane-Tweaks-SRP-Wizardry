@@ -36,6 +36,14 @@ public final class SanctuaryRegionHelper {
         return pos != null && isProtected(world, pos.getX(), pos.getZ());
     }
 
+    /** True when {@code pos} is inside an active sanctuary or within {@code margin} blocks of one. */
+    public static boolean isNear(World world, BlockPos pos, int margin) {
+        if (world == null || world.isRemote || pos == null || isDimensionBlacklisted(world)) {
+            return false;
+        }
+        return SanctuaryWorldData.get(world).isInsideWithMargin(pos.getX(), pos.getZ(), margin);
+    }
+
     private static final String SRP_PARASITE_BASE =
             "com.dhanantry.scapeandrunparasites.entity.ai.misc.EntityParasiteBase";
 

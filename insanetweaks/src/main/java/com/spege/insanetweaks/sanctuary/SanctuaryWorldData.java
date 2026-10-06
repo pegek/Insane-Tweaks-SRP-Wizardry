@@ -216,6 +216,25 @@ public class SanctuaryWorldData extends WorldSavedData {
         return false;
     }
 
+    /**
+     * Like {@link #isInside} with every region's radius widened by {@code margin} blocks — "inside
+     * a sanctuary or close to one". Same index loop over the copy-on-write list, so it is as safe
+     * on worker threads as {@code isInside}.
+     */
+    public boolean isInsideWithMargin(int x, int z, int margin) {
+        long extra = Math.max(0, margin);
+        for (int i = 0; i < regions.size(); i++) {
+            int[] r = regions.get(i);
+            long eff = r[3] + extra;
+            long dx = x - r[0];
+            long dz = z - r[2];
+            if (dx * dx + dz * dz <= eff * eff) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public synchronized void readFromNBT(NBTTagCompound c) {
         // Stage into a plain list first: one clear + one addAll on the copy-on-write list instead
