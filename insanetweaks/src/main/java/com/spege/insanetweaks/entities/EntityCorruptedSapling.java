@@ -91,6 +91,11 @@ public class EntityCorruptedSapling extends EntityLiving {
         this.ownerId = id;
     }
 
+    @javax.annotation.Nullable
+    public UUID getOwnerId() {
+        return this.ownerId;
+    }
+
     /** 0..MAX_STAGE — synced for the renderer's scale. */
     public int getStage() {
         return this.dataManager.get(STAGE);
