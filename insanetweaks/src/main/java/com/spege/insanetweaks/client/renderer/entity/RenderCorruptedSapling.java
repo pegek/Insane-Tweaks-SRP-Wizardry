@@ -18,11 +18,11 @@ public class RenderCorruptedSapling extends RenderLiving<EntityCorruptedSapling>
             new ResourceLocation("insanetweaks", "textures/entity/corrupted_sapling.png");
 
     public RenderCorruptedSapling(RenderManager manager) {
-        super(manager, new ModelCorruptedSapling(), 0.3f);
+        super(manager, new ModelCorruptedSapling(), 0.5f);
     }
 
-    /** Height of ModelCorruptedSapling in blocks: stem 14 px + bulb 8 px = 22 px. */
-    private static final float MODEL_HEIGHT = 22.0F / 16.0F;
+    /** Height of ModelCorruptedSapling in blocks at scale 1. */
+    private static final float MODEL_HEIGHT = ModelCorruptedSapling.HEIGHT_PX / 16.0F;
 
     @Override
     protected void preRenderCallback(@Nonnull EntityCorruptedSapling entity, float partialTickTime) {
