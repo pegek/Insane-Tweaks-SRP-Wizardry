@@ -21,6 +21,11 @@ public class EntitiesCategory {
     @Config.Comment("Arcane Blinker / Warden / Conjurer: purple magic-touched variants of SRP primitive parasites.")
     public final MagicParasites magicParasites = new MagicParasites();
 
+    @Config.Name("petrified_anchor")
+    @Config.LangKey("config.insanetweaks.category.entities.petrified_anchor")
+    @Config.Comment("Petrified Anchor: a structure plinth whose stone statue (EBW petrification) wakes into a mob when a player comes close.")
+    public final PetrifiedAnchor petrifiedAnchor = new PetrifiedAnchor();
+
     public static class Sentinel {
         @Config.Comment({ "Registry-name prefixes defining target priority, highest first.",
                 "Entities matching an earlier prefix are attacked before later ones;",
@@ -38,6 +43,30 @@ public class EntitiesCategory {
         @Config.Name("Sentinel: Regen Amount")
         @Config.RangeDouble(min = 0.0, max = 20.0)
         public double regenAmount = 3.75;
+    }
+
+    /** All values are read live. */
+    public static class PetrifiedAnchor {
+        @Config.Comment({ "Mobs an anchor without a creative pin picks from, as 'modid:entity;weight'.",
+                "A missing weight means 1. Malformed lines are skipped with a warning." })
+        @Config.Name("Pool")
+        public String[] pool = { "insanetweaks:magic_longarms;1", "insanetweaks:magic_manducater;1",
+                "insanetweaks:magic_summoner;1" };
+
+        @Config.Comment("A survival or adventure player this close (blocks) to the plinth wakes the statue.")
+        @Config.Name("Wake Radius")
+        @Config.RangeDouble(min = 1.0, max = 32.0)
+        public double wakeRadius = 4.0;
+
+        @Config.Comment("Ticks the statue cracks and shakes before the mob breaks free.")
+        @Config.Name("Crack Ticks")
+        @Config.RangeInt(min = 0, max = 200)
+        public int crackTicks = 20;
+
+        @Config.Comment({ "Dimensions where anchors stay empty plinths and never make a statue.",
+                "150 keeps the no-SRP invariant of that dimension." })
+        @Config.Name("Dimension Blacklist")
+        public int[] dimensionBlacklist = { 150 };
     }
 
     /**
