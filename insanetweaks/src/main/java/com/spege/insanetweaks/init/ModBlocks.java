@@ -23,9 +23,18 @@ public class ModBlocks {
 
     public static BlockSanctuaryCore SANCTUARY_CORE;
     public static com.spege.insanetweaks.sanctuary.BlockCreativeSanctuary CREATIVE_SANCTUARY;
+    public static com.spege.insanetweaks.anchor.BlockPetrifiedAnchor PETRIFIED_ANCHOR;
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        // Petrified Anchor: independent of the Sanctuary module, so it registers before that gate.
+        PETRIFIED_ANCHOR = new com.spege.insanetweaks.anchor.BlockPetrifiedAnchor();
+        PETRIFIED_ANCHOR.setCreativeTab(CreativeTabs.MISC);
+        event.getRegistry().register(PETRIFIED_ANCHOR);
+        net.minecraftforge.fml.common.registry.GameRegistry.registerTileEntity(
+                com.spege.insanetweaks.anchor.TileEntityPetrifiedAnchor.class,
+                new ResourceLocation(InsaneTweaksMod.MODID, "petrified_anchor"));
+
         if (!ModConfig.modules.enableSanctuary
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
@@ -50,6 +59,12 @@ public class ModBlocks {
 
     @SubscribeEvent
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
+        if (PETRIFIED_ANCHOR != null) {
+            ItemBlock anchorItem = new ItemBlock(PETRIFIED_ANCHOR);
+            anchorItem.setRegistryName(PETRIFIED_ANCHOR.getRegistryName());
+            event.getRegistry().register(anchorItem);
+        }
+
         if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;
@@ -68,6 +83,11 @@ public class ModBlocks {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
+        if (PETRIFIED_ANCHOR != null) {
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(PETRIFIED_ANCHOR), 0,
+                    new ModelResourceLocation(PETRIFIED_ANCHOR.getRegistryName(), "inventory"));
+        }
+
         if (!ModConfig.modules.enableSanctuary || SANCTUARY_CORE == null
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
             return;

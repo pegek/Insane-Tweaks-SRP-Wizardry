@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "awakened=false": { "model": "insanetweaks:petrified_anchor" },
+    "awakened=true": { "model": "insanetweaks:petrified_anchor_cracked" },
+    "inventory": { "model": "insanetweaks:petrified_anchor" }
+  }
+}
