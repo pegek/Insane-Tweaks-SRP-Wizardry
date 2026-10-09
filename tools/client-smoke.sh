@@ -7,7 +7,7 @@
 #
 # <swiat-zrodlowy>: dowolny zapis swiata 1.20.1 (np. world/ z serwera tools/server-check.sh).
 # Wymaga: Xvfb, ImageMagick (import), Mesa. Dzwiek nie startuje (brak urzadzenia) - to oczekiwane.
-# SMOKE_WITH_SPORE=1: klient ze Spore (-PwithSpore) i zarazeni magowie na scenie.
+# SMOKE_WITH_SPORE=1: zarazeni magowie i Mykomanta na scenie (Spore jest w dev zawsze od 0.3.1).
 set -euo pipefail
 
 src=${1:?swiat zrodlowy}

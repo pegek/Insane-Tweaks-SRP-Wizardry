@@ -2,15 +2,15 @@
 
 Addon do [Electroblob's Wizardry Redux](https://modrinth.com/mod/electroblobs-wizardry-redux)
 inspirowany modem Insane Tweaks z 1.12.2: magia oczyszczania i pasożytów oraz sprzęt, który rośnie
-razem z graczem. Opcjonalnie współpracuje z [Fungal Infection: Spore](https://modrinth.com/mod/fungal-infectionspore).
+razem z graczem. Wymaga [Fungal Infection: Spore](https://modrinth.com/mod/fungal-infectionspore).
 
-**Wersja:** 0.3.0. **Licencja:** GPL-3.0-only (jak Redux, po którym dziedziczy).
+**Wersja:** 0.3.1. **Licencja:** GPL-3.0-only (jak Redux, po którym dziedziczy).
 
 ## Wymagania
 
 - Minecraft 1.20.1, Forge **47.3.19+**
 - Electroblob's Wizardry Redux **0.8.9** (zakres `[0.8.9,0.9)`)
-- opcjonalnie Spore 2.2.x dla Forge 1.20.1 (sprawdzone na 2.2.0j)
+- Fungal Infection: Spore **2.2.x dla Forge 1.20.1** (zakres `[2.2,2.3)`, sprawdzone na 2.2.0j); od 0.3.1 wymagany
 
 ## Zawartość
 
@@ -31,9 +31,8 @@ Wszystkie liczby: `config/ebreduxaddon-common.toml` i `data/ebreduxaddon/spells/
 
 ```bash
 ./gradlew check build                    # JUnit dla core + jar w build/libs
-./gradlew runGameTestServer              # 42 testy w świecie, sam Redux
-./gradlew runGameTestServer -PwithSpore  # to samo ze Spore
-tools/server-check.sh a|b|c <katalog>    # jar produkcyjny na serwerze dedykowanym
+./gradlew runGameTestServer              # 42 testy w świecie (z Redux i Spore)
+tools/server-check.sh b|c <katalog>      # jar produkcyjny na serwerze dedykowanym (a: bez Spore, od 0.3.1 nie startuje)
 tools/client-smoke.sh <świat> <katalog>  # klient pod Xvfb, zrzuty ekranu (SMOKE_WITH_SPORE=1: ze Spore)
 ```
 

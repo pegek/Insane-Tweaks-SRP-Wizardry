@@ -11,7 +11,7 @@ version="${version}"
 displayName="EbreduxAddon"
 authors="spege"
 description='''
-Purification and parasite magic for Electroblob's Wizardry Redux: four spells, and a wand and armour that grow with their wearer. Optional support for Fungal Infection: Spore.
+Purification and parasite magic for Electroblob's Wizardry Redux: four spells, and a wand and armour that grow with their wearer. Requires Fungal Infection: Spore.
 '''
 
 [[dependencies.ebreduxaddon]]
@@ -41,7 +41,7 @@ Purification and parasite magic for Electroblob's Wizardry Redux: four spells, a
 # sprawdzone tylko na 2.2.0j (Forge 1.20.1). "2.2.0j" w porownaniu Mavena jest powyzej 2.2.0.
 [[dependencies.ebreduxaddon]]
     modId="spore"
-    mandatory=false
+    mandatory=true
     versionRange="[2.2,2.3)"
     ordering="AFTER"
     side="BOTH"

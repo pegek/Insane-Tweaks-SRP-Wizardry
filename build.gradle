@@ -3,7 +3,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
 }
 
-version = '0.3.0'
+version = '0.3.1'
 group   = 'com.spege.ebreduxaddon'
 base { archivesName = 'ebreduxaddon-1.20.1' }
 
@@ -40,7 +40,7 @@ minecraft {
             args '--quickPlaySingleplayer', 'smoke', '--username', 'Dev'
             mods { ebreduxaddon { source sourceSets.main } }
         }
-        // ./gradlew runGameTestServer [-PwithSpore]: stawia swiat, odpala wszystkie GameTesty addonu
+        // ./gradlew runGameTestServer: stawia swiat, odpala wszystkie GameTesty addonu
         // i konczy sie kodem bledu, gdy ktorys padnie. Jedyny sposob na testy w swiecie bez klienta:
         // w jarze produkcyjnym Forge GameTestow nie wlacza.
         gameTestServer {
@@ -74,16 +74,13 @@ dependencies {
     // UWAGA: fg.deobf(files(...)) NIE dziala na ForgeGradle 6 - tylko koordynaty Mavena.
     implementation fg.deobf('maven.modrinth:electroblobs-wizardry-redux:0.8.9-forge')
 
-    // Spore (ARR, jar nigdy w repo). Od 0.2 compileOnly: zarazony mag dziedziczy po jego Infected.
-    // Klasy z typami Spore laduje tylko bramka compat.spore.SporeCompat, wiec bez Spore w runtime
-    // nic sie nie sypie. -PwithSpore dokleja go do uruchomien w dev (GameTesty wariantu b).
+    // Spore (ARR, jar nigdy w repo). Od 0.3.1 wymagany w mods.toml, wiec jest w kazdym uruchomieniu
+    // dev. Bramka compat.spore.SporeCompat zostaje (nic nie kosztuje), ale bez Spore Forge i tak nie
+    // wystartuje. -PwithSpore nie jest juz potrzebne (ignorowane).
     // Spore uzywa tego samego numeru 2.2.0j dla Forge 1.20.1 i NeoForge 1.21, a Maven Modrinth po
     // numerze daje ten drugi (META-INF/neoforge.mods.toml, Forge go nie widzi). Dlatego ID wersji:
     // PbOZOahW = spore_1.20.1_2.2.0j.jar, sha1 d52e5d36... (ten sam plik, ktory wstawal na serwerze).
-    compileOnly fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
-    if (project.hasProperty('withSpore')) {
-        runtimeOnly fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
-    }
+    implementation fg.deobf('maven.modrinth:fungal-infectionspore:PbOZOahW')
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'

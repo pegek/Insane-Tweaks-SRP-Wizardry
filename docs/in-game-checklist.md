@@ -1,7 +1,8 @@
-# EbreduxAddon 0.3.0: testy w grze
+# EbreduxAddon 0.3.1: testy w grze
 
 **Instalacja:** Forge 1.20.1 **47.3.19 lub nowszy**, Electroblob's Wizardry Redux **0.8.9**, jar
-`ebreduxaddon-1.20.1-0.3.0.jar`. Do części B, C i D dodatkowo Fungal Infection: Spore **2.2.0j (Forge 1.20.1)**.
+`ebreduxaddon-1.20.1-0.3.1.jar` i **Fungal Infection: Spore 2.2.0j (Forge 1.20.1)**. Od 0.3.1 Spore jest
+wymagany: bez niego Forge pokaże ekran brakującej zależności i gra nie wystartuje.
 
 ## Co już sprawdzono automatycznie (nie trzeba powtarzać)
 
@@ -23,7 +24,7 @@
   stojakach renderują się zbroje, różdżki są w ramkach i na pasku, kolec leci z cząsteczkami, widać
   HUD zaklęć Redux z ikoną Cleanse i ikonę efektu Cleansing. Zrzut: `docs/screenshots/2026-10-03-client-smoke.png`.
 
-## A. Bez Spore
+## A. Zaklęcia, różdżki i zbroja
 
 ### Zaklęcia (rzucaj z różdżki, nie komendą)
 
@@ -92,8 +93,6 @@ NBT oraz dolosowanie po `/summon` z NBT. Klient pod Xvfb: magowie renderują si�
 - [ ] **C5. Purifying Pulse** rani zarażonego maga, a jego zabicie z Symbiotic Wand daje +40 symbiozy.
 - [ ] **C6. Wygląd.** Tekstury to przebarwiony zły mag z Redux. Zanotuj, czy czytelnie odróżnia się
       od zwykłego maga.
-- [ ] **C7. Świat bez Spore.** Świat z zarażonymi magami otwarty bez Spore: Forge ostrzega
-      o nieznanej encji, magowie znikają, reszta działa.
 
 ## D. Mykomanta (0.3, tylko ze Spore)
 
@@ -120,9 +119,9 @@ od addonu, a literówka w `evolutions` daje jedno ostrzeżenie w logu startu.
 - [ ] **D6. Lup.** Więcej kryształów magii niż z maga; różdżka rzadko (10%).
 - [ ] **D7. Config.** `infectedWizard.evolutions = ["spore:knight"]` → mag ewoluuje w Knighta.
       Literówka w id → jedno ostrzeżenie w logu startu serwera.
-- [ ] **D8. Świat bez Spore.** Jak C7: Mykomanty znikają z ostrzeżeniem Forge.
+- [ ] **D8. Brak Spore.** Start bez Spore → ekran Forge „brakujące zależności: spore”, gra nie rusza.
 
-## Znane ograniczenia 0.3.0
+## Znane ograniczenia 0.3.1
 
 - Placeholderowa grafika: modele zbroi na graczu, ikony zaklęć z Redux z innym odcieniem,
   tekstura kolca to dart z Redux.

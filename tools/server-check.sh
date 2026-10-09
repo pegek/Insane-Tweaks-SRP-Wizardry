@@ -3,13 +3,13 @@
 # "Done", zatrzymuje go i wypisuje to, co jest w logu o addonie, plus bledy i ostrzezenia.
 #
 #   tools/server-check.sh <a|b|c> <katalog-roboczy>
-#     a = Redux, b = Redux + Spore, c = Redux + Spore + Tombstone 9.1.4 + TombTweaks
+#     a = Redux bez Spore (od 0.3.1 Forge odmawia startu - Spore wymagany), b = Redux + Spore, c = Redux + Spore + Tombstone 9.1.4 + TombTweaks
 #
 # Zmienne: JAVA (domyslnie java, musi byc 17), TOMBTWEAKS_JAR (wymagany dla c).
 #
 # GameTesty NIE ida tutaj: Forge wylacza je w srodowisku produkcyjnym (ForgeGameTestHooks.
 # isGametestEnabled zwraca false, gdy FMLLoader.isProduction()), wiec /test nie istnieje nawet
-# z -Dforge.enableGameTest=true. Testy w swiecie: ./gradlew runGameTestServer [-PwithSpore].
+# z -Dforge.enableGameTest=true. Testy w swiecie: ./gradlew runGameTestServer.
 # Jary cudzych modow ida do katalogu roboczego, NIGDY do repo.
 set -euo pipefail
 
