@@ -316,7 +316,7 @@ public class EntityCorruptedSapling extends EntityLiving {
             if (this.wavesFired >= 2) {
                 this.heal(cfg.saplingWaveHeal); // the previous wave was survived
             }
-            int phase = SrpPhaseHelper.getEvolutionPhase(this.world);
+            int phase = SrpPhaseHelper.getGatingPhase(this.world);
             int nearby = SaplingWaveSpawner.countParasites(this.world,
                     this.getEntityBoundingBox().grow(cfg.saplingLureRadius));
             int count = SaplingStats.waveSpawnCount(cfg.saplingWaveBaseCount, phase, nearby, cfg.saplingWaveMaxSpawn);

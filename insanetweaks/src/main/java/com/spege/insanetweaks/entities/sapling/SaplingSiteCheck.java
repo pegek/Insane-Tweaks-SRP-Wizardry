@@ -41,7 +41,7 @@ public final class SaplingSiteCheck {
         if (isBlacklistedDimension(world, cfg)) {
             return SiteProblem.DIMENSION;
         }
-        if (SrpPhaseHelper.getEvolutionPhase(world) < 1) {
+        if (SrpPhaseHelper.getGatingPhase(world) < 1) {
             return SiteProblem.PHASE_TOO_LOW;
         }
         if (!hasInfestation(world, base, cfg.saplingInfestationRadius, cfg.saplingInfestationHeight)) {

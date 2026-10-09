@@ -172,3 +172,22 @@ config.insanetweaks.category.entities.petrified_anchor=Petrified Anchor
   - Breaking the statue from a distance releases the mob, and the plinth turns cracked.
   - Save and reload while dormant: the statue stays and still wakes.
   - In dimension 150, the anchor stays an empty plinth.
+
+## 12. Revision 1.23.1 (2026-10-09): SRP phase gate
+
+- Statues stay petrified until the SRP evolution phase reaches `Min Phase To Wake` (default 4,
+  0 disables). While the gate is closed, `AnchorStatueGuard` cancels survival players breaking a
+  statue block standing on an active anchor and strips such blocks from explosions, because EBW
+  would otherwise release the mob on any break. Creative players can still break it. Statues from
+  EBW's own Petrify spell are untouched.
+- The phase a gate sees comes from `tweaks > SRP Phase Source`:
+  - `GLOBAL_HIGHEST` (default) takes the highest phase among the dimensions SRP tracks, read
+    from its private `dimEPevolution` list;
+  - `DIMENSION` takes the gate's own dimension, where -1 and -2 count as below every threshold.
+
+  The same setting drives the Corrupted Sapling's planting gate (phase ≥ 1) and its wave pools.
+- This revision also fixes `SrpPhaseHelper`. It used to call `getEvolutionPhase(104)` with a save-data
+  id where SRP expects a dimension id. SRP's `addDim` then created a fake dimension 104 (phase -1)
+  in every world, and `& 0xFF` made every gate read 255. In practice the sapling was plantable
+  anywhere and always used the Late wave pool. The leftover dimension-104 record in existing saves
+  is inert (the dimension never exists) and is left alone.

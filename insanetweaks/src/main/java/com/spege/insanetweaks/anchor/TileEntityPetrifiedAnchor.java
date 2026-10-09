@@ -164,11 +164,21 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             markDirty();
             return;
         }
-        if (nearestWaker() != null) {
+        if (wakeAllowed(this.world) && nearestWaker() != null) {
             this.phase = WAKING;
             this.crackTimer = 0;
             markDirty();
         }
+    }
+
+    /**
+     * The SRP phase gate: statues stay petrified until the evolution phase (per
+     * {@code tweaks.srpPhaseSource}) reaches {@code minPhaseToWake}. Also read by
+     * {@link AnchorStatueGuard}, which refuses breaking or blasting a statue while this is false.
+     */
+    public static boolean wakeAllowed(World world) {
+        int min = ModConfig.entities.petrifiedAnchor.minPhaseToWake;
+        return min <= 0 || com.spege.insanetweaks.util.SrpPhaseHelper.getGatingPhase(world) >= min;
     }
 
     private EntityPlayer nearestWaker() {

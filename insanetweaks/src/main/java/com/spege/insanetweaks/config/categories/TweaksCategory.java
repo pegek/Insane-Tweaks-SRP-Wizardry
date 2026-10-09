@@ -62,6 +62,15 @@ public class TweaksCategory {
     @Config.Name("Restoration Debug Logging")
     public boolean restorationDebugLogging = false;
 
+    @Config.Comment({"Which SRP evolution phase content gates compare against (Corrupted Sapling planting",
+            "and wave pools, Petrified Anchor wake-up). GLOBAL_HIGHEST: the highest phase among all",
+            "dimensions SRP tracks - suits packs that freeze the overworld (-2) while another dimension",
+            "evolves. DIMENSION: the phase of the gate's own dimension; -1/-2 count as below every",
+            "threshold. Read live."})
+    @Config.Name("SRP Phase Source")
+    public com.spege.insanetweaks.util.SrpPhaseHelper.SrpPhaseSource srpPhaseSource =
+            com.spege.insanetweaks.util.SrpPhaseHelper.SrpPhaseSource.GLOBAL_HIGHEST;
+
     @Config.Comment({"Restoration Hourglass: enable its crafting recipe. Without it the artefact has no",
             "acquisition path at all beyond /give - there is no loot table or quest reward for it."})
     @Config.Name("Restoration Hourglass Recipe")

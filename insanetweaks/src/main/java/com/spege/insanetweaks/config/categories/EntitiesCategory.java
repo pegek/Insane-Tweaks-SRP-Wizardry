@@ -58,6 +58,13 @@ public class EntitiesCategory {
         @Config.RangeDouble(min = 1.0, max = 32.0)
         public double wakeRadius = 4.0;
 
+        @Config.Comment({"Statues stay petrified - no wake-up, and breaking or blasting them is refused - until",
+                "the SRP evolution phase reaches this value. Which phase counts is 'SRP Phase Source' in",
+                "tweaks (default: the highest phase of any dimension). 0 disables the gate."})
+        @Config.Name("Min Phase To Wake")
+        @Config.RangeInt(min = 0, max = 10)
+        public int minPhaseToWake = 4;
+
         @Config.Comment("Ticks the statue cracks and shakes before the mob breaks free.")
         @Config.Name("Crack Ticks")
         @Config.RangeInt(min = 0, max = 200)
