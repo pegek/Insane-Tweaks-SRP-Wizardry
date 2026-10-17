@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.srpwizcore.mixins.devspeed",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "plugin": "com.spege.srpwizcore.core.DevSpeedMixinPlugin",
+  "mixins": [ "MixinMinecraftServerDevSpeed" ],
+  "client": [ "MixinTimerDevSpeed" ],
+  "injectors": { "defaultRequire": 0 }
+}

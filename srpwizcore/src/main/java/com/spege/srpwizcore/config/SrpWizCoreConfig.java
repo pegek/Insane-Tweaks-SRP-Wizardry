@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import com.spege.srpwizcore.SrpWizCore;
 import com.spege.srpwizcore.config.categories.BbCompatCategory;
 import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
+import com.spege.srpwizcore.config.categories.DevSpeedCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.DragonRangedCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
@@ -66,6 +67,10 @@ public class SrpWizCoreConfig {
     @Config.Name("bbCompat")
     @Config.Comment("Put back Bountiful Baubles trinkets that another mod silently disabled. Covers the Broken Heart, which FirstAid makes completely inert.")
     public static final BbCompatCategory bbCompat = new BbCompatCategory();
+
+    @Config.Name("devSpeed")
+    @Config.Comment("DEV TOOL: /devspeed - a real tick-rate multiplier and a clock-only warp for speeding up live tests. Off by default; the setting is never saved with the world.")
+    public static final DevSpeedCategory devSpeed = new DevSpeedCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {

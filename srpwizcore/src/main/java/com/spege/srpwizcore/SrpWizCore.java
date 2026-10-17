@@ -14,7 +14,9 @@ import net.minecraftforge.fml.common.Mod;
  * Also owns a small native registry system: the configurable dormant-waystone travel
  * system (block/worldgen/teleport, see {@code com.spege.srpwizcore.dormant}), and the
  * elemental dragon ranged weapon system that passes fire/ice/lightning to any ammunition
- * (see {@code com.spege.srpwizcore.dragonranged}). Each fix config-gated in
+ * (see {@code com.spege.srpwizcore.dragonranged}). Plus one DEV TOOL, off by default: the
+ * {@code /devspeed} tick-rate multiplier (see {@code com.spege.srpwizcore.devspeed}). Each fix
+ * config-gated in
  * {@link com.spege.srpwizcore.config.SrpWizCoreConfig}.
  */
 @Mod(modid = SrpWizCore.MODID,
@@ -28,7 +30,7 @@ import net.minecraftforge.fml.common.Mod;
 public class SrpWizCore {
     public static final String MODID = "srpwizcore";
     public static final String NAME = "SRP&WIZ Core";
-    public static final String VERSION = "1.15.1";
+    public static final String VERSION = "1.17.0";
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -41,6 +43,8 @@ public class SrpWizCore {
     public void preInit(net.minecraftforge.fml.common.event.FMLPreInitializationEvent event) {
         com.spege.srpwizcore.util.IandfWorldgenOverrides.rebuild();
         com.spege.srpwizcore.spawnengine.SpawnEngine.reload();
+        // Unconditional: discriminators must match on both ends whatever either config says.
+        com.spege.srpwizcore.network.SrpWizCoreNetwork.register();
     }
 
     @Mod.EventHandler
@@ -108,6 +112,15 @@ public class SrpWizCore {
                     com.spege.srpwizcore.config.SrpWizCoreConfig.dormantWaystones.dimTarget);
         }
 
+        if (com.spege.srpwizcore.config.SrpWizCoreConfig.devSpeed.enabled) {
+            // Same flag gates the two mixins (DevSpeedMixinPlugin), so registration and
+            // application always agree within one boot.
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                    new com.spege.srpwizcore.devspeed.DevSpeedHandler());
+            LOGGER.warn("[srpwizcore] DEV TOOL armed: /devspeed (tick-rate multiplier). "
+                    + "Turn devSpeed off for normal play.");
+        }
+
         if (com.spege.srpwizcore.config.SrpWizCoreConfig.dragonRanged.enabled
                 && net.minecraftforge.fml.common.Loader.isModLoaded("iceandfire")) {
             // The element table calls Ice and Fire's capability and chain-lightning API, so the
@@ -132,5 +145,23 @@ public class SrpWizCore {
     @Mod.EventHandler
     public void serverStarting(net.minecraftforge.fml.common.event.FMLServerStartingEvent event) {
         event.registerServerCommand(new com.spege.srpwizcore.whtcompat.CommandWhtDiag());
+        if (com.spege.srpwizcore.config.SrpWizCoreConfig.devSpeed.enabled) {
+            // Never persisted: every server start begins at x1.
+            com.spege.srpwizcore.devspeed.DevSpeed.onServerStart();
+            event.registerServerCommand(new com.spege.srpwizcore.devspeed.CommandDevSpeed());
+        }
+    }
+
+    @Mod.EventHandler
+    public void serverStopping(net.minecraftforge.fml.common.event.FMLServerStoppingEvent event) {
+        if (com.spege.srpwizcore.config.SrpWizCoreConfig.devSpeed.enabled) {
+            // Players are still connected here, so their clients get the x1 packet too.
+            com.spege.srpwizcore.devspeed.DevSpeedWarp.stop(
+                    net.minecraftforge.fml.common.FMLCommonHandler.instance()
+                            .getMinecraftServerInstance(), "server stop");
+            com.spege.srpwizcore.devspeed.DevSpeed.reset(
+                    net.minecraftforge.fml.common.FMLCommonHandler.instance()
+                            .getMinecraftServerInstance(), "server stop");
+        }
     }
 }
