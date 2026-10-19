@@ -125,6 +125,7 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
                 mob.rotationYawHead = yaw;
                 mob.renderYawOffset = yaw;
                 mob.onInitialSpawn(this.world.getDifficultyForLocation(at), null);
+                AnchorLeash.tag(mob, this.pos, this.world.provider.getDimension());
                 if (!AnchorStatues.petrify(mob)) {
                     failure = "EBW refused the statue (no room for a tall mob, or block placement denied)";
                 }
