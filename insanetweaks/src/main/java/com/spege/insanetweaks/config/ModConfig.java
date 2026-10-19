@@ -38,6 +38,12 @@ public class ModConfig {
     @Config.Comment("Specific bugfixes and mechanic alterations.")
     public static final TweaksCategory tweaks = new TweaksCategory();
 
+    @Config.Name("arcaneSanctum")
+    @Config.LangKey("config.insanetweaks.category.arcane_sanctum")
+    @Config.Comment("Sunken Arcane Sanctum: the underground ritual-chamber structure.")
+    public static final com.spege.insanetweaks.config.categories.ArcaneSanctumCategory arcaneSanctum =
+            new com.spege.insanetweaks.config.categories.ArcaneSanctumCategory();
+
     @Config.Name("baubleFruits")
     @Config.LangKey("config.insanetweaks.category.baubleFruits")
     @Config.Comment("Bauble Fruits: consumption cap, tooltip counter, and the corrupted seed/sapling/fruit loop.")

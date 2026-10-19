@@ -65,6 +65,12 @@ public class EntitiesCategory {
         @Config.RangeInt(min = 0, max = 10)
         public int minPhaseToWake = 4;
 
+        @Config.Comment({ "A mob that came out of an anchor is pulled back next to it when it strays further",
+                "than this many blocks (checked every 2 s). 0 disables the leash. Read live." })
+        @Config.Name("Leash Radius")
+        @Config.RangeInt(min = 0, max = 256)
+        public int leashRadius = 32;
+
         @Config.Comment("Ticks the statue cracks and shakes before the mob breaks free.")
         @Config.Name("Crack Ticks")
         @Config.RangeInt(min = 0, max = 200)

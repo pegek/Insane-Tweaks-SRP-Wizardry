@@ -71,6 +71,16 @@ public class TweaksCategory {
     public com.spege.insanetweaks.util.SrpPhaseHelper.SrpPhaseSource srpPhaseSource =
             com.spege.insanetweaks.util.SrpPhaseHelper.SrpPhaseSource.GLOBAL_HIGHEST;
 
+    @Config.Comment("Arcane Ladder: upward speed while climbing (vanilla ladders ~0.2). Read live.")
+    @Config.Name("Arcane Ladder Climb Speed")
+    @Config.RangeDouble(min = 0.1, max = 1.0)
+    public double arcaneLadderClimbSpeed = 0.28;
+
+    @Config.Comment("Arcane Ladder: fastest slide down (vanilla ladders 0.15). Read live.")
+    @Config.Name("Arcane Ladder Max Descent")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double arcaneLadderMaxDescent = 0.10;
+
     @Config.Comment({"Restoration Hourglass: enable its crafting recipe. Without it the artefact has no",
             "acquisition path at all beyond /give - there is no loot table or quest reward for it."})
     @Config.Name("Restoration Hourglass Recipe")
