@@ -29,7 +29,7 @@ public class CommandInsaneTweaks extends CommandBase {
     @Override
     @Nonnull
     public String getUsage(@Nonnull ICommandSender sender) {
-        return "/itweaks <grantbook | propertybook | codexpool>";
+        return "/itweaks <grantbook | propertybook | codexpool | sanctum>";
     }
 
     @Override
@@ -60,6 +60,9 @@ public class CommandInsaneTweaks extends CommandBase {
                 break;
             case "codexpool":
                 handleCodexPool(sender);
+                break;
+            case "sanctum":
+                handleSanctum(server, sender, args);
                 break;
             case "help":
             default:
@@ -235,4 +238,63 @@ public class CommandInsaneTweaks extends CommandBase {
                 + "\u00A7a to \u00A7e" + target.getName()));
     }
 
+
+    private void handleSanctum(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (!sender.canUseCommand(2, getName())) {
+            throw new CommandException("commands.generic.permission");
+        }
+        if (args.length < 2) {
+            sender.sendMessage(new TextComponentString("/itweaks sanctum <place | nearest>"));
+            return;
+        }
+        net.minecraft.world.World world = sender.getEntityWorld();
+        net.minecraft.util.math.BlockPos at = sender.getPosition();
+        if ("place".equalsIgnoreCase(args[1])) {
+            com.spege.insanetweaks.worldgen.sanctum.SanctumLayout layout =
+                    com.spege.insanetweaks.worldgen.sanctum.SanctumLayout.generate(world.rand.nextLong(), at.getX(),
+                            at.getZ(), com.spege.insanetweaks.config.ModConfig.arcaneSanctum.floorYMin,
+                            com.spege.insanetweaks.config.ModConfig.arcaneSanctum.floorYMax);
+            com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.build(world, layout,
+                    new com.spege.insanetweaks.worldgen.sanctum.SanctumBox(layout.bounds.minX, 0, layout.bounds.minZ,
+                            layout.bounds.maxX, 255, layout.bounds.maxZ));
+            sender.sendMessage(new TextComponentString("Sanctum built: ritual chamber at " + layout.originX + " "
+                    + layout.floorY + " " + layout.originZ + ", shaft at " + layout.shaftX + " " + layout.shaftZ));
+            return;
+        }
+        if ("nearest".equalsIgnoreCase(args[1])) {
+            int size = com.spege.insanetweaks.config.ModConfig.arcaneSanctum.regionSize;
+            int prx = com.spege.insanetweaks.worldgen.sanctum.SanctumRegions.regionOf(at.getX() >> 4, size);
+            int prz = com.spege.insanetweaks.worldgen.sanctum.SanctumRegions.regionOf(at.getZ() >> 4, size);
+            double best = Double.MAX_VALUE;
+            com.spege.insanetweaks.worldgen.sanctum.SanctumLayout found = null;
+            for (int rx = prx - 16; rx <= prx + 16; rx++) {
+                for (int rz = prz - 16; rz <= prz + 16; rz++) {
+                    int[] s = com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.candidate(world, rx, rz);
+                    if (s == null) {
+                        continue;
+                    }
+                    com.spege.insanetweaks.worldgen.sanctum.SanctumLayout l =
+                            com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.layout(world, s[0], s[1]);
+                    if (!com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.biomeAllowed(world, l.originX,
+                            l.originZ)) {
+                        continue;
+                    }
+                    double d = at.distanceSq(l.shaftX, at.getY(), l.shaftZ);
+                    if (d < best) {
+                        best = d;
+                        found = l;
+                    }
+                }
+            }
+            if (found == null || !com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.dimensionAllowed(world)) {
+                sender.sendMessage(new TextComponentString("No sanctum candidate within 16 regions in this dimension."));
+            } else {
+                sender.sendMessage(new TextComponentString("Nearest sanctum shaft: " + found.shaftX + " ~ " + found.shaftZ
+                        + " (floor Y " + found.floorY + ", " + (int) Math.sqrt(best) + " blocks). Generated only if its "
+                        + "chunks were new when first reached."));
+            }
+            return;
+        }
+        sender.sendMessage(new TextComponentString("/itweaks sanctum <place | nearest>"));
+    }
 }
