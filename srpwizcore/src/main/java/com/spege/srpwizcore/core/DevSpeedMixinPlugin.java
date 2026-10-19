@@ -1,7 +1,9 @@
 package com.spege.srpwizcore.core;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -12,8 +14,9 @@ import com.spege.srpwizcore.devspeed.DevSpeedState;
  * Application gate + self-check for the dev-only game-speed mixins
  * ({@code mixins.srpwizcore.devspeed.json}). With the toggle off neither class is touched at all.
  *
- * <p>Both injectors use {@code require = 0} so a moved constant can never break the boot, and
- * this is where that silence is undone: {@link #postApply} counts, on the bytecode that will
+ * <p>The server half is patched here directly ({@link #preApply}); the client half is a
+ * {@code require = 0} redirect. Neither can break the boot when its target moves, and this is
+ * where that silence is undone: {@link #postApply} counts, on the bytecode that will
  * actually be defined, how many sites now call our handlers, records the count in
  * {@link DevSpeedState} for {@code /devspeed}, and logs an ERROR when it is not what vanilla
  * (and Cleanroom 0.6.13) has — 4 constants in {@code MinecraftServer.run}, 1 read in
@@ -28,6 +31,12 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
     /** Must match {@code @Config.Name} on {@code DevSpeedCategory.enabled}. */
     private static final String FLAG_NAME = "Dev Speed: Enabled";
 
+    /** Internal name, spelled out: the plugin must not resolve {@code DevSpeedState} for this. */
+    private static final String STATE_OWNER = "com/spege/srpwizcore/devspeed/DevSpeedState";
+
+    /** Must match {@code DevSpeedState.serverTickMillis()J}. */
+    private static final String SERVER_HOOK = "serverTickMillis";
+
     private static final int EXPECTED_SERVER_CONSTANTS = 4;
     private static final int EXPECTED_CLIENT_READS = 1;
 
@@ -35,11 +44,43 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
         super(FLAG_NAME, false, "dev game-speed tool (/devspeed)");
     }
 
+    /**
+     * The server half's actual patch: every {@code 50L} in {@code MinecraftServer.run()V} becomes
+     * {@code INVOKESTATIC DevSpeedState.serverTickMillis()J}. Same stack effect (one long), so
+     * nothing around it changes and no frame needs recomputing. Done here on the
+     * {@code ClassNode} rather than with {@code @ModifyConstant}, which wired 0 of 4 under
+     * CleanMix 0.7.4 — see {@code MixinMinecraftServerDevSpeed}. Both Cleanroom 0.6.13 and 0.7.11
+     * ship the vanilla loop, so one rewrite covers both.
+     */
+    @Override
+    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName,
+            IMixinInfo mixinInfo) {
+        if (!mixinClassName.endsWith("MixinMinecraftServerDevSpeed")) {
+            return;
+        }
+        for (MethodNode method : targetClass.methods) {
+            if (!"run".equals(method.name) || !"()V".equals(method.desc)) {
+                continue;
+            }
+            for (AbstractInsnNode insn = method.instructions.getFirst(); insn != null;
+                    insn = insn.getNext()) {
+                if (insn instanceof LdcInsnNode
+                        && Long.valueOf(DevSpeedState.VANILLA_MS_PER_TICK)
+                                .equals(((LdcInsnNode) insn).cst)) {
+                    AbstractInsnNode call = new MethodInsnNode(Opcodes.INVOKESTATIC, STATE_OWNER,
+                            SERVER_HOOK, "()J", false);
+                    method.instructions.set(insn, call);
+                    insn = call;
+                }
+            }
+        }
+    }
+
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName,
             IMixinInfo mixinInfo) {
         if (mixinClassName.endsWith("MixinMinecraftServerDevSpeed")) {
-            int wired = countCalls(targetClass, "run", "()V", "devSpeedMsPerTick");
+            int wired = countCalls(targetClass, "run", "()V", SERVER_HOOK);
             DevSpeedState.serverPatchedConstants = wired;
             if (wired == EXPECTED_SERVER_CONSTANTS) {
                 this.logger.info("[srpwizcore] devspeed: MinecraftServer.run patched "

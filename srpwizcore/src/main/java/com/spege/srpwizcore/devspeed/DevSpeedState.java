@@ -4,8 +4,9 @@ package com.spege.srpwizcore.devspeed;
  * Shared state of the dev-only game-speed tool ({@code /devspeed}).
  *
  * <p>Deliberately free of every Minecraft and Forge type. Three different callers read or
- * write it: the two mixin handlers (inside {@code MinecraftServer.run} and
- * {@code Timer.updateTimer}), the network handler, and {@code DevSpeedMixinPlugin.postApply},
+ * write it: the two tick hooks ({@link #serverTickMillis} inside {@code MinecraftServer.run},
+ * the mixin handler in {@code Timer.updateTimer}), the network handler, and
+ * {@code DevSpeedMixinPlugin.postApply},
  * which runs <em>inside the transformer while {@code MinecraftServer} itself is being
  * defined</em>. A field or signature typed with a Minecraft class here would make the plugin's
  * first touch of this class resolve that type mid-transformation — a {@code
@@ -49,6 +50,16 @@ public final class DevSpeedState {
     public static volatile int clientPatchedReads = -1;
 
     private DevSpeedState() {
+    }
+
+    /**
+     * Called in place of every {@code 50L} in {@code MinecraftServer.run} — the plugin rewrites
+     * the constants to {@code INVOKESTATIC} of this method. Lives here, not in the mixin, so the
+     * rewrite needs no handler that Mixin would have to merge.
+     */
+    public static long serverTickMillis() {
+        serverHookFired = true;
+        return serverMsPerTick;
     }
 
     /** Milliseconds per tick for a multiplier; rounded, never below 1 ms. */
