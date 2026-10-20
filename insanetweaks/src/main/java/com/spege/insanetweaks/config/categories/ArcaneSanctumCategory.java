@@ -60,6 +60,16 @@ public class ArcaneSanctumCategory {
     @Config.RangeInt(min = 0, max = 12)
     public int bookshelfBookRolls = 3;
 
+    @Config.Comment("Chance (0-1) that a fallen room anchor (sim wizard or battlemage) drops an artefact.")
+    @Config.Name("Anchor Artefact Chance Room")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double anchorArtefactChanceRoom = 0.20;
+
+    @Config.Comment("Chance (0-1) that a fallen ritual-chamber anchor (parasite) drops an artefact.")
+    @Config.Name("Anchor Artefact Chance Chamber")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double anchorArtefactChanceChamber = 0.50;
+
     @Config.Comment({ "Spells a trap dispenser fires (as scrolls), one picked per dispenser by position.",
             "Ids that do not resolve, or spells EBW does not allow from a dispenser, are skipped." })
     @Config.Name("Trap Spells")

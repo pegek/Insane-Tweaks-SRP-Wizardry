@@ -16,6 +16,8 @@ public final class AnchorLeash {
     public static final String ALONE = "InsaneTweaksAnchorAlone";
     /** Set when the mob is loaded back in away from home with nobody near; it goes home on its next check. */
     public static final String RECALL = "InsaneTweaksAnchorRecall";
+    /** On a ritual-chamber parasite until it has called the anchors around it for help. */
+    public static final String CALLER = "InsaneTweaksAnchorCaller";
 
     private AnchorLeash() {
     }

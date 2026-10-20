@@ -99,6 +99,38 @@ public class EntitiesCategory {
                 "150 keeps the no-SRP invariant of that dimension." })
         @Config.Name("Dimension Blacklist")
         public int[] dimensionBlacklist = { 150 };
+
+        @Config.Comment({ "Stat bonuses for every mob released from an anchor (in a sanctum or placed by hand).",
+                "A stand-in until the mobs' AI is balanced: switch it off here, or set a value below to 0.",
+                "Read when a mob is released." })
+        @Config.Name("Release Buffs")
+        public boolean releaseBuffs = true;
+
+        @Config.Comment("Extra max health for released mobs, as a fraction (0.2 = +20%). 0 disables it.")
+        @Config.Name("Release Health Bonus")
+        @Config.RangeDouble(min = 0.0, max = 10.0)
+        public double releaseHealthBonus = 0.20;
+
+        @Config.Comment("Extra movement speed for released sim wizards and battlemages, as a fraction. 0 disables it.")
+        @Config.Name("Release Speed Bonus")
+        @Config.RangeDouble(min = 0.0, max = 5.0)
+        public double releaseSpeedBonus = 0.15;
+
+        @Config.Comment({ "Parasites released from a sanctum's ritual-chamber anchors call for help once, the first",
+                "time they drop below the health fraction below: every intact anchor within the radius wakes.",
+                "Read live." })
+        @Config.Name("Reinforcements")
+        public boolean reinforcements = true;
+
+        @Config.Comment("Health fraction below which a chamber parasite calls for help. 0 disables it.")
+        @Config.Name("Reinforcement Health Fraction")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double reinforcementHealthFraction = 0.25;
+
+        @Config.Comment("Radius in blocks within which intact anchors answer the call.")
+        @Config.Name("Reinforcement Radius")
+        @Config.RangeDouble(min = 0.0, max = 64.0)
+        public double reinforcementRadius = 10.0;
     }
 
     /**

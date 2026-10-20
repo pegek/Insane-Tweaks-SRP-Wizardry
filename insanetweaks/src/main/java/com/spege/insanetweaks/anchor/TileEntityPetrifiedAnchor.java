@@ -17,9 +17,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
@@ -29,6 +31,8 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootTable;
 
 /**
  * The anchor's phase machine (server only; EBW renders the statue).
@@ -63,6 +67,7 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
     private static final int WARN_AFTER_ATTEMPTS = 3;
     private static final int TARGET_LOCK_TICKS = 60;
     private static final Set<String> WARNED_POOL_LINES = new HashSet<String>();
+    private static final ResourceLocation ARTEFACT_LOOT = new ResourceLocation(InsaneTweaksMod.MODID, "anchor_artefact");
 
     private byte phase = EMPTY;
     private String pinnedMob = "";
@@ -79,6 +84,8 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
     private boolean mobGone;
     private boolean hasSanctum;
     private long sanctumId;
+    /** Who a reinforcement call aims the mob at; not saved - a reload just loses the aim. */
+    private EntityPlayer callTarget;
 
     @Override
     public void update() {
@@ -206,7 +213,7 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             if (this.mobData != null) {
                 spawnMob(null);
             } else {
-                finish();
+                finish(false);
             }
             return;
         }
@@ -215,6 +222,30 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             this.crackTimer = 0;
             markDirty();
         }
+    }
+
+    /**
+     * A reinforcement call from a nearby chamber parasite: a dormant anchor wakes at once, as if a
+     * player had come close, and its mob is aimed at {@code target}. The phase gate still applies.
+     */
+    public boolean callToArms(EntityPlayer target) {
+        if (this.phase != DORMANT || !wakeAllowed(this.world) || !AnchorStatues.isStatueAt(this.world, statuePos())) {
+            return false;
+        }
+        this.callTarget = target;
+        this.phase = WAKING;
+        this.crackTimer = 0;
+        markDirty();
+        return true;
+    }
+
+    private EntityPlayer wakerOrCaller() {
+        EntityPlayer near = nearestWaker();
+        if (near != null) {
+            return near;
+        }
+        EntityPlayer called = this.callTarget;
+        return called != null && called.isEntityAlive() && called.world == this.world ? called : null;
     }
 
     /**
@@ -258,9 +289,9 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             EntityLiving legacy = AnchorStatues.creatureAt(this.world, at);
             AnchorStatues.release(this.world, at);
             if (legacy != null && legacy.isEntityAlive()) {
-                track(legacy, nearestWaker());
+                track(legacy, wakerOrCaller());
             } else {
-                finish();
+                finish(false);
             }
             return;
         }
@@ -277,20 +308,24 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
         BlockPos at = statuePos();
         MagicParasiteTraits.burst(this.world, at.getX() + 0.5D, at.getY() + 1.0D, at.getZ() + 0.5D, 3, 0.5D);
         if (this.releaseTimer >= cfg().releaseDelayTicks) {
-            spawnMob(nearestWaker());
+            spawnMob(wakerOrCaller());
         }
     }
 
     private void spawnMob(EntityPlayer waker) {
         Entity entity = this.mobData == null ? null : EntityList.createEntityFromNBT(this.mobData, this.world);
         if (!(entity instanceof EntityLiving)) {
-            finish();
+            finish(false);
             return;
         }
         BlockPos at = statuePos();
         entity.setLocationAndAngles(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, entity.rotationYaw, 0.0F);
+        if (this.hasSanctum && this.pinnedMob.isEmpty()) {
+            // Ritual-chamber parasite: may call the anchors around it once (AnchorLeashHandler).
+            entity.getEntityData().setBoolean(AnchorLeash.CALLER, true);
+        }
         if (!this.world.spawnEntity(entity)) {
-            finish();
+            finish(false);
             return;
         }
         MagicParasiteTraits.burst(this.world, entity.posX, entity.posY + entity.height * 0.5D, entity.posZ, 24, 0.5D);
@@ -299,6 +334,8 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
     }
 
     private void track(EntityLiving mob, EntityPlayer waker) {
+        AnchorBuffs.apply(mob);
+        this.callTarget = null;
         this.mobUuid = mob.getUniqueID();
         this.mobData = null;
         this.missingTicks = 0;
@@ -326,20 +363,20 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
     private void guard() {
         if (this.mobGone || this.mobUuid == null
                 || (this.hasSanctum && SanctumLocks.isAnchorDone(this.world, this.sanctumId, this.pos))) {
-            finish();
+            finish(this.mobGone);
             return;
         }
         Entity mob = this.world instanceof WorldServer ? ((WorldServer) this.world).getEntityFromUuid(this.mobUuid)
                 : null;
         if (mob != null && mob.isDead) {
-            finish();
+            finish(false);
             return;
         }
         if (mob == null) {
             if (!this.lastMobKnown || this.world.isBlockLoaded(BlockPos.fromLong(this.lastMobPos))) {
                 this.missingTicks += GUARD_INTERVAL;
                 if (this.missingTicks >= MISSING_LIMIT) {
-                    finish();
+                    finish(false);
                 }
             }
         } else {
@@ -355,13 +392,37 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
         markDirty();
     }
 
-    private void finish() {
+    /**
+     * The anchor's work is over. A hand-placed anchor turns SPENT. A sanctum anchor falls: sound,
+     * debris, the block is removed and - only when its own mob was seen to die - it may drop one
+     * artefact ({@code insanetweaks:anchor_artefact}).
+     */
+    private void finish(boolean died) {
         this.phase = SPENT;
         markDirty();
-        if (this.hasSanctum) {
-            SanctumLocks.anchorDone(this.world, this.sanctumId, this.pos);
+        if (!this.hasSanctum) {
+            setStage(BlockPetrifiedAnchor.Stage.SPENT);
+            return;
         }
-        setStage(BlockPetrifiedAnchor.Stage.SPENT);
+        SanctumLocks.anchorDone(this.world, this.sanctumId, this.pos);
+        BlockPos at = this.pos;
+        debris(at.down(), 50);
+        MagicParasiteTraits.burst(this.world, at.getX() + 0.5D, at.getY() + 1.0D, at.getZ() + 0.5D, 30, 0.6D);
+        this.world.playSound(null, at, SoundEvents.ENTITY_ILLAGER_MIRROR_MOVE, SoundCategory.BLOCKS, 1.0F, 0.6F);
+        this.world.playSound(null, at, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1.2F, 0.5F);
+        double chance = AnchorRules.artefactChance(true, !this.pinnedMob.isEmpty(),
+                ModConfig.arcaneSanctum.anchorArtefactChanceRoom, ModConfig.arcaneSanctum.anchorArtefactChanceChamber);
+        boolean drop = died && this.world.rand.nextDouble() < chance;
+        World world = this.world;
+        world.setBlockToAir(at);
+        if (drop && world instanceof WorldServer) {
+            LootTable table = world.getLootTableManager().getLootTableFromLocation(ARTEFACT_LOOT);
+            for (ItemStack stack : table.generateLootForPools(world.rand, new LootContext.Builder((WorldServer) world).build())) {
+                EntityItem item = new EntityItem(world, at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D, stack);
+                item.setDefaultPickupDelay();
+                world.spawnEntity(item);
+            }
+        }
     }
 
     private void setStage(BlockPetrifiedAnchor.Stage stage) {

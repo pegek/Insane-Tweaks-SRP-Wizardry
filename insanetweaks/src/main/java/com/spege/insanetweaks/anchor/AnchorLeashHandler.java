@@ -15,6 +15,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -121,6 +122,34 @@ public class AnchorLeashHandler {
             mob.heal((float) ((mob.getMaxHealth() - mob.getHealth()) * healFraction));
         }
         MagicParasiteTraits.burst(mob.world, mob.posX, mob.posY + mob.height * 0.5D, mob.posZ, 16, 0.4D);
+    }
+
+    /**
+     * A ritual-chamber parasite that drops below the configured health fraction calls for help once:
+     * every intact anchor within the radius wakes, aimed at the player it is fighting.
+     */
+    @SubscribeEvent
+    public void onDamage(LivingDamageEvent event) {
+        EntityLivingBase entity = event.getEntityLiving();
+        if (entity.world.isRemote || !entity.getEntityData().getBoolean(AnchorLeash.CALLER)) {
+            return;
+        }
+        EntitiesCategory.PetrifiedAnchor cfg = ModConfig.entities.petrifiedAnchor;
+        if (!cfg.reinforcements || !AnchorRules.shouldCall(entity.getHealth() - event.getAmount(), entity.getMaxHealth(),
+                cfg.reinforcementHealthFraction)) {
+            return;
+        }
+        entity.getEntityData().removeTag(AnchorLeash.CALLER);
+        EntityPlayer target = entity instanceof EntityLiving && ((EntityLiving) entity).getAttackTarget() instanceof EntityPlayer
+                ? (EntityPlayer) ((EntityLiving) entity).getAttackTarget()
+                : entity.world.getClosestPlayer(entity.posX, entity.posY, entity.posZ, 16.0D, NOT_SPECTATOR);
+        double r2 = cfg.reinforcementRadius * cfg.reinforcementRadius;
+        for (TileEntity te : new java.util.ArrayList<TileEntity>(entity.world.loadedTileEntityList)) {
+            if (te instanceof TileEntityPetrifiedAnchor && !te.isInvalid()
+                    && te.getDistanceSq(entity.posX, entity.posY, entity.posZ) <= r2) {
+                ((TileEntityPetrifiedAnchor) te).callToArms(target);
+            }
+        }
     }
 
     @SubscribeEvent
