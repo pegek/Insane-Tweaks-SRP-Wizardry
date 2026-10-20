@@ -1,0 +1,23 @@
+{
+    "parent": "insanetweaks:sanctum/found",
+    "display": {
+        "icon": {
+            "item": "ancientspellcraft:unseal_button"
+        },
+        "title": {
+            "translate": "advancement.insanetweaks:sanctum.cleansed"
+        },
+        "description": {
+            "translate": "advancement.insanetweaks:sanctum.cleansed.desc"
+        },
+        "frame": "goal",
+        "show_toast": true,
+        "announce_to_chat": true,
+        "hidden": false
+    },
+    "criteria": {
+        "cleansed": {
+            "trigger": "minecraft:impossible"
+        }
+    }
+}

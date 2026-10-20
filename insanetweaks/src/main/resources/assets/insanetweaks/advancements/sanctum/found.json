@@ -1,0 +1,23 @@
+{
+    "display": {
+        "icon": {
+            "item": "ancientspellcraft:sealed_stone"
+        },
+        "title": {
+            "translate": "advancement.insanetweaks:sanctum.found"
+        },
+        "description": {
+            "translate": "advancement.insanetweaks:sanctum.found.desc"
+        },
+        "background": "minecraft:textures/blocks/stonebrick_mossy.png",
+        "frame": "task",
+        "show_toast": true,
+        "announce_to_chat": true,
+        "hidden": false
+    },
+    "criteria": {
+        "found": {
+            "trigger": "minecraft:impossible"
+        }
+    }
+}

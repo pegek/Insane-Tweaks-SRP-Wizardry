@@ -120,7 +120,8 @@ public final class SanctumPlacement {
                 containers.add(Long.valueOf(new BlockPos(d[0], d[1], d[2]).toLong()));
             }
         }
-        SanctumWorldData.get(world).register(sanctumId, anchors, containers);
+        SanctumWorldData.get(world).register(sanctumId, anchors, containers, l.bounds.minX, l.bounds.minZ, l.bounds.maxX,
+                l.bounds.maxZ);
     }
 
     private static boolean integrityOk(World world, SanctumLayout l, int writerX, int writerZ) {

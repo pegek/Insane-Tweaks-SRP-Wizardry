@@ -37,6 +37,8 @@ public class SanctumWorldData extends WorldSavedData {
         final Set<Long> anchors = new HashSet<Long>();
         final List<Long> containers = new ArrayList<Long>();
         boolean cleared;
+        /** minX, minZ, maxX, maxZ of the footprint; null for records written before 1.27.0. */
+        int[] bounds;
     }
 
     public SanctumWorldData() {
@@ -66,8 +68,9 @@ public class SanctumWorldData extends WorldSavedData {
         markDirty();
     }
 
-    /** Records a sanctum once; later calls for the same id are ignored. */
-    public void register(long id, Collection<Long> anchors, Collection<Long> containers) {
+    /** Records a sanctum once, with its horizontal footprint; later calls for the same id are ignored. */
+    public void register(long id, Collection<Long> anchors, Collection<Long> containers, int minX, int minZ, int maxX,
+            int maxZ) {
         Long key = Long.valueOf(id);
         if (this.records.containsKey(key)) {
             return;
@@ -76,8 +79,20 @@ public class SanctumWorldData extends WorldSavedData {
         r.anchors.addAll(anchors);
         r.containers.addAll(containers);
         r.cleared = r.anchors.isEmpty();
+        r.bounds = new int[] { minX, minZ, maxX, maxZ };
         this.records.put(key, r);
         markDirty();
+    }
+
+    /** Whether x, z lies within {@code margin} blocks of any recorded sanctum's footprint. */
+    public boolean nearSanctum(int x, int z, int margin) {
+        for (Record r : this.records.values()) {
+            int[] b = r.bounds;
+            if (b != null && x >= b[0] - margin && x <= b[2] + margin && z >= b[1] - margin && z <= b[3] + margin) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Marks one anchor defeated; true exactly when this cleared the sanctum. */
@@ -125,6 +140,8 @@ public class SanctumWorldData extends WorldSavedData {
             r.anchors.addAll(longs(c.getTagList("Anchors", TAG_LONG)));
             r.containers.addAll(longs(c.getTagList("Containers", TAG_LONG)));
             r.cleared = c.getBoolean("Cleared");
+            int[] bounds = c.getIntArray("Bounds");
+            r.bounds = bounds.length == 4 ? bounds : null;
             this.records.put(Long.valueOf(c.getLong("Id")), r);
         }
     }
@@ -145,6 +162,9 @@ public class SanctumWorldData extends WorldSavedData {
             c.setTag("Anchors", toList(e.getValue().anchors));
             c.setTag("Containers", toList(e.getValue().containers));
             c.setBoolean("Cleared", e.getValue().cleared);
+            if (e.getValue().bounds != null) {
+                c.setIntArray("Bounds", e.getValue().bounds);
+            }
             sanctums.appendTag(c);
         }
         nbt.setTag("Sanctums", sanctums);

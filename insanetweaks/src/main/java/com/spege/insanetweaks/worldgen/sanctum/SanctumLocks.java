@@ -8,8 +8,11 @@ import electroblob.wizardry.packet.WizardryPacketHandler;
 import electroblob.wizardry.spell.ArcaneLock;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -91,6 +94,11 @@ public final class SanctumLocks {
         for (EntityPlayer player : world.playerEntities) {
             if (player.getDistanceSq(announce) < SYNC_RANGE * SYNC_RANGE) {
                 player.sendStatusMessage(new TextComponentTranslation("msg.insanetweaks.sanctum.unsealed"), true);
+                world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE,
+                        SoundCategory.PLAYERS, 1.0F, 1.0F);
+                if (player instanceof EntityPlayerMP) {
+                    SanctumAdvancements.grant((EntityPlayerMP) player, SanctumAdvancements.CLEANSED);
+                }
             }
         }
     }
