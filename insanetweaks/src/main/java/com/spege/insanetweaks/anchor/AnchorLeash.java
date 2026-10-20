@@ -14,6 +14,8 @@ public final class AnchorLeash {
     public static final String DIM = "InsaneTweaksAnchorDim";
     public static final String SANCTUM = "InsaneTweaksSanctum";
     public static final String ALONE = "InsaneTweaksAnchorAlone";
+    /** Set when the mob is loaded back in away from home with nobody near; it goes home on its next check. */
+    public static final String RECALL = "InsaneTweaksAnchorRecall";
 
     private AnchorLeash() {
     }

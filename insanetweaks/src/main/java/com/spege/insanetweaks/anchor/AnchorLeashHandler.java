@@ -14,6 +14,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -58,6 +59,12 @@ public class AnchorLeashHandler {
             sendHome((EntityLiving) entity, home, 0.0D);
             return;
         }
+        if (data.getBoolean(AnchorLeash.RECALL)) {
+            data.removeTag(AnchorLeash.RECALL);
+            data.setInteger(AnchorLeash.ALONE, 0);
+            sendHome((EntityLiving) entity, home, cfg.returnHealFraction);
+            return;
+        }
         EntityPlayer near = entity.world.getClosestPlayer(entity.posX, entity.posY, entity.posZ, cfg.returnRadius,
                 NOT_SPECTATOR);
         if (near != null) {
@@ -72,6 +79,32 @@ public class AnchorLeashHandler {
             }
         }
         data.setInteger(AnchorLeash.ALONE, alone);
+    }
+
+    /**
+     * The return timer only runs while the mob ticks, so a player who walks away far enough to
+     * unload it would find it wherever it stopped. Catch it on the way back in instead: loaded far
+     * from home with nobody near means it goes home on its next check.
+     */
+    @SubscribeEvent
+    public void onJoin(EntityJoinWorldEvent event) {
+        Entity entity = event.getEntity();
+        if (event.getWorld().isRemote || !(entity instanceof EntityLiving)) {
+            return;
+        }
+        NBTTagCompound data = entity.getEntityData();
+        if (!data.hasKey(AnchorLeash.HOME) || data.getInteger(AnchorLeash.DIM) != entity.dimension) {
+            return;
+        }
+        BlockPos home = BlockPos.fromLong(data.getLong(AnchorLeash.HOME));
+        if (entity.getDistanceSq(home) <= HOME_SLACK_SQ) {
+            return;
+        }
+        EntityPlayer near = event.getWorld().getClosestPlayer(entity.posX, entity.posY, entity.posZ,
+                ModConfig.entities.petrifiedAnchor.returnRadius, NOT_SPECTATOR);
+        if (near == null) {
+            data.setBoolean(AnchorLeash.RECALL, true);
+        }
     }
 
     private static void sendHome(EntityLiving mob, BlockPos home, double healFraction) {

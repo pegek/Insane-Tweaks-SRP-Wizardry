@@ -73,6 +73,9 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
     private NBTTagCompound mobData;
     private UUID mobUuid;
     private int missingTicks;
+    /** Where the mob was last seen; a missing mob whose chunk is unloaded is not counted as gone. */
+    private long lastMobPos;
+    private boolean lastMobKnown;
     private boolean mobGone;
     private boolean hasSanctum;
     private long sanctumId;
@@ -299,6 +302,8 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
         this.mobUuid = mob.getUniqueID();
         this.mobData = null;
         this.missingTicks = 0;
+        this.lastMobPos = mob.getPosition().toLong();
+        this.lastMobKnown = true;
         if (waker != null) {
             aim(mob, waker);
         }
@@ -331,12 +336,16 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             return;
         }
         if (mob == null) {
-            this.missingTicks += GUARD_INTERVAL;
-            if (this.missingTicks >= MISSING_LIMIT) {
-                finish();
+            if (!this.lastMobKnown || this.world.isBlockLoaded(BlockPos.fromLong(this.lastMobPos))) {
+                this.missingTicks += GUARD_INTERVAL;
+                if (this.missingTicks >= MISSING_LIMIT) {
+                    finish();
+                }
             }
         } else {
             this.missingTicks = 0;
+            this.lastMobPos = mob.getPosition().toLong();
+            this.lastMobKnown = true;
         }
     }
 
@@ -414,6 +423,8 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
         this.mobData = compound.hasKey("MobData", 10) ? compound.getCompoundTag("MobData") : null;
         this.mobUuid = compound.hasUniqueId("Mob") ? compound.getUniqueId("Mob") : null;
         this.missingTicks = compound.getInteger("Missing");
+        this.lastMobPos = compound.getLong("LastMobPos");
+        this.lastMobKnown = compound.getBoolean("LastMobKnown");
         this.mobGone = compound.getBoolean("MobGone");
         this.hasSanctum = compound.getBoolean("HasSanctum");
         this.sanctumId = compound.getLong("Sanctum");
@@ -432,6 +443,8 @@ public class TileEntityPetrifiedAnchor extends TileEntity implements ITickable {
             compound.setUniqueId("Mob", this.mobUuid);
         }
         compound.setInteger("Missing", this.missingTicks);
+        compound.setLong("LastMobPos", this.lastMobPos);
+        compound.setBoolean("LastMobKnown", this.lastMobKnown);
         compound.setBoolean("MobGone", this.mobGone);
         compound.setBoolean("HasSanctum", this.hasSanctum);
         compound.setLong("Sanctum", this.sanctumId);
