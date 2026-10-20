@@ -353,8 +353,9 @@ public final class SanctumLayout {
                 break;
         }
         if (type.hasAnchors()) {
+            // Never on an interior edge column: vines grow there and would fill the statue's space.
             int a = type == RoomType.TELEPORT ? 2 : 1;
-            int b = type == RoomType.TELEPORT ? 3 : 2;
+            int b = 2;
             addAnchor(rel(cx, cz, front, a, -b, f), POOL_ROOM);
             if (r.nextInt(4) == 0) {
                 addAnchor(rel(cx, cz, front, a, b, f), POOL_ROOM);
@@ -381,6 +382,11 @@ public final class SanctumLayout {
      * Tripwire across the row just inside the door; the hook on one side is attached to a dispenser
      * built into that side wall, facing across the room. The dispenser goes on the side whose wall
      * is not the ritual chamber's shell.
+     *
+     * <p>Order matters: a tripwire placed in the world scans south and west for a hook, and a hook
+     * found without its partner reads 41 blocks ahead - past the populated chunks. So the hook at
+     * the north/east end (facing south or west) goes first, then the wires, then the other hook,
+     * which has no placement scan of its own. The builder places props in list order.
      */
     private void trap(int cx, int cz, int front, int f) {
         int side = -1;
@@ -393,11 +399,14 @@ public final class SanctumLayout {
         int towardsRoom = side < 0 ? (front + 1) % 4 : (front + 3) % 4;
         int towardsDispenser = (towardsRoom + 2) % 4;
         this.trapDispensers.add(withTail(dispenser, face(towardsRoom)));
-        prop(cx, cz, front, 3, 3 * side, f, PROP_TRIP_HOOK, towardsRoom);
-        prop(cx, cz, front, 3, -3 * side, f, PROP_TRIP_HOOK, towardsDispenser);
+        int nearFacing = face(towardsRoom);
+        boolean nearFirst = nearFacing == SOUTH || nearFacing == WEST;
+        int firstB = nearFirst ? 3 * side : -3 * side;
+        prop(cx, cz, front, 3, firstB, f, PROP_TRIP_HOOK, nearFirst ? towardsRoom : towardsDispenser);
         for (int b = -2; b <= 2; b++) {
             prop(cx, cz, front, 3, b, f, PROP_TRIPWIRE, front);
         }
+        prop(cx, cz, front, 3, -firstB, f, PROP_TRIP_HOOK, nearFirst ? towardsDispenser : towardsRoom);
     }
 
     /** Small seeded décor on free floor cells at a <= 1, i.e. away from the door line and trap row. */

@@ -206,6 +206,56 @@ public class SanctumLayoutTest {
         assertTrue(sawTrap);
     }
 
+    /**
+     * A tripwire scans south/west for a hook on placement, and a hook without its partner reads 41
+     * blocks ahead - outside the populated area. So each trap is emitted north/east-end hook (facing
+     * south or west) first, then the five wires, then the south/west-end hook.
+     */
+    @Test
+    public void trapPiecesAreOrderedSoNoWireMeetsAnUnpartneredHook() {
+        boolean sawTrap = false;
+        for (long s = 0; s < SEEDS; s++) {
+            List<int[]> props = layout(s).props;
+            for (int i = 0; i < props.size(); i++) {
+                int kind = props.get(i)[3];
+                if (kind != SanctumLayout.PROP_TRIP_HOOK && kind != SanctumLayout.PROP_TRIPWIRE) {
+                    continue;
+                }
+                sawTrap = true;
+                int first = props.get(i)[4];
+                assertTrue("seed " + s + " first hook facing " + first,
+                        kind == SanctumLayout.PROP_TRIP_HOOK
+                                && (first == SanctumLayout.SOUTH || first == SanctumLayout.WEST));
+                for (int w = 1; w <= 5; w++) {
+                    assertEquals("seed " + s, SanctumLayout.PROP_TRIPWIRE, props.get(i + w)[3]);
+                }
+                int[] last = props.get(i + 6);
+                assertEquals(SanctumLayout.PROP_TRIP_HOOK, last[3]);
+                assertTrue(last[4] == SanctumLayout.NORTH || last[4] == SanctumLayout.EAST);
+                i += 6;
+            }
+        }
+        assertTrue(sawTrap);
+    }
+
+    /** Vines grow on interior edge cells; an anchor there could get its statue space covered. */
+    @Test
+    public void anchorsNeverSitOnAnInteriorEdgeColumn() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            for (int[] a : l.anchors) {
+                for (SanctumLayout.Room r : l.rooms) {
+                    SanctumBox in = r.outer.shrink(1);
+                    if (in == null || !in.contains(a[0], a[1], a[2])) {
+                        continue;
+                    }
+                    boolean edge = a[0] == in.minX || a[0] == in.maxX || a[2] == in.minZ || a[2] == in.maxZ;
+                    assertFalse("seed " + s + " " + r.type + " anchor " + key(a), edge);
+                }
+            }
+        }
+    }
+
     @Test
     public void teleportRingIsEightOrTwelveStones() {
         for (long s = 0; s < SEEDS; s++) {
