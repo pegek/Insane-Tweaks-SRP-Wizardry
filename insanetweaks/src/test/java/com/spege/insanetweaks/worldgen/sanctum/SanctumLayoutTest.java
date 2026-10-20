@@ -55,6 +55,7 @@ public class SanctumLayoutTest {
 
     @Test
     public void corePiecesSideRoomsAndFillers() {
+        boolean sawSixRooms = false;
         for (long s = 0; s < SEEDS; s++) {
             SanctumLayout l = layout(s);
             int side = 0;
@@ -70,11 +71,13 @@ public class SanctumLayoutTest {
                 }
             }
             assertEquals(5, l.rooms.size() - side);
-            assertTrue("seed " + s, side >= 2 && side <= 5);
+            assertTrue("seed " + s, side >= 3 && side <= 6);
+            sawSixRooms |= side == 6;
             assertTrue(fillers <= 1);
             assertEquals(SanctumLayout.RoomType.CHAMBER, l.rooms.get(0).type);
             assertEquals(SanctumLayout.RoomType.VESTIBULE, l.rooms.get(4).type);
         }
+        assertTrue("a full six-room sanctum must be possible", sawSixRooms);
     }
 
     @Test

@@ -309,7 +309,8 @@ public final class SanctumLayout {
             slots.add(Integer.valueOf(i));
         }
         Collections.shuffle(slots, r);
-        int k = 2 + r.nextInt(4);
+        // 3-6 side rooms over 6 slots and 6 types (one more on average since 1.27.0).
+        int k = 3 + r.nextInt(4);
         for (int i = 0; i < k; i++) {
             int[] slot = SLOTS[slots.get(i).intValue()];
             sideRoom(types.get(i), slot[0], slot[1], slot[2], slot[3] == 2 ? this.floorY2 : this.floorY, r);

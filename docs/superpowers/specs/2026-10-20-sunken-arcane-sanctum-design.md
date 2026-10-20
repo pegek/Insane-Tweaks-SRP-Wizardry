@@ -699,7 +699,8 @@ Both chances and the roll count are config fields.
   - `sanctum/found` is the root, with a stone-brick or sealed-stone background.
   - `sanctum/cleansed` is its child.
   - The existing sentient-gear root is left alone.
-- **Side rooms stay 2–5 (assistant).** RITUAL simply joins the type pool.
+- **Side rooms become 3–6 (user, 2026-10-20).** One more room on average; RITUAL joins the type pool.
+  Six slots and six types, so the footprint is unchanged.
 - **No compatibility for half-built sanctums (assistant).** The DEv 1.2 world is a test world, the
   same stance as §13 took on 1.25.0 locks.
 - **The hint book is never locked (assistant).** Whatever holds it, lectern or chest, stays outside
