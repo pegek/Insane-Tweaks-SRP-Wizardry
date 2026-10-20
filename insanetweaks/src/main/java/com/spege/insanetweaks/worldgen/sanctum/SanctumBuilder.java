@@ -11,6 +11,8 @@ import com.spege.insanetweaks.config.categories.ArcaneSanctumCategory;
 import com.spege.insanetweaks.init.ModBlocks;
 import com.spege.insanetweaks.init.ModElements;
 
+import com.windanesz.ancientspellcraft.tileentity.TileRune;
+
 import electroblob.wizardry.registry.WizardryBlocks;
 import electroblob.wizardry.tileentity.TileEntityImbuementAltar;
 import electroblob.wizardry.tileentity.TileEntityTimer;
@@ -182,6 +184,8 @@ public final class SanctumBuilder {
                 if (te instanceof IInventory) {
                     SanctumBooks.fill((IInventory) te, l.seed, prop[0], prop[1], prop[2], cfg.bookshelfBookRolls,
                             cfg.bookshelfBookChance);
+                    SanctumBooks.fillExtras((IInventory) te, l.seed, prop[0], prop[1], prop[2], cfg.bookshelfExtraRolls,
+                            cfg.bookshelfTreasureChance, cfg.bookshelfInsaneBookChance);
                 }
                 if (te != null) {
                     SanctumLocks.lock(te, sanctumId);
@@ -258,6 +262,44 @@ public final class SanctumBuilder {
         }
         for (int[] d : l.decor) {
             decor(world, l, clip, d, sanctumId);
+        }
+        ritual(world, l, clip);
+    }
+
+    /**
+     * The ritual room: ASC runes laid without their centrepiece, and an unlocked chest holding the
+     * hint book. A rune block or item missing from ASC skips that rune.
+     */
+    private static void ritual(World world, SanctumLayout l, SanctumBox clip) {
+        if (l.ritualKind < 0) {
+            return;
+        }
+        Block runeBlock = Block.getBlockFromName("ancientspellcraft:placed_rune");
+        EnumFacing face = facing(l.hintChest[3]);
+        for (int[] r : l.runes) {
+            if (runeBlock == null || runeBlock == Blocks.AIR || !clip.contains(r[0], r[1], r[2])) {
+                continue;
+            }
+            Item rune = Item.getByNameOrId(SanctumRituals.rune(r[3], (char) r[4]));
+            if (rune == null) {
+                continue;
+            }
+            BlockPos pos = new BlockPos(r[0], r[1], r[2]);
+            world.setBlockState(pos, runeBlock.getDefaultState(), FLAGS);
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof TileRune) {
+                ((TileRune) te).setRune(rune);
+                ((TileRune) te).setDirection(face);
+            }
+        }
+        int[] c = l.hintChest;
+        if (clip.contains(c[0], c[1], c[2])) {
+            BlockPos pos = new BlockPos(c[0], c[1], c[2]);
+            world.setBlockState(pos, Blocks.CHEST.getDefaultState().withProperty(BlockChest.FACING, face), FLAGS);
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof TileEntityChest) {
+                ((TileEntityChest) te).setInventorySlotContents(13, SanctumRitualBook.create(l.ritualKind));
+            }
         }
     }
 

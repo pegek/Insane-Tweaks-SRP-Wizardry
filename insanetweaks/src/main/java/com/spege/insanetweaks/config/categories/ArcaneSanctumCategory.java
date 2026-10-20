@@ -39,7 +39,7 @@ public class ArcaneSanctumCategory {
 
     @Config.Comment("Mobs pinned on the side rooms' anchors, as 'modid:entity;weight'.")
     @Config.Name("Room Anchor Pool")
-    public String[] roomAnchorPool = { "insanetweaks:sim_wizard;3", "insanetweaks:sim_battlemage;1" };
+    public String[] roomAnchorPool = { "insanetweaks:sim_wizard;3", "insanetweaks:sim_battlemage;2" };
 
     @Config.Comment("Chance (0-1) that the main chest also holds one random bauble/artefact from any mod.")
     @Config.Name("Main Chest Bauble Chance")
@@ -59,6 +59,22 @@ public class ArcaneSanctumCategory {
     @Config.Name("Bookshelf Book Rolls")
     @Config.RangeInt(min = 0, max = 12)
     public int bookshelfBookRolls = 3;
+
+    @Config.Comment("Extra rolls per EBW bookshelf for an enchanted book (see the two chances below).")
+    @Config.Name("Bookshelf Extra Rolls")
+    @Config.RangeInt(min = 0, max = 12)
+    public int bookshelfExtraRolls = 2;
+
+    @Config.Comment("Chance (0-1) per extra roll of a treasure-allowed enchanted book (level 30 enchanting).")
+    @Config.Name("Bookshelf Treasure Chance")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double bookshelfTreasureChance = 0.03;
+
+    @Config.Comment({ "Chance (0-1) per extra roll of an InsaneTweaks book: any of its enchantments at level 1",
+            "(curses included) or a book-grantable Property Book. A deliberate exception to the quest gate." })
+    @Config.Name("Bookshelf Insane Book Chance")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double bookshelfInsaneBookChance = 0.04;
 
     @Config.Comment("Chance (0-1) that a fallen room anchor (sim wizard or battlemage) drops an artefact.")
     @Config.Name("Anchor Artefact Chance Room")

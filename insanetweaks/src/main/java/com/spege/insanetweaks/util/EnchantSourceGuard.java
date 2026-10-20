@@ -39,6 +39,10 @@ import net.minecraft.util.ResourceLocation;
  *     ({@code {"function":"enchant_randomly","enchantments":["insanetweaks:swift_picking"]}}). That is
  *     a deliberate pack-author choice, not natural discovery, and the {@code EnchantRandomly} mixin
  *     only filters the auto-discovery branch.</li>
+ * <li>Sunken Arcane Sanctum EBW bookshelves (spec 14.7): {@code SanctumBooks.fillExtras} writes
+ *     pre-built level-1 books of every insanetweaks enchantment, the Sentient Codex curse included,
+ *     straight into the shelf inventory. A deliberate exception agreed with the pack author; nothing
+ *     random reaches this guard, so nothing here runs.</li>
  * </ul>
  *
  * <p>The blocking itself happens in three mixins under {@code mixins/enchant/} — see
