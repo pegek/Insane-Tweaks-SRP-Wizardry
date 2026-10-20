@@ -41,10 +41,11 @@ public class ArcaneSanctumCategory {
     @Config.Name("Room Anchor Pool")
     public String[] roomAnchorPool = { "insanetweaks:sim_wizard;3", "insanetweaks:sim_battlemage;2" };
 
-    @Config.Comment("Chance (0-1) that the main chest also holds one random bauble/artefact from any mod.")
+    @Config.Comment({ "Chance (0-1) that the main chest also holds one random bauble/artefact from any mod.",
+            "0 since 1.28.0: sanctum chests roll parasite relics instead (loot tables)." })
     @Config.Name("Main Chest Bauble Chance")
     @Config.RangeDouble(min = 0.0, max = 1.0)
-    public double mainChestBaubleChance = 0.25;
+    public double mainChestBaubleChance = 0.0;
 
     @Config.Comment("Item ids never picked as the main chest's bauble.")
     @Config.Name("Bauble Blacklist")
@@ -79,7 +80,7 @@ public class ArcaneSanctumCategory {
     @Config.Comment("Chance (0-1) that a fallen room anchor (sim wizard or battlemage) drops an artefact.")
     @Config.Name("Anchor Artefact Chance Room")
     @Config.RangeDouble(min = 0.0, max = 1.0)
-    public double anchorArtefactChanceRoom = 0.20;
+    public double anchorArtefactChanceRoom = 0.10;
 
     @Config.Comment("Chance (0-1) that a fallen ritual-chamber anchor (parasite) drops an artefact.")
     @Config.Name("Anchor Artefact Chance Chamber")

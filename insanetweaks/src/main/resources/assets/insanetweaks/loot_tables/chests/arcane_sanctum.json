@@ -1,43 +1,286 @@
 {
   "pools": [
-    { "name": "abomination", "rolls": { "min": 1, "max": 2 }, "entries": [
-      { "type": "item", "name": "ebwizardry:spectral_dust", "weight": 3,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 3 } },
-                       { "function": "insanetweaks:abomination_meta" } ] },
-      { "type": "item", "name": "ebwizardry:magic_crystal", "weight": 2,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 2 } },
-                       { "function": "insanetweaks:abomination_meta" } ] } ] },
-    { "name": "parasite_parts", "rolls": { "min": 1, "max": 3 }, "entries": [
-      { "type": "item", "name": "srparasites:assimilated_flesh", "weight": 4,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 4 } } ] },
-      { "type": "item", "name": "srparasites:vile_shell", "weight": 3 },
-      { "type": "item", "name": "srparasites:infectious_blade_fragment", "weight": 2 },
-      { "type": "item", "name": "srparasites:ada_longarms_drop", "weight": 1 },
-      { "type": "item", "name": "srparasites:ada_manducater_drop", "weight": 1 },
-      { "type": "item", "name": "srparasites:ada_summoner_drop", "weight": 1 } ] },
-    { "name": "spell_book", "rolls": 1, "entries": [
-      { "type": "item", "name": "ebwizardry:spell_book", "weight": 1,
-        "functions": [ { "function": "ebwizardry:random_spell", "tiers": [ "advanced", "master" ] } ] } ] },
-    { "name": "knowledge", "rolls": { "min": 1, "max": 2 }, "entries": [
-      { "type": "item", "name": "ancientspellcraft:stone_tablet_small", "weight": 1 },
-      { "type": "item", "name": "ancientspellcraft:stone_tablet", "weight": 1 },
-      { "type": "item", "name": "ancientspellcraft:stone_tablet_large", "weight": 1 },
-      { "type": "item", "name": "ancientspellcraft:stone_tablet_grand", "weight": 1 },
-      { "type": "item", "name": "ancientspellcraft:ancient_spellcraft_spell_book", "weight": 3,
-        "functions": [ { "function": "ebwizardry:random_spell", "undiscovered_bias": 0.3 } ] },
-      { "type": "item", "name": "ancientspellcraft:theory_scroll", "weight": 3 },
-      { "type": "item", "name": "ancientspellcraft:runic_plate", "weight": 3,
-        "functions": [ { "function": "ebwizardry:random_spell", "undiscovered_bias": 0.5 } ] },
-      { "type": "loot_table", "name": "ancientspellcraft:subsets/ritual_books", "weight": 1 },
-      { "type": "loot_table", "name": "ancientspellcraft:subsets/rare_scrolls", "weight": 2 } ] },
-    { "name": "wizardry", "rolls": 1, "entries": [
-      { "type": "loot_table", "name": "ebwizardry:subsets/arcane_tomes", "weight": 2 },
-      { "type": "loot_table", "name": "ebwizardry:subsets/wand_upgrades", "weight": 2 },
-      { "type": "loot_table", "name": "ebwizardry:subsets/wizard_armour", "weight": 2 } ] },
-    { "name": "valuables", "rolls": 1, "entries": [
-      { "type": "item", "name": "minecraft:diamond", "weight": 1,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 2 } } ] },
-      { "type": "item", "name": "minecraft:ender_pearl", "weight": 1,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 3 } } ] } ] }
+    {
+      "name": "abomination",
+      "rolls": {
+        "min": 1,
+        "max": 2
+      },
+      "entries": [
+        {
+          "type": "item",
+          "name": "ebwizardry:spectral_dust",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 3
+              }
+            },
+            {
+              "function": "insanetweaks:abomination_meta"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "ebwizardry:magic_crystal",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 2
+              }
+            },
+            {
+              "function": "insanetweaks:abomination_meta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parasite_parts",
+      "rolls": {
+        "min": 1,
+        "max": 3
+      },
+      "entries": [
+        {
+          "type": "item",
+          "name": "srparasites:assimilated_flesh",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 4
+              }
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "srparasites:vile_shell",
+          "weight": 3
+        },
+        {
+          "type": "item",
+          "name": "srparasites:infectious_blade_fragment",
+          "weight": 2
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_longarms_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_manducater_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_summoner_drop",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "name": "spell_book",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "ebwizardry:spell_book",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "tiers": [
+                "advanced",
+                "master"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "knowledge",
+      "rolls": {
+        "min": 1,
+        "max": 2
+      },
+      "entries": [
+        {
+          "type": "item",
+          "name": "ancientspellcraft:stone_tablet_small",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:stone_tablet",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:stone_tablet_large",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:stone_tablet_grand",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:ancient_spellcraft_spell_book",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "undiscovered_bias": 0.3
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:theory_scroll",
+          "weight": 3
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:runic_plate",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "undiscovered_bias": 0.5
+            }
+          ]
+        },
+        {
+          "type": "loot_table",
+          "name": "ancientspellcraft:subsets/ritual_books",
+          "weight": 1
+        },
+        {
+          "type": "loot_table",
+          "name": "ancientspellcraft:subsets/rare_scrolls",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "name": "wizardry",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "loot_table",
+          "name": "ebwizardry:subsets/arcane_tomes",
+          "weight": 2
+        },
+        {
+          "type": "loot_table",
+          "name": "ebwizardry:subsets/wand_upgrades",
+          "weight": 2
+        },
+        {
+          "type": "loot_table",
+          "name": "ebwizardry:subsets/wizard_armour",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "name": "valuables",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:diamond",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:ender_pearl",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 3
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parasite_relic",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "srparasites:vile_shell",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:infectious_blade_fragment",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_yelloweye_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_summoner_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_manducater_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_longarms_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_bolster_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_devourer_drop",
+          "weight": 1
+        },
+        {
+          "type": "empty",
+          "weight": 8
+        }
+      ]
+    }
   ]
 }

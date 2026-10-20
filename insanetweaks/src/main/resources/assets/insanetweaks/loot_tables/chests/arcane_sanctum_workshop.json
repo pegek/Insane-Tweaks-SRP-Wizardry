@@ -1,22 +1,158 @@
 {
   "pools": [
-    { "name": "scrolls", "rolls": 1, "entries": [
-      { "type": "item", "name": "ebwizardry:scroll", "weight": 1,
-        "functions": [ { "function": "ebwizardry:random_spell", "undiscovered_bias": 0.3 },
-                       { "function": "set_count", "count": { "min": 1, "max": 2 } } ] } ] },
-    { "name": "knowledge", "rolls": 1, "entries": [
-      { "type": "item", "name": "ancientspellcraft:ancient_spellcraft_scroll", "weight": 2,
-        "functions": [ { "function": "ebwizardry:random_spell", "undiscovered_bias": 0.3 } ] },
-      { "type": "item", "name": "ancientspellcraft:runic_plate", "weight": 2,
-        "functions": [ { "function": "ebwizardry:random_spell", "undiscovered_bias": 0.5 } ] },
-      { "type": "item", "name": "ancientspellcraft:theory_scroll", "weight": 2 } ] },
-    { "name": "arcana", "rolls": 1, "entries": [
-      { "type": "item", "name": "ebwizardry:spectral_dust", "weight": 2,
-        "functions": [ { "function": "insanetweaks:abomination_meta" } ] },
-      { "type": "item", "name": "minecraft:ender_pearl", "weight": 2,
-        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 2 } } ] } ] },
-    { "name": "potion", "rolls": 1, "entries": [
-      { "type": "item", "name": "minecraft:potion", "weight": 1,
-        "functions": [ { "function": "set_nbt", "tag": "{Potion:\"minecraft:strong_healing\"}" } ] } ] }
+    {
+      "name": "scrolls",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "ebwizardry:scroll",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "undiscovered_bias": 0.3
+            },
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "knowledge",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "ancientspellcraft:ancient_spellcraft_scroll",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "undiscovered_bias": 0.3
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:runic_plate",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "ebwizardry:random_spell",
+              "undiscovered_bias": 0.5
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "ancientspellcraft:theory_scroll",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "name": "arcana",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "ebwizardry:spectral_dust",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "insanetweaks:abomination_meta"
+            }
+          ]
+        },
+        {
+          "type": "item",
+          "name": "minecraft:ender_pearl",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "set_count",
+              "count": {
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "potion",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "minecraft:potion",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "set_nbt",
+              "tag": "{Potion:\"minecraft:strong_healing\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parasite_relic",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "srparasites:vile_shell",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:infectious_blade_fragment",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_yelloweye_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_summoner_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_manducater_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_longarms_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_bolster_drop",
+          "weight": 1
+        },
+        {
+          "type": "item",
+          "name": "srparasites:ada_devourer_drop",
+          "weight": 1
+        },
+        {
+          "type": "empty",
+          "weight": 24
+        }
+      ]
+    }
   ]
 }
