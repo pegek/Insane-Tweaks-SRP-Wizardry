@@ -409,3 +409,114 @@ The footprint is about 57×29 blocks, within ±28 of the origin.
   covers the subcommands.
 - **Deferred (feedback 10).** Making the Imbuement Altar unminable again, a ritual book, more recipes
   and a richer JEI page all belong to a separate conversation.
+
+## 13. Revision 1.26.0 (2026-10-21): second playtest
+
+### 13.1 Fixes
+
+- **Arcane Lock never engaged.**
+  - EBW reads the owner with `NBTTagCompound.hasUniqueId` / `getUniqueId("arcaneLockOwner")`, which
+    means two longs, `arcaneLockOwnerMost` and `arcaneLockOwnerLeast`. 1.25.0 wrote a string, so
+    neither the lock nor the purple overlay ever engaged. The lock is now written with
+    `setUniqueId`, and unlocking removes both longs.
+  - EBW's `canBypassLocks` lets creative players through, so the lock must be tested in survival.
+- **Return after a chunk unload.**
+  - The 40 s countdown runs only while the mob is ticked.
+  - When an anchor mob joins the world (`EntityJoinWorldEvent`, including chunk loads) more than 4
+    blocks from home with no player within `Return Radius`, it is flagged. On its next 40-tick check
+    it returns home and heals the configured fraction.
+  - It is flagged rather than moved on the spot, because moving an entity during its own join can
+    leave it in the wrong chunk list.
+- **Missing-mob timeout.** An `awake` anchor remembers its mob's last known position. It counts the
+  60 s only while that position's chunk is loaded. An anchor in a loaded chunk can therefore no
+  longer give up on a mob that sits in an unloaded one, which would wrongly count it as defeated
+  and lift the lock.
+- **`ancientspellcraft:sage_desk`** is not registered in ASC 1.8.3 (the blockstate is an orphan). The
+  workshop uses `ancientspellcraft:sphere_cognizance` instead.
+- **Scribing desk.** ASC's model fronts the opposite way, so it is placed facing away from the
+  room's door.
+
+### 13.2 Ritual chamber
+
+- **Seal.** The chiseled frame around the seal is removed and the whole chamber is `sealed_stone`.
+  Unsealing may now spread through the shell; that is accepted, because the parasites are held by
+  their anchors (leash and return).
+- **Second chest.** 50% chance of a second main-loot chest (`-25, F2, -2`), not adjacent to the first.
+- **Shulker box.** 25% chance of a purple shulker box (`-25, F2, 2`) with 2–4 strong potions. It is
+  locked like the chests.
+- **Anchors.** 3–5 anchors, plus a 25% chance of a sixth, from the 7 spots.
+
+### 13.3 Lighting
+
+- **Main light.** Permanent EBW `magic_light` blocks along the walls of every room, at fixed spots per
+  room type. The tile entity's `setLifetime(-1)` makes them permanent.
+- **Glowstone.** The old ceiling glowstone spots remain only as a sporadic extra: each is placed with
+  a 15% seeded chance.
+
+### 13.4 Side rooms
+
+- **Slots.** Six instead of four. The two new ones sit on level 2, north and south of the
+  antechamber, before the seal. A sanctum gets 2–5 rooms of distinct types:
+  - library;
+  - forge;
+  - workshop;
+  - **teleport**;
+  - one filler: crypt or collapsed room.
+- **Teleport room.** A ring of `ebwizardry:transportation_stone`, seeded 3×3 or 4×4 with an empty
+  centre. It holds 1 anchor plus a 25% chance of a second, placed away from the ring.
+- **Traps.** 35% per side room:
+  - tripwire hooks with string across the row just inside the door;
+  - the hook on one side is attached to a dispenser built into the side wall, facing across the
+    room, loaded with 2–4 EBW scrolls of one offensive spell from `Trap Spells` (default: magic
+    missile, firebolt, ice shard, poison; ids that are missing or cannot be cast by a dispenser are
+    skipped).
+- **Walls.** Vines grow on inside walls (about 6% of wall-adjacent cells, attached to the wall).
+  About 1.5% of shell blocks are silverfish blocks in a matching stone-brick variant.
+- **Décor**, side rooms only, each piece independent and seeded, placed on free floor cells away
+  from the door line and the trap row:
+
+  | Piece | Chance | Details |
+  |---|---|---|
+  | Armour stand | 20% | 1–2 random iron, chain or gold pieces |
+  | Shulker box | 8% | strong potions, locked |
+  | Ender chest | 10% | |
+  | End portal frame | 10% | 30% with an eye |
+  | Bed | 15% | random colour |
+  | Painting | 25% | on the back wall |
+  | Skull | 20% | 30% of them wither skeleton |
+
+- **Library.**
+  - 20% of the EBW-bookshelf spots become `ebwizardry:gilded_wood` and 20% vanilla bookshelves; the
+    rest stay EBW bookshelves.
+  - The book chance per roll rises to 8%.
+
+### 13.5 Loot
+
+No gold nuggets, plain magic crystals, paper or blank scrolls in any sanctum chest.
+
+- **Main chest.**
+  - Abomination crystal and dust;
+  - SRP parts;
+  - one roll of `ebwizardry:random_spell` books (advanced or master);
+  - diamonds or ender pearls;
+  - the wizard-tower pool.
+- **Library chest.**
+  - enchanted books (`enchant_with_levels` 25–30, treasure);
+  - spell books (`random_spell`);
+  - experience bottles.
+- **Forge chest.**
+  - armour-upgrade components (guaranteed one);
+  - diamonds;
+  - an enchanted iron or diamond weapon or armour piece.
+- **Workshop chest.**
+  - spell scrolls (`random_spell`);
+  - Abomination dust;
+  - ender pearls;
+  - a strong potion.
+- **Shulker potions.** Strong healing, strong regeneration, strong strength, strong swiftness, long
+  fire resistance and long night vision, as splash or plain potions.
+
+### 13.6 Deferred
+
+- **Runestone walls.** The user is still testing; Abomination runestone may be added first. Walls
+  stay stone brick for now.
