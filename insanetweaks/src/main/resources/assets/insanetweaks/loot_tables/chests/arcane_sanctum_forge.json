@@ -1,0 +1,18 @@
+{
+  "pools": [
+    { "name": "components", "rolls": { "min": 1, "max": 2 }, "entries": [
+      { "type": "item", "name": "ebwizardry:resplendent_thread", "weight": 3 },
+      { "type": "item", "name": "ebwizardry:crystal_silver_plating", "weight": 3 },
+      { "type": "item", "name": "ebwizardry:ethereal_crystalweave", "weight": 2 },
+      { "type": "empty", "weight": 2 } ] },
+    { "name": "materials", "rolls": { "min": 2, "max": 4 }, "entries": [
+      { "type": "item", "name": "minecraft:iron_ingot", "weight": 4,
+        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 4 } } ] },
+      { "type": "item", "name": "minecraft:gold_ingot", "weight": 2,
+        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 3 } } ] },
+      { "type": "item", "name": "ebwizardry:magic_crystal", "weight": 3,
+        "functions": [ { "function": "set_count", "count": { "min": 1, "max": 3 } } ] },
+      { "type": "item", "name": "minecraft:coal", "weight": 2,
+        "functions": [ { "function": "set_count", "count": { "min": 2, "max": 6 } } ] } ] }
+  ]
+}

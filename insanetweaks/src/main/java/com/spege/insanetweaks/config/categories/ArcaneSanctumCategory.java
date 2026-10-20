@@ -24,15 +24,39 @@ public class ArcaneSanctumCategory {
     @Config.RangeDouble(min = 0.0, max = 1.0)
     public double chance = 0.5;
 
+    @Config.Comment("Level 1 floor; the ritual level is 10 lower (level 1 is clamped to at least 17).")
     @Config.Name("Floor Y Min")
     @Config.RangeInt(min = 6, max = 120)
-    public int floorYMin = 18;
+    public int floorYMin = 22;
 
     @Config.Name("Floor Y Max")
     @Config.RangeInt(min = 6, max = 120)
-    public int floorYMax = 26;
+    public int floorYMax = 30;
 
     @Config.Comment("BiomeDictionary types a sanctum's centre may not be in.")
     @Config.Name("Excluded Biome Types")
     public String[] excludedBiomeTypes = { "OCEAN", "RIVER", "BEACH" };
+
+    @Config.Comment("Mobs pinned on the side rooms' anchors, as 'modid:entity;weight'.")
+    @Config.Name("Room Anchor Pool")
+    public String[] roomAnchorPool = { "insanetweaks:sim_wizard;3", "insanetweaks:sim_battlemage;1" };
+
+    @Config.Comment("Chance (0-1) that the main chest also holds one random bauble/artefact from any mod.")
+    @Config.Name("Main Chest Bauble Chance")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double mainChestBaubleChance = 0.25;
+
+    @Config.Comment("Item ids never picked as the main chest's bauble.")
+    @Config.Name("Bauble Blacklist")
+    public String[] baubleBlacklist = { "enigmaticlegacy:cursed_ring" };
+
+    @Config.Comment("Chance (0-1) per roll that an EBW bookshelf gets a spell book.")
+    @Config.Name("Bookshelf Book Chance")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public double bookshelfBookChance = 0.05;
+
+    @Config.Comment("Rolls per EBW bookshelf. Books: 50% Abomination, 25% any Master, 25% any Advanced spell.")
+    @Config.Name("Bookshelf Book Rolls")
+    @Config.RangeInt(min = 0, max = 12)
+    public int bookshelfBookRolls = 3;
 }

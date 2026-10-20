@@ -71,6 +71,25 @@ public class EntitiesCategory {
         @Config.RangeInt(min = 0, max = 256)
         public int leashRadius = 32;
 
+        @Config.Comment("Ticks between the statue shattering and its mob appearing. Read live.")
+        @Config.Name("Release Delay Ticks")
+        @Config.RangeInt(min = 0, max = 200)
+        public int releaseDelayTicks = 10;
+
+        @Config.Comment({ "An anchor's mob with no player this close for 'Return Seconds' teleports back to its",
+                "anchor and heals 'Return Heal Fraction' of its missing health. Read live." })
+        @Config.Name("Return Radius")
+        @Config.RangeDouble(min = 4.0, max = 256.0)
+        public double returnRadius = 40.0;
+
+        @Config.Name("Return Seconds")
+        @Config.RangeInt(min = 1, max = 3600)
+        public int returnSeconds = 40;
+
+        @Config.Name("Return Heal Fraction")
+        @Config.RangeDouble(min = 0.0, max = 1.0)
+        public double returnHealFraction = 0.25;
+
         @Config.Comment("Ticks the statue cracks and shakes before the mob breaks free.")
         @Config.Name("Crack Ticks")
         @Config.RangeInt(min = 0, max = 200)
