@@ -53,13 +53,16 @@ public final class DevSpeedState {
     }
 
     /**
-     * Called in place of every {@code 50L} in {@code MinecraftServer.run} — the plugin rewrites
-     * the constants to {@code INVOKESTATIC} of this method. Lives here, not in the mixin, so the
-     * rewrite needs no handler that Mixin would have to merge.
+     * Called right after every tick-length source in {@code MinecraftServer.run} — the vanilla
+     * {@code 50L}, or LLibrary's {@code LLibraryHooks.getTickRate()} that replaces it — with that
+     * source's value. While {@code /devspeed} is at 1x the upstream value passes through
+     * untouched, so LLibrary's own tick-rate API keeps working; otherwise ours wins. Lives here,
+     * not in the mixin, so the plugin's rewrite needs no handler that Mixin would have to merge.
      */
-    public static long serverTickMillis() {
+    public static long serverTickMillis(long upstream) {
         serverHookFired = true;
-        return serverMsPerTick;
+        long ms = serverMsPerTick;
+        return ms == VANILLA_MS_PER_TICK ? upstream : ms;
     }
 
     /** Milliseconds per tick for a multiplier; rounded, never below 1 ms. */

@@ -45,16 +45,20 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
     }
 
     /**
-     * The server half's actual patch: every {@code 50L} in {@code MinecraftServer.run()V} becomes
-     * {@code INVOKESTATIC DevSpeedState.serverTickMillis()J}. Same stack effect (one long), so
-     * nothing around it changes and no frame needs recomputing. Done here on the
-     * {@code ClassNode} rather than with {@code @ModifyConstant}. Both Cleanroom 0.6.13 and 0.7.11
-     * ship the vanilla loop in their binpatch, so one rewrite covers both.
+     * The server half's actual patch: right after each of the four tick-length sources in
+     * {@code MinecraftServer.run()V} it inserts {@code INVOKESTATIC
+     * DevSpeedState.serverTickMillis(J)J}, which takes that long and hands back ours or passes it
+     * through. Long in, long out: nothing around it changes and no frame needs recomputing.
      *
-     * <p>🚨 Open on 0.7.11 (2026-10-20): live, this replaces 0 of 4 although the same code
-     * replaces 4/4 on the decoded binpatch offline — so {@code run()V} reaches Mixin in a
-     * different shape. Until that is understood, any result other than 4 logs what the method
-     * actually looks like and dumps the class ({@link DevSpeedDiagnostics}).
+     * <p>A source is either vanilla's {@code ldc2_w 50} or a static {@code getTickRate()J}. The
+     * second is what DEv 1.2 actually ships: <b>LLibrary 1.7.20's {@code LLibraryRuntimePatcher}
+     * replaces all four {@code 50L} with {@code LLibraryHooks.getTickRate()}</b> (its own
+     * {@code TickRateHandler} API), and it does so before Mixin runs, on every Cleanroom version.
+     * That — not CleanMix — is why the original {@code @ModifyConstant(longValue = 50L)} wired 0
+     * of 4, and why the server half had never worked in this pack. Found 2026-10-20 from the
+     * {@link DevSpeedDiagnostics} dump of the class as Mixin received it. Chaining after the
+     * source instead of replacing it keeps LLibrary's tick rate working while {@code /devspeed}
+     * is at 1x, and works unchanged on a pack without LLibrary.
      */
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName,
@@ -62,33 +66,45 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
         if (!mixinClassName.endsWith("MixinMinecraftServerDevSpeed")) {
             return;
         }
-        int replaced = 0;
+        int wired = 0;
         for (MethodNode method : targetClass.methods) {
             if (!"run".equals(method.name) || !"()V".equals(method.desc)) {
                 continue;
             }
             for (AbstractInsnNode insn = method.instructions.getFirst(); insn != null;
                     insn = insn.getNext()) {
-                if (insn instanceof LdcInsnNode
-                        && Long.valueOf(DevSpeedState.VANILLA_MS_PER_TICK)
-                                .equals(((LdcInsnNode) insn).cst)) {
-                    AbstractInsnNode call = new MethodInsnNode(Opcodes.INVOKESTATIC, STATE_OWNER,
-                            SERVER_HOOK, "()J", false);
-                    method.instructions.set(insn, call);
-                    insn = call;
-                    replaced++;
+                if (isTickSource(insn)) {
+                    AbstractInsnNode hook = new MethodInsnNode(Opcodes.INVOKESTATIC, STATE_OWNER,
+                            SERVER_HOOK, "(J)J", false);
+                    method.instructions.insert(insn, hook);
+                    insn = hook;
+                    wired++;
                 }
             }
         }
-        this.lastReplaced = replaced;
-        if (replaced != EXPECTED_SERVER_CONSTANTS) {
-            DevSpeedDiagnostics.describe(this.logger, "preApply", targetClass, replaced);
+        this.lastWired = wired;
+        if (wired != EXPECTED_SERVER_CONSTANTS) {
+            DevSpeedDiagnostics.describe(this.logger, "preApply", targetClass, wired);
             DevSpeedDiagnostics.dump(this.logger, "pre", targetClass);
         }
     }
 
-    /** What {@link #preApply} replaced last; {@code -1} = never called. For the postApply line. */
-    private int lastReplaced = -1;
+    /** Vanilla's {@code 50L}, or a tick-rate mod's static {@code getTickRate()J} standing in. */
+    private static boolean isTickSource(AbstractInsnNode insn) {
+        if (insn instanceof LdcInsnNode) {
+            return Long.valueOf(DevSpeedState.VANILLA_MS_PER_TICK)
+                    .equals(((LdcInsnNode) insn).cst);
+        }
+        if (insn instanceof MethodInsnNode && insn.getOpcode() == Opcodes.INVOKESTATIC) {
+            MethodInsnNode call = (MethodInsnNode) insn;
+            return "getTickRate".equals(call.name) && "()J".equals(call.desc)
+                    && !STATE_OWNER.equals(call.owner);
+        }
+        return false;
+    }
+
+    /** What {@link #preApply} wired last; {@code -1} = never called. For the postApply line. */
+    private int lastWired = -1;
 
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName,
@@ -98,12 +114,12 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
             DevSpeedState.serverPatchedConstants = wired;
             if (wired == EXPECTED_SERVER_CONSTANTS) {
                 this.logger.info("[srpwizcore] devspeed: MinecraftServer.run patched "
-                        + "({} x 50L tick constant -> /devspeed)", wired);
+                        + "({} x tick-length source -> /devspeed)", wired);
             } else {
                 this.logger.error("[srpwizcore] devspeed: MinecraftServer.run has {} of {} "
-                        + "expected 50L tick constants wired (preApply replaced {}) - the server "
+                        + "expected tick-length sources wired (preApply wired {}) - the server "
                         + "loop was rewritten by something else. /devspeed will {}.", wired,
-                        EXPECTED_SERVER_CONSTANTS, this.lastReplaced,
+                        EXPECTED_SERVER_CONSTANTS, this.lastWired,
                         wired == 0 ? "refuse to run" : "be unreliable");
                 DevSpeedDiagnostics.describe(this.logger, "postApply", targetClass, wired);
                 DevSpeedDiagnostics.dump(this.logger, "post", targetClass);

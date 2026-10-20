@@ -10,7 +10,7 @@ repositories {
     mavenCentral()
 }
 
-version = '1.20.2'
+version = '1.20.3'
 group = 'com.spege.srpwizcore'
 archivesBaseName = 'srpwizcore'
 

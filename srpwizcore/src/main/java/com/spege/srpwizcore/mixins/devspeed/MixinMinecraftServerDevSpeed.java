@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.Mixin;
  * other tick counter advance faster, which {@code /time set} cannot do.
  *
  * <p>Why not {@code @ModifyConstant(longValue = 50L)}, which is what this class used to carry:
- * under CleanMix 0.7.4 (Cleanroom 0.7.11) it applied without a word and wired 0 of the 4
- * constants, although the binpatched {@code run()} still holds all four {@code ldc2_w 50} and
- * no transformer in the pack or in Cleanroom touches the method (checked 2026-10-20). It had
- * never run on 0.6.13 either. The plugin's direct rewrite does not depend on the injector at all.
+ * in DEv 1.2 there is no {@code 50L} left by the time Mixin sees the class. LLibrary's coremod
+ * replaces all four with {@code LLibraryHooks.getTickRate()}, so the injector wired 0 of 4 on
+ * every Cleanroom version (found 2026-10-20; CleanMix was blamed first, wrongly). The plugin
+ * chains a call after each tick-length source, constant or LLibrary call alike.
  */
 @Mixin(MinecraftServer.class)
 public abstract class MixinMinecraftServerDevSpeed {
