@@ -6,6 +6,7 @@ import com.spege.srpwizcore.config.SrpWizCoreConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
@@ -40,6 +41,7 @@ public final class EffectPanelClient {
         if (SrpWizCoreConfig.effectPanel.suppressJeeRenderer) {
             suppressJeeRenderer();
         }
+        ClientCommandHandler.instance.registerCommand(new CommandEffectDesc());
     }
 
     /**

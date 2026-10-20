@@ -1,3 +1,7 @@
 tile.srpwizcore.dormant_waystone.name=Dormant Waystone
 srpwizcore.effectpanel.missing.title=No description yet.
 srpwizcore.effectpanel.missing.where=Add to config/srpwizcore/effect_descriptions.lang:
+srpwizcore.effectpanel.command.usage=/effectdesc missing
+srpwizcore.effectpanel.command.appended=Appended %s blank line(s) to %s
+srpwizcore.effectpanel.command.coverage=Described %s of %s effects - file %s, JEE %s, potiondescriptions %s, SRP bestiary %s
+srpwizcore.effectpanel.command.failed=Could not write %s: %s
