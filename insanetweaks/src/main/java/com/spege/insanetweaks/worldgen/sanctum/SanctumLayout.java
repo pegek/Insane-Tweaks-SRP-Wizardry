@@ -2,32 +2,34 @@ package com.spege.insanetweaks.worldgen.sanctum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * The seeded shape of one Sunken Arcane Sanctum, in world coordinates. Pure Java: everything is
  * laid out in a local frame (the descent rises along local +x) and rotated by a seeded direction.
  *
- * <p>Two levels. Level 1 ({@link #floorY}): vestibule under the shaft, hall, 2-4 side rooms.
- * Level 2 ({@link #floorY2}, ten blocks lower): antechamber with the seal, then the sealed-stone
- * ritual chamber. A straight stairway joins them.
+ * <p>Two levels. Level 1 ({@link #floorY}): vestibule under the shaft, hall, side rooms. Level 2
+ * ({@link #floorY2}, ten blocks lower): antechamber with the seal and two more side-room slots,
+ * then the sealed-stone ritual chamber. A straight stairway joins them.
  *
  * <p>Room order is fixed: 0 chamber, 1 antechamber, 2 descent, 3 hall, 4 vestibule, then side
- * rooms. The builder decides materials; this class decides geometry and what goes where,
- * including furniture, so containers are known before anything is built.
+ * rooms. The builder decides materials; this class decides geometry and what goes where -
+ * furniture, traps, décor, lights - so containers are known before anything is built.
  */
 public final class SanctumLayout {
 
     public enum RoomType {
-        CHAMBER, ANTECHAMBER, DESCENT, HALL, VESTIBULE, LIBRARY, FORGE, WORKSHOP, CRYPT, COLLAPSED;
+        CHAMBER, ANTECHAMBER, DESCENT, HALL, VESTIBULE, LIBRARY, FORGE, WORKSHOP, TELEPORT, CRYPT, COLLAPSED;
 
         public boolean isSideRoom() {
             return ordinal() >= LIBRARY.ordinal();
         }
 
         public boolean hasAnchors() {
-            return this == LIBRARY || this == FORGE || this == WORKSHOP;
+            return this == LIBRARY || this == FORGE || this == WORKSHOP || this == TELEPORT;
         }
     }
 
@@ -54,9 +56,25 @@ public final class SanctumLayout {
     public static final int PROP_ANVIL = 4;
     public static final int PROP_FURNACE = 5;
     public static final int PROP_SCRIBING_DESK = 6;
+    /** Not registered in ASC 1.8.3 - kept only so the numbering stays stable; never placed. */
     public static final int PROP_SAGE_DESK = 7;
     public static final int PROP_SAGE_LECTERN = 8;
     public static final int PROP_CRAFTING_TABLE = 9;
+    public static final int PROP_SPHERE_COGNIZANCE = 10;
+    public static final int PROP_TRANSPORT_STONE = 11;
+    public static final int PROP_GILDED_WOOD = 12;
+    public static final int PROP_BOOKSHELF = 13;
+    public static final int PROP_SHULKER = 14;
+    public static final int PROP_TRIP_HOOK = 15;
+    public static final int PROP_TRIPWIRE = 16;
+
+    public static final int DECOR_ARMOR_STAND = 0;
+    public static final int DECOR_SHULKER = 1;
+    public static final int DECOR_ENDER_CHEST = 2;
+    public static final int DECOR_PORTAL_FRAME = 3;
+    public static final int DECOR_BED = 4;
+    public static final int DECOR_PAINTING = 5;
+    public static final int DECOR_SKULL = 6;
 
     public static final int CHEST_MAIN = 0;
     public static final int CHEST_LIBRARY = 1;
@@ -69,10 +87,13 @@ public final class SanctumLayout {
     public static final int LEVEL_DROP = 10;
     public static final int MIN_FLOOR = 17;
 
+    private static final double TRAP_CHANCE = 0.35D;
+
     private static final int[][] CHAMBER_SPOTS = { { -16, -5 }, { -16, 5 }, { -24, -5 }, { -24, 5 }, { -20, -6 },
             { -20, 6 }, { -26, 3 } };
-    /** Side-room slots: centre x, centre z, facing towards the room's door. */
-    private static final int[][] SLOTS = { { 14, -10, SOUTH }, { 14, 10, NORTH }, { 24, -8, SOUTH }, { 24, 8, NORTH } };
+    /** Side-room slots: centre x, centre z, facing towards the room's door, level (1 or 2). */
+    private static final int[][] SLOTS = { { 14, -10, SOUTH, 1 }, { 14, 10, NORTH, 1 }, { 24, -8, SOUTH, 1 },
+            { 24, 8, NORTH, 1 }, { -8, -8, SOUTH, 2 }, { -8, 8, NORTH, 2 } };
 
     public final long seed;
     public final int originX;
@@ -84,7 +105,6 @@ public final class SanctumLayout {
     /** Boxes cut to air after every room interior: doorways and the stairway's headroom. */
     public final List<SanctumBox> carves = new ArrayList<SanctumBox>();
     public SanctumBox seal;
-    public final List<int[]> sealFrame = new ArrayList<int[]>();
     public int[] button;
     /** x, y, z of every stair block; all face {@link #stairFacing}. */
     public final List<int[]> stairs = new ArrayList<int[]>();
@@ -106,10 +126,18 @@ public final class SanctumLayout {
     public final List<int[]> chests = new ArrayList<int[]>();
     /** x, y, z, kind ({@link #PROP_EBW_SHELF} ...), facing. */
     public final List<int[]> props = new ArrayList<int[]>();
-    public final List<int[]> lights = new ArrayList<int[]>();
+    /** x, y, z of permanent EBW magic lights along room walls - the main lighting. */
+    public final List<int[]> magicLights = new ArrayList<int[]>();
+    /** x, y, z of ceiling spots the builder fills with glowstone only sporadically. */
+    public final List<int[]> glowSpots = new ArrayList<int[]>();
+    /** x, y, z, facing of trap dispensers, built into a side wall (shell cells). */
+    public final List<int[]> trapDispensers = new ArrayList<int[]>();
+    /** x, y, z, kind ({@link #DECOR_ARMOR_STAND} ...), facing, extra. */
+    public final List<int[]> decor = new ArrayList<int[]>();
     public SanctumBox bounds;
 
     private final int rot;
+    private final Set<String> used = new HashSet<String>();
 
     private SanctumLayout(long seed, int originX, int originZ, int floorY, int direction) {
         this.seed = seed;
@@ -129,6 +157,12 @@ public final class SanctumLayout {
         SanctumLayout l = new SanctumLayout(seed, originX, originZ, floor, r.nextInt(4));
         l.build(r);
         return l;
+    }
+
+    /** The head cell of a bed décor entry: one step from its foot cell in its facing. */
+    public static int[] bedHead(int[] bed) {
+        int[] v = vec(bed[4]);
+        return new int[] { bed[0] + v[0], bed[1], bed[2] + v[1] };
     }
 
     private void build(Random r) {
@@ -156,17 +190,9 @@ public final class SanctumLayout {
         carve(7, f1, -1, 7, f1 + 3, 1);
         this.stairFacing = face(EAST);
 
-        // Seal plug in the chamber wall, ringed by a frame so unsealing cannot spread into the shell.
+        // Seal plug in the all-sealed-stone chamber wall; unsealing may spread through the shell.
         this.seal = box(-12, f2, -1, -12, f2 + 2, 1);
         this.button = point(-12, f2 + 1, 0);
-        for (int z = -2; z <= 2; z++) {
-            for (int y = f2 - 1; y <= f2 + 3; y++) {
-                if (Math.abs(z) <= 1 && y >= f2 && y <= f2 + 2) {
-                    continue;
-                }
-                this.sealFrame.add(point(-12, y, z));
-            }
-        }
 
         int[] shaft = point(24, f1, 0);
         this.shaftX = shaft[0];
@@ -177,12 +203,20 @@ public final class SanctumLayout {
 
         chamber(r);
 
-        this.lights.add(point(-8, f2 + 4, 0));
-        int[][] hallLights = { { 14, 0 }, { 11, -3 }, { 11, 3 }, { 17, -3 }, { 17, 3 } };
-        for (int[] h : hallLights) {
-            this.lights.add(point(h[0], f1 + 4, h[1]));
+        this.glowSpots.add(point(-8, f2 + 4, 0));
+        int[][] hallSpots = { { 14, 0 }, { 11, -3 }, { 11, 3 }, { 17, -3 }, { 17, 3 } };
+        for (int[] h : hallSpots) {
+            this.glowSpots.add(point(h[0], f1 + 4, h[1]));
         }
-        this.lights.add(point(22, f1 + 4, -2));
+        this.glowSpots.add(point(22, f1 + 4, -2));
+        for (int side = -1; side <= 1; side += 2) {
+            this.magicLights.add(point(11, f1 + 2, 5 * side));
+            this.magicLights.add(point(17, f1 + 2, 5 * side));
+            this.magicLights.add(point(21, f1 + 2, 3 * side));
+            this.magicLights.add(point(27, f1 + 2, 3 * side));
+            this.magicLights.add(point(-6, f2 + 3, 3 * side));
+        }
+        this.magicLights.add(point(7, f1 + 3, 1));
 
         sideRooms(r);
 
@@ -214,18 +248,30 @@ public final class SanctumLayout {
             int[] w = point(p[0], f2, p[1]);
             this.pillars.add(new int[] { w[0], w[2] });
         }
-        this.chests.add(withTail(point(-25, f2, 0), face(EAST), CHEST_MAIN));
+        addChest(point(-25, f2, 0), face(EAST), CHEST_MAIN);
+        if (r.nextBoolean()) {
+            addChest(point(-25, f2, -2), face(EAST), CHEST_MAIN);
+        }
+        if (r.nextInt(4) == 0) {
+            addProp(point(-25, f2, 2), PROP_SHULKER, face(EAST));
+        }
         List<int[]> spots = new ArrayList<int[]>();
         Collections.addAll(spots, CHAMBER_SPOTS);
         Collections.shuffle(spots, r);
-        int statues = 3 + r.nextInt(3);
+        int statues = 3 + r.nextInt(3) + (r.nextInt(4) == 0 ? 1 : 0);
         for (int i = 0; i < statues; i++) {
-            this.anchors.add(withTail(point(spots.get(i)[0], f2, spots.get(i)[1]), POOL_CHAMBER));
+            addAnchor(point(spots.get(i)[0], f2, spots.get(i)[1]), POOL_CHAMBER);
         }
         for (int lx = -24; lx <= -16; lx += 4) {
             for (int lz = -4; lz <= 4; lz += 4) {
-                this.lights.add(point(lx, f2 + 7, lz));
+                this.glowSpots.add(point(lx, f2 + 7, lz));
             }
+        }
+        for (int side = -1; side <= 1; side += 2) {
+            this.magicLights.add(point(-27, f2 + 3, 4 * side));
+            this.magicLights.add(point(-13, f2 + 3, 4 * side));
+            this.magicLights.add(point(-24, f2 + 3, 7 * side));
+            this.magicLights.add(point(-16, f2 + 3, 7 * side));
         }
     }
 
@@ -234,6 +280,7 @@ public final class SanctumLayout {
         types.add(RoomType.LIBRARY);
         types.add(RoomType.FORGE);
         types.add(RoomType.WORKSHOP);
+        types.add(RoomType.TELEPORT);
         types.add(r.nextBoolean() ? RoomType.CRYPT : RoomType.COLLAPSED);
         Collections.shuffle(types, r);
         List<Integer> slots = new ArrayList<Integer>();
@@ -241,82 +288,218 @@ public final class SanctumLayout {
             slots.add(Integer.valueOf(i));
         }
         Collections.shuffle(slots, r);
-        int k = 2 + r.nextInt(3);
+        int k = 2 + r.nextInt(4);
         for (int i = 0; i < k; i++) {
             int[] slot = SLOTS[slots.get(i).intValue()];
-            sideRoom(types.get(i), slot[0], slot[1], slot[2], r);
+            sideRoom(types.get(i), slot[0], slot[1], slot[2], slot[3] == 2 ? this.floorY2 : this.floorY, r);
         }
     }
 
-    private void sideRoom(RoomType type, int cx, int cz, int front, Random r) {
-        int f1 = this.floorY;
-        // Outer 9x7x9 box, sharing the wall the door is cut through.
+    private void sideRoom(RoomType type, int cx, int cz, int front, int f, Random r) {
         int[] fv = vec(front);
-        room(type, cx - 4, f1 - 1, cz - 4, cx + 4, f1 + 5, cz + 4);
+        room(type, cx - 4, f - 1, cz - 4, cx + 4, f + 5, cz + 4);
         int dx = cx + fv[0] * 4;
         int dz = cz + fv[1] * 4;
         if (fv[0] == 0) {
-            carve(dx - 1, f1, dz, dx + 1, f1 + 2, dz);
+            carve(dx - 1, f, dz, dx + 1, f + 2, dz);
         } else {
-            carve(dx, f1, dz - 1, dx, f1 + 2, dz + 1);
+            carve(dx, f, dz - 1, dx, f + 2, dz + 1);
         }
-        this.lights.add(point(cx, f1 + 4, cz));
+        this.glowSpots.add(point(cx, f + 4, cz));
         int sideA = (front + 3) % 4;
         int sideB = (front + 1) % 4;
         switch (type) {
             case LIBRARY:
                 for (int b = -3; b <= 3; b++) {
-                    for (int y = f1; y <= f1 + 1; y++) {
-                        prop(cx, cz, front, -3, b, y, PROP_EBW_SHELF, front);
+                    for (int y = f; y <= f + 1; y++) {
+                        prop(cx, cz, front, -3, b, y, shelf(r), front);
                     }
                 }
                 for (int a = -2; a <= 0; a++) {
-                    prop(cx, cz, front, a, 3, f1, PROP_EBW_SHELF, sideA);
-                    prop(cx, cz, front, a, -3, f1, PROP_EBW_SHELF, sideB);
+                    prop(cx, cz, front, a, 3, f, shelf(r), sideA);
+                    prop(cx, cz, front, a, -3, f, shelf(r), sideB);
                 }
-                prop(cx, cz, front, -1, 0, f1, r.nextBoolean() ? PROP_ENCHANTING_TABLE : PROP_ARCANE_WORKBENCH, front);
-                chest(cx, cz, front, 2, 3, f1, sideA, CHEST_LIBRARY);
+                prop(cx, cz, front, -1, 0, f, r.nextBoolean() ? PROP_ENCHANTING_TABLE : PROP_ARCANE_WORKBENCH, front);
+                addChest(rel(cx, cz, front, 2, 3, f), face(sideA), CHEST_LIBRARY);
                 break;
             case FORGE:
-                prop(cx, cz, front, -2, 0, f1, PROP_ARCANE_ANVIL, front);
-                prop(cx, cz, front, -2, 2, f1, PROP_ANVIL, front);
-                prop(cx, cz, front, -3, -3, f1, PROP_FURNACE, front);
-                prop(cx, cz, front, -3, -2, f1, PROP_FURNACE, front);
-                chest(cx, cz, front, -3, 2, f1, front, CHEST_FORGE);
+                prop(cx, cz, front, -2, 0, f, PROP_ARCANE_ANVIL, front);
+                prop(cx, cz, front, -2, 2, f, PROP_ANVIL, front);
+                prop(cx, cz, front, -3, -3, f, PROP_FURNACE, front);
+                prop(cx, cz, front, -3, -2, f, PROP_FURNACE, front);
+                addChest(rel(cx, cz, front, -3, 2, f), face(front), CHEST_FORGE);
                 break;
             case WORKSHOP:
-                prop(cx, cz, front, -3, -1, f1, PROP_SCRIBING_DESK, front);
-                prop(cx, cz, front, -3, 1, f1, PROP_SAGE_DESK, front);
-                prop(cx, cz, front, -2, -3, f1, PROP_SAGE_LECTERN, sideB);
-                prop(cx, cz, front, -3, -3, f1, PROP_CRAFTING_TABLE, front);
-                chest(cx, cz, front, -3, 3, f1, front, CHEST_WORKSHOP);
+                // ASC's scribing desk model fronts the opposite way.
+                prop(cx, cz, front, -3, -1, f, PROP_SCRIBING_DESK, (front + 2) % 4);
+                prop(cx, cz, front, -3, 1, f, PROP_SPHERE_COGNIZANCE, front);
+                prop(cx, cz, front, -2, -3, f, PROP_SAGE_LECTERN, sideB);
+                prop(cx, cz, front, -3, -3, f, PROP_CRAFTING_TABLE, front);
+                addChest(rel(cx, cz, front, -3, 3, f), face(front), CHEST_WORKSHOP);
+                break;
+            case TELEPORT:
+                boolean small = r.nextBoolean();
+                int lo = small ? -1 : -2;
+                int hi = 1;
+                for (int a = lo; a <= hi; a++) {
+                    for (int b = lo; b <= hi; b++) {
+                        if (a == lo || a == hi || b == lo || b == hi) {
+                            prop(cx, cz, front, a, b, f, PROP_TRANSPORT_STONE, front);
+                        }
+                    }
+                }
                 break;
             default:
                 break;
         }
         if (type.hasAnchors()) {
-            this.anchors.add(withTail(rel(cx, cz, front, 1, -2, f1), POOL_ROOM));
+            int a = type == RoomType.TELEPORT ? 2 : 1;
+            int b = type == RoomType.TELEPORT ? 3 : 2;
+            addAnchor(rel(cx, cz, front, a, -b, f), POOL_ROOM);
             if (r.nextInt(4) == 0) {
-                this.anchors.add(withTail(rel(cx, cz, front, 1, 2, f1), POOL_ROOM));
+                addAnchor(rel(cx, cz, front, a, b, f), POOL_ROOM);
+            }
+        }
+        this.magicLights.add(rel(cx, cz, front, -1, -3, f + 2));
+        this.magicLights.add(rel(cx, cz, front, -1, 3, f + 2));
+        if (type != RoomType.LIBRARY && type != RoomType.TELEPORT) {
+            this.magicLights.add(rel(cx, cz, front, 2, -3, f + 2));
+            this.magicLights.add(rel(cx, cz, front, 2, 3, f + 2));
+        }
+        if (r.nextDouble() < TRAP_CHANCE) {
+            trap(cx, cz, front, f);
+        }
+        decor(cx, cz, front, f, r);
+    }
+
+    private static int shelf(Random r) {
+        double roll = r.nextDouble();
+        return roll < 0.2D ? PROP_GILDED_WOOD : roll < 0.4D ? PROP_BOOKSHELF : PROP_EBW_SHELF;
+    }
+
+    /**
+     * Tripwire across the row just inside the door; the hook on one side is attached to a dispenser
+     * built into that side wall, facing across the room. The dispenser goes on the side whose wall
+     * is not the ritual chamber's shell.
+     */
+    private void trap(int cx, int cz, int front, int f) {
+        int side = -1;
+        int[] dispenser = rel(cx, cz, front, 3, -4, f);
+        if (this.rooms.get(0).outer.contains(dispenser[0], dispenser[1], dispenser[2])) {
+            side = 1;
+            dispenser = rel(cx, cz, front, 3, 4, f);
+        }
+        // Facing from the dispenser side towards the room: +lateral for b = -4, -lateral for b = +4.
+        int towardsRoom = side < 0 ? (front + 1) % 4 : (front + 3) % 4;
+        int towardsDispenser = (towardsRoom + 2) % 4;
+        this.trapDispensers.add(withTail(dispenser, face(towardsRoom)));
+        prop(cx, cz, front, 3, 3 * side, f, PROP_TRIP_HOOK, towardsRoom);
+        prop(cx, cz, front, 3, -3 * side, f, PROP_TRIP_HOOK, towardsDispenser);
+        for (int b = -2; b <= 2; b++) {
+            prop(cx, cz, front, 3, b, f, PROP_TRIPWIRE, front);
+        }
+    }
+
+    /** Small seeded décor on free floor cells at a <= 1, i.e. away from the door line and trap row. */
+    private void decor(int cx, int cz, int front, int f, Random r) {
+        List<int[]> free = new ArrayList<int[]>();
+        for (int a = -3; a <= 1; a++) {
+            for (int b = -3; b <= 3; b++) {
+                int[] p = rel(cx, cz, front, a, b, f);
+                if (!this.used.contains(key(p))) {
+                    free.add(new int[] { p[0], p[1], p[2], a, b });
+                }
+            }
+        }
+        Collections.shuffle(free, r);
+        int back = (front + 2) % 4;
+        if (r.nextDouble() < 0.20D) {
+            place(free, DECOR_ARMOR_STAND, face(front), 0);
+        }
+        if (r.nextDouble() < 0.08D) {
+            place(free, DECOR_SHULKER, face(front), 0);
+        }
+        if (r.nextDouble() < 0.10D) {
+            place(free, DECOR_ENDER_CHEST, face(front), 0);
+        }
+        if (r.nextDouble() < 0.10D) {
+            place(free, DECOR_PORTAL_FRAME, face(front), r.nextDouble() < 0.3D ? 1 : 0);
+        }
+        if (r.nextDouble() < 0.15D) {
+            bed(free, cx, cz, front, back, f);
+        }
+        if (r.nextDouble() < 0.20D) {
+            place(free, DECOR_SKULL, r.nextInt(4), r.nextDouble() < 0.3D ? 1 : 0);
+        }
+        if (r.nextDouble() < 0.25D) {
+            int[] p = rel(cx, cz, front, -3, r.nextInt(3) - 1, f + 2);
+            if (this.used.add(key(p))) {
+                this.decor.add(withTail(p, DECOR_PAINTING, face(front), 0));
             }
         }
     }
 
-    // ---- local-frame helpers --------------------------------------------------------------
+    private void place(List<int[]> free, int kind, int facing, int extra) {
+        while (!free.isEmpty()) {
+            int[] c = free.remove(free.size() - 1);
+            int[] p = { c[0], c[1], c[2] };
+            if (this.used.add(key(p))) {
+                this.decor.add(withTail(p, kind, facing, extra));
+                return;
+            }
+        }
+    }
+
+    private void bed(List<int[]> free, int cx, int cz, int front, int back, int f) {
+        for (int i = free.size() - 1; i >= 0; i--) {
+            int[] c = free.get(i);
+            if (c[3] - 1 < -3) {
+                continue;
+            }
+            int[] foot = { c[0], c[1], c[2] };
+            int[] head = rel(cx, cz, front, c[3] - 1, c[4], f);
+            if (!this.used.contains(key(foot)) && !this.used.contains(key(head))) {
+                this.used.add(key(foot));
+                this.used.add(key(head));
+                free.remove(i);
+                this.decor.add(withTail(foot, DECOR_BED, face(back), 0));
+                return;
+            }
+        }
+    }
+
+    // ---- registration helpers -------------------------------------------------------------
+
+    private void addAnchor(int[] p, int pool) {
+        this.used.add(key(p));
+        this.anchors.add(withTail(p, pool));
+    }
+
+    private void addChest(int[] p, int facing, int table) {
+        this.used.add(key(p));
+        this.chests.add(withTail(p, facing, table));
+    }
+
+    private void addProp(int[] p, int kind, int facing) {
+        this.used.add(key(p));
+        this.props.add(withTail(p, kind, facing));
+    }
 
     private void prop(int cx, int cz, int front, int a, int b, int y, int kind, int localFacing) {
-        this.props.add(withTail(rel(cx, cz, front, a, b, y), kind, face(localFacing)));
+        addProp(rel(cx, cz, front, a, b, y), kind, face(localFacing));
     }
 
-    private void chest(int cx, int cz, int front, int a, int b, int y, int localFacing, int table) {
-        this.chests.add(withTail(rel(cx, cz, front, a, b, y), face(localFacing), table));
+    private static String key(int[] p) {
+        return p[0] + "," + p[1] + "," + p[2];
     }
+
+    // ---- local-frame helpers --------------------------------------------------------------
 
     /** A point a steps towards the door and b steps to the door's right, around a room centre. */
     private int[] rel(int cx, int cz, int front, int a, int b, int y) {
-        int[] f = vec(front);
-        int[] l = vec((front + 1) % 4);
-        return point(cx + f[0] * a + l[0] * b, y, cz + f[1] * a + l[1] * b);
+        int[] fv = vec(front);
+        int[] lv = vec((front + 1) % 4);
+        return point(cx + fv[0] * a + lv[0] * b, y, cz + fv[1] * a + lv[1] * b);
     }
 
     private static int[] vec(int facing) {
