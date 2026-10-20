@@ -406,3 +406,12 @@ msg.insanetweaks.sapling.uprooted=§7You tear the sapling out. The seed is lost.
 boss.insanetweaks.sapling.lure=Corrupted Sapling - the hive stirs
 boss.insanetweaks.sapling.wave=Corrupted Sapling - wave %s/%s
 boss.insanetweaks.sapling.paused=Corrupted Sapling - paused: %s
+
+# --- Effect descriptions for Just Enough Effects (effectinfo) ---
+# JEE shows <effect name>.<N>.desc when the mouse is over an active effect in the inventory.
+# It starts looking at N = the effect's amplifier and walks up to 4, so a .4. key is the
+# fallback for every level. No percent signs: the text goes through String.format.
+potion.insanetweaks.cleanse.4.desc=Strips every harmful effect from you twice a second. Granted for a moment by the Living and Sentient armour when it saves you from a lethal blow.
+potion.insanetweaks.immune_bond.4.desc=Bound to the caster of Immune Bond: the Call of the Hive cannot take hold, and any infection already present is purged.
+potion.insanetweaks.gilded_stasis.4.desc=Frozen in gold by Zhonya's Hourglass. You take no damage, but cannot move, attack or use anything until it fades.
+potion.insanetweaks.nourished.4.desc=Your hunger does not drain while this lasts - saturation keeps topping itself back up. Granted by eating food enchanted with Mmmm.
