@@ -22,7 +22,7 @@ import java.util.Set;
 public final class SanctumLayout {
 
     public enum RoomType {
-        CHAMBER, ANTECHAMBER, DESCENT, HALL, VESTIBULE, LIBRARY, FORGE, WORKSHOP, TELEPORT, CRYPT, COLLAPSED;
+        CHAMBER, ANTECHAMBER, DESCENT, HALL, VESTIBULE, LIBRARY, FORGE, WORKSHOP, TELEPORT, RITUAL, CRYPT, COLLAPSED;
 
         public boolean isSideRoom() {
             return ordinal() >= LIBRARY.ordinal();
@@ -106,6 +106,8 @@ public final class SanctumLayout {
     public final List<SanctumBox> carves = new ArrayList<SanctumBox>();
     public SanctumBox seal;
     public int[] button;
+    /** The doorway between the antechamber and the bottom stair; four high so the step clears it. */
+    public SanctumBox stairDoor;
     /** x, y, z of every stair block; all face {@link #stairFacing}. */
     public final List<int[]> stairs = new ArrayList<int[]>();
     public int stairFacing;
@@ -134,6 +136,14 @@ public final class SanctumLayout {
     public final List<int[]> trapDispensers = new ArrayList<int[]>();
     /** x, y, z, kind ({@link #DECOR_ARMOR_STAND} ...), facing, extra. */
     public final List<int[]> decor = new ArrayList<int[]>();
+    /** Index into {@link SanctumRituals}, or -1 without a ritual room. */
+    public int ritualKind = -1;
+    /** x, y, z, ritual, key char of every rune laid in the ritual room. */
+    public final List<int[]> runes = new ArrayList<int[]>();
+    /** x, y, z of the centrepiece cell, left empty for the player; null without a ritual room. */
+    public int[] ritualCentre;
+    /** x, y, z, facing of the unlocked chest holding the ritual's hint book; null without one. */
+    public int[] hintChest;
     public SanctumBox bounds;
 
     private final int rot;
@@ -174,7 +184,8 @@ public final class SanctumLayout {
         room(RoomType.DESCENT, -4, f2 - 1, -2, 8, f1 + 4, 2);
         room(RoomType.HALL, 8, f1 - 1, -6, 20, f1 + 5, 6);
         room(RoomType.VESTIBULE, 20, f1 - 1, -4, 28, f1 + 5, 4);
-        carve(-4, f2, -1, -4, f2 + 2, 1);
+        carve(-4, f2, -1, -4, f2 + 3, 1);
+        this.stairDoor = this.carves.get(this.carves.size() - 1);
         carve(8, f1, -1, 8, f1 + 2, 1);
         carve(20, f1, -1, 20, f1 + 2, 1);
 
@@ -209,13 +220,20 @@ public final class SanctumLayout {
             this.glowSpots.add(point(h[0], f1 + 4, h[1]));
         }
         this.glowSpots.add(point(22, f1 + 4, -2));
+        List<int[]> hall = new ArrayList<int[]>();
+        List<int[]> vestibule = new ArrayList<int[]>();
+        List<int[]> antechamber = new ArrayList<int[]>();
         for (int side = -1; side <= 1; side += 2) {
-            this.magicLights.add(point(11, f1 + 2, 5 * side));
-            this.magicLights.add(point(17, f1 + 2, 5 * side));
-            this.magicLights.add(point(21, f1 + 2, 3 * side));
-            this.magicLights.add(point(27, f1 + 2, 3 * side));
-            this.magicLights.add(point(-6, f2 + 3, 3 * side));
+            hall.add(point(11, f1 + 3, 5 * side));
+            hall.add(point(17, f1 + 3, 5 * side));
+            vestibule.add(point(21, f1 + 3, 3 * side));
+            vestibule.add(point(27, f1 + 3, 3 * side));
+            antechamber.add(point(-6, f2 + 4, 3 * side));
         }
+        lights(r, hall);
+        lights(r, vestibule);
+        lights(r, antechamber);
+        // The landing's ceiling is the descent shell at F1+4, so its light stays at F1+3.
         this.magicLights.add(point(7, f1 + 3, 1));
 
         sideRooms(r);
@@ -267,12 +285,14 @@ public final class SanctumLayout {
                 this.glowSpots.add(point(lx, f2 + 7, lz));
             }
         }
+        List<int[]> lamps = new ArrayList<int[]>();
         for (int side = -1; side <= 1; side += 2) {
-            this.magicLights.add(point(-27, f2 + 3, 4 * side));
-            this.magicLights.add(point(-13, f2 + 3, 4 * side));
-            this.magicLights.add(point(-24, f2 + 3, 7 * side));
-            this.magicLights.add(point(-16, f2 + 3, 7 * side));
+            lamps.add(point(-27, f2 + 4, 4 * side));
+            lamps.add(point(-13, f2 + 4, 4 * side));
+            lamps.add(point(-24, f2 + 4, 7 * side));
+            lamps.add(point(-16, f2 + 4, 7 * side));
         }
+        lights(r, lamps);
     }
 
     private void sideRooms(Random r) {
@@ -281,6 +301,7 @@ public final class SanctumLayout {
         types.add(RoomType.FORGE);
         types.add(RoomType.WORKSHOP);
         types.add(RoomType.TELEPORT);
+        types.add(RoomType.RITUAL);
         types.add(r.nextBoolean() ? RoomType.CRYPT : RoomType.COLLAPSED);
         Collections.shuffle(types, r);
         List<Integer> slots = new ArrayList<Integer>();
@@ -337,6 +358,9 @@ public final class SanctumLayout {
                 prop(cx, cz, front, -3, -3, f, PROP_CRAFTING_TABLE, front);
                 addChest(rel(cx, cz, front, -3, 3, f), face(front), CHEST_WORKSHOP);
                 break;
+            case RITUAL:
+                ritual(cx, cz, front, f, r);
+                break;
             case TELEPORT:
                 boolean small = r.nextBoolean();
                 int lo = small ? -1 : -2;
@@ -361,16 +385,56 @@ public final class SanctumLayout {
                 addAnchor(rel(cx, cz, front, a, b, f), POOL_ROOM);
             }
         }
-        this.magicLights.add(rel(cx, cz, front, -1, -3, f + 2));
-        this.magicLights.add(rel(cx, cz, front, -1, 3, f + 2));
+        List<int[]> lamps = new ArrayList<int[]>();
+        lamps.add(rel(cx, cz, front, -1, -3, f + 3));
+        lamps.add(rel(cx, cz, front, -1, 3, f + 3));
         if (type != RoomType.LIBRARY && type != RoomType.TELEPORT) {
-            this.magicLights.add(rel(cx, cz, front, 2, -3, f + 2));
-            this.magicLights.add(rel(cx, cz, front, 2, 3, f + 2));
+            lamps.add(rel(cx, cz, front, 2, -3, f + 3));
+            lamps.add(rel(cx, cz, front, 2, 3, f + 3));
         }
+        lights(r, lamps);
         if (r.nextDouble() < TRAP_CHANCE) {
             trap(cx, cz, front, f);
         }
         decor(cx, cz, front, f, r);
+    }
+
+    /** Keeps 2-3 of a room's candidate magic lights (all of them when it has fewer). */
+    private void lights(Random r, List<int[]> candidates) {
+        int keep = Math.min(candidates.size(), 2 + r.nextInt(2));
+        Collections.shuffle(candidates, r);
+        for (int i = 0; i < keep; i++) {
+            this.magicLights.add(candidates.get(i));
+        }
+    }
+
+    /**
+     * Lays one ASC ritual on the floor around the room centre, without its centrepiece. Grid cell
+     * (row i, column j) goes to a = i - h/2, b = w/2 - j: a proper rotation of ASC's own layout
+     * (row i north, column j west of the centrepiece), never a mirror image. The whole grid,
+     * blanks included, is kept free; the hint chest stands against the back wall.
+     */
+    private void ritual(int cx, int cz, int front, int f, Random r) {
+        int kind = r.nextInt(SanctumRituals.RITUAL_COUNT);
+        this.ritualKind = kind;
+        String[] pattern = SanctumRituals.pattern(kind);
+        int h = pattern.length;
+        int w = pattern[0].length();
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                int[] cell = rel(cx, cz, front, i - h / 2, w / 2 - j, f);
+                this.used.add(key(cell));
+                char c = pattern[i].charAt(j);
+                if (i == h / 2 && j == w / 2) {
+                    this.ritualCentre = cell;
+                } else if (c != ' ') {
+                    this.runes.add(withTail(cell, kind, c));
+                }
+            }
+        }
+        int[] chest = rel(cx, cz, front, -3, 0, f);
+        this.used.add(key(chest));
+        this.hintChest = withTail(chest, face(front));
     }
 
     private static int shelf(Random r) {

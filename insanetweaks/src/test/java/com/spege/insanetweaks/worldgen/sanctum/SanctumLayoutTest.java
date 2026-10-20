@@ -3,6 +3,7 @@ package com.spege.insanetweaks.worldgen.sanctum;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -158,10 +159,14 @@ public class SanctumLayoutTest {
         for (long s = 0; s < SEEDS; s++) {
             SanctumLayout l = layout(s);
             Set<String> used = new HashSet<String>();
-            for (List<int[]> list : Arrays.asList(l.anchors, l.chests, l.props, l.decor)) {
+            for (List<int[]> list : Arrays.asList(l.anchors, l.chests, l.props, l.decor, l.runes)) {
                 for (int[] p : list) {
                     assertTrue("seed " + s + " cell " + key(p), used.add(key(p)));
                 }
+            }
+            if (l.ritualCentre != null) {
+                assertTrue("ritual centre seed " + s, used.add(key(l.ritualCentre)));
+                assertTrue("hint chest seed " + s, used.add(key(l.hintChest)));
             }
             for (int[] d : l.decor) {
                 if (d[3] == SanctumLayout.DECOR_BED) {
@@ -252,6 +257,136 @@ public class SanctumLayoutTest {
                     boolean edge = a[0] == in.minX || a[0] == in.maxX || a[2] == in.minZ || a[2] == in.maxZ;
                     assertFalse("seed " + s + " " + r.type + " anchor " + key(a), edge);
                 }
+            }
+        }
+    }
+
+    @Test
+    public void lightsAreTwoOrThreePerRoom() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            for (SanctumLayout.Room r : l.rooms) {
+                SanctumBox in = r.outer.shrink(1);
+                int n = 0;
+                for (int[] p : l.magicLights) {
+                    n += in.contains(p[0], p[1], p[2]) ? 1 : 0;
+                }
+                if (r.type == SanctumLayout.RoomType.DESCENT) {
+                    assertTrue("seed " + s + " descent " + n, n <= 1);
+                } else if (r.type == SanctumLayout.RoomType.ANTECHAMBER) {
+                    assertEquals("seed " + s, 2, n);
+                } else {
+                    assertTrue("seed " + s + " " + r.type + " " + n, n >= 2 && n <= 3);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void stairDoorIsFourHigh() {
+        for (long s = 0; s < 50; s++) {
+            SanctumLayout l = layout(s);
+            assertNotNull(l.stairDoor);
+            assertEquals(3, l.stairDoor.maxY - l.stairDoor.minY);
+            assertEquals(l.floorY2, l.stairDoor.minY);
+        }
+    }
+
+    private static SanctumLayout.Room ritualRoom(SanctumLayout l) {
+        for (SanctumLayout.Room r : l.rooms) {
+            if (r.type == SanctumLayout.RoomType.RITUAL) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void ritualRoomAppearsAndIsIncomplete() {
+        boolean saw = false;
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            SanctumLayout.Room room = ritualRoom(l);
+            if (room == null) {
+                assertTrue(l.runes.isEmpty());
+                assertEquals(-1, l.ritualKind);
+                continue;
+            }
+            saw = true;
+            assertTrue(l.ritualKind >= 0 && l.ritualKind < SanctumRituals.RITUAL_COUNT);
+            int runes = 0;
+            for (String row : SanctumRituals.pattern(l.ritualKind)) {
+                runes += row.replace(" ", "").length();
+            }
+            assertEquals("seed " + s, runes - 1, l.runes.size());
+            SanctumBox in = room.outer.shrink(1);
+            for (int[] r : l.runes) {
+                assertFalse(r[0] == l.ritualCentre[0] && r[1] == l.ritualCentre[1] && r[2] == l.ritualCentre[2]);
+                assertTrue(in.contains(r[0], r[1], r[2]));
+            }
+            assertTrue(in.contains(l.ritualCentre[0], l.ritualCentre[1], l.ritualCentre[2]));
+        }
+        assertTrue(saw);
+    }
+
+    /** ASC tries the four rotations of the pattern, never a mirror image. */
+    @Test
+    public void ritualRunesFormARotationOfThePattern() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            if (l.ritualKind < 0) {
+                continue;
+            }
+            String[] p = SanctumRituals.pattern(l.ritualKind);
+            int h = p.length;
+            int w = p[0].length();
+            java.util.Map<String, Character> placed = new java.util.HashMap<String, Character>();
+            for (int[] r : l.runes) {
+                placed.put((r[0] - l.ritualCentre[0]) + "," + (r[2] - l.ritualCentre[2]), Character.valueOf((char) r[4]));
+            }
+            boolean match = false;
+            for (int rot = 0; rot < 4 && !match; rot++) {
+                boolean ok = true;
+                for (int i = 0; i < h && ok; i++) {
+                    for (int j = 0; j < w && ok; j++) {
+                        // ASC: row i is (i - h/2) blocks north (-z), column j is (j - w/2) blocks west (-x).
+                        int dx = -(j - w / 2);
+                        int dz = -(i - h / 2);
+                        for (int k = 0; k < rot; k++) {
+                            int t = dx;
+                            dx = -dz;
+                            dz = t;
+                        }
+                        char want = p[i].charAt(j);
+                        Character got = placed.get(dx + "," + dz);
+                        if (i == h / 2 && j == w / 2) {
+                            ok = got == null;
+                        } else if (want == ' ') {
+                            ok = got == null;
+                        } else {
+                            ok = got != null && got.charValue() == want;
+                        }
+                    }
+                }
+                match = ok;
+            }
+            assertTrue("seed " + s + " ritual " + l.ritualKind, match);
+        }
+    }
+
+    @Test
+    public void hintChestIsNotALockedChest() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            SanctumLayout.Room room = ritualRoom(l);
+            if (room == null) {
+                assertNull(l.hintChest);
+                continue;
+            }
+            assertNotNull(l.hintChest);
+            assertTrue(room.outer.shrink(1).contains(l.hintChest[0], l.hintChest[1], l.hintChest[2]));
+            for (int[] c : l.chests) {
+                assertFalse(key(c).equals(key(l.hintChest)));
             }
         }
     }
