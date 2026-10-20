@@ -516,6 +516,18 @@ No gold nuggets, plain magic crystals, paper or blank scrolls in any sanctum che
 - **Shulker potions.** Strong healing, strong regeneration, strong strength, strong swiftness, long
   fire resistance and long night vision, as splash or plain potions.
 
+- **Ancient Spellcraft "ancient knowledge"** (items used with the Sphere of Cognizance and the
+  Scribing Desk; ids taken from ASC's own `chests/ancient_vault` table, so they exist in 1.8.3):
+  - **main chest:** one knowledge roll from the four stone tablets (`stone_tablet_small`,
+    `stone_tablet`, `stone_tablet_large`, `stone_tablet_grand`), `ancient_spellcraft_spell_book`
+    (`random_spell`), `theory_scroll`, `runic_plate` (`random_spell`),
+    `ancientspellcraft:subsets/ritual_books` and `ancientspellcraft:subsets/rare_scrolls`;
+  - **library chest:** `ancient_spellcraft_spell_book`, `theory_scroll` or `stone_tablet_small`;
+  - **workshop chest:** `ancient_spellcraft_scroll`, `runic_plate` or `theory_scroll`.
+
+  EBW subsets add quality without filler: `arcane_tomes`, `wand_upgrades` and `wizard_armour` in the
+  main chest, `armour_upgrades` in the forge chest.
+
 ### 13.6 Deferred
 
 - **Runestone walls.** The user is still testing; Abomination runestone may be added first. Walls
