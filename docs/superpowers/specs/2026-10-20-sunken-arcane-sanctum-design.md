@@ -718,3 +718,220 @@ Both chances and the roll count are config fields.
 - The artefact table is weighted uncommon over rare over epic.
 - The insanetweaks book pool is uniform.
 - The version is 1.27.0.
+
+As built, 1.27.0 differs in three ways:
+- the pool is Rejuvenation, Bonfire and **Condensing**, because Elemental Attunement can never start
+  in ASC 1.8.3;
+- the hint book is in an unlocked plain chest, not on a sage lectern;
+- side rooms are 3–6.
+
+## 15. Revision 1.28.0 (2026-10-21): fourth playtest, gameplay batch "A"
+
+Why: in 1.27.0 the mechanics work. This round is about three things:
+- tightening the sanctum against cheese (digging in, being teleported out);
+- making its threat legible before the player commits;
+- making its rewards feel worth the risk.
+
+The visual overhaul ("B": runestone edges, per-dimension palettes, Nether/End/dim-111 placement)
+is a separate, later revision. So are the lore books and the Akashic-Tome-style guide book. §15.9
+lists everything that is deliberately not in this revision.
+
+### 15.1 Lighting
+
+- Every room keeps **1–2** of its magic-light candidates.
+- The ritual chamber keeps **2–3**.
+
+Heights stay as in 1.27.0.
+
+### 15.2 The hall (the level-1 room the stairway leads down from)
+
+- **Décor:** it gets the same décor kinds and chances as a side room (§13.4). Two areas stay clear:
+  - the straight walkway between its three doors (local z -1..1 for the full hall length);
+  - every door line, ±2 cells, as in the side-room rule.
+
+  Paintings hang on the hall's long walls.
+- **Anchors:** it gets **2–3 anchors** pinned from the room pool, so sim wizards and battlemages.
+  - They go off the walkway and off interior edge columns (§14 vine rule).
+  - They are registered with the sanctum like every other anchor.
+- **Artefact chance:** a fallen room anchor (sim) now drops an artefact with **10%** chance (was
+  20%). Chamber anchors stay at 50%. Room-anchor rooms and the hall share this one value.
+
+### 15.3 Ritual chamber
+
+- **Anchors:** always **4**, plus **two independent 25% rolls** for a fifth and a sixth. The seven
+  chamber spots stay as they are.
+- **Codex lectern:**
+  - an ASC `sage_lectern` stands on the chamber floor beside the 3×3 altar, facing it;
+  - it stays **empty** in this revision;
+  - the guide book (Akashic Tome compatible, explaining the 3×3 ritual recipe first) and its
+    mechanics belong to a separate session;
+  - the layout records the lectern's cell, so that session only has to fill it;
+  - it is not a container and is not locked.
+
+### 15.4 Ritual room
+
+- **Anchors:** the room now holds anchors like the other room types:
+  - one always, plus a second at 25%;
+  - pinned from the room pool;
+  - off the rune footprint.
+
+  The room is too small for a 5×5 footprint plus non-edge cells, so its anchors may stand on an
+  interior edge column. In that case the builder's vine pass must skip every anchor's column, in
+  every room.
+- **Two chests:**
+  - The hint chest stays unlocked and holds only the book.
+  - A second, ordinary sanctum chest with the library ("minor") loot table is added. It is locked
+    like every other sanctum chest.
+- **Décor:** the room keeps the usual side-room décor off the footprint.
+
+### 15.5 Loot
+
+- **Parasite parts instead of the bauble.**
+  - The main chest's bauble roll (`Main Chest Bauble Chance`) defaults to **0**. The code stays, so
+    a pack can turn it back on.
+  - Every sanctum chest table gets a **"parasite relic" pool**: one roll, mostly empty, otherwise
+    one of the parts below.
+  - The relic pool hits **50%** in the main chest and **25%** in the library, forge and workshop
+    chests.
+  - The existing main-chest `parasite_parts` pool stays as it is (flesh and common parts). Where a
+    part appears in both pools, that is fine.
+  - The parts are verified as items in SRP 1.10.9 (by `models/item/`, not by lang):
+
+    | Item id | In-game name |
+    |---|---|
+    | `srparasites:vile_shell` | Vile Shell |
+    | `srparasites:infectious_blade_fragment` | Infectious Blade Fragment |
+    | `srparasites:ada_yelloweye_drop` | Yelloweye Bone |
+    | `srparasites:ada_summoner_drop` | Summoner Core |
+    | `srparasites:ada_manducater_drop` | Manducater Orb |
+    | `srparasites:ada_longarms_drop` | Longarm Armor Fragment |
+    | `srparasites:ada_bolster_drop` | Bolster Husk |
+    | `srparasites:ada_devourer_drop` | Devourer Tentacle |
+
+  - "Stalker Spine" does not exist in SRP 1.10.9 or in SW: Parasites v5. The nearest is
+    `swparasites:serrated_spines`. It is left out until the user names the item they meant.
+- **Shulker elixirs (placeholder until the loot pass).** A potion shulker holds 2–4 **Sanctum
+  Elixirs**, each splash or drinkable, 50/50. An elixir is a `minecraft:potion` /
+  `minecraft:splash_potion` carrying `CustomPotionEffects`, a custom colour and a display name.
+  - **Vanilla effects:** 3–4 distinct ones at amplifier I (level II), each lasting 4–8 minutes,
+    chosen from speed, strength, regeneration, resistance, fire resistance, haste, jump boost,
+    absorption and night vision.
+  - **Insanetweaks effect:** with 50% chance, one of `insanetweaks:cleanse` or
+    `insanetweaks:nourished` (amplifier 1 - Nourished does nothing at 0), lasting 2–4 minutes.
+    - Immune Bond is excluded: it only works through its spell's caster binding, so drunk it is an
+      empty timer (user, 2026-10-21).
+    - Gilded Stasis is excluded: it freezes the drinker.
+    - Wit's Hunger is excluded: it is a curse.
+  - **EBW buff effect:** with 50% chance, one of `ebwizardry:ward`, `empowerment`, `font_of_mana`,
+    `fireskin`, `ice_shroud`, `static_aura`, `sixth_sense` or `frost_step`, lasting 2–4 minutes.
+  - All choices are positional and deterministic. The name is a translate key, e.g. "Sanctum
+    Elixir".
+
+### 15.6 Arcane wall around the sanctum
+
+ASC's own `arcane_wall` is a tile-entity block tied to a caster, which is the wrong tool for
+thousands of hull cells. So content adds **`insanetweaks:arcane_wall`**:
+- **Behaviour:**
+  - no tile entity;
+  - unbreakable in survival (hardness -1, very high blast resistance);
+  - push reaction `BLOCK`;
+  - drops nothing.
+- **Look:** a full cube using ASC's `ancientspellcraft:blocks/arcane_wall_0` texture, translucent
+  render layer. It also needs an item model, `en_us` name and a creative-tab entry for testing.
+
+**Hull.** One layer of it surrounds the whole structure:
+- every cell of each room's outer box grown by one that does not lie inside any room's outer box;
+- this covers sides, under floors and over ceilings;
+- **except** the shaft column above the vestibule ceiling (the 3×3 around the shaft at y > `wardY`),
+  which is the one way in.
+
+The layout exposes this as a pure, tested rule (a cell predicate), and the builder writes it inside
+the clip before the walls. The layout's `bounds` grow by one to include the hull.
+
+**Dissolving.** The wall goes away in the same event that lifts the Arcane Lock (the last anchor
+falls):
+- every hull cell becomes **stone** (not air, so no 1-wide spawnable gaps);
+- cells in loaded chunks are dissolved at once;
+- a chunk of the sanctum that is unloaded at that moment is dissolved the next time it loads. The
+  work is queued from the chunk-load event and done on the next server tick, never inside the load
+  event.
+- The sanctum record remembers which chunks are done, so each chunk is swept at most once after the
+  clear.
+- The record gains the hull's y-range, so a sweep scans only that range, not up to the sky.
+
+Sanctums generated before 1.28.0 have no hull and nothing to dissolve.
+
+### 15.7 Warning before the descent
+
+When a player comes within the footprint plus 8 blocks of a sanctum that is **not cleared**:
+- **Title:** a large dark-red **"BEWARE"** title, with a subtitle, through vanilla title packets.
+- **Chat:** a longer chat message. It says three things:
+  - taming the sanctum can bring great power and wealth;
+  - it is deadly;
+  - what sleeps there is a danger to the world itself, and waking it may hasten the parasites.
+
+  This is flavour only: no SRP mechanic is added.
+- **Frequency:** at most once per player per 10 minutes (wall clock, server memory, not saved).
+- It fires in addition to the one-time "Something Sleeps Below" advancement.
+
+All text lives in `en_us.lang`.
+
+### 15.8 Teleport guard
+
+This uses option (b), chosen by the user on 2026-10-21.
+
+In the pack, the sims' only teleport is **Banish**, their close-range reaction; Blink and Phase Step
+are not in their spell pool. EBW moves the entity directly (`setPositionAndUpdate`), so nothing can
+be caught after the fact. Vetoing Banish would leave a sim helpless at close range. So Banish is
+**allowed**, but nobody leaves the sanctum through it:
+- **Which spells:** those in the config list `Sanctum Guarded Spells`. The default list is
+  `ebwizardry:banish`, `ebwizardry:blink`, `ebwizardry:phase_step`.
+- **Before the cast:** on `SpellCastEvent.Pre` with a guarded spell, cast by a mob released from an
+  anchor of a sanctum that is not cleared, the server remembers where the caster and its current
+  attack target stand.
+- **After the cast:** for a few ticks, if either of them is found outside that sanctum's box
+  (footprint plus the hull's y-range), it is put back where it stood. A teleport that lands inside
+  the sanctum stays.
+- **Not touched:** the AI, and teleports a player casts themselves.
+- **Banish cooldown (user, 2026-10-21):** a sim may cast a DISPLACE spell (Banish) at most once per
+  `Banish Cooldown (ticks)`, default **300** (15 s), everywhere. While it cools down, both the panic
+  reaction and the close-range special skip DISPLACE.
+
+### 15.9 Not in this revision (recorded)
+
+- **"B": the visual overhaul.**
+  - Room edges framed with EBW runestone. EBW runestone metadata is `Element.ordinal()`: 1 fire,
+    2 ice, 3 lightning, 4 necromancy, 5 earth, 6 sorcery, 7 healing.
+  - Palettes and runestone variants per dimension:
+
+    | Dimension | Main block | Runestone |
+    |---|---|---|
+    | Overworld | stone brick | sorcery (6) + lightning (3) |
+    | Nether | nether brick | fire (1) |
+    | End | end stone brick | necromancy (4) |
+    | dim 111 (Lost Cities) | obsidian + `nb:cry_obi` | earth (5) |
+
+  - Placement rules for the Nether, the End and dim 111.
+- **Lore books:** 1–2 per sanctum, in chests. They tell how the sanctum was once the secret
+  sanctum of acolytes of ancient magic, who studied the creatures that came with the falling star.
+  They hoped to tame the abominations and make their magic and land stronger. They failed, paid for
+  their greed, and sealed the sanctum as a last act so the horrors would not overrun the world.
+- **The Akashic-Tome-style guide book** for the codex lectern, with the 3×3 ritual recipe first.
+- **The real loot pass** (replacing the elixir placeholder). Magic crystals may come back.
+- **The assimilated-dragon lair** and a possible split into two structures.
+- **Rethinking the entrance.**
+
+### 15.10 Calls made by the assistant (for the user to check)
+
+- "The room with the corridor down" is the level-1 hall.
+- Hall anchors come from the room pool.
+- The relic pool hits 50% in the main chest and 25% in the others.
+- The bauble roll defaults to 0 rather than being removed.
+- The ritual room's loot chest is separate and locked; the hint chest stays free.
+- Hull cells dissolve to stone.
+- The warning has a 10-minute cooldown.
+- The teleport guard is option (b): return to the pre-cast position (the user's choice).
+- The Banish cooldown defaults to 300 ticks. The user asked for a longer one; the value is the
+  assistant's.
+- The codex lectern stays empty this revision.
+- The version is 1.28.0.
