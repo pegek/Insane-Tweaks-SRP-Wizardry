@@ -77,6 +77,9 @@ public final class CommandEffectDesc extends CommandBase {
         if (args.length != 1 || !"missing".equals(args[0])) {
             throw new WrongUsageException(getUsage(sender));
         }
+        // Work from the file as it is on disk now, not as of the last F3+T: the user may have just
+        // filled in lines, and a stale view would append those keys again.
+        EffectDescriptions.reload();
 
         List<Potion> potions = new ArrayList<>(ForgeRegistries.POTIONS.getValuesCollection());
         Collections.sort(potions, new Comparator<Potion>() {

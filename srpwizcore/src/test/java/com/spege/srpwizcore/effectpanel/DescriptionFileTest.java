@@ -27,9 +27,18 @@ public class DescriptionFileTest {
     }
 
     @Test
+    public void blankDuplicateNeverErasesAText() {
+        // /effectdesc missing run before F3+T used to append "key=" after the user's "key=Text";
+        // a blank means "not described yet", never "delete my description".
+        DescriptionFile.Parsed p = DescriptionFile.parse(Arrays.asList("minecraft:luck=Lucky.", "minecraft:luck="));
+        assertEquals("Lucky.", p.entries.get("minecraft:luck"));
+        assertTrue(p.presentKeys.contains("minecraft:luck"));
+    }
+
+    @Test
     public void stripsUtf8Bom() {
         assertEquals("Lucky.", DescriptionFile.parse(
-                Collections.singletonList("﻿minecraft:luck=Lucky.")).entries.get("minecraft:luck"));
+                Collections.singletonList("\uFEFFminecraft:luck=Lucky.")).entries.get("minecraft:luck"));
     }
 
     @Test

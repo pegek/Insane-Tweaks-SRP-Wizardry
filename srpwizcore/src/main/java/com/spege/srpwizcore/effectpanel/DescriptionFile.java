@@ -69,7 +69,7 @@ public final class DescriptionFile {
         List<Integer> malformed = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            if (i == 0 && line.startsWith("﻿")) {
+            if (i == 0 && line.startsWith("\uFEFF")) {
                 line = line.substring(1); // Notepad writes a BOM
             }
             String trimmed = line.trim();
@@ -84,9 +84,12 @@ public final class DescriptionFile {
             }
             String text = trimmed.substring(eq + 1).trim();
             present.add(key);
-            // Remove first so a later duplicate also moves to the later position.
-            entries.remove(key);
+            // A blank means "not described yet", never "delete my description": /effectdesc missing
+            // run before F3+T could append "key=" below a text the user had just typed, and letting
+            // that blank win would erase it without a word. A non-empty duplicate still wins, and
+            // moves the entry to its later position.
             if (!text.isEmpty()) {
+                entries.remove(key);
                 entries.put(key, text);
             }
         }
