@@ -5,6 +5,9 @@ apply plugin: 'maven-publish'
 repositories {
     maven { url = 'https://maven.cleanroommc.com' }
     maven { url = 'https://www.cursemaven.com' }
+    // JUnit for the test source set only. The pure classes under test take no Minecraft types,
+    // so they run on a plain JVM; everything else in this mod is verified in game.
+    mavenCentral()
 }
 
 version = '1.19.0'
@@ -77,6 +80,8 @@ dependencies {
     // is called; a Baubles method name with MC class names in its descriptor, nothing to remap.
     compileOnly files(rootProject.file('libs/BaublesEX-1.12.2-2.3.6.jar'))
     implementation 'zone.rong:mixinbooter:7.1'
+
+    testImplementation 'junit:junit:4.12'
 }
 
 jar {
@@ -102,6 +107,10 @@ jar {
 }
 
 jar.finalizedBy('reobfJar')
+
+test {
+    testLogging { events 'passed', 'skipped', 'failed' }
+}
 
 publishing {
     publications { mavenJava(MavenPublication) { artifact jar } }
