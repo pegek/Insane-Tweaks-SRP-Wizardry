@@ -48,9 +48,13 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
      * The server half's actual patch: every {@code 50L} in {@code MinecraftServer.run()V} becomes
      * {@code INVOKESTATIC DevSpeedState.serverTickMillis()J}. Same stack effect (one long), so
      * nothing around it changes and no frame needs recomputing. Done here on the
-     * {@code ClassNode} rather than with {@code @ModifyConstant}, which wired 0 of 4 under
-     * CleanMix 0.7.4 — see {@code MixinMinecraftServerDevSpeed}. Both Cleanroom 0.6.13 and 0.7.11
-     * ship the vanilla loop, so one rewrite covers both.
+     * {@code ClassNode} rather than with {@code @ModifyConstant}. Both Cleanroom 0.6.13 and 0.7.11
+     * ship the vanilla loop in their binpatch, so one rewrite covers both.
+     *
+     * <p>🚨 Open on 0.7.11 (2026-10-20): live, this replaces 0 of 4 although the same code
+     * replaces 4/4 on the decoded binpatch offline — so {@code run()V} reaches Mixin in a
+     * different shape. Until that is understood, any result other than 4 logs what the method
+     * actually looks like and dumps the class ({@link DevSpeedDiagnostics}).
      */
     @Override
     public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName,
@@ -58,6 +62,7 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
         if (!mixinClassName.endsWith("MixinMinecraftServerDevSpeed")) {
             return;
         }
+        int replaced = 0;
         for (MethodNode method : targetClass.methods) {
             if (!"run".equals(method.name) || !"()V".equals(method.desc)) {
                 continue;
@@ -71,10 +76,19 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
                             SERVER_HOOK, "()J", false);
                     method.instructions.set(insn, call);
                     insn = call;
+                    replaced++;
                 }
             }
         }
+        this.lastReplaced = replaced;
+        if (replaced != EXPECTED_SERVER_CONSTANTS) {
+            DevSpeedDiagnostics.describe(this.logger, "preApply", targetClass, replaced);
+            DevSpeedDiagnostics.dump(this.logger, "pre", targetClass);
+        }
     }
+
+    /** What {@link #preApply} replaced last; {@code -1} = never called. For the postApply line. */
+    private int lastReplaced = -1;
 
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName,
@@ -87,9 +101,12 @@ public class DevSpeedMixinPlugin extends ConfigFlagMixinPlugin {
                         + "({} x 50L tick constant -> /devspeed)", wired);
             } else {
                 this.logger.error("[srpwizcore] devspeed: MinecraftServer.run has {} of {} "
-                        + "expected 50L tick constants wired - the server loop was rewritten by "
-                        + "something else. /devspeed will {}.", wired, EXPECTED_SERVER_CONSTANTS,
+                        + "expected 50L tick constants wired (preApply replaced {}) - the server "
+                        + "loop was rewritten by something else. /devspeed will {}.", wired,
+                        EXPECTED_SERVER_CONSTANTS, this.lastReplaced,
                         wired == 0 ? "refuse to run" : "be unreliable");
+                DevSpeedDiagnostics.describe(this.logger, "postApply", targetClass, wired);
+                DevSpeedDiagnostics.dump(this.logger, "post", targetClass);
             }
         } else if (mixinClassName.endsWith("MixinTimerDevSpeed")) {
             int wired = countCalls(targetClass, "func_74275_a", "()V", "devSpeedTickLength");
