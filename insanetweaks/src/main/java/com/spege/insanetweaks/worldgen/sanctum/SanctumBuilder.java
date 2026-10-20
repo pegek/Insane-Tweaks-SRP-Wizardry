@@ -13,20 +13,36 @@ import com.spege.insanetweaks.init.ModElements;
 
 import electroblob.wizardry.registry.WizardryBlocks;
 import electroblob.wizardry.tileentity.TileEntityImbuementAltar;
+import electroblob.wizardry.tileentity.TileEntityTimer;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockChest;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.block.BlockEndPortalFrame;
 import net.minecraft.block.BlockLadder;
+import net.minecraft.block.BlockSilverfish;
+import net.minecraft.block.BlockSkull;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.BlockStoneBrick;
+import net.minecraft.block.BlockTripWire;
+import net.minecraft.block.BlockTripWireHook;
+import net.minecraft.block.BlockVine;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityBed;
 import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -34,10 +50,10 @@ import net.minecraft.world.World;
 
 /**
  * Writes the part of a {@link SanctumLayout} inside a clip box. Passes: (1) walls - every room in
- * stone brick, then the ritual chamber's shell in sealed stone over any shared plane; (2) every
- * interior except the stairway's, then carves (doorways, stair headroom) to air; (3) seal, dais,
- * altars, pillars, stairs, props, chests, anchors, lights; (4) webs and rubble; (5) shaft and
- * surface ruin. Materials depend on position only (SanctumNoise), so a structure split over many
+ * stone brick (a few silverfish blocks among them), then the ritual chamber's shell in sealed
+ * stone over any shared plane; (2) every interior except the stairway's, then carves (doorways,
+ * stair headroom) to air; (3) seal, dais, altars, pillars, stairs, props, traps, chests, anchors,
+ * lights, decor; (4) webs, vines and rubble; (5) shaft and surface ruin. Materials depend on position only (SanctumNoise), so a structure split over many
  * populate calls is identical to one built at once. Containers get the sanctum's Arcane Lock.
  */
 public final class SanctumBuilder {
@@ -90,7 +106,11 @@ public final class SanctumBuilder {
         for (int x = c.minX; x <= c.maxX; x++) {
             for (int y = c.minY; y <= c.maxY; y++) {
                 for (int z = c.minZ; z <= c.maxZ; z++) {
-                    world.setBlockState(new BlockPos(x, y, z), p.wall(l.seed, x, y, z), FLAGS);
+                    IBlockState wall = p.wall(l.seed, x, y, z);
+                    if (SanctumNoise.at(l.seed, x, y, z, 9) < 0.015D) {
+                        wall = p.infested(wall);
+                    }
+                    world.setBlockState(new BlockPos(x, y, z), wall, FLAGS);
                 }
             }
         }
@@ -112,9 +132,6 @@ public final class SanctumBuilder {
 
     private static void contents(World world, SanctumLayout l, SanctumBox clip, Palette p, long sanctumId) {
         ArcaneSanctumCategory cfg = ModConfig.arcaneSanctum;
-        for (int[] f : l.sealFrame) {
-            setIn(world, clip, f[0], f[1], f[2], p.chiseled());
-        }
         SanctumBox seal = l.seal.intersection(clip);
         if (seal != null) {
             for (int x = seal.minX; x <= seal.maxX; x++) {
@@ -155,6 +172,10 @@ public final class SanctumBuilder {
                 continue;
             }
             BlockPos pos = new BlockPos(prop[0], prop[1], prop[2]);
+            if (prop[3] == SanctumLayout.PROP_SHULKER) {
+                potionBox(world, l, pos, sanctumId);
+                continue;
+            }
             world.setBlockState(pos, withFacing(p.prop(prop[3]), facing(prop[4])), FLAGS);
             if (prop[3] == SanctumLayout.PROP_EBW_SHELF) {
                 TileEntity te = world.getTileEntity(pos);
@@ -165,6 +186,18 @@ public final class SanctumBuilder {
                 if (te != null) {
                     SanctumLocks.lock(te, sanctumId);
                 }
+            }
+        }
+        for (int[] d : l.trapDispensers) {
+            if (!clip.contains(d[0], d[1], d[2])) {
+                continue;
+            }
+            BlockPos pos = new BlockPos(d[0], d[1], d[2]);
+            world.setBlockState(pos, Blocks.DISPENSER.getDefaultState().withProperty(BlockDispenser.FACING,
+                    facing(d[3])), FLAGS);
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof IInventory) {
+                SanctumTraps.load((IInventory) te, l.seed, d[0], d[1], d[2]);
             }
         }
         for (int[] c : l.chests) {
@@ -207,12 +240,132 @@ public final class SanctumBuilder {
                 }
             }
         }
-        for (int[] light : l.lights) {
-            setIn(world, clip, light[0], light[1], light[2], Blocks.GLOWSTONE.getDefaultState());
+        for (int[] light : l.magicLights) {
+            if (!clip.contains(light[0], light[1], light[2])) {
+                continue;
+            }
+            BlockPos pos = new BlockPos(light[0], light[1], light[2]);
+            world.setBlockState(pos, WizardryBlocks.magic_light.getDefaultState(), FLAGS);
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof TileEntityTimer) {
+                ((TileEntityTimer) te).setLifetime(-1);
+            }
+        }
+        for (int[] spot : l.glowSpots) {
+            if (SanctumNoise.at(l.seed, spot[0], spot[1], spot[2], 12) < 0.15D) {
+                setIn(world, clip, spot[0], spot[1], spot[2], Blocks.GLOWSTONE.getDefaultState());
+            }
+        }
+        for (int[] d : l.decor) {
+            decor(world, l, clip, d, sanctumId);
         }
     }
 
-    /** Webs on top-layer edges everywhere; rubble on the floor of crypts and collapsed rooms. */
+    /** A purple shulker box of potions, under the sanctum's lock. */
+    private static void potionBox(World world, SanctumLayout l, BlockPos pos, long sanctumId) {
+        world.setBlockState(pos, Blocks.PURPLE_SHULKER_BOX.getDefaultState(), FLAGS);
+        TileEntity te = world.getTileEntity(pos);
+        if (te instanceof IInventory) {
+            SanctumPotions.fill((IInventory) te, l.seed, pos.getX(), pos.getY(), pos.getZ());
+        }
+        if (te != null) {
+            SanctumLocks.lock(te, sanctumId);
+        }
+    }
+
+    private static void decor(World world, SanctumLayout l, SanctumBox clip, int[] d, long sanctumId) {
+        BlockPos pos = new BlockPos(d[0], d[1], d[2]);
+        EnumFacing face = facing(d[4]);
+        if (d[3] == SanctumLayout.DECOR_BED) {
+            EnumDyeColor colour = EnumDyeColor.byMetadata((int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 120) * 16));
+            int[] head = SanctumLayout.bedHead(d);
+            bedPart(world, clip, pos, face, BlockBed.EnumPartType.FOOT, colour);
+            bedPart(world, clip, new BlockPos(head[0], head[1], head[2]), face, BlockBed.EnumPartType.HEAD, colour);
+            return;
+        }
+        if (d[3] == SanctumLayout.DECOR_PAINTING) {
+            // The painting tests surfaces for art up to two blocks out: stay well inside this clip,
+            // so it never reads a chunk outside the populated area. The cell is the air in front of
+            // the wall, which is what EntityHanging's hanging position means.
+            if (clip.contains(d[0] - 3, d[1], d[2] - 3) && clip.contains(d[0] + 3, d[1], d[2] + 3)) {
+                EntityPainting painting = new EntityPainting(world, pos, face);
+                if (painting.onValidSurface()) {
+                    world.spawnEntity(painting);
+                }
+            }
+            return;
+        }
+        if (!clip.contains(d[0], d[1], d[2])) {
+            return;
+        }
+        switch (d[3]) {
+            case SanctumLayout.DECOR_ARMOR_STAND:
+                armorStand(world, l, d, face);
+                break;
+            case SanctumLayout.DECOR_SHULKER:
+                potionBox(world, l, pos, sanctumId);
+                break;
+            case SanctumLayout.DECOR_ENDER_CHEST:
+                world.setBlockState(pos, withFacing(Blocks.ENDER_CHEST.getDefaultState(), face), FLAGS);
+                break;
+            case SanctumLayout.DECOR_PORTAL_FRAME:
+                world.setBlockState(pos, Blocks.END_PORTAL_FRAME.getDefaultState()
+                        .withProperty(BlockEndPortalFrame.FACING, face)
+                        .withProperty(BlockEndPortalFrame.EYE, Boolean.valueOf(d[5] == 1)), FLAGS);
+                break;
+            case SanctumLayout.DECOR_SKULL:
+                world.setBlockState(pos, Blocks.SKULL.getDefaultState().withProperty(BlockSkull.FACING, EnumFacing.UP),
+                        FLAGS);
+                TileEntity te = world.getTileEntity(pos);
+                if (te instanceof TileEntitySkull) {
+                    ((TileEntitySkull) te).setType(d[5] == 1 ? 1 : 0);
+                    ((TileEntitySkull) te).setSkullRotation((int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 121) * 16));
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void bedPart(World world, SanctumBox clip, BlockPos pos, EnumFacing face, BlockBed.EnumPartType part,
+            EnumDyeColor colour) {
+        if (!clip.contains(pos.getX(), pos.getY(), pos.getZ())) {
+            return;
+        }
+        world.setBlockState(pos, Blocks.BED.getDefaultState().withProperty(BlockBed.FACING, face)
+                .withProperty(BlockBed.PART, part), FLAGS);
+        TileEntity te = world.getTileEntity(pos);
+        if (te instanceof TileEntityBed) {
+            ((TileEntityBed) te).setColor(colour);
+        }
+    }
+
+    private static final Item[][] ARMOUR = {
+            { Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS, Items.IRON_BOOTS },
+            { Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS, Items.CHAINMAIL_BOOTS },
+            { Items.GOLDEN_HELMET, Items.GOLDEN_CHESTPLATE, Items.GOLDEN_LEGGINGS, Items.GOLDEN_BOOTS } };
+    private static final EntityEquipmentSlot[] ARMOUR_SLOTS = { EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST,
+            EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET };
+
+    /** An armour stand wearing one or two pieces of iron, chain or gold, slots picked by position. */
+    private static void armorStand(World world, SanctumLayout l, int[] d, EnumFacing face) {
+        EntityArmorStand stand = new EntityArmorStand(world);
+        stand.setLocationAndAngles(d[0] + 0.5D, d[1], d[2] + 0.5D, face.getHorizontalAngle(), 0.0F);
+        int pieces = SanctumNoise.at(l.seed, d[0], d[1], d[2], 110) < 0.5D ? 1 : 2;
+        int first = Math.min(3, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 111) * 4));
+        int step = 1 + Math.min(2, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 112) * 3));
+        for (int i = 0; i < pieces; i++) {
+            int slot = (first + i * step) & 3;
+            int material = Math.min(2, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 113 + i) * 3));
+            stand.setItemStackToSlot(ARMOUR_SLOTS[slot], new ItemStack(ARMOUR[material][slot]));
+        }
+        world.spawnEntity(stand);
+    }
+
+    /**
+     * Webs on top-layer edges everywhere; vines on the walls between floor and ceiling; rubble on
+     * the floor of crypts and collapsed rooms.
+     */
     private static void decorate(World world, SanctumLayout l, SanctumLayout.Room room, SanctumBox clip) {
         SanctumBox in = room.outer.shrink(1);
         if (in == null || room.type == SanctumLayout.RoomType.DESCENT) {
@@ -233,6 +386,11 @@ public final class SanctumBuilder {
                     double n = SanctumNoise.at(l.seed, x, y, z, 7);
                     if (y == in.maxY && edge && n < 0.18D) {
                         world.setBlockState(pos, Blocks.WEB.getDefaultState(), FLAGS);
+                    } else if (edge && y > in.minY && y < in.maxY && SanctumNoise.at(l.seed, x, y, z, 13) < 0.06D) {
+                        EnumFacing wall = x == in.minX ? EnumFacing.WEST : x == in.maxX ? EnumFacing.EAST
+                                : z == in.minZ ? EnumFacing.NORTH : EnumFacing.SOUTH;
+                        world.setBlockState(pos, Blocks.VINE.getDefaultState()
+                                .withProperty(BlockVine.getPropertyFor(wall), Boolean.TRUE), FLAGS);
                     } else if (y == in.minY && room.type == SanctumLayout.RoomType.CRYPT && n < 0.12D) {
                         world.setBlockState(pos, n < 0.05D ? Blocks.BONE_BLOCK.getDefaultState()
                                 : Blocks.MOSSY_COBBLESTONE.getDefaultState(), FLAGS);
@@ -387,6 +545,14 @@ public final class SanctumBuilder {
             return n < 0.6D ? this.plain : n < 0.85D ? this.mossy : this.cracked;
         }
 
+        /** The silverfish block that looks like the given wall brick. */
+        IBlockState infested(IBlockState wall) {
+            BlockSilverfish.EnumType type = wall == this.mossy ? BlockSilverfish.EnumType.MOSSY_STONEBRICK
+                    : wall == this.cracked ? BlockSilverfish.EnumType.CRACKED_STONEBRICK
+                            : BlockSilverfish.EnumType.STONEBRICK;
+            return Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, type);
+        }
+
         IBlockState ruin(long seed, int x, int y, int z) {
             return SanctumNoise.at(seed, x, y, z, 5) < 0.5D ? this.mossy : this.cracked;
         }
@@ -419,10 +585,20 @@ public final class SanctumBuilder {
                     return Blocks.FURNACE.getDefaultState();
                 case SanctumLayout.PROP_SCRIBING_DESK:
                     return lookup("ancientspellcraft:scribing_desk");
-                case SanctumLayout.PROP_SAGE_DESK:
-                    return lookup("ancientspellcraft:sage_desk");
                 case SanctumLayout.PROP_SAGE_LECTERN:
                     return lookup("ancientspellcraft:sage_lectern");
+                case SanctumLayout.PROP_SPHERE_COGNIZANCE:
+                    return lookup("ancientspellcraft:sphere_cognizance");
+                case SanctumLayout.PROP_TRANSPORT_STONE:
+                    return WizardryBlocks.transportation_stone.getDefaultState();
+                case SanctumLayout.PROP_GILDED_WOOD:
+                    return WizardryBlocks.gilded_wood.getDefaultState();
+                case SanctumLayout.PROP_BOOKSHELF:
+                    return Blocks.BOOKSHELF.getDefaultState();
+                case SanctumLayout.PROP_TRIP_HOOK:
+                    return Blocks.TRIPWIRE_HOOK.getDefaultState().withProperty(BlockTripWireHook.ATTACHED, Boolean.TRUE);
+                case SanctumLayout.PROP_TRIPWIRE:
+                    return Blocks.TRIPWIRE.getDefaultState().withProperty(BlockTripWire.ATTACHED, Boolean.TRUE);
                 default:
                     return Blocks.CRAFTING_TABLE.getDefaultState();
             }

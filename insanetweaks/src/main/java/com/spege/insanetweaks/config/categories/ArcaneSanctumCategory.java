@@ -53,10 +53,16 @@ public class ArcaneSanctumCategory {
     @Config.Comment("Chance (0-1) per roll that an EBW bookshelf gets a spell book.")
     @Config.Name("Bookshelf Book Chance")
     @Config.RangeDouble(min = 0.0, max = 1.0)
-    public double bookshelfBookChance = 0.05;
+    public double bookshelfBookChance = 0.08;
 
     @Config.Comment("Rolls per EBW bookshelf. Books: 50% Abomination, 25% any Master, 25% any Advanced spell.")
     @Config.Name("Bookshelf Book Rolls")
     @Config.RangeInt(min = 0, max = 12)
     public int bookshelfBookRolls = 3;
+
+    @Config.Comment({ "Spells a trap dispenser fires (as scrolls), one picked per dispenser by position.",
+            "Ids that do not resolve, or spells EBW does not allow from a dispenser, are skipped." })
+    @Config.Name("Trap Spells")
+    public String[] trapSpells = { "ebwizardry:magic_missile", "ebwizardry:firebolt", "ebwizardry:ice_shard",
+            "ebwizardry:poison" };
 }
