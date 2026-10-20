@@ -87,6 +87,11 @@ public class ArcaneSanctumCategory {
     @Config.RangeDouble(min = 0.0, max = 1.0)
     public double anchorArtefactChanceChamber = 0.50;
 
+    @Config.Comment({ "Teleport spells a sanctum guardian may cast but cannot use to take itself or its target out",
+            "of a sanctum that is not yet cleansed: whoever lands outside is put back. Read live." })
+    @Config.Name("Sanctum Guarded Spells")
+    public String[] sanctumGuardedSpells = { "ebwizardry:banish", "ebwizardry:blink", "ebwizardry:phase_step" };
+
     @Config.Comment({ "Spells a trap dispenser fires (as scrolls), one picked per dispenser by position.",
             "Ids that do not resolve, or spells EBW does not allow from a dispenser, are skipped." })
     @Config.Name("Trap Spells")

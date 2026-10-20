@@ -682,6 +682,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.worldgen.sanctum.SanctumLockHandler());
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.worldgen.sanctum.SanctumFoundHandler());
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.worldgen.sanctum.SanctumWalls());
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.worldgen.sanctum.SanctumTeleportGuard());
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneLadderHandler());
 
         // Sunken Arcane Sanctum: built chunk by chunk inside each populate box (no cascading worldgen).

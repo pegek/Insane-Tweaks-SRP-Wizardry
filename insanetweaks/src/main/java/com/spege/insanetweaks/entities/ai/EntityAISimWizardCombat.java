@@ -82,6 +82,8 @@ public class EntityAISimWizardCombat extends EntityAIBase {
     private long lastHeavyDamageTime = Long.MIN_VALUE / 2;
     /** World time before which no further panic reaction may fire. */
     private long nextPanicReadyTime;
+    /** DISPLACE (banish) is off the table until this world time - see tuning().banishCooldownTicks. */
+    private long nextDisplaceReadyTime;
 
     // E1 diagnostics
     private long lastRejectLogTime;
@@ -363,7 +365,7 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         List<Spell> pool = this.wizard.getSpells();
         Spell escape = pickByRoles(pool, SpellRole.ESCAPE);
         boolean selfMove = escape != null;
-        if (escape == null) {
+        if (escape == null && displaceReady()) {
             escape = pickByRoles(pool, SpellRole.DISPLACE);
         }
         if (escape == null) {
@@ -388,6 +390,17 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         }
         this.wizard.signalCastBurst(tuning().castAnimationTicks);
         applySpellCooldown(escape);
+        if (!selfMove) {
+            armDisplaceCooldown();
+        }
+    }
+
+    private boolean displaceReady() {
+        return this.wizard.world.getTotalWorldTime() >= this.nextDisplaceReadyTime;
+    }
+
+    private void armDisplaceCooldown() {
+        this.nextDisplaceReadyTime = this.wizard.world.getTotalWorldTime() + tuning().banishCooldownTicks;
     }
 
     /**
@@ -646,9 +659,10 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         //  - DRAIN at mid range: channelled parasitic drain that heals the wizard
         if (ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent > 0
                 && this.wizard.getRNG().nextInt(100) < ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent) {
-            if (distance <= tuning().banishMaxDistance) {
+            if (distance <= tuning().banishMaxDistance && displaceReady()) {
                 Spell displace = pickByRoles(pool, SpellRole.DISPLACE);
                 if (displace != null) {
+                    armDisplaceCooldown();
                     return displace;
                 }
             } else if (distance <= tuning().lifeDrainMaxDistance) {

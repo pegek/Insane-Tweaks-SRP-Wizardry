@@ -635,6 +635,12 @@ public class EntitiesCategory {
         @Config.RangeInt(min = 20, max = 600)
         public int panicCooldownTicks = 120;
 
+        @Config.Comment({ "Cooldown (ticks) between two DISPLACE casts (banish) by one wizard, in panic and as the",
+                "close-range special alike. While it runs, DISPLACE is skipped as if it were not in the pool." })
+        @Config.Name("Banish Cooldown (ticks)")
+        @Config.RangeInt(min = 0, max = 2400)
+        public int banishCooldownTicks = 300;
+
         // ---------------- Ally support ----------------
 
         @Config.Comment({
