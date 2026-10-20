@@ -1,1 +1,3 @@
 tile.srpwizcore.dormant_waystone.name=Dormant Waystone
+srpwizcore.effectpanel.missing.title=No description yet.
+srpwizcore.effectpanel.missing.where=Add to config/srpwizcore/effect_descriptions.lang:

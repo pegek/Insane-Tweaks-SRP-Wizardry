@@ -137,6 +137,11 @@ public class SrpWizCore {
      */
     @Mod.EventHandler
     public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
+        // Effect panel: client-only setup. The side check is what keeps a dedicated server from
+        // ever resolving EffectPanelClient (class-level @SideOnly(CLIENT)) - see its javadoc.
+        if (event.getSide().isClient()) {
+            com.spege.srpwizcore.effectpanel.EffectPanelClient.init();
+        }
         if (com.spege.srpwizcore.config.SrpWizCoreConfig.dragonRanged.enabled) {
             com.spege.srpwizcore.dragonranged.DragonWeaponRegistry.build();
         }

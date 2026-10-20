@@ -10,6 +10,7 @@ import com.spege.srpwizcore.SrpWizCore;
 import com.spege.srpwizcore.config.categories.BbCompatCategory;
 import com.spege.srpwizcore.config.categories.CqrIntegrationCategory;
 import com.spege.srpwizcore.config.categories.DevSpeedCategory;
+import com.spege.srpwizcore.config.categories.EffectPanelCategory;
 import com.spege.srpwizcore.config.categories.DormantWaystonesCategory;
 import com.spege.srpwizcore.config.categories.DragonRangedCategory;
 import com.spege.srpwizcore.config.categories.IandfWorldgenCategory;
@@ -71,6 +72,10 @@ public class SrpWizCoreConfig {
     @Config.Name("devSpeed")
     @Config.Comment("DEV TOOL: /devspeed - a real tick-rate multiplier and a clock-only warp for speeding up live tests. Off by default; the setting is never saved with the world.")
     public static final DevSpeedCategory devSpeed = new DevSpeedCategory();
+
+    @Config.Name("effectPanel")
+    @Config.Comment("Effect panel: hover an effect in the inventory to read what it does. Client-only.")
+    public static final EffectPanelCategory effectPanel = new EffectPanelCategory();
 
     @Mod.EventBusSubscriber(modid = SrpWizCore.MODID)
     private static class EventHandler {
