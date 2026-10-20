@@ -111,8 +111,13 @@ public final class SanctumPlacement {
             containers.add(Long.valueOf(new BlockPos(c[0], c[1], c[2]).toLong()));
         }
         for (int[] p : l.props) {
-            if (p[3] == SanctumLayout.PROP_EBW_SHELF) {
+            if (p[3] == SanctumLayout.PROP_EBW_SHELF || p[3] == SanctumLayout.PROP_SHULKER) {
                 containers.add(Long.valueOf(new BlockPos(p[0], p[1], p[2]).toLong()));
+            }
+        }
+        for (int[] d : l.decor) {
+            if (d[3] == SanctumLayout.DECOR_SHULKER) {
+                containers.add(Long.valueOf(new BlockPos(d[0], d[1], d[2]).toLong()));
             }
         }
         SanctumWorldData.get(world).register(sanctumId, anchors, containers);

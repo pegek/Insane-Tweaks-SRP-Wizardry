@@ -17,7 +17,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 /**
  * A sanctum's containers wear EBW's own Arcane Lock (tile data {@code arcaneLockOwner}), owned by
- * a UUID derived from the sanctum id, so EBW's handlers refuse opening, breaking and blasting and
+ * a UUID derived from the sanctum id - stored with {@code setUniqueId}, the only form EBW reads - so EBW's handlers refuse opening, breaking and blasting and
  * EBW renders the lock. The lock is lifted - key removed, EBW's sync packet sent - when the last
  * anchor of the sanctum falls, the way EBW's shrine core does it.
  */
@@ -36,7 +36,7 @@ public final class SanctumLocks {
 
     public static void lock(TileEntity te, long sanctumId) {
         NBTTagCompound data = te.getTileData();
-        data.setString(ArcaneLock.NBT_KEY, ownerOf(sanctumId).toString());
+        data.setUniqueId(ArcaneLock.NBT_KEY, ownerOf(sanctumId));
         data.setLong(SANCTUM_KEY, sanctumId);
         te.markDirty();
     }
@@ -44,14 +44,15 @@ public final class SanctumLocks {
     /** The sanctum id of a sanctum-locked tile entity, or null. */
     public static Long sanctumOf(TileEntity te) {
         NBTTagCompound data = te.getTileData();
-        return data.hasKey(SANCTUM_KEY) && data.hasKey(ArcaneLock.NBT_KEY) ? Long.valueOf(data.getLong(SANCTUM_KEY))
+        return data.hasKey(SANCTUM_KEY) && data.hasUniqueId(ArcaneLock.NBT_KEY) ? Long.valueOf(data.getLong(SANCTUM_KEY))
                 : null;
     }
 
     public static void unlock(World world, BlockPos pos, TileEntity te) {
         NBTTagCompound data = te.getTileData();
         long id = data.getLong(SANCTUM_KEY);
-        data.removeTag(ArcaneLock.NBT_KEY);
+        data.removeTag(ArcaneLock.NBT_KEY + "Most");
+        data.removeTag(ArcaneLock.NBT_KEY + "Least");
         data.removeTag(SANCTUM_KEY);
         te.markDirty();
         WizardryPacketHandler.net.sendToAllAround(new PacketSyncArcaneLock.Message(pos, false, ownerOf(id)),
