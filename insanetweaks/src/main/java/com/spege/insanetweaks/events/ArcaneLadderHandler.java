@@ -38,5 +38,9 @@ public class ArcaneLadderHandler {
             player.motionY = -descent;
         }
         player.fallDistance = 0.0F;
+        if (!player.world.isRemote && player.ticksExisted % 8 == 0 && Math.abs(player.posY - player.prevPosY) > 0.02D) {
+            player.world.playSound(null, player.posX, player.posY, player.posZ, net.minecraft.init.SoundEvents.BLOCK_NOTE_CHIME,
+                    net.minecraft.util.SoundCategory.PLAYERS, 0.25F, 1.4F + player.getRNG().nextFloat() * 0.5F);
+        }
     }
 }

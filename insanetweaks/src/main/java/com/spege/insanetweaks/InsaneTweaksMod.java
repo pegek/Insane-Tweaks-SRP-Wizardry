@@ -218,6 +218,10 @@ public class InsaneTweaksMod implements IGuiHandler {
                 com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.MAIN_LOOT);
         net.minecraft.world.storage.loot.LootTableList.register(
                 com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.MINOR_LOOT);
+        net.minecraft.world.storage.loot.LootTableList.register(
+                com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.FORGE_LOOT);
+        net.minecraft.world.storage.loot.LootTableList.register(
+                com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.WORKSHOP_LOOT);
         // Used by those three tables. Must be registered before any table is parsed (world load);
         // an unknown function name makes the WHOLE table fail to load, not just the entry.
         net.minecraft.world.storage.loot.functions.LootFunctionManager.registerFunction(
@@ -675,6 +679,7 @@ public class InsaneTweaksMod implements IGuiHandler {
         // Petrified Anchor: keeps statues sealed (no mining, no blasting) while the SRP phase gate is closed.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.anchor.AnchorStatueGuard());
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.anchor.AnchorLeashHandler());
+        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.worldgen.sanctum.SanctumLockHandler());
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArcaneLadderHandler());
 
         // Sunken Arcane Sanctum: built chunk by chunk inside each populate box (no cascading worldgen).

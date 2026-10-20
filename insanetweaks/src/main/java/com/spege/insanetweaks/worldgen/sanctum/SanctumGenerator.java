@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.spege.insanetweaks.config.ModConfig;
 
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -40,7 +41,7 @@ public class SanctumGenerator implements IWorldGenerator {
                         || !SanctumPlacement.isValid(world, start[0], start[1], layout, chunkX, chunkZ)) {
                     continue;
                 }
-                SanctumBuilder.build(world, layout, clip);
+                SanctumBuilder.build(world, layout, clip, ChunkPos.asLong(start[0], start[1]));
             }
         }
     }

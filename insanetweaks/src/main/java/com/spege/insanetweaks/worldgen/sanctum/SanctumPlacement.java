@@ -93,8 +93,29 @@ public final class SanctumPlacement {
             return decided.booleanValue();
         }
         boolean ok = biomeAllowed(world, l.originX, l.originZ) && integrityOk(world, l, writerX, writerZ);
+        if (ok) {
+            register(world, key, l);
+        }
         data.decide(key, ok);
         return ok;
+    }
+
+    /** Records a sanctum's anchors and containers for the Arcane Lock (idempotent). */
+    public static void register(World world, long sanctumId, SanctumLayout l) {
+        java.util.List<Long> anchors = new java.util.ArrayList<Long>();
+        for (int[] a : l.anchors) {
+            anchors.add(Long.valueOf(new BlockPos(a[0], a[1], a[2]).toLong()));
+        }
+        java.util.List<Long> containers = new java.util.ArrayList<Long>();
+        for (int[] c : l.chests) {
+            containers.add(Long.valueOf(new BlockPos(c[0], c[1], c[2]).toLong()));
+        }
+        for (int[] p : l.props) {
+            if (p[3] == SanctumLayout.PROP_EBW_SHELF) {
+                containers.add(Long.valueOf(new BlockPos(p[0], p[1], p[2]).toLong()));
+            }
+        }
+        SanctumWorldData.get(world).register(sanctumId, anchors, containers);
     }
 
     private static boolean integrityOk(World world, SanctumLayout l, int writerX, int writerZ) {

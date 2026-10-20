@@ -77,6 +77,8 @@ public class CommandInsaneTweaks extends CommandBase {
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks grantbook <enchantment> [level] [player]\u00A77 - Give a quest-granted enchanted book"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks propertybook <property> [player]\u00A77 - Give a Property Book (anvil onto a tool)"));
             sender.sendMessage(new TextComponentString("\u00A7e/itweaks codexpool\u00A77 - Explain which enchantments Sentient Codex would raise on the held item"));
+            sender.sendMessage(new TextComponentString("\u00A7e/itweaks sanctum place\u00A77 - Build a Sunken Arcane Sanctum here"));
+            sender.sendMessage(new TextComponentString("\u00A7e/itweaks sanctum nearest\u00A77 - Locate the nearest sanctum site"));
         }
     }
 
@@ -254,11 +256,12 @@ public class CommandInsaneTweaks extends CommandBase {
                     com.spege.insanetweaks.worldgen.sanctum.SanctumLayout.generate(world.rand.nextLong(), at.getX(),
                             at.getZ(), com.spege.insanetweaks.config.ModConfig.arcaneSanctum.floorYMin,
                             com.spege.insanetweaks.config.ModConfig.arcaneSanctum.floorYMax);
+            com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.register(world, layout.seed, layout);
             com.spege.insanetweaks.worldgen.sanctum.SanctumBuilder.build(world, layout,
                     new com.spege.insanetweaks.worldgen.sanctum.SanctumBox(layout.bounds.minX, 0, layout.bounds.minZ,
-                            layout.bounds.maxX, 255, layout.bounds.maxZ));
-            sender.sendMessage(new TextComponentString("Sanctum built: ritual chamber at " + layout.originX + " "
-                    + layout.floorY + " " + layout.originZ + ", shaft at " + layout.shaftX + " " + layout.shaftZ));
+                            layout.bounds.maxX, 255, layout.bounds.maxZ), layout.seed);
+            sender.sendMessage(new TextComponentString("Sanctum built: hall level Y " + layout.floorY + ", ritual level Y "
+                    + layout.floorY2 + ", shaft at " + layout.shaftX + " " + layout.shaftZ));
             return;
         }
         if ("nearest".equalsIgnoreCase(args[1])) {
@@ -296,5 +299,18 @@ public class CommandInsaneTweaks extends CommandBase {
             return;
         }
         sender.sendMessage(new TextComponentString("/itweaks sanctum <place | nearest>"));
+    }
+
+    @Override
+    @Nonnull
+    public java.util.List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender,
+            @Nonnull String[] args, @javax.annotation.Nullable net.minecraft.util.math.BlockPos targetPos) {
+        if (args.length == 1) {
+            return getListOfStringsMatchingLastWord(args, "grantbook", "propertybook", "codexpool", "sanctum", "help");
+        }
+        if (args.length == 2 && "sanctum".equalsIgnoreCase(args[0])) {
+            return getListOfStringsMatchingLastWord(args, "place", "nearest");
+        }
+        return java.util.Collections.<String>emptyList();
     }
 }
