@@ -12,15 +12,13 @@ import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Keeps an anchor's statue sealed while the SRP phase gate is closed
- * ({@link TileEntityPetrifiedAnchor#wakeAllowed}). EBW releases the mob whenever the statue's bottom
- * block breaks, so without this a player could free it early by mining the statue or blowing it up.
- * Creative players may still break it. Only statue blocks standing on an active anchor are guarded;
- * a statue made by EBW's own Petrify spell is untouched.
+ * A statue standing on a dormant anchor can never be broken or blown up in survival: the anchor
+ * itself releases its mob (from its own copy), and a statue broken by hand would bypass that
+ * (playtest 2026-10-20). Creative players may still break it. Statues from EBW's own Petrify spell
+ * are untouched.
  */
 public class AnchorStatueGuard {
 
-    /** Statues are at most three blocks tall, so an anchor is at most three blocks below any part. */
     private static final int MAX_PARTS = 3;
 
     @SubscribeEvent
@@ -32,7 +30,8 @@ public class AnchorStatueGuard {
         }
         event.setCanceled(true);
         if (player != null) {
-            player.sendStatusMessage(new TextComponentTranslation("msg.insanetweaks.anchor.sealed"), true);
+            player.sendStatusMessage(new TextComponentTranslation(TileEntityPetrifiedAnchor.wakeAllowed(world)
+                    ? "msg.insanetweaks.anchor.sealed_force" : "msg.insanetweaks.anchor.sealed"), true);
         }
     }
 
@@ -44,14 +43,13 @@ public class AnchorStatueGuard {
         }
         Iterator<BlockPos> it = event.getAffectedBlocks().iterator();
         while (it.hasNext()) {
-            BlockPos pos = it.next();
-            if (isSealed(world, pos)) {
+            if (isSealed(world, it.next())) {
                 it.remove();
             }
         }
     }
 
-    /** True for a statue block that stands (directly or via its lower parts) on an active, gated anchor. */
+    /** True for a statue block that stands (directly or via its lower parts) on a dormant anchor. */
     static boolean isSealed(World world, BlockPos pos) {
         if (!AnchorStatues.isStatueAt(world, pos)) {
             return false;
@@ -60,8 +58,7 @@ public class AnchorStatueGuard {
             BlockPos below = pos.down(k);
             IBlockState state = world.getBlockState(below);
             if (state.getBlock() instanceof BlockPetrifiedAnchor) {
-                return !state.getValue(BlockPetrifiedAnchor.AWAKENED).booleanValue()
-                        && !TileEntityPetrifiedAnchor.wakeAllowed(world);
+                return state.getValue(BlockPetrifiedAnchor.STAGE) == BlockPetrifiedAnchor.Stage.DORMANT;
             }
             if (!AnchorStatues.isStatueAt(world, below)) {
                 return false;
