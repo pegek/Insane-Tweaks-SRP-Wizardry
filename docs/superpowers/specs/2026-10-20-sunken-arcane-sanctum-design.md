@@ -291,3 +291,121 @@ config.insanetweaks.category.arcane_sanctum=Sunken Arcane Sanctum
   - The leash pulls a statue mob back when it is lured 40 blocks away.
   - In a new world, `sanctum nearest` finds a start; walk there and find it generated whole.
   - In an old world, a start next to explored chunks is skipped (the integrity rule).
+
+## 12. Revision 1.25.0 (2026-10-21): first playtest feedback
+
+### 12.1 Anchors
+
+- **Reliability (feedback 4).** When an anchor creates its mob, it stores a copy of the mob's NBT
+  (`MobData`). On waking it removes the statue **without** EBW's release and spawns the mob
+  itself from that copy. This removes the failure where a freshly loaded statue's `creature` had
+  not yet been rebuilt and the break released nothing.
+  - Anchors built before 1.25.0 have no copy, so they fall back to EBW's release.
+  - A statue standing on an active anchor can **never** be broken or blown up; the old SRP phase
+    gate decided only *when* it wakes. The guard message differs depending on whether the gate is
+    open.
+- **Release delay (feedback 9).** After `Crack Ticks` the statue shatters (debris burst). The mob
+  appears `Release Delay Ticks` later, 10 by default.
+- **Persistence.** The spawned mob gets `enablePersistence()` and, for SRP parasites,
+  `cannotDespawn(false)`: SRP's `canD` flag, where false means it cannot despawn.
+- **Block stages.** `PropertyBool awakened` is replaced by `PropertyEnum stage`. Metadata stays
+  compatible with existing saves.
+
+  | Stage | Meta | Tile entity | Can be mined | Look |
+  |---|---|---|---|---|
+  | `dormant` | 0 | yes | no | intact |
+  | `spent` | 1 | no | yes, drops cobble | cracked |
+  | `awake` | 2 | yes, tracks its mob | no | cracked |
+
+- **Tile entity phases.**
+  - `EMPTY` 0, `DORMANT` 1, `WAKING` 2 and `SPENT` 3 keep their old numbers, so saved anchors still
+    load.
+  - New `RELEASING` 4 is the delay before the mob appears.
+  - New `AWAKE` 5: the anchor watches its mob by UUID. It moves to `SPENT` when the mob dies (a
+    `LivingDeathEvent` reaches the anchor if it is loaded, or the sanctum record otherwise), or when
+    the mob cannot be found for 60 s.
+- **Return home (feedback 1).** Handled by `AnchorLeashHandler` every 40 ticks.
+  - A tagged mob with no non-spectator player within `Return Radius` (40) for `Return Seconds` (40)
+    is teleported next to its anchor and heals `Return Heal Fraction` (0.25) of its **missing**
+    health. Its target and path are cleared.
+  - The 32-block leash stays as the hard limit.
+
+### 12.2 Layout: two levels (feedback 5, 8, 9 and the revised main room)
+
+Level 1 (`F1`, from config, clamped to ≥ 17) holds:
+
+- the vestibule under the shaft;
+- a 13×13 hall;
+- 2–4 side rooms, filling seeded slots: two off the hall and two off the vestibule.
+
+The side-room types are drawn without replacement from:
+
+| Type | Furniture | Anchors | Chest |
+|---|---|---|---|
+| `LIBRARY` | EBW bookshelves facing the room, plus either an enchanting table or an EBW arcane workbench (seeded variant) | yes | library |
+| `FORGE` | ASC arcane anvil, anvil, furnaces | yes | forge |
+| `WORKSHOP` | ASC scribing desk, sage desk, sage lectern, crafting table | yes | workshop |
+| filler: `CRYPT` or `COLLAPSED` | rubble | none | none |
+
+- At most one filler room appears, so a sanctum can come out bigger.
+- A room with anchors gets 1, plus a 25% chance of a second, pinned from `Room Anchor Pool`:
+  `insanetweaks:sim_wizard;3`, `insanetweaks:sim_battlemage;1`.
+
+A **10-block straight stairway** (stone-brick stairs, 4 blocks of headroom) leads from the hall down to
+level 2 (`F2 = F1 − 10`):
+
+- **Antechamber**, with the seal.
+- **Ritual chamber**, now **17×17 outer with 8 blocks of headroom**:
+  - the whole shell (walls, floor, ceiling) is ASC `sealed_stone`;
+  - 3–5 magic-parasite anchors;
+  - the same altar dais;
+  - a main chest.
+- **The seal plug** stays 3×3 with the `unseal_button` at its centre. It is surrounded in the wall
+  plane by a ring of chiseled stone bricks, so ASC's unsealing (which spreads through touching
+  `sealed_stone`) cannot reach the sealed shell.
+
+The footprint is about 57×29 blocks, within ±28 of the origin.
+
+### 12.3 Arcane Lock (feedback 7)
+
+- **Locking.** Every chest and every EBW bookshelf in a sanctum gets EBW's native lock at
+  generation: tile data `arcaneLockOwner` set to a UUID derived from the sanctum id, plus
+  `InsaneTweaksSanctum` holding the id itself. EBW's own handlers then refuse opening, breaking,
+  mob griefing and explosions, and EBW renders the lock.
+- **Registering.** When a start is judged valid, and on `sanctum place`, `SanctumWorldData` records
+  the sanctum: its id, every anchor position and every container position.
+- **Defeating anchors.** An anchor counts as defeated when its mob dies (the mob carries
+  `InsaneTweaksSanctum` too) or when its tile entity gives up after the 60 s timeout.
+- **Unlocking.** When the last anchor is defeated, the record is marked cleared. Every loaded
+  container is unlocked: the key is removed and EBW's `PacketSyncArcaneLock` is sent to nearby
+  players. Players within 64 blocks get the message "The sanctum's seals fade."
+- **Unloaded containers.** A container that was not loaded at that moment is unlocked lazily: a
+  highest-priority interaction handler strips the lock before EBW's handler sees it.
+
+### 12.4 Loot (feedback 3 and the main-room bauble)
+
+- **Chests never contain `magic_nucleus`.**
+  - The main chest holds: crystals; Abomination crystal and dust (`magic_crystal` and
+    `spectral_dust`, both with `insanetweaks:abomination_meta`); SRP parasite parts (`ada_*_drop`,
+    `assimilated_flesh`, `vile_shell`, `infectious_blade_fragment`); and the EBW wizard-tower pool.
+  - The forge and workshop chests have their own tables: armour-upgrade components for the forge,
+    scrolls and ink materials for the workshop.
+- **Main-chest bauble.** With `Main Chest Bauble Chance` (0.25), the main chest also holds one
+  random item implementing `baubles.api.IBauble`. That covers EBW artefacts, rings and amulets from
+  any mod. Items without a creative tab, and those on `Bauble Blacklist`, are skipped.
+- **EBW bookshelves.** They face into the room. Each gets `Bookshelf Book Rolls` (3) tries at
+  `Bookshelf Book Chance` (0.05) for a spell book, drawn from spells enabled for books and treasure:
+  - 50%: an Abomination spell;
+  - 25%: any Master spell;
+  - 25%: any Advanced spell;
+  - an empty bucket falls back to Advanced.
+
+### 12.5 Small items
+
+- **Arcane Ladder sound (feedback 6).** Every 8 ticks of actual vertical movement on an Arcane
+  Ladder, a soft note-block chime plays at a random pitch between 1.4 and 1.9, at volume 0.25. It
+  is heard by everyone nearby.
+- **Command help (feedback 2).** `/itweaks` help lists `sanctum place|nearest`, and tab completion
+  covers the subcommands.
+- **Deferred (feedback 10).** Making the Imbuement Altar unminable again, a ritual book, more recipes
+  and a richer JEI page all belong to a separate conversation.
