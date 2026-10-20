@@ -289,6 +289,12 @@ public final class SanctumBuilder {
             decor(world, l, clip, d, sanctumId);
         }
         ritual(world, l, clip);
+        int[] lectern = l.codexLectern;
+        if (lectern != null && clip.contains(lectern[0], lectern[1], lectern[2])) {
+            // The codex lectern stays empty until the guide book exists (spec 15.3).
+            world.setBlockState(new BlockPos(lectern[0], lectern[1], lectern[2]),
+                    withFacing(p.prop(SanctumLayout.PROP_SAGE_LECTERN), facing(lectern[3])), FLAGS);
+        }
     }
 
     /**
