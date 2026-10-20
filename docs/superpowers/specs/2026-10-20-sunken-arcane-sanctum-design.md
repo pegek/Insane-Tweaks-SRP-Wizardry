@@ -532,3 +532,188 @@ No gold nuggets, plain magic crystals, paper or blank scrolls in any sanctum che
 
 - **Runestone walls.** The user is still testing; Abomination runestone may be added first. Walls
   stay stone brick for now.
+
+## 14. Revision 1.27.0 (2026-10-21): third playtest
+
+Version note: another session shipped content 1.26.1 (Wit's Hunger) on this branch, so this
+revision is **1.27.0**. It also carries the two post-review fixes already committed in `f76e797`
+(trap placement order, teleport anchors off the vine column), which never reached the pack.
+
+Why: the 1.26.0 test showed the lock, loot and trap mechanics working. This round is about pacing
+and payoff:
+- less light;
+- an unobstructed stair;
+- anchor mobs that hit harder and call for help;
+- a visible payoff when a statue falls or the sanctum is cleansed;
+- one new side room;
+- two advancements that tell the player where they are and what they did.
+
+**Non-goals:**
+- No AI changes for sim wizards, sim battlemages or parasites. The user will rework their AI
+  separately. Everything below is a *mechanic attached to anchor-spawned mobs*, not behaviour.
+- Anchor mobs still teleport home and wait instead of re-petrifying (§12.1). This is accepted as is.
+
+### 14.1 Lighting
+
+- Every room keeps **2–3** of its `magic_light` spots, chosen by the layout seed, instead of all of
+  them. "Room" means each side room, and each of the five core pieces separately.
+- Every magic light sits **one block higher** than in 1.26.0.
+- Glowstone spots are unchanged (sporadic, 15%).
+
+### 14.2 Stair headroom
+
+The doorway between the antechamber and the stairway (local x = -4, z -1..1) is three blocks high.
+A player stepping on or off the bottom stair is lifted half a block and hits the three bricks above
+it. That carve becomes **four high** (y F2..F2+3). Nothing else changes in the descent.
+
+### 14.3 Anchor mobs
+
+- **Room pool.** `Room Anchor Pool` default becomes `sim_wizard;3`, `sim_battlemage;2`, so
+  battlemages are noticeably more common. The DEv 1.2 instance config gets the same edit: back it up
+  first and change only that one line.
+- **Buffs.** Every mob released from a Petrified Anchor (any anchor, in a sanctum or hand-placed)
+  gets **+20% max health**. Sim wizards and sim battlemages also get **+15% movement speed**.
+  - Both are named attribute modifiers with fixed UUIDs, so they never stack.
+  - The mob spawns at its new full health.
+  - The two values are config fields.
+- **Reinforcements.** These apply only to mobs released from **ritual-chamber anchors** (the
+  unpinned, parasite pool).
+  - The first time such a mob drops **below 25% health**, it wakes every still-dormant anchor within
+    **10 blocks**.
+  - Woken anchors release their mob at once, as if a player had come near, with the usual crack and
+    release delay. The phase gate (`minPhaseToWake`) still applies.
+  - Each mob calls only once. A reinforcement that is itself a chamber parasite can call in turn.
+  - Radius and threshold are config fields.
+
+### 14.4 Payoff: anchor falls, sanctum cleansed
+
+- **Anchor falls (sanctum anchors only).** When the mob of an anchor inside a sanctum dies:
+  1. the anchor plays a sound and a particle burst;
+  2. the block is removed;
+  3. with a chance, **one artefact** drops as an item entity on its spot. There is no chest.
+  - **Chance:** **20%** for room anchors (sim wizard or sim battlemage), **50%** for chamber anchors
+    (parasites).
+  - **Loot table:** a new `insanetweaks:anchor_artefact`, drawing only from the EBW and ASC artefact
+    subsets: `ebwizardry:subsets/{uncommon,rare,epic}_artefacts` and
+    `ancientspellcraft:subsets/{uncommon,rare,epic}_artefacts`. Weights favour uncommon over rare
+    over epic. It is artefacts-only for testing and will be tuned later.
+  - Hand-placed anchors outside a sanctum keep today's behaviour (SPENT, cracked pedestal, no drop).
+  - The anchor's sanctum record still counts it as done, so lifting the lock works exactly as now.
+- **Sanctum cleansed.** Every time the last anchor of a sanctum falls and its locks lift, a sound
+  plays for the players near the sanctum, together with the existing "unsealed" message.
+
+### 14.5 Advancements
+
+These form a small `insanetweaks:sanctum/` branch, not a new tab. They hang under the existing
+`insanetweaks` advancement root, or under a new root if none exists. Both are granted from code
+through an `impossible` criterion.
+
+- **`insanetweaks:sanctum/found`, "Something Sleeps Below".**
+  - The description warns that a dangerous and valuable structure lies nearby.
+  - It is granted the first time a player is inside a sanctum's horizontal footprint plus an 8-block
+    margin, at any height. So it fires at the surface entrance, before the descent.
+  - It grants no mana.
+- **`insanetweaks:sanctum/cleansed`, "Sanctum Cleansed".** A child of `found`, granted to the players
+  near the sanctum when its last anchor falls.
+- **Manacore.** Add `insanetweaks:sanctum/cleansed=15` to `advancements.bonuses` in the instance's
+  `manacore.cfg`: back it up first and add only that one line. The default bonuses sum to 230
+  against a cap of 250, so it fits.
+
+### 14.6 Ritual room (new side room type `RITUAL`)
+
+ASC rituals are flat patterns of placed runes (`ancientspellcraft:placed_rune` with a `TileRune`
+holding the rune item), up to 5×5, with one centrepiece. Only the master rune checks the pattern;
+an incomplete pattern never starts.
+
+- **Which ritual.** The room holds **one of three rituals**, chosen by seed: **Rejuvenation**,
+  **Bonfire** or **Elemental Attunement**.
+  - Excluded: Forest (it is underground), Arcane Barrier (needs a 5×5 block platform), Condensing
+    (takes days) and Warlock Attunement (too niche).
+  - The patterns are read from ASC's own `assets/ancientspellcraft/rituals/*.json`, copied in as
+    constants and rotated with the room.
+- **Always incomplete.** The **centrepiece rune is never placed**, and nothing in the structure
+  supplies it. Elemental Attunement also needs its catalyst: an elemental magic crystal thrown onto
+  the centrepiece.
+  - Why the centrepiece: the rune the player places carries the player as caster, so the ritual's
+    effect has someone to act on. Bonfire binds the caster's spawn point, and Attunement attunes the
+    caster.
+  - The builder must **verify, in ASC bytecode or in game,** that a player-placed centrepiece makes
+    the player the ritual's caster.
+  - If it does not, choose the missing rune so that it does. If no choice works for a ritual,
+    replace that ritual and say so.
+- **The hint book.** A `minecraft:written_book` on an ASC `sage_lectern`, or in a small chest if the
+  lectern cannot hold it. Its pages are text components translated from `en_us.lang`. They give:
+  - the ritual's name;
+  - what it does, in a short paraphrase rather than ASC's own text;
+  - how it activates;
+  - **exactly what is missing**: the centrepiece rune by name, plus the crystal for Attunement;
+  - how to make the missing rune: Blank Rune + Arcane Compound + dye, as in that rune's ASC recipe.
+- **Room rules.**
+  - It joins the side-room type list, giving up to 6 types for 6 slots.
+  - It is not an anchor room.
+  - It gets the usual lights, décor and trap chance.
+  - Décor stays off the ritual footprint.
+
+### 14.7 EBW bookshelf extras
+
+Each sanctum EBW bookshelf rolls the existing spell-book roll (`Bookshelf Book Rolls`, `Bookshelf
+Book Chance`) plus **two extra rolls**. Like the rest of the generation, they are positional and
+deterministic. Each extra roll gives:
+
+- **3%:** an enchanted book via treasure-allowed random enchanting at level 30;
+- **4%:** a book from the insanetweaks pool, picked uniformly from:
+  - every enchantment registered under the `insanetweaks` namespace, at **level 1**, as an enchanted
+    book;
+  - every Property Book whose property is `bookGrantable`.
+
+Both chances and the roll count are config fields.
+
+### 14.8 Later (recorded, not in this revision)
+
+- A visual overhaul of the structure: runestone walls, possibly Abomination runestone.
+- Better loot tables; magic crystals may return to the loot.
+- The assimilated-dragon lair as a second main room, after which the sanctum may split into two
+  structures.
+- Rethinking how the player enters the structure.
+
+### 14.9 Decisions after the builder check
+
+- **The quest gate is deliberately broken here (user).** Insanetweaks enchantments are otherwise
+  quest-only (`EnchantSourceGuard` and three mixins). Sanctum bookshelves are an explicit
+  exception, and the curse (Sentient Codex) stays in the pool. The bypass must be narrow: books
+  written by the sanctum builder straight into a shelf's inventory. Nothing else may loosen the
+  guard. Document the exception next to the guard.
+- **Reinforcements wake every intact anchor within 10 blocks, through walls (user).** That includes
+  side-room sim anchors next to the chamber. The player is expected to clear the side rooms first.
+  - Only sanctum chamber anchors call for help; hand-placed anchors do not.
+  - A woken mob is aimed at the caller's attack target if that is a player, otherwise at the
+    nearest player within 16 blocks (assistant).
+- **What counts as an anchor falling (assistant).**
+  - An artefact rolls only when the anchor's own mob is confirmed dead. That is the existing
+    `markMobGone` path, seen while the anchor is loaded.
+  - Any other ending removes the sanctum anchor with the sound and particles but without a roll:
+    the missing-mob timeout, a failed spawn, an empty release, or a death noticed only later through
+    the sanctum record.
+  - No save-format change.
+- **The advancements get their own tab (assistant).**
+  - `sanctum/found` is the root, with a stone-brick or sealed-stone background.
+  - `sanctum/cleansed` is its child.
+  - The existing sentient-gear root is left alone.
+- **Side rooms stay 2–5 (assistant).** RITUAL simply joins the type pool.
+- **No compatibility for half-built sanctums (assistant).** The DEv 1.2 world is a test world, the
+  same stance as §13 took on 1.25.0 locks.
+- **The hint book is never locked (assistant).** Whatever holds it, lectern or chest, stays outside
+  the Arcane Lock, because it exists to help during the run.
+
+### 14.10 Calls made by the assistant (for the user to check)
+
+- The wizard-to-battlemage weight is 3:2.
+- The buffs apply to every anchor mob, in or out of a sanctum.
+- A reinforcement can chain.
+- The ritual pool is Rejuvenation, Bonfire and Elemental Attunement.
+- The missing piece is the centrepiece rune.
+- The book sits on a sage lectern.
+- The "found" trigger is the footprint plus 8 blocks, at any height.
+- The artefact table is weighted uncommon over rare over epic.
+- The insanetweaks book pool is uniform.
+- The version is 1.27.0.
