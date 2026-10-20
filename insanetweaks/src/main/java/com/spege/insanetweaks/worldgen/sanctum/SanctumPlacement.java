@@ -121,7 +121,7 @@ public final class SanctumPlacement {
             }
         }
         SanctumWorldData.get(world).register(sanctumId, anchors, containers, l.bounds.minX, l.bounds.minZ, l.bounds.maxX,
-                l.bounds.maxZ);
+                l.bounds.maxZ, l.hullMinY, l.hullMaxY);
     }
 
     private static boolean integrityOk(World world, SanctumLayout l, int writerX, int writerZ) {

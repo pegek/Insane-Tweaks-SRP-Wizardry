@@ -39,6 +39,10 @@ public class SanctumWorldData extends WorldSavedData {
         boolean cleared;
         /** minX, minZ, maxX, maxZ of the footprint; null for records written before 1.27.0. */
         int[] bounds;
+        /** hullMinY, hullMaxY of the arcane-wall hull; null for records written before 1.28.0. */
+        int[] hullY;
+        /** Chunks whose hull has been dissolved since the sanctum was cleared. */
+        final Set<Long> swept = new HashSet<Long>();
     }
 
     public SanctumWorldData() {
@@ -70,7 +74,7 @@ public class SanctumWorldData extends WorldSavedData {
 
     /** Records a sanctum once, with its horizontal footprint; later calls for the same id are ignored. */
     public void register(long id, Collection<Long> anchors, Collection<Long> containers, int minX, int minZ, int maxX,
-            int maxZ) {
+            int maxZ, int hullMinY, int hullMaxY) {
         Long key = Long.valueOf(id);
         if (this.records.containsKey(key)) {
             return;
@@ -80,8 +84,54 @@ public class SanctumWorldData extends WorldSavedData {
         r.containers.addAll(containers);
         r.cleared = r.anchors.isEmpty();
         r.bounds = new int[] { minX, minZ, maxX, maxZ };
+        r.hullY = new int[] { hullMinY, hullMaxY };
         this.records.put(key, r);
         markDirty();
+    }
+
+    /** minX, minZ, maxX, maxZ, hullMinY, hullMaxY of a sanctum with a hull, or null. */
+    public int[] box(long id) {
+        Record r = this.records.get(Long.valueOf(id));
+        if (r == null || r.bounds == null || r.hullY == null) {
+            return null;
+        }
+        return new int[] { r.bounds[0], r.bounds[1], r.bounds[2], r.bounds[3], r.hullY[0], r.hullY[1] };
+    }
+
+    /** Cleared sanctums with a hull that overlaps this chunk and has not been dissolved there yet. */
+    public List<Long> clearedNeedingSweep(int chunkX, int chunkZ) {
+        List<Long> out = new ArrayList<Long>();
+        Long chunk = Long.valueOf(net.minecraft.util.math.ChunkPos.asLong(chunkX, chunkZ));
+        for (Map.Entry<Long, Record> e : this.records.entrySet()) {
+            Record r = e.getValue();
+            if (!r.cleared || r.bounds == null || r.hullY == null || r.swept.contains(chunk)) {
+                continue;
+            }
+            if ((chunkX << 4) + 15 >= r.bounds[0] && (chunkX << 4) <= r.bounds[2] && (chunkZ << 4) + 15 >= r.bounds[1]
+                    && (chunkZ << 4) <= r.bounds[3]) {
+                out.add(e.getKey());
+            }
+        }
+        return out;
+    }
+
+    public void markSwept(long id, long chunk) {
+        Record r = this.records.get(Long.valueOf(id));
+        if (r != null && r.swept.add(Long.valueOf(chunk))) {
+            markDirty();
+        }
+    }
+
+    /** Like {@link #nearSanctum}, but only sanctums that are not yet cleared. */
+    public boolean nearUnclearedSanctum(int x, int z, int margin) {
+        for (Record r : this.records.values()) {
+            int[] b = r.bounds;
+            if (!r.cleared && b != null && x >= b[0] - margin && x <= b[2] + margin && z >= b[1] - margin
+                    && z <= b[3] + margin) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether x, z lies within {@code margin} blocks of any recorded sanctum's footprint. */
@@ -142,6 +192,9 @@ public class SanctumWorldData extends WorldSavedData {
             r.cleared = c.getBoolean("Cleared");
             int[] bounds = c.getIntArray("Bounds");
             r.bounds = bounds.length == 4 ? bounds : null;
+            int[] hullY = c.getIntArray("HullY");
+            r.hullY = hullY.length == 2 ? hullY : null;
+            r.swept.addAll(longs(c.getTagList("Swept", TAG_LONG)));
             this.records.put(Long.valueOf(c.getLong("Id")), r);
         }
     }
@@ -164,6 +217,12 @@ public class SanctumWorldData extends WorldSavedData {
             c.setBoolean("Cleared", e.getValue().cleared);
             if (e.getValue().bounds != null) {
                 c.setIntArray("Bounds", e.getValue().bounds);
+            }
+            if (e.getValue().hullY != null) {
+                c.setIntArray("HullY", e.getValue().hullY);
+            }
+            if (!e.getValue().swept.isEmpty()) {
+                c.setTag("Swept", toList(e.getValue().swept));
             }
             sanctums.appendTag(c);
         }

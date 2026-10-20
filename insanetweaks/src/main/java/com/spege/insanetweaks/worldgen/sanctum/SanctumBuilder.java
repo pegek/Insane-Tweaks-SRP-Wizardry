@@ -76,6 +76,7 @@ public final class SanctumBuilder {
 
     public static void build(World world, SanctumLayout l, SanctumBox clip, long sanctumId) {
         Palette p = new Palette();
+        hull(world, l, clip);
         for (SanctumLayout.Room room : l.rooms) {
             if (room.type != SanctumLayout.RoomType.CHAMBER) {
                 fillWalls(world, l, room.outer, clip, p);
@@ -99,6 +100,30 @@ public final class SanctumBuilder {
     }
 
     // ---- passes -----------------------------------------------------------------------------
+
+    /** The arcane-wall hull: the surface of every room's outer box grown by one, where it is hull. */
+    private static void hull(World world, SanctumLayout l, SanctumBox clip) {
+        IBlockState wall = ModBlocks.ARCANE_WALL.getDefaultState();
+        for (SanctumLayout.Room room : l.rooms) {
+            SanctumBox o = room.outer;
+            SanctumBox g = new SanctumBox(o.minX - 1, o.minY - 1, o.minZ - 1, o.maxX + 1, o.maxY + 1, o.maxZ + 1);
+            SanctumBox c = g.intersection(clip);
+            if (c == null) {
+                continue;
+            }
+            for (int x = c.minX; x <= c.maxX; x++) {
+                for (int y = c.minY; y <= c.maxY; y++) {
+                    for (int z = c.minZ; z <= c.maxZ; z++) {
+                        boolean surface = x == g.minX || x == g.maxX || y == g.minY || y == g.maxY || z == g.minZ
+                                || z == g.maxZ;
+                        if (surface && l.isHull(x, y, z)) {
+                            world.setBlockState(new BlockPos(x, y, z), wall, FLAGS);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private static void fillWalls(World world, SanctumLayout l, SanctumBox box, SanctumBox clip, Palette p) {
         SanctumBox c = box.intersection(clip);
@@ -428,7 +453,8 @@ public final class SanctumBuilder {
                     double n = SanctumNoise.at(l.seed, x, y, z, 7);
                     if (y == in.maxY && edge && n < 0.18D) {
                         world.setBlockState(pos, Blocks.WEB.getDefaultState(), FLAGS);
-                    } else if (edge && y > in.minY && y < in.maxY && SanctumNoise.at(l.seed, x, y, z, 13) < 0.06D) {
+                    } else if (edge && y > in.minY && y < in.maxY && SanctumNoise.at(l.seed, x, y, z, 13) < 0.06D
+                            && !anchorColumn(l, x, z)) {
                         EnumFacing wall = x == in.minX ? EnumFacing.WEST : x == in.maxX ? EnumFacing.EAST
                                 : z == in.minZ ? EnumFacing.NORTH : EnumFacing.SOUTH;
                         world.setBlockState(pos, Blocks.VINE.getDefaultState()
@@ -508,6 +534,16 @@ public final class SanctumBuilder {
     private static boolean isDust(SanctumLayout l, int[] altar) {
         for (int[] d : l.dustAltars) {
             if (d[0] == altar[0] && d[1] == altar[1] && d[2] == altar[2]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Vines never grow over an anchor: they would fill the space its statue needs. */
+    private static boolean anchorColumn(SanctumLayout l, int x, int z) {
+        for (int[] a : l.anchors) {
+            if (a[0] == x && a[2] == z) {
                 return true;
             }
         }

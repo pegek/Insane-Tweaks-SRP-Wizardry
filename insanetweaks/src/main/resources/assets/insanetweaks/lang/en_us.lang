@@ -304,6 +304,7 @@ tile.insanetweaks.sanctuary_core.name=Sanctuary Nexus
 tile.insanetweaks.creative_sanctuary.name=Creative Sanctuary
 tile.insanetweaks.petrified_anchor.name=Petrified Anchor
 tile.insanetweaks.arcane_ward.name=Arcane Ward
+tile.insanetweaks.arcane_wall.name=Arcane Wall
 tile.insanetweaks.arcane_ladder.name=Arcane Ladder
 msg.insanetweaks.anchor.pinned=Anchor pinned to %s
 msg.insanetweaks.anchor.reset=Anchor reset to the random pool

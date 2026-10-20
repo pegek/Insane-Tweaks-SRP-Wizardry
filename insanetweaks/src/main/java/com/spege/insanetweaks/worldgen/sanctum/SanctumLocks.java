@@ -91,6 +91,7 @@ public final class SanctumLocks {
         if (announce == null) {
             announce = anchor;
         }
+        SanctumWalls.dissolveLoaded(world, sanctumId);
         for (EntityPlayer player : world.playerEntities) {
             if (player.getDistanceSq(announce) < SYNC_RANGE * SYNC_RANGE) {
                 player.sendStatusMessage(new TextComponentTranslation("msg.insanetweaks.sanctum.unsealed"), true);

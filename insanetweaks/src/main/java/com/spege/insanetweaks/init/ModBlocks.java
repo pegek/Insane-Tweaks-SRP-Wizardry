@@ -26,6 +26,7 @@ public class ModBlocks {
     public static com.spege.insanetweaks.anchor.BlockPetrifiedAnchor PETRIFIED_ANCHOR;
     public static com.spege.insanetweaks.blocks.BlockArcaneWard ARCANE_WARD;
     public static com.spege.insanetweaks.blocks.BlockArcaneLadder ARCANE_LADDER;
+    public static com.spege.insanetweaks.blocks.BlockArcaneWall ARCANE_WALL;
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
@@ -42,6 +43,9 @@ public class ModBlocks {
         ARCANE_LADDER = new com.spege.insanetweaks.blocks.BlockArcaneLadder();
         ARCANE_LADDER.setCreativeTab(CreativeTabs.MISC);
         event.getRegistry().register(ARCANE_LADDER);
+        ARCANE_WALL = new com.spege.insanetweaks.blocks.BlockArcaneWall();
+        ARCANE_WALL.setCreativeTab(CreativeTabs.MISC);
+        event.getRegistry().register(ARCANE_WALL);
 
         if (!ModConfig.modules.enableSanctuary
                 || !net.minecraftforge.fml.common.Loader.isModLoaded(InsaneTweaksMod.SRP_MODID)) {
@@ -72,7 +76,7 @@ public class ModBlocks {
             anchorItem.setRegistryName(PETRIFIED_ANCHOR.getRegistryName());
             event.getRegistry().register(anchorItem);
         }
-        for (Block b : new Block[] { ARCANE_WARD, ARCANE_LADDER }) {
+        for (Block b : new Block[] { ARCANE_WARD, ARCANE_LADDER, ARCANE_WALL }) {
             if (b != null) {
                 ItemBlock ib = new ItemBlock(b);
                 ib.setRegistryName(b.getRegistryName());
@@ -102,7 +106,7 @@ public class ModBlocks {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(PETRIFIED_ANCHOR), 0,
                     new ModelResourceLocation(PETRIFIED_ANCHOR.getRegistryName(), "inventory"));
         }
-        for (Block b : new Block[] { ARCANE_WARD, ARCANE_LADDER }) {
+        for (Block b : new Block[] { ARCANE_WARD, ARCANE_LADDER, ARCANE_WALL }) {
             if (b != null) {
                 ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(b), 0,
                         new ModelResourceLocation(b.getRegistryName(), "inventory"));
