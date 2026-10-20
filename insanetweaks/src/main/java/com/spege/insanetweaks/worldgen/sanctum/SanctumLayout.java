@@ -29,7 +29,7 @@ public final class SanctumLayout {
         }
 
         public boolean hasAnchors() {
-            return this == LIBRARY || this == FORGE || this == WORKSHOP || this == TELEPORT;
+            return this == LIBRARY || this == FORGE || this == WORKSHOP || this == TELEPORT || this == RITUAL;
         }
     }
 
@@ -144,6 +144,14 @@ public final class SanctumLayout {
     public int[] ritualCentre;
     /** x, y, z, facing of the unlocked chest holding the ritual's hint book; null without one. */
     public int[] hintChest;
+    /** The hall's straight walkway between its doors; nothing is placed on it. */
+    public SanctumBox hallWalkway;
+    /** x, y, z, facing of the (still empty) codex lectern beside the altar. */
+    public int[] codexLectern;
+    /** Lowest and highest y of the arcane-wall hull. */
+    public int hullMinY;
+    public int hullMaxY;
+    /** Every room's outer box grown by one block, plus the shaft column above the ward. */
     public SanctumBox bounds;
 
     private final int rot;
@@ -230,20 +238,141 @@ public final class SanctumLayout {
             vestibule.add(point(27, f1 + 3, 3 * side));
             antechamber.add(point(-6, f2 + 4, 3 * side));
         }
-        lights(r, hall);
-        lights(r, vestibule);
-        lights(r, antechamber);
+        lights(r, hall, 1, 2);
+        lights(r, vestibule, 1, 2);
+        lights(r, antechamber, 1, 2);
         // The landing's ceiling is the descent shell at F1+4, so its light stays at F1+3.
         this.magicLights.add(point(7, f1 + 3, 1));
 
         sideRooms(r);
+        hall(r);
 
-        SanctumBox all = this.rooms.get(0).outer;
+        SanctumBox all = grown(this.rooms.get(0).outer);
+        this.hullMinY = Integer.MAX_VALUE;
+        this.hullMaxY = Integer.MIN_VALUE;
         for (Room room : this.rooms) {
-            all = all.union(room.outer);
+            SanctumBox g = grown(room.outer);
+            all = all.union(g);
+            this.hullMinY = Math.min(this.hullMinY, g.minY);
+            this.hullMaxY = Math.max(this.hullMaxY, g.maxY);
         }
         this.bounds = all.union(new SanctumBox(this.shaftX - 1, this.wardY, this.shaftZ - 1,
                 this.shaftX + 1, 255, this.shaftZ + 1));
+    }
+
+    private static SanctumBox grown(SanctumBox b) {
+        return new SanctumBox(b.minX - 1, b.minY - 1, b.minZ - 1, b.maxX + 1, b.maxY + 1, b.maxZ + 1);
+    }
+
+    /**
+     * The arcane-wall hull: one layer around every room (each outer box grown by one), never inside
+     * any room's outer box, and open in the shaft column above the vestibule - the one way in.
+     */
+    public boolean isHull(int x, int y, int z) {
+        if (Math.abs(x - this.shaftX) <= 1 && Math.abs(z - this.shaftZ) <= 1 && y > this.wardY) {
+            return false;
+        }
+        boolean near = false;
+        for (Room room : this.rooms) {
+            SanctumBox o = room.outer;
+            if (o.contains(x, y, z)) {
+                return false;
+            }
+            near |= x >= o.minX - 1 && x <= o.maxX + 1 && y >= o.minY - 1 && y <= o.maxY + 1 && z >= o.minZ - 1
+                    && z <= o.maxZ + 1;
+        }
+        return near;
+    }
+
+    /**
+     * The level-1 hall: 2-3 room-pool anchors and side-room decor, all off the straight walkway
+     * between its doors and off every doorway approach. Local frame: centre (14, 0), front east.
+     */
+    private void hall(Random r) {
+        int f = this.floorY;
+        this.hallWalkway = box(9, f, -1, 19, f + 2, 1);
+        List<int[]> spots = new ArrayList<int[]>();
+        for (int a = -3; a <= 3; a += 3) {
+            spots.add(new int[] { a, -3 });
+            spots.add(new int[] { a, 3 });
+        }
+        Collections.shuffle(spots, r);
+        int n = 2 + r.nextInt(2);
+        for (int i = 0; i < n; i++) {
+            addAnchor(rel(14, 0, EAST, spots.get(i)[0], spots.get(i)[1], f), POOL_ROOM);
+        }
+        List<int[]> free = new ArrayList<int[]>();
+        for (int a = -5; a <= 5; a++) {
+            for (int b = -5; b <= 5; b++) {
+                if (Math.abs(b) <= 1) {
+                    continue;
+                }
+                int[] p = rel(14, 0, EAST, a, b, f);
+                if (!this.used.contains(key(p)) && !nearCarve(p)) {
+                    free.add(new int[] { p[0], p[1], p[2], a, b });
+                }
+            }
+        }
+        Collections.shuffle(free, r);
+        if (r.nextDouble() < 0.20D) {
+            place(free, DECOR_ARMOR_STAND, face(SOUTH), 0);
+        }
+        if (r.nextDouble() < 0.08D) {
+            place(free, DECOR_SHULKER, face(SOUTH), 0);
+        }
+        if (r.nextDouble() < 0.10D) {
+            place(free, DECOR_ENDER_CHEST, face(SOUTH), 0);
+        }
+        if (r.nextDouble() < 0.10D) {
+            place(free, DECOR_PORTAL_FRAME, face(SOUTH), r.nextDouble() < 0.3D ? 1 : 0);
+        }
+        if (r.nextDouble() < 0.15D) {
+            hallBed(free, f);
+        }
+        if (r.nextDouble() < 0.20D) {
+            place(free, DECOR_SKULL, r.nextInt(4), r.nextDouble() < 0.3D ? 1 : 0);
+        }
+        if (r.nextDouble() < 0.25D) {
+            int[] as = { -4, -3, 3, 4 };
+            int a = as[r.nextInt(as.length)];
+            int b = r.nextBoolean() ? 5 : -5;
+            int[] p = rel(14, 0, EAST, a, b, f + 2);
+            // Facing away from the long wall it hangs on: north wall (b = -5) faces south and back.
+            if (!nearCarve(p) && this.used.add(key(p))) {
+                this.decor.add(withTail(p, DECOR_PAINTING, face(b < 0 ? SOUTH : NORTH), 0));
+            }
+        }
+    }
+
+    /** A bed in the hall: head one step towards the nearer long wall. */
+    private void hallBed(List<int[]> free, int f) {
+        for (int i = free.size() - 1; i >= 0; i--) {
+            int[] c = free.get(i);
+            int b2 = c[4] + (c[4] > 0 ? 1 : -1);
+            if (Math.abs(b2) > 5) {
+                continue;
+            }
+            int[] foot = { c[0], c[1], c[2] };
+            int[] head = rel(14, 0, EAST, c[3], b2, f);
+            if (!this.used.contains(key(foot)) && !this.used.contains(key(head)) && !nearCarve(head)) {
+                this.used.add(key(foot));
+                this.used.add(key(head));
+                free.remove(i);
+                this.decor.add(withTail(foot, DECOR_BED, face(c[4] > 0 ? SOUTH : NORTH), 0));
+                return;
+            }
+        }
+    }
+
+    /** Within two blocks (x/z) of a doorway or stair carve at a height that carve spans. */
+    private boolean nearCarve(int[] p) {
+        for (SanctumBox d : this.carves) {
+            if (p[0] >= d.minX - 2 && p[0] <= d.maxX + 2 && p[2] >= d.minZ - 2 && p[2] <= d.maxZ + 2
+                    && p[1] >= d.minY && p[1] <= d.maxY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void chamber(Random r) {
@@ -276,7 +405,7 @@ public final class SanctumLayout {
         List<int[]> spots = new ArrayList<int[]>();
         Collections.addAll(spots, CHAMBER_SPOTS);
         Collections.shuffle(spots, r);
-        int statues = 3 + r.nextInt(3) + (r.nextInt(4) == 0 ? 1 : 0);
+        int statues = 4 + (r.nextInt(4) == 0 ? 1 : 0) + (r.nextInt(4) == 0 ? 1 : 0);
         for (int i = 0; i < statues; i++) {
             addAnchor(point(spots.get(i)[0], f2, spots.get(i)[1]), POOL_CHAMBER);
         }
@@ -292,7 +421,11 @@ public final class SanctumLayout {
             lamps.add(point(-24, f2 + 4, 7 * side));
             lamps.add(point(-16, f2 + 4, 7 * side));
         }
-        lights(r, lamps);
+        lights(r, lamps, 2, 3);
+        // Codex lectern beside the altar, facing it; filled by a later revision.
+        int[] lectern = point(-17, f2, 0);
+        this.used.add(key(lectern));
+        this.codexLectern = withTail(lectern, face(WEST));
     }
 
     private void sideRooms(Random r) {
@@ -379,7 +512,9 @@ public final class SanctumLayout {
         }
         if (type.hasAnchors()) {
             // Never on an interior edge column: vines grow there and would fill the statue's space.
-            int a = type == RoomType.TELEPORT ? 2 : 1;
+            // The ritual room's runes fill its middle: its anchors stand against the back wall
+            // beside the hint chest, and the builder keeps vines off every anchor column.
+            int a = type == RoomType.TELEPORT ? 2 : type == RoomType.RITUAL ? -3 : 1;
             int b = 2;
             addAnchor(rel(cx, cz, front, a, -b, f), POOL_ROOM);
             if (r.nextInt(4) == 0) {
@@ -393,16 +528,16 @@ public final class SanctumLayout {
             lamps.add(rel(cx, cz, front, 2, -3, f + 3));
             lamps.add(rel(cx, cz, front, 2, 3, f + 3));
         }
-        lights(r, lamps);
+        lights(r, lamps, 1, 2);
         if (r.nextDouble() < TRAP_CHANCE) {
             trap(cx, cz, front, f);
         }
         decor(cx, cz, front, f, r);
     }
 
-    /** Keeps 2-3 of a room's candidate magic lights (all of them when it has fewer). */
-    private void lights(Random r, List<int[]> candidates) {
-        int keep = Math.min(candidates.size(), 2 + r.nextInt(2));
+    /** Keeps min..max of a room's candidate magic lights (all of them when it has fewer). */
+    private void lights(Random r, List<int[]> candidates, int min, int max) {
+        int keep = Math.min(candidates.size(), min + r.nextInt(max - min + 1));
         Collections.shuffle(candidates, r);
         for (int i = 0; i < keep; i++) {
             this.magicLights.add(candidates.get(i));
@@ -436,6 +571,7 @@ public final class SanctumLayout {
         int[] chest = rel(cx, cz, front, -3, 0, f);
         this.used.add(key(chest));
         this.hintChest = withTail(chest, face(front));
+        addChest(rel(cx, cz, front, 2, 3, f), face((front + 3) % 4), CHEST_LIBRARY);
     }
 
     private static int shelf(Random r) {

@@ -48,8 +48,8 @@ public class SanctumLayoutTest {
     public void footprintStaysNearTheOrigin() {
         for (long s = 0; s < SEEDS; s++) {
             SanctumLayout l = layout(s);
-            assertTrue(l.bounds.minX >= 1000 - 28 && l.bounds.maxX <= 1000 + 28);
-            assertTrue(l.bounds.minZ >= -2000 - 28 && l.bounds.maxZ <= -2000 + 28);
+            assertTrue(l.bounds.minX >= 1000 - 29 && l.bounds.maxX <= 1000 + 29);
+            assertTrue(l.bounds.minZ >= -2000 - 29 && l.bounds.maxZ <= -2000 + 29);
         }
     }
 
@@ -103,7 +103,7 @@ public class SanctumLayoutTest {
     }
 
     @Test
-    public void chamberHoldsThreeToSixAnchorsAndRoomsOneOrTwo() {
+    public void chamberHoldsFourToSixAnchorsRoomsOneOrTwoHallTwoOrThree() {
         boolean sawSix = false;
         for (long s = 0; s < SEEDS; s++) {
             SanctumLayout l = layout(s);
@@ -116,7 +116,7 @@ public class SanctumLayoutTest {
                     room++;
                 }
             }
-            assertTrue("seed " + s, chamber >= 3 && chamber <= 6);
+            assertTrue("seed " + s, chamber >= 4 && chamber <= 6);
             sawSix |= chamber == 6;
             int anchorRooms = 0;
             for (SanctumLayout.Room r : l.rooms) {
@@ -124,7 +124,7 @@ public class SanctumLayoutTest {
                     anchorRooms++;
                 }
             }
-            assertTrue(room >= anchorRooms && room <= 2 * anchorRooms);
+            assertTrue("seed " + s + " room anchors " + room, room >= anchorRooms + 2 && room <= 2 * anchorRooms + 3);
         }
         assertTrue(sawSix);
     }
@@ -167,6 +167,7 @@ public class SanctumLayoutTest {
                     assertTrue("seed " + s + " cell " + key(p), used.add(key(p)));
                 }
             }
+            assertTrue("codex lectern seed " + s, used.add(key(l.codexLectern)));
             if (l.ritualCentre != null) {
                 assertTrue("ritual centre seed " + s, used.add(key(l.ritualCentre)));
                 assertTrue("hint chest seed " + s, used.add(key(l.hintChest)));
@@ -254,7 +255,9 @@ public class SanctumLayoutTest {
             for (int[] a : l.anchors) {
                 for (SanctumLayout.Room r : l.rooms) {
                     SanctumBox in = r.outer.shrink(1);
-                    if (in == null || !in.contains(a[0], a[1], a[2])) {
+                    // The ritual room is too small for its 5x5 runes plus inner anchor cells; the
+                    // builder keeps vines off every anchor column instead.
+                    if (in == null || !in.contains(a[0], a[1], a[2]) || r.type == SanctumLayout.RoomType.RITUAL) {
                         continue;
                     }
                     boolean edge = a[0] == in.minX || a[0] == in.maxX || a[2] == in.minZ || a[2] == in.maxZ;
@@ -265,7 +268,7 @@ public class SanctumLayoutTest {
     }
 
     @Test
-    public void lightsAreTwoOrThreePerRoom() {
+    public void lightsPerRoom() {
         for (long s = 0; s < SEEDS; s++) {
             SanctumLayout l = layout(s);
             for (SanctumLayout.Room r : l.rooms) {
@@ -276,10 +279,110 @@ public class SanctumLayoutTest {
                 }
                 if (r.type == SanctumLayout.RoomType.DESCENT) {
                     assertTrue("seed " + s + " descent " + n, n <= 1);
-                } else if (r.type == SanctumLayout.RoomType.ANTECHAMBER) {
-                    assertEquals("seed " + s, 2, n);
+                } else if (r.type == SanctumLayout.RoomType.CHAMBER) {
+                    assertTrue("seed " + s + " chamber " + n, n >= 2 && n <= 3);
                 } else {
-                    assertTrue("seed " + s + " " + r.type + " " + n, n >= 2 && n <= 3);
+                    assertTrue("seed " + s + " " + r.type + " " + n, n >= 1 && n <= 2);
+                }
+            }
+        }
+    }
+
+    private static SanctumLayout.Room room(SanctumLayout l, SanctumLayout.RoomType type) {
+        for (SanctumLayout.Room r : l.rooms) {
+            if (r.type == type) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void hallKeepsItsWalkwayClear() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            assertNotNull(l.hallWalkway);
+            for (List<int[]> list : Arrays.asList(l.anchors, l.decor, l.props)) {
+                for (int[] p : list) {
+                    assertFalse("seed " + s + " " + key(p), l.hallWalkway.contains(p[0], p[1], p[2]));
+                }
+            }
+            SanctumBox hall = room(l, SanctumLayout.RoomType.HALL).outer.shrink(1);
+            int n = 0;
+            for (int[] a : l.anchors) {
+                if (hall.contains(a[0], a[1], a[2])) {
+                    n++;
+                    assertEquals(SanctumLayout.POOL_ROOM, a[3]);
+                }
+            }
+            assertTrue("seed " + s + " hall anchors " + n, n >= 2 && n <= 3);
+        }
+    }
+
+    @Test
+    public void codexLecternBesideTheAltar() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            assertNotNull(l.codexLectern);
+            assertTrue(room(l, SanctumLayout.RoomType.CHAMBER).outer.shrink(1)
+                    .contains(l.codexLectern[0], l.codexLectern[1], l.codexLectern[2]));
+            int[] altar = l.altars.get(4);
+            assertTrue(Math.abs(altar[0] - l.codexLectern[0]) <= 3 && Math.abs(altar[2] - l.codexLectern[2]) <= 3);
+        }
+    }
+
+    @Test
+    public void ritualRoomHasAnchorsAndALockedChest() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            SanctumLayout.Room ritual = room(l, SanctumLayout.RoomType.RITUAL);
+            if (ritual == null) {
+                continue;
+            }
+            SanctumBox in = ritual.outer.shrink(1);
+            int anchors = 0;
+            for (int[] a : l.anchors) {
+                anchors += in.contains(a[0], a[1], a[2]) ? 1 : 0;
+            }
+            assertTrue("seed " + s, anchors >= 1 && anchors <= 2);
+            int chests = 0;
+            for (int[] c : l.chests) {
+                if (in.contains(c[0], c[1], c[2])) {
+                    chests++;
+                    assertEquals(SanctumLayout.CHEST_LIBRARY, c[4]);
+                }
+            }
+            assertEquals("seed " + s, 1, chests);
+        }
+    }
+
+    @Test
+    public void hullNeverInsideARoomAndShaftStaysOpen() {
+        for (long s = 0; s < 60; s++) {
+            SanctumLayout l = layout(s);
+            assertFalse(l.isHull(l.shaftX, l.wardY + 1, l.shaftZ));
+            for (SanctumLayout.Room room : l.rooms) {
+                SanctumBox g = new SanctumBox(room.outer.minX - 1, room.outer.minY - 1, room.outer.minZ - 1,
+                        room.outer.maxX + 1, room.outer.maxY + 1, room.outer.maxZ + 1);
+                for (int x = g.minX; x <= g.maxX; x++) {
+                    for (int y = g.minY; y <= g.maxY; y++) {
+                        for (int z = g.minZ; z <= g.maxZ; z++) {
+                            boolean surface = x == g.minX || x == g.maxX || y == g.minY || y == g.maxY
+                                    || z == g.minZ || z == g.maxZ;
+                            boolean inRoom = false;
+                            for (SanctumLayout.Room o : l.rooms) {
+                                inRoom |= o.outer.contains(x, y, z);
+                            }
+                            boolean shaft = Math.abs(x - l.shaftX) <= 1 && Math.abs(z - l.shaftZ) <= 1 && y > l.wardY;
+                            if (inRoom) {
+                                assertFalse("seed " + s, l.isHull(x, y, z));
+                            } else if (surface && !shaft) {
+                                assertTrue("seed " + s + " " + x + "," + y + "," + z, l.isHull(x, y, z));
+                                assertTrue(l.bounds.contains(x, y, z));
+                                assertTrue(y >= l.hullMinY && y <= l.hullMaxY);
+                            }
+                        }
+                    }
                 }
             }
         }
