@@ -26,6 +26,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public class SanctumTeleportGuard {
 
     private static final int WATCH_TICKS = 10;
+    /** Radius around the caster within which anyone could be the one a teleport spell moves. */
+    private static final double SPELL_REACH = 32.0D;
     private static final List<Pending> PENDING = new ArrayList<Pending>();
 
     private static final class Pending {
@@ -63,13 +65,16 @@ public class SanctumTeleportGuard {
             return;
         }
         long expires = caster.world.getTotalWorldTime() + WATCH_TICKS;
+        // Banish is a ray: it hits the first living thing on its line - another player, a thrall, a
+        // pet - not necessarily the attack target. So everyone inside the sanctum near the caster
+        // is remembered, the caster included.
+        List<EntityLivingBase> near = caster.world.getEntitiesWithinAABB(EntityLivingBase.class,
+                caster.getEntityBoundingBox().grow(SPELL_REACH));
         synchronized (PENDING) {
-            if (inside(box, caster.posX, caster.posY, caster.posZ)) {
-                PENDING.add(new Pending(caster, id, expires));
-            }
-            EntityLivingBase target = ((EntityLiving) caster).getAttackTarget();
-            if (target != null && inside(box, target.posX, target.posY, target.posZ)) {
-                PENDING.add(new Pending(target, id, expires));
+            for (EntityLivingBase e : near) {
+                if (inside(box, e.posX, e.posY, e.posZ)) {
+                    PENDING.add(new Pending(e, id, expires));
+                }
             }
         }
     }

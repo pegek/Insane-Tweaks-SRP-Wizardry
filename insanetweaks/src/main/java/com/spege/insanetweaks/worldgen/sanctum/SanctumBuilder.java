@@ -76,7 +76,10 @@ public final class SanctumBuilder {
 
     public static void build(World world, SanctumLayout l, SanctumBox clip, long sanctumId) {
         Palette p = new Palette();
-        hull(world, l, clip);
+        SanctumWorldData data = SanctumWorldData.get(world);
+        if (SanctumHull.shouldBuild(data.box(sanctumId) != null, data.isCleared(sanctumId))) {
+            hull(world, l, clip);
+        }
         for (SanctumLayout.Room room : l.rooms) {
             if (room.type != SanctumLayout.RoomType.CHAMBER) {
                 fillWalls(world, l, room.outer, clip, p);
