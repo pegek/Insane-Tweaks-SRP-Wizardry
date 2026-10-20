@@ -5,6 +5,7 @@ import com.spege.insanetweaks.potions.PotionCleanse;
 import com.spege.insanetweaks.potions.PotionGildedStasis;
 import com.spege.insanetweaks.potions.PotionImmuneBond;
 import com.spege.insanetweaks.potions.PotionNourished;
+import com.spege.insanetweaks.potions.PotionWitsHunger;
 
 import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
@@ -37,6 +38,12 @@ public class ModPotions {
      */
     public static PotionNourished NOURISHED;
 
+    /**
+     * Wit's Hunger - the EBW-style curse a starving Sentient Codex lays on its holder: Weakness and
+     * Mining Fatigue in one tile, never stacking with the real effects (the stronger counts).
+     */
+    public static PotionWitsHunger WITS_HUNGER;
+
     @SubscribeEvent
     public static void registerPotions(RegistryEvent.Register<Potion> event) {
         CLEANSE = (PotionCleanse) new PotionCleanse()
@@ -54,5 +61,9 @@ public class ModPotions {
         NOURISHED = (PotionNourished) new PotionNourished()
                 .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "nourished"));
         event.getRegistry().register(NOURISHED);
+
+        WITS_HUNGER = (PotionWitsHunger) new PotionWitsHunger()
+                .setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "wits_hunger"));
+        event.getRegistry().register(WITS_HUNGER);
     }
 }

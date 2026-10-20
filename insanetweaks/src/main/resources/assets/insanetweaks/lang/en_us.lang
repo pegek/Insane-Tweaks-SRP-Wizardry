@@ -139,6 +139,7 @@ entity.corrupted_sapling.name=Corrupted Sapling
 potion.insanetweaks.cleanse=§eCleanse
 potion.insanetweaks.gilded_stasis=§6Gilded Stasis
 potion.insanetweaks.nourished=§aNourished
+potion.insanetweaks.wits_hunger=Wit's Hunger
 
 
 
@@ -418,3 +419,4 @@ potion.insanetweaks.cleanse.4.desc=Strips every harmful effect from you twice a 
 potion.insanetweaks.immune_bond.4.desc=Bound to the caster of Immune Bond: the Call of the Hive cannot take hold, and any infection already present is purged.
 potion.insanetweaks.gilded_stasis.4.desc=Frozen in gold by Zhonya's Hourglass. You take no damage, but cannot move, attack or use anything until it fades.
 potion.insanetweaks.nourished.4.desc=Your hunger does not drain while this lasts - saturation keeps topping itself back up. Granted by eating food enchanted with Mmmm.
+potion.insanetweaks.wits_hunger.4.desc=A starving Sentient Codex feeds on your mind: weaker blows, a slower swing and much slower mining, as Weakness and Mining Fatigue of the same level. If you have those from elsewhere too, only the stronger counts. Feed the Codex experience to lift it.

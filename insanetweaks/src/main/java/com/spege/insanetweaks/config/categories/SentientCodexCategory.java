@@ -235,8 +235,10 @@ public class SentientCodexCategory {
     public double starvationExhaustion = 0.5;
 
     @Config.Comment({
-            "Apply Weakness and Mining Fatigue while starving, at an amplifier of (severity - 1).",
-            "Read live (no restart)."
+            "Curse a starving holder with Wit's Hunger at level = severity: Weakness and Mining Fatigue",
+            "of that level in one curse tile (no timer, milk does not cure it). It never stacks with",
+            "real Weakness or Mining Fatigue from another source - the stronger one counts. Lifted the",
+            "moment the Codex is fed or no longer carried. Read live (no restart)."
     })
     @Config.Name("Starvation Debuffs")
     public boolean starvationDebuffs = true;

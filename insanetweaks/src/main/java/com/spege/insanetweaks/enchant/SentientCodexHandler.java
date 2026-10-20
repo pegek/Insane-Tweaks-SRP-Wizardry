@@ -7,6 +7,8 @@ import java.util.WeakHashMap;
 
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.config.categories.SentientCodexCategory;
+import com.spege.insanetweaks.init.ModPotions;
+import com.spege.insanetweaks.potions.PotionWitsHunger;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.EntityLivingBase;
@@ -19,6 +21,7 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -108,6 +111,7 @@ public class SentientCodexHandler {
             // Frozen: stop feeding and stop growing. Already-granted levels stay baked in (we keep
             // no base snapshot to restore). To fully remove the enchant, unregister it via
             // modules.enableSentientCodex.
+            liftCurse(p);
             return;
         }
 
@@ -120,6 +124,7 @@ public class SentientCodexHandler {
             // who mined all afternoon could then pick up a Codex and have it grow instantly off XP
             // it was never there for. Experience only counts while the item is being carried.
             XP_REMAINDER.remove(p);
+            liftCurse(p); // no Codex carried, nothing left to starve
             return;
         }
 
@@ -140,6 +145,8 @@ public class SentientCodexHandler {
         // punishment by however many Codex items happen to be in the pack.
         if (worstSeverity > 0) {
             punish(p, worstSeverity, cfg);
+        } else {
+            liftCurse(p); // fed: the curse ends now, not when its short refresh window runs out
         }
     }
 
@@ -330,11 +337,48 @@ public class SentientCodexHandler {
         if (cfg.starvationExhaustion > 0.0D) {
             p.addExhaustion((float) (cfg.starvationExhaustion * severity));
         }
-        if (cfg.starvationDebuffs) {
+        if (cfg.starvationDebuffs && ModPotions.WITS_HUNGER != null) {
+            // Wit's Hunger: Weakness + Mining Fatigue as ONE curse tile, never stacking with the real
+            // effects (the stronger counts - see PotionWitsHunger). A short duration renewed every
+            // interval: it looks permanent (curses draw no timer) but cannot outlive this handler.
+            int amplifier = severity - 1;
+            PotionEffect current = p.getActivePotionEffect(ModPotions.WITS_HUNGER);
+            if (current != null && current.getAmplifier() > amplifier) {
+                // addPotionEffect never lowers an amplifier, and a lowered maxStarvationSeverity can.
+                p.removePotionEffect(ModPotions.WITS_HUNGER);
+            }
             int duration = Math.max(40, cfg.tickInterval * 3);
-            p.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, duration, severity - 1, false, false));
-            p.addPotionEffect(new PotionEffect(MobEffects.MINING_FATIGUE, duration, severity - 1, false, false));
+            p.addPotionEffect(new PotionEffect(ModPotions.WITS_HUNGER, duration, amplifier, false, false));
+        } else {
+            liftCurse(p);
         }
+    }
+
+    /** Ends Wit's Hunger now, if the player has it. Its attribute modifiers go with it. */
+    private static void liftCurse(EntityPlayer p) {
+        if (ModPotions.WITS_HUNGER != null && p.isPotionActive(ModPotions.WITS_HUNGER)) {
+            p.removePotionEffect(ModPotions.WITS_HUNGER);
+        }
+    }
+
+    /**
+     * Wit's Hunger's mining half. Dig speed is not an attribute in 1.12 - Mining Fatigue's slowdown
+     * is hardcoded in {@code EntityPlayer.getDigSpeed} - so it is applied here, as only the part the
+     * curse adds on top of any real Mining Fatigue (the stronger counts). Runs on both sides: the
+     * client predicts block breaking, and the two must agree or digging stutters.
+     */
+    @SubscribeEvent
+    public void onBreakSpeed(PlayerEvent.BreakSpeed event) {
+        if (ModPotions.WITS_HUNGER == null) {
+            return;
+        }
+        EntityPlayer p = event.getEntityPlayer();
+        PotionEffect curse = p.getActivePotionEffect(ModPotions.WITS_HUNGER);
+        if (curse == null) {
+            return;
+        }
+        int fatigue = PotionWitsHunger.amplifierOf(p, MobEffects.MINING_FATIGUE);
+        event.setNewSpeed(event.getNewSpeed() * WitsHungerMath.digSpeedMultiplier(curse.getAmplifier(), fatigue));
     }
 
     // ----------------------------------------------------------------
