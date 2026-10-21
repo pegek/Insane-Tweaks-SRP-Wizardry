@@ -43,8 +43,6 @@ public class SanctumWorldData extends WorldSavedData {
         int[] hullY;
         /** Chunks whose hull has been dissolved since the sanctum was cleared. */
         final Set<Long> swept = new HashSet<Long>();
-        /** x, y, z of the dais's centre altar; null until the builder records it. */
-        int[] dais;
     }
 
     public SanctumWorldData() {
@@ -106,21 +104,6 @@ public class SanctumWorldData extends WorldSavedData {
             }
         }
         return null;
-    }
-
-    /** Records the dais's centre altar, which is then the only place the 3x3 ritual runs in it. */
-    public void setDais(long id, int x, int y, int z) {
-        Record r = this.records.get(Long.valueOf(id));
-        if (r != null) {
-            r.dais = new int[] { x, y, z };
-            markDirty();
-        }
-    }
-
-    /** x, y, z of the dais's centre altar, or null when it was never recorded. */
-    public int[] dais(long id) {
-        Record r = this.records.get(Long.valueOf(id));
-        return r == null || r.dais == null ? null : r.dais.clone();
     }
 
     /** hullMinY, hullMaxY of a sanctum, or null for records written before 1.28.0. */
@@ -235,8 +218,6 @@ public class SanctumWorldData extends WorldSavedData {
             int[] hullY = c.getIntArray("HullY");
             r.hullY = hullY.length == 2 ? hullY : null;
             r.swept.addAll(longs(c.getTagList("Swept", TAG_LONG)));
-            int[] dais = c.getIntArray("Dais");
-            r.dais = dais.length == 3 ? dais : null;
             this.records.put(Long.valueOf(c.getLong("Id")), r);
         }
     }
@@ -265,9 +246,6 @@ public class SanctumWorldData extends WorldSavedData {
             }
             if (!e.getValue().swept.isEmpty()) {
                 c.setTag("Swept", toList(e.getValue().swept));
-            }
-            if (e.getValue().dais != null) {
-                c.setIntArray("Dais", e.getValue().dais);
             }
             sanctums.appendTag(c);
         }

@@ -63,6 +63,9 @@ public final class ModRituals {
     /** Whether srpextra's parts exist, or the Living armour falls back to SRP substitutes. */
     private static final boolean SRPEXTRA = Loader.isModLoaded("srpextra");
 
+    private static final String BETTER_SURVIVAL = "mujmajnkraftsbettersurvival";
+    private static final String LIVING_NUNCHAKU = "itemparasitelivingnunchaku";
+
     /** Every distinct id missing this run, in discovery order. For the closing summary. */
     private static final Set<String> MISSING_IDS = new LinkedHashSet<>();
 
@@ -226,6 +229,38 @@ public final class ModRituals {
                 buckle(), cloth(), buckle(),
                 plates(), item("srparasites", "living_core"), plates(),
                 NONE, battlemage("boots"), NONE);
+
+        // Parasite Mage armour, grown from EB's warlock set.
+        ritual("parasite_mage_helmet", t, stack(InsaneTweaksMod.MODID, "parasite_mage_helmet", 1, 0),
+                NONE, buckle(), NONE,
+                plates(), warlock("helmet"), plates(),
+                NONE, item("srparasites", "living_core"), NONE);
+
+        ritual("parasite_mage_chestplate", t, stack(InsaneTweaksMod.MODID, "parasite_mage_chestplate", 1, 0),
+                NONE, plates(), NONE,
+                cloth(), item("srparasites", "living_core"), cloth(),
+                plates(), warlock("chestplate"), plates());
+
+        ritual("parasite_mage_leggings", t, stack(InsaneTweaksMod.MODID, "parasite_mage_leggings", 1, 0),
+                cloth(), NONE, cloth(),
+                buckle(), item("srparasites", "living_core"), buckle(),
+                buckle(), warlock("leggings"), buckle());
+
+        ritual("parasite_mage_boots", t, stack(InsaneTweaksMod.MODID, "parasite_mage_boots", 1, 0),
+                NONE, cloth(), NONE,
+                plates(), item("srparasites", "living_core"), plates(),
+                NONE, warlock("boots"), NONE);
+
+        // The Living nunchaku is Better Survival's item, made by OUR recipe; only with Better Survival.
+        if (Loader.isModLoaded(BETTER_SURVIVAL)) {
+            ritual("parasite_living_nunchaku", t, stack(BETTER_SURVIVAL, LIVING_NUNCHAKU, 1, 0),
+                    item("srparasites", "hardened_bone_handle"), item("srparasites", "vile_shell"),
+                    anyOre(ModOreDict.ORE_INFECTIOUS_LONG_BLADE_FRAGMENT),
+                    item("srparasites", "vile_shell"), anyOre(ModOreDict.ORE_LIVING_NUCLEUS),
+                    item("srparasites", "vile_shell"),
+                    anyOre(ModOreDict.ORE_INFECTIOUS_LONG_BLADE_FRAGMENT), item("srparasites", "vile_shell"),
+                    item("srparasites", "hardened_bone_handle"));
+        }
     }
 
     /**
@@ -321,8 +356,19 @@ public final class ModRituals {
         items.add(ModItems.LIVING_BATTLEMAGE_LEGGINGS);
         items.add(ModItems.LIVING_BATTLEMAGE_BOOTS);
         items.add(ModItems.LIVING_NUCLEUS);
+        items.add(ModItems.PARASITE_WIZARD_HELMET);
+        items.add(ModItems.PARASITE_WIZARD_CHESTPLATE);
+        items.add(ModItems.PARASITE_WIZARD_LEGGINGS);
+        items.add(ModItems.PARASITE_WIZARD_BOOTS);
         if (ModBlocks.SANCTUARY_CORE != null) {
             items.add(Item.getItemFromBlock(ModBlocks.SANCTUARY_CORE));
+        }
+        // Looked up by name and typed as Item, never as the Better Survival subclass: naming that
+        // class here would make this one fail to link without Better Survival (see CLAUDE.md,
+        // "Guarding an optional mod dependency").
+        Item nunchaku = ForgeRegistries.ITEMS.getValue(new ResourceLocation(BETTER_SURVIVAL, LIVING_NUNCHAKU));
+        if (nunchaku != null) {
+            items.add(nunchaku);
         }
         return items;
     }
@@ -392,10 +438,19 @@ public final class ModRituals {
 
     /** Any of EB's eight elemental battlemage pieces of one slot, at any damage - as the JSON accepts. */
     private static Ingredient battlemage(String slot) {
+        return elementalArmour("battlemage", slot);
+    }
+
+    /** Same for EB's warlock armour, which the Parasite Mage set is grown from. */
+    private static Ingredient warlock(String slot) {
+        return elementalArmour("warlock", slot);
+    }
+
+    private static Ingredient elementalArmour(String set, String slot) {
         String[] suffixes = { "", "_fire", "_ice", "_lightning", "_necromancy", "_earth", "_sorcery", "_healing" };
         List<ItemStack> stacks = new ArrayList<>();
         for (int i = 0; i < suffixes.length; i++) {
-            Item piece = safeItem("ebwizardry", "battlemage_" + slot + suffixes[i]);
+            Item piece = safeItem("ebwizardry", set + "_" + slot + suffixes[i]);
             if (piece != Items.AIR) {
                 stacks.add(new ItemStack(piece, 1, OreDictionary.WILDCARD_VALUE));
             }

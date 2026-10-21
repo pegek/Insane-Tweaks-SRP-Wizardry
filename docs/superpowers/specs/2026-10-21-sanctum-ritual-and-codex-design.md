@@ -94,6 +94,11 @@ sanctum that is cleared:
    `SanctumWorldData` for this (e.g. `Long sanctumAt(int x, int z)` returning the id or null).
    `SanctumWorldData` is not one of the parallel session's files.
 2. Only if a sanctum was found, test `isCleared(id)`.
+3. **The gate is loose** (user, 2026-10-21): any 3x3 inside the cleared sanctum counts, the generated
+   dais or one built there from crafted altars, as long as its centre lies within the sanctum's hull
+   height (`SanctumWorldData.hullY`, stored since 1.28.0). That rules out a base built on the surface
+   above the sanctum. Records older than 1.28.0 (test worlds) have no hull height and fall back to the
+   footprint alone. The decision is the pure `ritual/RitualSanctumGate`.
 
 🚨 `SanctumWorldData.isCleared(id)` returns **true for an unknown id** (`r == null || r.cleared`).
 Calling it without step 1 would let any 3x3 anywhere count as cleared. "Cleared" means every anchor
@@ -154,6 +159,8 @@ individual costs later.
 | `insanetweaks:living_aegis` | `recipes/living_aegis.json` |
 | `insanetweaks:living_battlemage_helmet/chestplate/leggings/boots` | the four `recipes/living_battlemage_*.json` |
 | `insanetweaks:sanctuary_core` | `ModRecipes` `sanctuary_nexus` |
+| `insanetweaks:parasite_mage_helmet/chestplate/leggings/boots` | the four `recipes/parasite_mage_*.json` (user, 2026-10-21) |
+| `mujmajnkraftsbettersurvival:itemparasitelivingnunchaku` | `recipes/parasite_living_nunchaku.json` — our recipe for Better Survival's item; only with Better Survival (user, 2026-10-21) |
 | living nucleus | see below |
 
 Details the builder must carry over:
@@ -297,12 +304,8 @@ To be sent when this design is approved:
    instead of the lectern, then call `SanctumCodex.fill(world, pos)`.
 3. The comment on `codexLectern()` in `SanctumBuilder` ("EBW's lectern - it holds books") is wrong;
    see §10.
-4. **Record the dais** (added during implementation, user decision on gate scope still pending). In
-   `SanctumPlacement.register`, right after `SanctumWorldData.register(...)`, call
-   `SanctumWorldData.get(world).setDais(id, x, y, z)` with the world position of
-   `SanctumLayout.altars.get(4)`. With it, the ritual runs only on that dais. Without it, the gate falls
-   back to "anywhere inside the cleared sanctum's hull height", and sanctums generated before the line
-   lands keep that wider rule.
+
+No dais recording is needed: the gate is loose (§5).
 
 ## 12. Config (`tweaks`)
 

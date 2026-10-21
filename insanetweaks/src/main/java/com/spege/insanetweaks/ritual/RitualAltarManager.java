@@ -226,8 +226,7 @@ public final class RitualAltarManager {
             return false;
         }
         long key = id.longValue();
-        return RitualSanctumGate.allows(true, data.isCleared(key), data.dais(key), data.hullY(key),
-                centre.getX(), centre.getY(), centre.getZ());
+        return RitualSanctumGate.allows(true, data.isCleared(key), data.hullY(key), centre.getY());
     }
 
     private static boolean receptaclesLit(World world, BlockPos centre) {

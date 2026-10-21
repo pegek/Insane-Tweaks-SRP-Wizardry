@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "Nine $(item)Imbuement Altars$() set out in a 3x3 square form a circle that works like a crafting table. Lay one ingredient on each altar; when the arrangement matches a ritual, the circle wakes and the result appears on the centre altar.$(br2)The circle only answers on the dais of a $(thing)conquered Sunken Arcane Sanctum$(). Altars cannot be moved, so the dais is the reward for clearing it."
+      "text": "Nine $(item)Imbuement Altars$() set out in a 3x3 square form a circle that works like a crafting table. Lay one ingredient on each altar; when the arrangement matches a ritual, the circle wakes and the result appears on the centre altar.$(br2)The circle only answers inside a $(thing)conquered Sunken Arcane Sanctum$(). Altars cannot be moved: the dais at its heart is the reward for clearing it."
     },
     {
       "type": "text",
