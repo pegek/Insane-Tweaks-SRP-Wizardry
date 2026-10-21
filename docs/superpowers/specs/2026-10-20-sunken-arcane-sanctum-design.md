@@ -935,3 +935,97 @@ be caught after the fact. Vetoing Banish would leave a sim helpless at close ran
   assistant's.
 - The codex lectern stays empty this revision.
 - The version is 1.28.0.
+
+As built: in 1.28.1 the codex lectern is `ebwizardry:oak_lectern`, because ASC's sage lectern
+cannot hold books. The arcane workbench in the library is also locked, since it can pull books out
+of the locked shelves. And a Roguelike Dungeons start near a sanctum is skipped
+(`MixinRoguelikeDungeonGenerator`, config `Block Foreign Dungeons`).
+
+## 16. Revision 1.29.0 (2026-10-21): batch "B", element variants and palettes
+
+Why: the sanctum should look like a place of ancient magic rather than a brick bunker. Each
+sanctum should also have an identity that later revisions can build on: a different loot table,
+different rooms and different enemies per variant. In this revision the variant drives the look
+only.
+
+Non-goals:
+- No generation in the Nether or the End yet. Their palettes are prepared, but their placement
+  rules (entrance, floor height) are a later revision, Nether first and End possibly never.
+- No per-variant loot, rooms or enemies yet.
+
+### 16.1 Variant (element)
+
+- **One element per sanctum.** The element is picked from its dimension's pool, deterministically
+  from the layout seed, so every chunk of one sanctum agrees.
+
+  | Dimension | Pool |
+  |---|---|
+  | Overworld (0) | sorcery, lightning |
+  | dim 111 (Lost Cities) | earth |
+  | Nether (-1) | fire |
+  | End (1) | necromancy |
+  | Any other | the Overworld pool |
+
+- **Stored.** The layout exposes the element. The sanctum record saves it as a string (`"Element"`)
+  for the later per-variant work. Records from before 1.29.0 have none.
+
+### 16.2 Runestone frame
+
+EBW runestone and runestone pedestal of the sanctum's element, metadata `Element.ordinal()`: 1 fire,
+2 ice, 3 lightning, 4 necromancy, 5 earth, 6 sorcery, 7 healing.
+
+- **Edges.** The 12 edges of every room's outer box are runestone, **except the ritual chamber**,
+  which stays all sealed stone (user, 2026-10-21).
+- **Corners.** The 8 corners of every outer box are a **runestone pedestal**, mixed with plain
+  runestone by noise. *Assistant's call:* about 60% pedestal.
+- **Pedestals are never "natural".** A natural EBW pedestal belongs to a shrine and can start a mob
+  wave.
+- **Accents.** Some face cells of the stone-brick walls are runestone, by noise. *Assistant's call:*
+  about 4%. The brick variants stay the main material. The chamber's sealed faces get no accents.
+- **Untouched cells.** Doorway carves, the seal plug and the hull are never framed. A frame cell
+  that a carve opens stays open, because carves are cut after the walls.
+
+### 16.3 Palettes per dimension
+
+The palette decides the wall mix and the blocks for the chiseled dais, the stairs and the surface
+ruin. The ritual chamber's sealed stone, the ASC and EBW props and the arcane wall hull are the same
+everywhere. A missing modded block falls back to the Overworld block, with one warning in the log.
+
+| Dimension | Walls | Chiseled / dais | Stairs | Silverfish |
+|---|---|---|---|---|
+| Overworld | stone brick 60%, mossy 25%, cracked 15% (as now) | chiseled stone brick | stone brick | yes |
+| dim 111 | obsidian 85%, `nb:cry_obi` 15% | `nb:black_stone_bricks` | `nb:black_stone_brick_stairs` | no |
+| Nether (prepared) | nether brick 70%, red nether brick 30% | red nether brick | nether brick | no |
+| End (prepared) | end stone bricks 75%, purpur block 25% | purpur pillar | purpur | no |
+
+The surface ruin uses the wall mix of its palette.
+
+### 16.4 Generation in dim 111
+
+- `Dimensions` defaults to **0 and 111**.
+- The instance config gets 111 added: back up the file, then add one line.
+- Lost Cities streets sit around y 65–70 and basements end well above the sanctum's top (about y 36),
+  so the layout and floor range are unchanged.
+- **Street-level entrance (option a, user 2026-10-21).** Lost Cities builds its buildings before our
+  populate, so the measured "surface" is a roof.
+  - In dimensions listed in the config `Surface Cap` (default `111=75`, the street level of the
+    pack's Lost Cities profile), the shaft, its casing and its ward stop at the cap.
+  - The entrance is then a hole in the street or in a building's ground floor.
+  - Where the measured surface is above the cap (a building), the surface ruin is skipped.
+- **Pre-1.29.0 sanctums get no frame (assistant).** A sanctum whose record has no `"Element"` gets
+  no frame and no accents, in any chunk, so it never ends up half framed. Same rule as the hull.
+- **The Nether (-1) and the End (1) are refused (assistant).** They are refused like dim 150, even
+  if listed in `Dimensions`, until their placement rules exist. Under today's rules a Nether sanctum
+  would sit under the lava sea.
+
+### 16.5 Calls made by the assistant (for the user to check)
+
+- About 60% pedestal on corners.
+- About 4% runestone accents.
+- The chamber gets neither frame nor accents (the user's choice).
+- `Surface Cap` defaults to `111=75`.
+- dim 111: the chiseled block and the stairs come from Unseen's Nether Backport black stone.
+- The Nether's chiseled block is red nether brick, and the End's is purpur pillar.
+- The surface ruin follows the palette.
+- The element is saved in the record now, for later.
+- The version is 1.29.0.
