@@ -15,6 +15,7 @@ import com.windanesz.ancientspellcraft.tileentity.TileRune;
 
 import electroblob.wizardry.registry.WizardryBlocks;
 import electroblob.wizardry.tileentity.TileEntityImbuementAltar;
+import electroblob.wizardry.tileentity.TileEntityReceptacle;
 import electroblob.wizardry.tileentity.TileEntityTimer;
 
 import net.minecraft.block.Block;
@@ -27,6 +28,7 @@ import net.minecraft.block.BlockSilverfish;
 import net.minecraft.block.BlockSkull;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.BlockStoneBrick;
+import net.minecraft.block.BlockTorch;
 import net.minecraft.block.BlockTripWire;
 import net.minecraft.block.BlockTripWireHook;
 import net.minecraft.block.BlockVine;
@@ -296,11 +298,54 @@ public final class SanctumBuilder {
             decor(world, l, clip, d, sanctumId);
         }
         ritual(world, l, clip);
-        int[] lectern = l.codexLectern;
-        if (lectern != null && clip.contains(lectern[0], lectern[1], lectern[2])) {
-            // The codex lectern stays empty until the guide book exists (spec 15.3).
-            world.setBlockState(new BlockPos(lectern[0], lectern[1], lectern[2]),
-                    withFacing(p.codexLectern(), facing(lectern[3])), FLAGS);
+        int[] codex = l.codexLectern;
+        if (codex != null && clip.contains(codex[0], codex[1], codex[2])) {
+            // The codex shelf beside the altar holds the Insane Codex (ritual spec section 11). An EBW
+            // lectern stores no item at all, so the spot is a bookshelf.
+            BlockPos at = new BlockPos(codex[0], codex[1], codex[2]);
+            world.setBlockState(at, withFacing(WizardryBlocks.oak_bookshelf.getDefaultState(), facing(codex[3])), FLAGS);
+            SanctumCodex.fill(world, at);
+        }
+        receptacles(world, l, clip);
+    }
+
+    /**
+     * Four receptacles around the 3x3 altar, one hanging on the outer face of each side's middle
+     * altar (the position the 3x3 ritual checks, ritual spec section 6). 1-4 of them are lit, always
+     * including an Abomination one, so a conquered sanctum can run at least one ritual; without
+     * the Abomination element all stay dark. Deterministic from the centre, so split builds agree.
+     */
+    private static void receptacles(World world, SanctumLayout l, SanctumBox clip) {
+        int[] c = l.altars.get(4);
+        int lit = 1 + Math.min(3, (int) (SanctumNoise.at(l.seed, c[0], c[1], c[2], 170) * 4));
+        int first = Math.min(3, (int) (SanctumNoise.at(l.seed, c[0], c[1], c[2], 171) * 4));
+        java.util.List<electroblob.wizardry.constants.Element> others =
+                new java.util.ArrayList<electroblob.wizardry.constants.Element>();
+        for (electroblob.wizardry.constants.Element e : com.spege.insanetweaks.util.NativeElements.values()) {
+            if (e != electroblob.wizardry.constants.Element.MAGIC) {
+                others.add(e);
+            }
+        }
+        EnumFacing[] sides = { EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST };
+        for (int i = 0; i < sides.length; i++) {
+            EnumFacing s = sides[i];
+            BlockPos pos = new BlockPos(c[0] + 2 * s.getFrontOffsetX(), c[1], c[2] + 2 * s.getFrontOffsetZ());
+            if (!clip.contains(pos.getX(), pos.getY(), pos.getZ())) {
+                continue;
+            }
+            world.setBlockState(pos, WizardryBlocks.receptacle.getDefaultState().withProperty(BlockTorch.FACING, s),
+                    FLAGS);
+            int order = (i - first + 4) % 4;
+            if (!ModElements.EXTENDED || ModElements.ABOMINATION == null || order >= lit) {
+                continue;
+            }
+            TileEntity te = world.getTileEntity(pos);
+            if (te instanceof TileEntityReceptacle) {
+                electroblob.wizardry.constants.Element element = order == 0 || others.isEmpty() ? ModElements.ABOMINATION
+                        : others.get(Math.min(others.size() - 1,
+                                (int) (SanctumNoise.at(l.seed, pos.getX(), pos.getY(), pos.getZ(), 172) * others.size())));
+                ((TileEntityReceptacle) te).setElement(element);
+            }
         }
     }
 
@@ -736,11 +781,6 @@ public final class SanctumBuilder {
                     : wall == this.cracked ? BlockSilverfish.EnumType.CRACKED_STONEBRICK
                             : BlockSilverfish.EnumType.STONEBRICK;
             return Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, type);
-        }
-
-        /** EBW's lectern - it holds books, unlike ASC's sage lectern. */
-        IBlockState codexLectern() {
-            return lookup("ebwizardry:oak_lectern");
         }
 
         IBlockState ruin(long seed, int x, int y, int z) {
