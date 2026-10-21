@@ -17,7 +17,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.OreIngredient;
 
 /**
@@ -57,6 +59,9 @@ public final class ModRituals {
     /** A position that must stay EMPTY. Not a placeholder - the matcher enforces it. */
     public static final Ingredient NONE = Ingredient.EMPTY;
 
+    /** Whether srpextra's parts exist, or the Living armour falls back to SRP substitutes. */
+    private static final boolean SRPEXTRA = Loader.isModLoaded("srpextra");
+
     /** Every distinct id missing this run, in discovery order. For the closing summary. */
     private static final Set<String> MISSING_IDS = new LinkedHashSet<>();
 
@@ -78,6 +83,14 @@ public final class ModRituals {
         skipped = 0;
 
         registerCrystalCondensing();
+        if (ModElements.EXTENDED) {
+            int abom = ModElements.ABOMINATION.ordinal();
+            registerComponents(abom);
+            registerLivingGear();
+            if (ModConfig.tweaks.altarTestRecipes) {
+                registerTestRecipes(abom);
+            }
+        }
 
         if (skipped > 0) {
             InsaneTweaksMod.LOGGER.warn("[InsaneTweaks] Altar rituals: {} ritual(s) were skipped because "
@@ -123,9 +136,259 @@ public final class ModRituals {
                 item("ebwizardry", "spectral_dust", meta));
     }
 
+    /**
+     * The arcane components and the Sanctuary core. Every pattern except the golden book's is a
+     * cell-for-cell copy of the item's crafting-table recipe: what moving it to the altar adds is the
+     * conquered sanctum and the four receptacle dusts, not a different shopping list.
+     */
+    private static void registerComponents(int abom) {
+        int t = ModConfig.tweaks.ritualDurationTicks;
+
+        ritual("magic_nucleus", t, stack(InsaneTweaksMod.MODID, "magic_nucleus", 1, 0),
+                NONE, item("srparasites", "beckon_drop"), NONE,
+                item("ebwizardry", "spectral_dust", abom), item("ebwizardry", "magic_crystal", abom),
+                item("ebwizardry", "spectral_dust", abom),
+                NONE, item("srparasites", "ada_arachnida_drop"), NONE);
+
+        ritual("adaptation_upgrade", t, stack(InsaneTweaksMod.MODID, "adaptation_upgrade", 1, 0),
+                NONE, item("srparasites", "vile_shell"), NONE,
+                item(InsaneTweaksMod.MODID, "golden_book"), item("ebwizardry", "attunement_upgrade"),
+                item(InsaneTweaksMod.MODID, "golden_book"),
+                NONE, anyOre(ModOreDict.ORE_MAGIC_NUCLEUS, ModOreDict.ORE_LIVING_NUCLEUS), NONE);
+
+        // Cheaper than the table (which stays): the nether star becomes an Abomination crystal.
+        ritual("golden_book", t, stack(InsaneTweaksMod.MODID, "golden_book", 4, 0),
+                item("defiledlands", "book_wyrm_scale_golden"), item("ebwizardry", "magic_crystal", abom),
+                item("defiledlands", "book_wyrm_scale_golden"),
+                item(InsaneTweaksMod.MODID, "rupter_solied"), item("minecraft", "bookshelf"),
+                item(InsaneTweaksMod.MODID, "rupter_solied"),
+                item("defiledlands", "book_wyrm_scale"), item("ancientspellcraft", "empty_mystic_spell_book"),
+                item("defiledlands", "book_wyrm_scale"));
+
+        // The result is whatever backs itLivingNucleus: our clone without swparasites, swparasites'
+        // own item with it. Only OUR clone's table recipe is stripped; swparasites' stays.
+        ritual("living_nucleus", t, firstOre(ModOreDict.ORE_LIVING_NUCLEUS),
+                NONE, item("srparasites", "ada_summoner_drop"), NONE,
+                item("srparasites", "assimilated_flesh"), item("srparasites", "living_core"),
+                item("srparasites", "assimilated_flesh"),
+                NONE, item("srparasites", "ada_manducater_drop"), NONE);
+
+        if (ModBlocks.SANCTUARY_CORE != null) {
+            ritual("sanctuary_core", t, new ItemStack(ModBlocks.SANCTUARY_CORE),
+                    item("srparasites", "pearl"), item("minecraft", "beacon"), item("srparasites", "pearl"),
+                    item("ebwizardry", "runestone", 4), item("srparasites", "levelclock"),
+                    item("ebwizardry", "runestone", 4),
+                    item("ancientspellcraft", "devoritium_block"), item("srparasites", "false_apple"),
+                    item("ancientspellcraft", "devoritium_block"));
+        }
+    }
+
+    /** Living gear, each pattern copied from its crafting-table JSON. */
+    private static void registerLivingGear() {
+        int t = ModConfig.tweaks.ritualDurationTicks;
+
+        ritual("living_wand", t, stack(InsaneTweaksMod.MODID, "living_wand", 1, 0),
+                NONE, anyOre(ModOreDict.ORE_MAGIC_NUCLEUS, ModOreDict.ORE_LIVING_NUCLEUS), NONE,
+                item("srparasites", "vile_shell"), item("ebwizardry", "master_wand"), item("srparasites", "vile_shell"),
+                item(InsaneTweaksMod.MODID, "golden_book"), item(InsaneTweaksMod.MODID, "rupter_solied"), NONE);
+
+        ritual("living_spellblade", t, stack(InsaneTweaksMod.MODID, "living_spellblade", 1, 0),
+                NONE, NONE, anyOre(ModOreDict.ORE_LIVING_NUCLEUS),
+                item("srparasites", "vile_shell"), item("ancientspellcraft", "battlemage_sword_master"),
+                anyOre(ModOreDict.ORE_INFECTIOUS_LONG_BLADE_FRAGMENT),
+                item("srparasites", "hardened_bone_handle"), item("srparasites", "vile_shell"), NONE);
+
+        ritual("living_aegis", t, stack(InsaneTweaksMod.MODID, "living_aegis", 1, 0),
+                NONE, anyOre(ModOreDict.ORE_LIVING_NUCLEUS), NONE,
+                item("srparasites", "vile_shell"), item("ancientspellcraft", "battlemage_shield"),
+                item("srparasites", "vile_shell"),
+                plates(), cloth(), plates());
+
+        ritual("living_battlemage_helmet", t, stack(InsaneTweaksMod.MODID, "living_battlemage_helmet", 1, 0),
+                plates(), buckle(), plates(),
+                plates(), battlemage("helmet"), plates(),
+                NONE, item("srparasites", "living_core"), NONE);
+
+        ritual("living_battlemage_chestplate", t,
+                stack(InsaneTweaksMod.MODID, "living_battlemage_chestplate", 1, 0),
+                cloth(), plates(), cloth(),
+                plates(), item("srparasites", "living_core"), plates(),
+                plates(), battlemage("chestplate"), plates());
+
+        ritual("living_battlemage_leggings", t, stack(InsaneTweaksMod.MODID, "living_battlemage_leggings", 1, 0),
+                cloth(), plates(), cloth(),
+                buckle(), item("srparasites", "living_core"), buckle(),
+                buckle(), battlemage("leggings"), buckle());
+
+        ritual("living_battlemage_boots", t, stack(InsaneTweaksMod.MODID, "living_battlemage_boots", 1, 0),
+                buckle(), cloth(), buckle(),
+                plates(), item("srparasites", "living_core"), plates(),
+                NONE, battlemage("boots"), NONE);
+    }
+
+    /**
+     * Experimental altar routes to other mods' trinket parts. Their own crafting recipes are never
+     * touched. Each swaps the original recipe's rarest input for an Abomination material; Bountiful
+     * Baubles' two items have no crafting recipe at all (they drop), so theirs are designed fresh.
+     */
+    private static void registerTestRecipes(int abom) {
+        int t = ModConfig.tweaks.ritualDurationTicks;
+
+        ritual("test_twisted_core", t, stack("enigmaticlegacy", "twisted_core", 1, 0),
+                NONE, item("minecraft", "ghast_tear"), NONE,
+                item("minecraft", "blaze_powder"), item("ebwizardry", "magic_crystal", abom),
+                item("minecraft", "blaze_powder"),
+                anyOre("dustRedstone"), item("minecraft", "ender_eye"), anyOre("dustRedstone"));
+
+        ritual("test_cosmic_heart", t, stack("enigmaticlegacy", "cosmic_heart", 1, 0),
+                item("enigmaticlegacy", "astral_dust"), anyOre(ModOreDict.ORE_MAGIC_NUCLEUS),
+                item("enigmaticlegacy", "astral_dust"),
+                item("minecraft", "blaze_powder"), anyOre("blockDiamond"), item("minecraft", "blaze_powder"),
+                item("enigmaticlegacy", "astral_dust"), item("minecraft", "ender_eye"),
+                item("enigmaticlegacy", "astral_dust"));
+
+        ritual("test_enchanter_pearl", t, stack("enigmaticlegacy", "enchanter_pearl", 1, 0),
+                NONE, anyOre("gemEmerald"), NONE,
+                item("minecraft", "blaze_powder"), item("minecraft", "ender_pearl"), item("minecraft", "blaze_powder"),
+                item("ebwizardry", "spectral_dust", abom), item("minecraft", "obsidian"),
+                item("ebwizardry", "spectral_dust", abom));
+
+        ritual("test_evil_ingot", t, stack("enigmaticlegacy", "evil_ingot", 1, 0),
+                item("minecraft", "ghast_tear"), item("ebwizardry", "spectral_dust", abom),
+                item("minecraft", "ghast_tear"),
+                item("ebwizardry", "spectral_dust", abom), anyOre("ingotNetherite"),
+                item("ebwizardry", "spectral_dust", abom),
+                item("minecraft", "ghast_tear"), item("ebwizardry", "spectral_dust", abom),
+                item("minecraft", "ghast_tear"));
+
+        ritual("test_witherite_ingot", t, stack("enigmaticlegacy", "witherite_ingot", 1, 0),
+                anyOre("ingotGold"), item("minecraft", "obsidian"), anyOre("ingotGold"),
+                item("minecraft", "obsidian"), item("ebwizardry", "magic_crystal", abom), item("minecraft", "obsidian"),
+                anyOre("ingotGold"), NONE, anyOre("ingotGold"));
+
+        ritual("test_glowing_gem", t, stack("xat", "glowing_gem", 1, 0),
+                item("xat", "glowing_ingot"), item("xat", "glowing_powder"), item("xat", "glowing_ingot"),
+                item("xat", "glowing_powder"), item("ebwizardry", "magic_crystal", abom), item("xat", "glowing_powder"),
+                item("xat", "glowing_ingot"), item("xat", "glowing_powder"), item("xat", "glowing_ingot"));
+
+        ritual("test_mana_crystal", t, stack("xat", "mana_crystal", 1, 0),
+                item("xat", "mana_candy"), item("ebwizardry", "spectral_dust", abom), item("xat", "mana_candy"),
+                item("ebwizardry", "spectral_dust", abom), item("xat", "glowing_gem"),
+                item("ebwizardry", "spectral_dust", abom),
+                item("xat", "mana_candy"), item("ebwizardry", "spectral_dust", abom), item("xat", "mana_candy"));
+
+        ritual("test_titan_spirit", t, stack("xat", "titan_spirit", 1, 0),
+                item("xat", "glowing_gem"), item("minecraft", "potato"), item("xat", "glowing_gem"),
+                item("ebwizardry", "spectral_dust", abom), item("xat", "mana_crystal"),
+                item("ebwizardry", "spectral_dust", abom),
+                item("xat", "glowing_gem"), item("minecraft", "beef"), item("xat", "glowing_gem"));
+
+        ritual("test_ender_dragon_scale", t, stack("bountifulbaubles", "enderdragonscale", 1, 0),
+                item("minecraft", "obsidian"), item("minecraft", "dragon_breath"), item("minecraft", "obsidian"),
+                item("minecraft", "dragon_breath"), item("ebwizardry", "magic_crystal", abom),
+                item("minecraft", "dragon_breath"),
+                item("minecraft", "obsidian"), item("minecraft", "dragon_breath"), item("minecraft", "obsidian"));
+
+        ritual("test_spectral_silt", t, stack("bountifulbaubles", "spectralsilt", 4, 0),
+                item("minecraft", "sand"), item("ebwizardry", "spectral_dust", abom), item("minecraft", "sand"),
+                item("ebwizardry", "spectral_dust", abom), item("minecraft", "glowstone_dust"),
+                item("ebwizardry", "spectral_dust", abom),
+                item("minecraft", "sand"), item("ebwizardry", "spectral_dust", abom), item("minecraft", "sand"));
+    }
+
+    /**
+     * True for the items of THIS mod whose crafting-table recipe gives way to the altar.
+     * {@code ModRecipes.removeRecipes} strips only {@code insanetweaks:}-namespaced recipes for these,
+     * so another mod's recipe for the same item (swparasites' living nucleus) is never touched.
+     * The golden book is deliberately absent: its table recipe stays and the altar is only cheaper.
+     */
+    public static boolean isAltarExclusive(Item item) {
+        if (item == null || item == Items.AIR) {
+            return false;
+        }
+        if (item == ModItems.MAGIC_NUCLEUS || item == ModItems.ADAPTATION_UPGRADE || item == ModItems.LIVING_WAND
+                || item == ModItems.LIVING_SPELLBLADE || item == ModItems.LIVING_AEGIS
+                || item == ModItems.LIVING_BATTLEMAGE_HELMET || item == ModItems.LIVING_BATTLEMAGE_CHESTPLATE
+                || item == ModItems.LIVING_BATTLEMAGE_LEGGINGS || item == ModItems.LIVING_BATTLEMAGE_BOOTS
+                || item == ModItems.LIVING_NUCLEUS) {
+            return true;
+        }
+        return ModBlocks.SANCTUARY_CORE != null && item == Item.getItemFromBlock(ModBlocks.SANCTUARY_CORE);
+    }
+
     // ------------------------------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------------------------------
+
+    /** srpextra:sturdy_armor_plates, or the SRP substitute ModRecipes uses without srpextra. */
+    private static Ingredient plates() {
+        return SRPEXTRA ? item("srpextra", "sturdy_armor_plates") : item("srparasites", "hive_scrap");
+    }
+
+    /** srpextra:tightening_buckle, or its SRP substitute. */
+    private static Ingredient buckle() {
+        return SRPEXTRA ? item("srpextra", "tightening_buckle") : item("srparasites", "infectious_blade_fragment");
+    }
+
+    /** srpextra:flexible_cloth, or its substitute. */
+    private static Ingredient cloth() {
+        return SRPEXTRA ? item("srpextra", "flexible_cloth") : item(InsaneTweaksMod.MODID, "rupter_solied");
+    }
+
+    /** Any of EB's eight elemental battlemage pieces of one slot, at any damage - as the JSON accepts. */
+    private static Ingredient battlemage(String slot) {
+        String[] suffixes = { "", "_fire", "_ice", "_lightning", "_necromancy", "_earth", "_sorcery", "_healing" };
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int i = 0; i < suffixes.length; i++) {
+            Item piece = safeItem("ebwizardry", "battlemage_" + slot + suffixes[i]);
+            if (piece != Items.AIR) {
+                stacks.add(new ItemStack(piece, 1, OreDictionary.WILDCARD_VALUE));
+            }
+        }
+        return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
+    }
+
+    /**
+     * Everything registered under any of the given ore names, snapshotted now. Records a miss when
+     * all of them are empty, so the ritual is dropped with a warn line instead of registering a cell
+     * nothing can ever fill - which {@link #ore} (dynamic, never empty-checked) would do silently.
+     */
+    private static Ingredient anyOre(String... oreNames) {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int i = 0; i < oreNames.length; i++) {
+            stacks.addAll(OreDictionary.getOres(oreNames[i], false));
+        }
+        if (stacks.isEmpty()) {
+            String id = "ore:" + String.join("|", oreNames);
+            MISSING_IDS.add(id);
+            PENDING_MISSING.add(id);
+            return Ingredient.EMPTY;
+        }
+        return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
+    }
+
+    /** First item under an ore name, as a result; EMPTY (and a recorded miss) when there is none. */
+    private static ItemStack firstOre(String oreName) {
+        List<ItemStack> ores = OreDictionary.getOres(oreName, false);
+        if (ores.isEmpty()) {
+            String id = "ore:" + oreName;
+            MISSING_IDS.add(id);
+            PENDING_MISSING.add(id);
+            return ItemStack.EMPTY;
+        }
+        ItemStack first = ores.get(0).copy();
+        if (first.getMetadata() == OreDictionary.WILDCARD_VALUE) {
+            first.setItemDamage(0);
+        }
+        first.setCount(1);
+        return first;
+    }
+
+    /** A result stack by registry name. Goes through {@link #safeItem}, so a missing id drops the ritual. */
+    private static ItemStack stack(String modid, String path, int count, int meta) {
+        Item found = safeItem(modid, path);
+        return found == Items.AIR ? ItemStack.EMPTY : new ItemStack(found, count, meta);
+    }
 
     /**
      * Builds and registers one ritual, unless an ingredient id turned out to be missing.
@@ -148,6 +411,9 @@ public final class ModRituals {
                     + "is not registered.", path);
             skipped++;
             return;
+        }
+        if (ModItems.isGearDisabled(result.getItem())) {
+            return; // gear.availability switched it off; its table recipe is already gone too
         }
         RitualRegistry.register(new RitualRecipe(
                 new ResourceLocation(InsaneTweaksMod.MODID, path), pattern, result, duration));

@@ -108,6 +108,14 @@ public class TweaksCategory {
     @Config.RequiresMcRestart
     public int ritualDurationTicks = 140;
 
+    @Config.Comment({"Altar rituals: register the EXPERIMENTAL altar routes to other mods' trinket parts",
+            "(Enigmatic Legacy, Trinkets and Baubles, Bountiful Baubles). Their own crafting recipes are",
+            "never touched; these only add a second way to make them. Values are test values.",
+            "The Codex hides its page for them when this is off."})
+    @Config.Name("Altar Test Recipes")
+    @Config.RequiresMcRestart
+    public boolean altarTestRecipes = true;
+
     // The Bauble Fruit acquisition loop (fragment drops, sapling, corrupted fruit) moved to the
     // dedicated 'baubleFruits' category in 1.4.18 — see BaubleFruitsCategory.
 }
