@@ -10,12 +10,18 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.api.RitualRecipe;
 import com.spege.insanetweaks.api.RitualRegistry;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.init.ModElements;
 
+import electroblob.wizardry.constants.Element;
 import electroblob.wizardry.registry.WizardryBlocks;
 import electroblob.wizardry.registry.WizardrySounds;
 import electroblob.wizardry.tileentity.TileEntityImbuementAltar;
+import electroblob.wizardry.tileentity.TileEntityReceptacle;
+import net.minecraft.block.BlockTorch;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
@@ -46,6 +52,10 @@ public final class RitualAltarManager {
 
     /** How often the swirl particles are emitted while a ritual runs. */
     private static final int PARTICLE_INTERVAL = 4;
+
+    /** The four receptacle sides, in the N, E, S, W order {@link RitualReceptacles} reads them. */
+    private static final EnumFacing[] RECEPTACLE_SIDES = {
+            EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST };
 
     /** Per-dimension running rituals, keyed by the centre altar. */
     private static final Map<Integer, Map<BlockPos, ActiveRitual>> ACTIVE = new HashMap<>();
@@ -150,6 +160,12 @@ public final class RitualAltarManager {
         if (match == null) {
             return;
         }
+        if (!receptaclesLit(world, centre)) {
+            // The arrangement IS a recipe, so say something: silence here would read as "wrong
+            // recipe" when the fault is the four receptacles around it.
+            abort(world, centre);
+            return;
+        }
 
         if (active == null) {
             active = new HashMap<>();
@@ -197,6 +213,45 @@ public final class RitualAltarManager {
         return grid;
     }
 
+    private static boolean receptaclesLit(World world, BlockPos centre) {
+        int abomination = ModElements.EXTENDED && ModElements.ABOMINATION != null
+                ? ModElements.ABOMINATION.ordinal() : -1;
+        return RitualReceptacles.lit(readReceptacles(world, centre), abomination);
+    }
+
+    /**
+     * Reads the four receptacles, in N, E, S, W order, as element ordinals.
+     *
+     * <p>Each one sits two blocks out from the centre - on the outer face of that side's middle altar -
+     * and must point away from the structure: {@code FACING == side}, the same test EB applies to the
+     * four receptacles of a single altar. One hung on any other face, or pointing inward, does not
+     * count.
+     *
+     * @return the ordinals ({@link RitualReceptacles#DARK} for an empty receptacle), or null when any
+     *         of the four positions is not a correctly hung receptacle
+     */
+    private static int[] readReceptacles(World world, BlockPos centre) {
+        int[] ordinals = new int[RECEPTACLE_SIDES.length];
+        for (int i = 0; i < RECEPTACLE_SIDES.length; i++) {
+            EnumFacing side = RECEPTACLE_SIDES[i];
+            BlockPos pos = centre.offset(side, 2);
+            if (!world.isBlockLoaded(pos)) {
+                return null;
+            }
+            IBlockState state = world.getBlockState(pos);
+            if (state.getBlock() != WizardryBlocks.receptacle || state.getValue(BlockTorch.FACING) != side) {
+                return null;
+            }
+            TileEntity te = world.getTileEntity(pos);
+            if (!(te instanceof TileEntityReceptacle)) {
+                return null;
+            }
+            Element element = ((TileEntityReceptacle) te).getElement();
+            ordinals[i] = element == null ? RitualReceptacles.DARK : element.ordinal();
+        }
+        return ordinals;
+    }
+
     // ------------------------------------------------------------------------------------------
     // Playback
     // ------------------------------------------------------------------------------------------
@@ -214,6 +269,10 @@ public final class RitualAltarManager {
             return false;
         }
         ritual.rotation = rotation;
+        if (!receptaclesLit(world, centre)) {
+            abort(world, centre); // a receptacle was emptied or knocked off mid-ritual
+            return false;
+        }
 
         ritual.ticks++;
 
@@ -265,6 +324,16 @@ public final class RitualAltarManager {
             TileEntityImbuementAltar altar = (TileEntityImbuementAltar) centreTe;
             altar.setStack(ritual.recipe.getResult());
             altar.markDirty();
+        }
+
+        // The four receptacles burn out, as EB's own altar empties its receptacles
+        // (consumeReceptacleContents): every ritual costs four dust on top of its pattern.
+        for (int i = 0; i < RECEPTACLE_SIDES.length; i++) {
+            TileEntity te = world.getTileEntity(centre.offset(RECEPTACLE_SIDES[i], 2));
+            if (te instanceof TileEntityReceptacle) {
+                ((TileEntityReceptacle) te).setElement(null);
+                te.markDirty();
+            }
         }
 
         world.playSound(null, centre, WizardrySounds.BLOCK_IMBUEMENT_ALTAR_IMBUE, SoundCategory.BLOCKS,

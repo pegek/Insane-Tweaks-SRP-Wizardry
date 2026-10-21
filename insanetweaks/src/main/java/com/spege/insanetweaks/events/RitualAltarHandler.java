@@ -4,6 +4,8 @@ import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.ritual.RitualAltarManager;
 
 import electroblob.wizardry.registry.WizardryBlocks;
+import net.minecraft.block.BlockTorch;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -22,9 +24,12 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * (break). Nothing else can reach the altar's inventory, because EB's tile entity implements no
  * capability - so this is the complete set, not a sample of it.
  *
- * <p>Each handler filters on the block being an imbuement altar BEFORE marking anything. That filter
- * is the whole reason this is cheap: without it every right-click anywhere in the world would push a
- * position into the dirty set.
+ * <p>The same three events on a receptacle matter too: lighting one, emptying it, hanging or knocking
+ * it off changes whether the structure may run.
+ *
+ * <p>Each handler filters on the block being an imbuement altar or a receptacle BEFORE marking
+ * anything. That filter is the whole reason this is cheap: without it every right-click anywhere in
+ * the world would push a position into the dirty set.
  */
 public class RitualAltarHandler {
 
@@ -46,10 +51,7 @@ public class RitualAltarHandler {
      */
     @SubscribeEvent
     public void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getPlacedBlock().getBlock() != WizardryBlocks.imbuement_altar) {
-            return;
-        }
-        RitualAltarManager.markDirty(event.getWorld(), event.getPos());
+        markState(event.getWorld(), event.getPos(), event.getPlacedBlock());
     }
 
     @SubscribeEvent
@@ -77,9 +79,22 @@ public class RitualAltarHandler {
         if (world == null || world.isRemote || pos == null) {
             return;
         }
-        if (world.getBlockState(pos).getBlock() != WizardryBlocks.imbuement_altar) {
+        markState(world, pos, world.getBlockState(pos));
+    }
+
+    /**
+     * An altar marks itself. A receptacle marks the altar it hangs on instead: it sits two blocks out
+     * from the centre, outside the manager's one-block scan, while the side's middle altar it is
+     * attached to is inside it.
+     */
+    private static void markState(World world, BlockPos pos, IBlockState state) {
+        if (world == null || world.isRemote) {
             return;
         }
-        RitualAltarManager.markDirty(world, pos);
+        if (state.getBlock() == WizardryBlocks.imbuement_altar) {
+            RitualAltarManager.markDirty(world, pos);
+        } else if (state.getBlock() == WizardryBlocks.receptacle) {
+            RitualAltarManager.markDirty(world, pos.offset(state.getValue(BlockTorch.FACING).getOpposite()));
+        }
     }
 }
