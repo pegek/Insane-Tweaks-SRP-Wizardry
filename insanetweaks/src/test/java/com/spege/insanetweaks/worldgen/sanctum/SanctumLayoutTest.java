@@ -389,6 +389,76 @@ public class SanctumLayoutTest {
     }
 
     @Test
+    public void chamberHasNoFrame() {
+        for (long s = 0; s < 40; s++) {
+            SanctumLayout l = layout(s);
+            SanctumBox c = l.rooms.get(0).outer;
+            for (int x = c.minX; x <= c.maxX; x++) {
+                for (int y = c.minY; y <= c.maxY; y++) {
+                    for (int z = c.minZ; z <= c.maxZ; z++) {
+                        assertEquals(SanctumLayout.FRAME_NONE, l.frameAt(x, y, z));
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void everyNonChamberCornerIsACornerAndEdgesAreEdges() {
+        for (long s = 0; s < 100; s++) {
+            SanctumLayout l = layout(s);
+            SanctumBox chamber = l.rooms.get(0).outer;
+            for (SanctumLayout.Room r : l.rooms) {
+                if (r.type == SanctumLayout.RoomType.CHAMBER) {
+                    continue;
+                }
+                SanctumBox o = r.outer;
+                for (int x : new int[] { o.minX, o.maxX }) {
+                    for (int y : new int[] { o.minY, o.maxY }) {
+                        for (int z : new int[] { o.minZ, o.maxZ }) {
+                            if (!chamber.contains(x, y, z)) {
+                                assertEquals("seed " + s + " " + r.type, SanctumLayout.FRAME_CORNER, l.frameAt(x, y, z));
+                            }
+                        }
+                    }
+                }
+                int mx = (o.minX + o.maxX) / 2;
+                if (!chamber.contains(mx, o.minY, o.minZ)) {
+                    assertTrue(l.frameAt(mx, o.minY, o.minZ) != SanctumLayout.FRAME_NONE);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void faceCentresAreNotFramedByTheirOwnRoom() {
+        SanctumLayout l = layout(3L);
+        for (SanctumLayout.Room r : l.rooms) {
+            if (r.type == SanctumLayout.RoomType.CHAMBER) {
+                continue;
+            }
+            SanctumBox o = r.outer;
+            int mx = (o.minX + o.maxX) / 2;
+            int my = (o.minY + o.maxY) / 2;
+            int mz = (o.minZ + o.maxZ) / 2;
+            // Centre of the floor face: on exactly one boundary plane of this room.
+            boolean onOtherRoomEdge = false;
+            for (SanctumLayout.Room q : l.rooms) {
+                if (q != r) {
+                    SanctumBox b = q.outer;
+                    int planes = (mx == b.minX || mx == b.maxX ? 1 : 0) + (o.minY == b.minY || o.minY == b.maxY ? 1 : 0)
+                            + (mz == b.minZ || mz == b.maxZ ? 1 : 0);
+                    onOtherRoomEdge |= b.contains(mx, o.minY, mz) && planes >= 2;
+                }
+            }
+            if (!onOtherRoomEdge) {
+                assertEquals(r.type + " floor centre", SanctumLayout.FRAME_NONE, l.frameAt(mx, o.minY, mz));
+            }
+            assertEquals(SanctumLayout.FRAME_NONE, l.frameAt(mx, my, mz));
+        }
+    }
+
+    @Test
     public void stairDoorIsFourHigh() {
         for (long s = 0; s < 50; s++) {
             SanctumLayout l = layout(s);

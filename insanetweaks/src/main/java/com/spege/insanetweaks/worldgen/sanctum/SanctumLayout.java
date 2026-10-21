@@ -76,6 +76,10 @@ public final class SanctumLayout {
     public static final int DECOR_PAINTING = 5;
     public static final int DECOR_SKULL = 6;
 
+    public static final int FRAME_NONE = 0;
+    public static final int FRAME_EDGE = 1;
+    public static final int FRAME_CORNER = 2;
+
     public static final int CHEST_MAIN = 0;
     public static final int CHEST_LIBRARY = 1;
     public static final int CHEST_FORGE = 2;
@@ -268,6 +272,33 @@ public final class SanctumLayout {
      * The arcane-wall hull: one layer around every room (each outer box grown by one), never inside
      * any room's outer box, and open in the shaft column above the vestibule - the one way in.
      */
+    /**
+     * Runestone frame (spec 16.2): a shell cell on two boundary planes of a non-chamber room is an
+     * edge, on three a corner. Nothing inside the ritual chamber's outer box is framed - it stays
+     * all sealed stone.
+     */
+    public int frameAt(int x, int y, int z) {
+        if (this.rooms.get(0).outer.contains(x, y, z)) {
+            return FRAME_NONE;
+        }
+        int best = FRAME_NONE;
+        for (Room room : this.rooms) {
+            SanctumBox o = room.outer;
+            if (room.type == RoomType.CHAMBER || !o.contains(x, y, z)) {
+                continue;
+            }
+            int planes = (x == o.minX || x == o.maxX ? 1 : 0) + (y == o.minY || y == o.maxY ? 1 : 0)
+                    + (z == o.minZ || z == o.maxZ ? 1 : 0);
+            if (planes >= 3) {
+                return FRAME_CORNER;
+            }
+            if (planes == 2) {
+                best = FRAME_EDGE;
+            }
+        }
+        return best;
+    }
+
     public boolean isHull(int x, int y, int z) {
         if (Math.abs(x - this.shaftX) <= 1 && Math.abs(z - this.shaftZ) <= 1 && y > this.wardY) {
             return false;
