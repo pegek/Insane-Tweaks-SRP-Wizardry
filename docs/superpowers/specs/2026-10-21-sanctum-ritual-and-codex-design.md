@@ -212,6 +212,10 @@ strongest fruit, the one granting the Non-Euclidean Cube slot, designed next ses
   `gear.availability`) to also remove, when `tweaks.altarExclusiveRecipes` is on, every recipe that
   **is registered under the `insanetweaks` namespace** and whose output is one of the §7.1 results.
 - The namespace filter is what keeps other mods' recipes (e.g. `swparasites:living_nucleus`) safe.
+- *Assistant's call:* exclusivity only applies when a ritual can actually happen. The recipes are
+  removed only if `enableAltarRituals`, `ModElements.EXTENDED` and `arcaneSanctum.enabled` are all
+  true. Otherwise the table recipes stay, so a pack without sanctums or without the Abomination element
+  is not left with uncraftable Living gear.
 - This covers both the JSON recipes and the `*_fallback*` Java recipes, which produce the same
   outputs. The JSON files and the Java code stay in the repository.
 - `golden_book` is **not** in the set.
@@ -268,7 +272,9 @@ The assistant drafts all text in English; the user edits it.
 **Acquisition**
 - **Sanctum:** the parallel session replaces the codex lectern with an `ebwizardry:oak_bookshelf` and
   calls `SanctumCodex.fill(World, BlockPos)`, which puts one Codex in the shelf's first empty slot.
-  One per sanctum. EBW's lectern turned out to hold no item at all (`TileEntityLectern` has no slot;
+  One per sanctum. *Assistant's call:* the shelf is **not** under the Arcane Lock (the same as the
+  earlier decision for the lectern, and the same as the free hint chest), so the Codex can be read
+  before the sanctum is cleared. EBW's lectern turned out to hold no item at all (`TileEntityLectern` has no slot;
   right-click opens EBW's spell browser for books in nearby shelves), which is why it is replaced.
 - **EBW shelves refuse unknown items.** `TileEntityBookshelf.isItemValidForSlot` only accepts
   `ContainerBookshelf.isBook`. At init, when Patchouli is loaded, call
@@ -321,3 +327,9 @@ The four salvage fields are removed (§4).
 - Every test-recipe swap in §7.3.
 - One config toggle each for disabling table recipes and for test recipes (§12).
 - The placeholder book name.
+- Table recipes stay when no ritual is possible (§8).
+- The Codex shelf is not locked (§10).
+- Sanctum records written before bounds were stored (pre-1.27.0, test worlds only) cannot host a
+  ritual; no recovery.
+- The starter chapter list for Mechanics (Abomination magic, Living and Sentient gear, Adaptation
+  Upgrade, Bauble Fruits) and Notable content (Sanctuary, Sunken Arcane Sanctum).
