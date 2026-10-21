@@ -285,6 +285,21 @@ public class ModRecipes {
                             new ItemStack(net.minecraft.init.Items.BOOK),
                             new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
                             new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta)));
+
+            // The Insane Codex, for anyone who never found (or lost) the sanctum's copy. Only with
+            // Patchouli: without it CodexBook.stack() is EMPTY and there is no book to open.
+            ItemStack codex = com.spege.insanetweaks.integration.patchouli.CodexBook.stack();
+            if (Loader.isModLoaded("patchouli") && !codex.isEmpty()) {
+                registerFallback(event, "codex",
+                        new ShapelessOreRecipe(
+                                new ResourceLocation(InsaneTweaksMod.MODID, "codex"),
+                                codex,
+                                new ItemStack(net.minecraft.init.Items.WRITABLE_BOOK),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta)));
+            }
         } else {
             // Say what the skip cost. logMissingSummary() cannot: nothing above ran, so no id was
             // recorded and skippedRecipes stays 0, and the player would meet this as two recipes

@@ -340,6 +340,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         // verifier does not resolve while linking this @Mod class.
         if (net.minecraftforge.fml.common.Loader.isModLoaded("patchouli")) {
             com.spege.insanetweaks.integration.patchouli.PatchouliFlags.apply();
+            // EB's bookshelf takes only items on its own "book" list (ContainerBookshelf.isBook), and
+            // Patchouli's guide book is not on it - without this the sanctum's Codex shelf, and any
+            // player, could never put the Codex on a shelf. The list is only ever appended to.
+            net.minecraft.item.Item guideBook = com.spege.insanetweaks.integration.patchouli.CodexBook.guideBook();
+            if (guideBook != null) {
+                electroblob.wizardry.inventory.ContainerBookshelf.registerBookItem(guideBook);
+            }
         }
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
