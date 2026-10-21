@@ -53,10 +53,13 @@ public final class SanctumPlacement {
         return false;
     }
 
-    /** The highest y the entrance shaft may reach in this dimension (Surface Cap), or no limit. */
-    public static int surfaceCap(World world) {
+    /**
+     * The lowest y a street can be at in this dimension (Street Level), or Integer.MIN_VALUE when
+     * the dimension has no buildings over the ground and the shaft simply ends at the surface.
+     */
+    public static int streetLevel(World world) {
         int dim = world.provider.getDimension();
-        for (String line : cfg().surfaceCap) {
+        for (String line : cfg().streetLevel) {
             String[] parts = line.trim().split("=");
             if (parts.length != 2) {
                 continue;
@@ -69,19 +72,24 @@ public final class SanctumPlacement {
                 // malformed line: ignored
             }
         }
-        return Integer.MAX_VALUE;
+        return Integer.MIN_VALUE;
     }
 
     /** The start chunk of a region, or null. */
     public static int[] candidate(World world, int regionX, int regionZ) {
-        return SanctumRegions.candidate(world.getSeed(), regionX, regionZ, cfg().regionSize, MARGIN, cfg().chance);
+        return SanctumRegions.candidate(seed(world), regionX, regionZ, cfg().regionSize, MARGIN, cfg().chance);
+    }
+
+    /** The placement seed of this world's dimension (SanctumRegions.dimensionSeed). */
+    public static long seed(World world) {
+        return SanctumRegions.dimensionSeed(world.getSeed(), world.provider.getDimension());
     }
 
     public static synchronized SanctumLayout layout(World world, int chunkX, int chunkZ) {
         String key = world.provider.getDimension() + ":" + chunkX + ":" + chunkZ + ":" + world.getSeed();
         SanctumLayout l = CACHE.get(key);
         if (l == null) {
-            l = SanctumLayout.generate(SanctumRegions.layoutSeed(world.getSeed(), chunkX, chunkZ), chunkX * 16 + 8,
+            l = SanctumLayout.generate(SanctumRegions.layoutSeed(seed(world), chunkX, chunkZ), chunkX * 16 + 8,
                     chunkZ * 16 + 8, cfg().floorYMin, cfg().floorYMax);
             CACHE.put(key, l);
         }

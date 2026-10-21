@@ -27,7 +27,7 @@ public final class SanctumDungeonGuard {
                 || !ModConfig.arcaneSanctum.blockForeignDungeons || !SanctumPlacement.dimensionAllowed(world)) {
             return false;
         }
-        int[] start = SanctumRegions.startNear(world.getSeed(), chunkX, chunkZ, RADIUS,
+        int[] start = SanctumRegions.startNear(SanctumPlacement.seed(world), chunkX, chunkZ, RADIUS,
                 ModConfig.arcaneSanctum.regionSize, SanctumPlacement.MARGIN, ModConfig.arcaneSanctum.chance);
         if (start == null) {
             return false;

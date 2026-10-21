@@ -494,7 +494,17 @@ public final class SanctumBuilder {
             setIn(world, clip, l.ladderSupport[0], y, l.ladderSupport[2],
                     p.wall(l.seed, l.ladderSupport[0], y, l.ladderSupport[2]));
         }
-        int cap = SanctumPlacement.surfaceCap(world);
+        // With buildings over the ground (Street Level set), one top for the whole 3x3 shaft: the
+        // first open floor above the street level in the centre column - a street or a ground floor.
+        int street = SanctumPlacement.streetLevel(world);
+        int shaftTop = Integer.MIN_VALUE;
+        int centreMeasured = Integer.MIN_VALUE;
+        if (street != Integer.MIN_VALUE && clip.contains(sx, l.wardY, sz)) {
+            centreMeasured = world.getTopSolidOrLiquidBlock(new BlockPos(sx, 0, sz)).getY() - 1;
+            final World w = world;
+            shaftTop = SanctumEntrance.topY(Math.max(street, l.wardY + 1), centreMeasured,
+                    y -> w.getBlockState(new BlockPos(sx, y, sz)).getMaterial().blocksMovement());
+        }
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 int x = sx + dx;
@@ -503,11 +513,11 @@ public final class SanctumBuilder {
                     continue;
                 }
                 int measured = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z)).getY() - 1;
-                // Under a building (Lost Cities) the shaft ends at street level, with no ruin on top.
-                int surface = Math.min(measured, cap);
+                int surface = shaftTop == Integer.MIN_VALUE ? measured : shaftTop;
                 if (Math.abs(dx) == 2 || Math.abs(dz) == 2) {
-                    if (measured <= cap) {
-                        ruinCell(world, l, x, z, surface, p);
+                    // Something stands over the entrance (a building): no ruin on its roof.
+                    if (shaftTop == Integer.MIN_VALUE || shaftTop >= centreMeasured) {
+                        ruinCell(world, l, x, z, measured, p);
                     }
                 } else if (dx == 0 && dz == 0) {
                     for (int y = l.floorY; y <= Math.max(surface, l.wardY + 1); y++) {

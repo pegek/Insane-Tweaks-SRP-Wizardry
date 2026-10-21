@@ -10,15 +10,17 @@ public class ArcaneSanctumCategory {
     public boolean enabled = true;
 
     @Config.Comment({ "Dimensions sanctums generate in. 150 is always refused (no-SRP dimension); the Nether (-1)",
-            "and the End (1) are refused until they have placement rules of their own. Each dimension",
-            "has its own palette and runestone element (111: obsidian and earth)." })
+            "and the End (1) are refused until they have placement rules of their own. 111 gets the",
+            "obsidian palette and earth runestone; any other listed dimension uses the Overworld ones." })
     @Config.Name("Dimensions")
     public int[] dimensions = { 0, 111 };
 
-    @Config.Comment({ "Highest block the entrance shaft may reach, as 'dimension=y'. Where buildings stand over",
-            "the shaft (Lost Cities), it ends at street level and the surface ruin is left out." })
-    @Config.Name("Surface Cap")
-    public String[] surfaceCap = { "111=75" };
+    @Config.Comment({ "Lowest street level, as 'dimension=y', for dimensions with buildings over the ground",
+            "(Lost Cities: its ground level). There the entrance shaft ends on the first floor at or above",
+            "this y with two blocks of headroom - a street or a building's ground floor - instead of on a",
+            "roof, and the surface ruin is left out when something stands over it. Read live." })
+    @Config.Name("Street Level")
+    public String[] streetLevel = { "111=71" };
 
     @Config.Comment("Region size in chunks. Each region holds at most one sanctum.")
     @Config.Name("Region Size")

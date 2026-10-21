@@ -1008,10 +1008,18 @@ The surface ruin uses the wall mix of its palette.
   so the layout and floor range are unchanged.
 - **Street-level entrance (option a, user 2026-10-21).** Lost Cities builds its buildings before our
   populate, so the measured "surface" is a roof.
-  - In dimensions listed in the config `Surface Cap` (default `111=75`, the street level of the
-    pack's Lost Cities profile), the shaft, its casing and its ward stop at the cap.
-  - The entrance is then a hole in the street or in a building's ground floor.
-  - Where the measured surface is above the cap (a building), the surface ruin is skipped.
+  - In dimensions listed in the config `Street Level` (default `111=71`, the ground level of the
+    pack's Lost Cities profile), the shaft ends on the **first floor at or above that y with two
+    blocks of headroom**, found in the centre column. Lost Cities streets sit at 71, 77, 83 or 89 by
+    city level.
+  - The entrance is a hole in the street or in a building's ground floor.
+  - One top is used for the whole 3×3 shaft, so the ladder always has its support.
+  - When something stands over that floor (a building), the surface ruin is skipped.
+  - This replaces the first build's absolute cap of 75, which buried or walled in the entrance
+    (final review).
+- **Placement seed per dimension.** Placement in other dimensions uses the world seed salted with
+  the dimension number; the Overworld is unchanged. Otherwise every dim-111 sanctum would be a copy
+  of the Overworld one at the same x/z, with the same rooms and loot.
 - **Pre-1.29.0 sanctums get no frame (assistant).** A sanctum whose record has no `"Element"` gets
   no frame and no accents, in any chunk, so it never ends up half framed. Same rule as the hull.
 - **The Nether (-1) and the End (1) are refused (assistant).** They are refused like dim 150, even

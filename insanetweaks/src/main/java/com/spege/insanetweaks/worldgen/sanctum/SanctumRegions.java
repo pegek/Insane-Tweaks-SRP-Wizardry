@@ -30,6 +30,15 @@ public final class SanctumRegions {
         return roll < chance ? new int[] { cx, cz } : null;
     }
 
+    /**
+     * The seed sanctum placement uses in a dimension: the world seed in the Overworld (unchanged),
+     * salted elsewhere - otherwise every dimension would get a copy of the Overworld's sanctums at
+     * the same coordinates, with the same rooms and the same loot.
+     */
+    public static long dimensionSeed(long worldSeed, int dimension) {
+        return dimension == 0 ? worldSeed : worldSeed ^ (dimension * 0x9E3779B97F4A7C15L);
+    }
+
     /** A sanctum start within {@code radius} chunks (each axis) of the chunk, or null. */
     public static int[] startNear(long worldSeed, int chunkX, int chunkZ, int radius, int size, int margin,
             double chance) {
