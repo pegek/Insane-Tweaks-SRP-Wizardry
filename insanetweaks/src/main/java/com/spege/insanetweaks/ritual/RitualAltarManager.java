@@ -11,6 +11,7 @@ import com.spege.insanetweaks.api.RitualRecipe;
 import com.spege.insanetweaks.api.RitualRegistry;
 import com.spege.insanetweaks.config.ModConfig;
 import com.spege.insanetweaks.init.ModElements;
+import com.spege.insanetweaks.worldgen.sanctum.SanctumWorldData;
 
 import electroblob.wizardry.constants.Element;
 import electroblob.wizardry.registry.WizardryBlocks;
@@ -160,9 +161,9 @@ public final class RitualAltarManager {
         if (match == null) {
             return;
         }
-        if (!receptaclesLit(world, centre)) {
+        if (!inConqueredSanctum(world, centre) || !receptaclesLit(world, centre)) {
             // The arrangement IS a recipe, so say something: silence here would read as "wrong
-            // recipe" when the fault is the four receptacles around it.
+            // recipe" when the fault is the place (no conquered sanctum) or the four receptacles.
             abort(world, centre);
             return;
         }
@@ -211,6 +212,22 @@ public final class RitualAltarManager {
             }
         }
         return grid;
+    }
+
+    /**
+     * The exclusivity gate: the ritual is the reward for conquering a Sunken Arcane Sanctum. Checked
+     * once, at start - a cleared sanctum never becomes uncleared again.
+     */
+    private static boolean inConqueredSanctum(World world, BlockPos centre) {
+        SanctumWorldData data = SanctumWorldData.get(world);
+        // sanctumAt FIRST: isCleared answers true for an id it does not know.
+        Long id = data.sanctumAt(centre.getX(), centre.getZ());
+        if (id == null) {
+            return false;
+        }
+        long key = id.longValue();
+        return RitualSanctumGate.allows(true, data.isCleared(key), data.dais(key), data.hullY(key),
+                centre.getX(), centre.getY(), centre.getZ());
     }
 
     private static boolean receptaclesLit(World world, BlockPos centre) {
