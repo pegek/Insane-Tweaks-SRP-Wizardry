@@ -43,6 +43,8 @@ public class SanctumWorldData extends WorldSavedData {
         int[] hullY;
         /** Chunks whose hull has been dissolved since the sanctum was cleared. */
         final Set<Long> swept = new HashSet<Long>();
+        /** The sanctum's EBW element (variant); null for records written before 1.29.0. */
+        String element;
     }
 
     public SanctumWorldData() {
@@ -74,7 +76,7 @@ public class SanctumWorldData extends WorldSavedData {
 
     /** Records a sanctum once, with its horizontal footprint; later calls for the same id are ignored. */
     public void register(long id, Collection<Long> anchors, Collection<Long> containers, int minX, int minZ, int maxX,
-            int maxZ, int hullMinY, int hullMaxY) {
+            int maxZ, int hullMinY, int hullMaxY, String element) {
         Long key = Long.valueOf(id);
         if (this.records.containsKey(key)) {
             return;
@@ -85,8 +87,15 @@ public class SanctumWorldData extends WorldSavedData {
         r.cleared = r.anchors.isEmpty();
         r.bounds = new int[] { minX, minZ, maxX, maxZ };
         r.hullY = new int[] { hullMinY, hullMaxY };
+        r.element = element;
         this.records.put(key, r);
         markDirty();
+    }
+
+    /** The sanctum's element (variant), or null for a record from before 1.29.0. */
+    public String element(long id) {
+        Record r = this.records.get(Long.valueOf(id));
+        return r == null ? null : r.element;
     }
 
     /** minX, minZ, maxX, maxZ, hullMinY, hullMaxY of a sanctum with a hull, or null. */
@@ -195,6 +204,7 @@ public class SanctumWorldData extends WorldSavedData {
             int[] hullY = c.getIntArray("HullY");
             r.hullY = hullY.length == 2 ? hullY : null;
             r.swept.addAll(longs(c.getTagList("Swept", TAG_LONG)));
+            r.element = c.hasKey("Element") ? c.getString("Element") : null;
             this.records.put(Long.valueOf(c.getLong("Id")), r);
         }
     }
@@ -223,6 +233,9 @@ public class SanctumWorldData extends WorldSavedData {
             }
             if (!e.getValue().swept.isEmpty()) {
                 c.setTag("Swept", toList(e.getValue().swept));
+            }
+            if (e.getValue().element != null) {
+                c.setString("Element", e.getValue().element);
             }
             sanctums.appendTag(c);
         }

@@ -75,8 +75,10 @@ public final class SanctumBuilder {
     }
 
     public static void build(World world, SanctumLayout l, SanctumBox clip, long sanctumId) {
-        Palette p = new Palette();
         SanctumWorldData data = SanctumWorldData.get(world);
+        // The element comes from the record: a sanctum recorded before 1.29.0 has none, and gets no
+        // runestone frame in any chunk rather than half of one.
+        Palette p = new Palette(world.provider.getDimension(), data.element(sanctumId));
         if (SanctumHull.shouldBuild(data.box(sanctumId) != null, data.isCleared(sanctumId))) {
             hull(world, l, clip);
         }
@@ -136,11 +138,7 @@ public final class SanctumBuilder {
         for (int x = c.minX; x <= c.maxX; x++) {
             for (int y = c.minY; y <= c.maxY; y++) {
                 for (int z = c.minZ; z <= c.maxZ; z++) {
-                    IBlockState wall = p.wall(l.seed, x, y, z);
-                    if (SanctumNoise.at(l.seed, x, y, z, 9) < 0.015D) {
-                        wall = p.infested(wall);
-                    }
-                    world.setBlockState(new BlockPos(x, y, z), wall, FLAGS);
+                    world.setBlockState(new BlockPos(x, y, z), p.shell(l, x, y, z), FLAGS);
                 }
             }
         }
@@ -192,8 +190,7 @@ public final class SanctumBuilder {
                 setIn(world, clip, pillar[0], y, pillar[1], p.sealed());
             }
         }
-        IBlockState stair = Blocks.STONE_BRICK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING,
-                facing(l.stairFacing));
+        IBlockState stair = withFacing(p.stairs(), facing(l.stairFacing));
         for (int[] s : l.stairs) {
             setIn(world, clip, s[0], s[1], s[2], stair);
         }
@@ -497,6 +494,7 @@ public final class SanctumBuilder {
             setIn(world, clip, l.ladderSupport[0], y, l.ladderSupport[2],
                     p.wall(l.seed, l.ladderSupport[0], y, l.ladderSupport[2]));
         }
+        int cap = SanctumPlacement.surfaceCap(world);
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 int x = sx + dx;
@@ -504,9 +502,13 @@ public final class SanctumBuilder {
                 if (!clip.contains(x, l.wardY, z)) {
                     continue;
                 }
-                int surface = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z)).getY() - 1;
+                int measured = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z)).getY() - 1;
+                // Under a building (Lost Cities) the shaft ends at street level, with no ruin on top.
+                int surface = Math.min(measured, cap);
                 if (Math.abs(dx) == 2 || Math.abs(dz) == 2) {
-                    ruinCell(world, l, x, z, surface, p);
+                    if (measured <= cap) {
+                        ruinCell(world, l, x, z, surface, p);
+                    }
                 } else if (dx == 0 && dz == 0) {
                     for (int y = l.floorY; y <= Math.max(surface, l.wardY + 1); y++) {
                         set(world, x, y, z, y == l.wardY ? ModBlocks.ARCANE_WARD.getDefaultState() : ladder);
@@ -624,8 +626,16 @@ public final class SanctumBuilder {
         }
     }
 
-    /** Block choices, with id lookups for ASC/EBW blocks and a stone-brick fallback. */
+    /**
+     * Block choices: the dimension's palette (SanctumPalettes) with an Overworld fallback for a
+     * missing mod, the sanctum element's runestone frame, and id lookups for ASC/EBW blocks.
+     */
     private static final class Palette {
+        private final int dimension;
+        /** Runestone and pedestal of the sanctum's element; null without an element (no frame). */
+        private final IBlockState runestone;
+        private final IBlockState pedestal;
+        private final java.util.Map<String, IBlockState> resolved = new java.util.HashMap<String, IBlockState>();
         private final IBlockState plain = Blocks.STONEBRICK.getDefaultState();
         private final IBlockState mossy = plain.withProperty(BlockStoneBrick.VARIANT, BlockStoneBrick.EnumType.MOSSY);
         private final IBlockState cracked = plain.withProperty(BlockStoneBrick.VARIANT, BlockStoneBrick.EnumType.CRACKED);
@@ -634,9 +644,80 @@ public final class SanctumBuilder {
         private final IBlockState sealed = lookup("ancientspellcraft:sealed_stone");
         private final IBlockState button = lookup("ancientspellcraft:unseal_button");
 
+        Palette(int dimension, String element) {
+            this.dimension = dimension;
+            if (element == null) {
+                this.runestone = null;
+                this.pedestal = null;
+            } else {
+                electroblob.wizardry.constants.Element e = electroblob.wizardry.constants.Element.fromName(element,
+                        electroblob.wizardry.constants.Element.SORCERY);
+                this.runestone = WizardryBlocks.runestone.getDefaultState()
+                        .withProperty(electroblob.wizardry.block.BlockRunestone.ELEMENT, e);
+                this.pedestal = WizardryBlocks.runestone_pedestal.getDefaultState()
+                        .withProperty(electroblob.wizardry.block.BlockPedestal.ELEMENT, e)
+                        .withProperty(electroblob.wizardry.block.BlockPedestal.NATURAL, Boolean.FALSE);
+            }
+        }
+
+        /**
+         * A shell cell of a non-chamber room: runestone on the edges, pedestals mixed with runestone
+         * on the corners, a few runestone accents, otherwise the palette's wall (with silverfish
+         * only where the palette is stone brick).
+         */
+        IBlockState shell(SanctumLayout l, int x, int y, int z) {
+            if (this.runestone != null) {
+                int frame = l.frameAt(x, y, z);
+                if (frame == SanctumLayout.FRAME_CORNER) {
+                    return SanctumNoise.at(l.seed, x, y, z, 14) < 0.6D ? this.pedestal : this.runestone;
+                }
+                if (frame == SanctumLayout.FRAME_EDGE || SanctumNoise.at(l.seed, x, y, z, 15) < 0.04D) {
+                    return this.runestone;
+                }
+            }
+            IBlockState wall = wall(l.seed, x, y, z);
+            if (SanctumPalettes.silverfish(this.dimension) && SanctumNoise.at(l.seed, x, y, z, 9) < 0.015D) {
+                wall = infested(wall);
+            }
+            return wall;
+        }
+
         IBlockState wall(long seed, int x, int y, int z) {
             double n = SanctumNoise.at(seed, x, y, z, 3);
-            return n < 0.6D ? this.plain : n < 0.85D ? this.mossy : this.cracked;
+            return resolve(SanctumPalettes.wall(this.dimension, n), SanctumPalettes.wall(0, n));
+        }
+
+        IBlockState stairs() {
+            return resolve(SanctumPalettes.stairs(this.dimension), SanctumPalettes.stairs(0));
+        }
+
+        /** "modid:name" or "modid:name:meta"; a missing block falls back, with one warning per id. */
+        @SuppressWarnings("deprecation")
+        private IBlockState resolve(String id, String fallback) {
+            IBlockState cached = this.resolved.get(id);
+            if (cached != null) {
+                return cached;
+            }
+            String name = id;
+            int meta = -1;
+            int last = id.lastIndexOf(':');
+            if (last > id.indexOf(':')) {
+                name = id.substring(0, last);
+                meta = Integer.parseInt(id.substring(last + 1));
+            }
+            Block block = Block.getBlockFromName(name);
+            IBlockState state;
+            if (block == null || block == Blocks.AIR) {
+                if (WARNED.add(id)) {
+                    InsaneTweaksMod.LOGGER.warn("[InsaneTweaks] Sunken Arcane Sanctum: block '{}' is missing; "
+                            + "using '{}' instead.", id, fallback);
+                }
+                state = id.equals(fallback) ? this.plain : resolve(fallback, fallback);
+            } else {
+                state = meta < 0 ? block.getDefaultState() : block.getStateFromMeta(meta);
+            }
+            this.resolved.put(id, state);
+            return state;
         }
 
         /** The silverfish block that looks like the given wall brick. */
@@ -653,11 +734,15 @@ public final class SanctumBuilder {
         }
 
         IBlockState ruin(long seed, int x, int y, int z) {
-            return SanctumNoise.at(seed, x, y, z, 5) < 0.5D ? this.mossy : this.cracked;
+            if (SanctumPalettes.silverfish(this.dimension)) {
+                return SanctumNoise.at(seed, x, y, z, 5) < 0.5D ? this.mossy : this.cracked;
+            }
+            double n = SanctumNoise.at(seed, x, y, z, 5);
+            return resolve(SanctumPalettes.wall(this.dimension, n), SanctumPalettes.wall(0, n));
         }
 
         IBlockState chiseled() {
-            return this.chiseled;
+            return resolve(SanctumPalettes.chiseled(this.dimension), SanctumPalettes.chiseled(0));
         }
 
         IBlockState sealed() {

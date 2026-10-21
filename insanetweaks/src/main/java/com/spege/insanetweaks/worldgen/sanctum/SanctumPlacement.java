@@ -41,7 +41,8 @@ public final class SanctumPlacement {
 
     public static boolean dimensionAllowed(World world) {
         int dim = world.provider.getDimension();
-        if (dim == NO_SRP_DIMENSION) {
+        // 150: no SRP there, ever. Nether and End: no placement rules yet (spec 16.4).
+        if (dim == NO_SRP_DIMENSION || dim == -1 || dim == 1) {
             return false;
         }
         for (int d : cfg().dimensions) {
@@ -50,6 +51,25 @@ public final class SanctumPlacement {
             }
         }
         return false;
+    }
+
+    /** The highest y the entrance shaft may reach in this dimension (Surface Cap), or no limit. */
+    public static int surfaceCap(World world) {
+        int dim = world.provider.getDimension();
+        for (String line : cfg().surfaceCap) {
+            String[] parts = line.trim().split("=");
+            if (parts.length != 2) {
+                continue;
+            }
+            try {
+                if (Integer.parseInt(parts[0].trim()) == dim) {
+                    return Integer.parseInt(parts[1].trim());
+                }
+            } catch (NumberFormatException e) {
+                // malformed line: ignored
+            }
+        }
+        return Integer.MAX_VALUE;
     }
 
     /** The start chunk of a region, or null. */
@@ -122,7 +142,8 @@ public final class SanctumPlacement {
             }
         }
         SanctumWorldData.get(world).register(sanctumId, anchors, containers, l.bounds.minX, l.bounds.minZ, l.bounds.maxX,
-                l.bounds.maxZ, l.hullMinY, l.hullMaxY);
+                l.bounds.maxZ, l.hullMinY, l.hullMaxY,
+                SanctumVariants.element(world.provider.getDimension(), l.seed));
     }
 
     private static boolean integrityOk(World world, SanctumLayout l, int writerX, int writerZ) {
