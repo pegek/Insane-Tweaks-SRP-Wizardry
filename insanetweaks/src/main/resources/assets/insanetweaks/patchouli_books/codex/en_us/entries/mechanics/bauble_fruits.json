@@ -1,0 +1,16 @@
+{
+  "name": "Bauble Fruits",
+  "icon": "insanetweaks:corrupted_fruit",
+  "category": "mechanics",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "text",
+      "text": "Bauble Fruits open extra bauble slots. Slay high-tier parasites while wearing the $(item)Blessed Ring$() to find seed fragments, join four into a $(item)Corrupted Seed$(), plant it on infested ground and defend the sapling until it bears fruit."
+    },
+    {
+      "type": "text",
+      "text": "Purify the $(item)Corrupted Fruit$() on a single Imbuement Altar ringed by four receptacles: the colours of the dust choose which slot it opens. Eating it uncleansed opens a random slot, and costs your life."
+    }
+  ]
+}

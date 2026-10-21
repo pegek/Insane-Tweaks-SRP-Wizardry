@@ -79,8 +79,15 @@ dependencies {
     // entity types.
     // JourneyMap is in libs for srpwizmixins alone (its meteor waypoints); nothing here needs it,
     // and leaving a whole map mod on this compile classpath only invites accidental coupling.
-    implementation fg.deobf(fileTree(dir: rootProject.file('libs'), include: '*.jar', exclude: ['ElectroblobsWizardry-*.jar', 'dldungeonsjbg-*.jar', 'journeymap-*.jar']))
+    implementation fg.deobf(fileTree(dir: rootProject.file('libs'), include: '*.jar', exclude: ['ElectroblobsWizardry-*.jar', 'dldungeonsjbg-*.jar', 'journeymap-*.jar', 'Patchouli-*.jar']))
     implementation fg.deobf('curse.maven:ElectroblobsWizardry-265642:8320066')
+
+    // Patchouli is an OPTIONAL runtime dependency (the Codex). Plain compileOnly, not deobf, and
+    // never on the runtime classpath: only integration/patchouli/* names it, and those classes are
+    // loaded by Patchouli itself or behind Loader.isModLoaded("patchouli"). No remapping is needed
+    // because what they call is Patchouli's own API (not SRG-renamed) and MC class names, which SRG
+    // does not rename either.
+    compileOnly files(rootProject.file('libs/Patchouli-1.0-23.6.jar'))
 
     // Meteor placement guard: this mod hands srpwizmixins a ProtectedAreaProvider so the parasite
     // meteor never lands on a sanctuary. The dependency runs content -> extracted mod, which is the

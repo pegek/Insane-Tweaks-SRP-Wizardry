@@ -335,6 +335,13 @@ public class InsaneTweaksMod implements IGuiHandler {
         com.spege.insanetweaks.init.ModRituals.register();
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.RitualAltarHandler());
 
+        // The Codex (Patchouli, optional). PatchouliFlags names Patchouli types, so it is reached only
+        // behind this check; the call itself is a plain invokestatic of our own class, which the
+        // verifier does not resolve while linking this @Mod class.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("patchouli")) {
+            com.spege.insanetweaks.integration.patchouli.PatchouliFlags.apply();
+        }
+
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.IndestructibleDropHandler());

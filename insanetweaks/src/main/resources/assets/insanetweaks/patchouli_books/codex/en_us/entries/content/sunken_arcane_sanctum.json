@@ -1,0 +1,16 @@
+{
+  "name": "Sunken Arcane Sanctum",
+  "icon": "ebwizardry:runestone",
+  "category": "content",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "text": "A few overgrown stones around a narrow shaft are all that shows on the surface. Below lies the sealed sanctum of acolytes who tried to tame the abominations that fell with the star, and failed."
+    },
+    {
+      "type": "text",
+      "text": "Climb down the $(item)Arcane Ladder$() through the ward, unseal the plug of sealed stone and face the petrified guardians. When every anchor has fallen the sanctum is cleared, and the dais of Nine Altars at its heart is yours to use."
+    }
+  ]
+}

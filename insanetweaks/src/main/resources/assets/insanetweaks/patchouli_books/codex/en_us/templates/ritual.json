@@ -1,0 +1,110 @@
+{
+  "processor": "com.spege.insanetweaks.integration.patchouli.RitualPageProcessor",
+  "components": [
+    {
+      "type": "header",
+      "text": "#name#",
+      "x": -1,
+      "y": 0
+    },
+    {
+      "type": "item",
+      "item": "#s0#",
+      "guard": "#s0#",
+      "x": 30,
+      "y": 34
+    },
+    {
+      "type": "item",
+      "item": "#s1#",
+      "guard": "#s1#",
+      "x": 48,
+      "y": 34
+    },
+    {
+      "type": "item",
+      "item": "#s2#",
+      "guard": "#s2#",
+      "x": 66,
+      "y": 34
+    },
+    {
+      "type": "item",
+      "item": "#s3#",
+      "guard": "#s3#",
+      "x": 30,
+      "y": 52
+    },
+    {
+      "type": "item",
+      "item": "#s4#",
+      "guard": "#s4#",
+      "x": 48,
+      "y": 52
+    },
+    {
+      "type": "item",
+      "item": "#s5#",
+      "guard": "#s5#",
+      "x": 66,
+      "y": 52
+    },
+    {
+      "type": "item",
+      "item": "#s6#",
+      "guard": "#s6#",
+      "x": 30,
+      "y": 70
+    },
+    {
+      "type": "item",
+      "item": "#s7#",
+      "guard": "#s7#",
+      "x": 48,
+      "y": 70
+    },
+    {
+      "type": "item",
+      "item": "#s8#",
+      "guard": "#s8#",
+      "x": 66,
+      "y": 70
+    },
+    {
+      "type": "item",
+      "item": "#rN#",
+      "guard": "#rN#",
+      "x": 48,
+      "y": 14
+    },
+    {
+      "type": "item",
+      "item": "#rE#",
+      "guard": "#rE#",
+      "x": 86,
+      "y": 52
+    },
+    {
+      "type": "item",
+      "item": "#rS#",
+      "guard": "#rS#",
+      "x": 48,
+      "y": 90
+    },
+    {
+      "type": "item",
+      "item": "#rW#",
+      "guard": "#rW#",
+      "x": 10,
+      "y": 52
+    },
+    {
+      "type": "item",
+      "item": "#result#",
+      "guard": "#result#",
+      "framed": true,
+      "x": 48,
+      "y": 118
+    }
+  ]
+}

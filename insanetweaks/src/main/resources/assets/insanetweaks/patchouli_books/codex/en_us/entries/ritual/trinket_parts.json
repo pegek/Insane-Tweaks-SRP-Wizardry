@@ -1,0 +1,53 @@
+{
+  "name": "Trinket Parts (Experimental)",
+  "icon": "enigmaticlegacy:twisted_core",
+  "category": "ritual",
+  "sortnum": 3,
+  "flag": "insanetweaks:altar_test_recipes",
+  "pages": [
+    {
+      "type": "text",
+      "text": "Experimental routes to parts from other mods. Their own recipes remain; these are only a second way, trading a rare ingredient for Abomination dust or crystal."
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_twisted_core"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_cosmic_heart"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_enchanter_pearl"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_evil_ingot"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_witherite_ingot"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_glowing_gem"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_mana_crystal"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_titan_spirit"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_ender_dragon_scale"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:test_spectral_silt"
+    }
+  ]
+}
