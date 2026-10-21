@@ -297,6 +297,12 @@ To be sent when this design is approved:
    instead of the lectern, then call `SanctumCodex.fill(world, pos)`.
 3. The comment on `codexLectern()` in `SanctumBuilder` ("EBW's lectern - it holds books") is wrong;
    see §10.
+4. **Record the dais** (added during implementation, user decision on gate scope still pending). In
+   `SanctumPlacement.register`, right after `SanctumWorldData.register(...)`, call
+   `SanctumWorldData.get(world).setDais(id, x, y, z)` with the world position of
+   `SanctumLayout.altars.get(4)`. With it, the ritual runs only on that dais. Without it, the gate falls
+   back to "anywhere inside the cleared sanctum's hull height", and sanctums generated before the line
+   lands keep that wider rule.
 
 ## 12. Config (`tweaks`)
 

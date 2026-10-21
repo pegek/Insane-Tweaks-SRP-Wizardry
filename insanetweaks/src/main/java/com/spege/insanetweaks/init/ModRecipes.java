@@ -104,10 +104,7 @@ public class ModRecipes {
         // 🚨 Only when a ritual can actually happen. With rituals off, no Abomination element (no
         // receptacle can ever count as lit) or no sanctums (no dais to stand on), stripping these
         // would leave Living gear, the adaptation upgrade and the rest uncraftable by any route.
-        boolean altarExclusive = com.spege.insanetweaks.config.ModConfig.tweaks.altarExclusiveRecipes
-                && com.spege.insanetweaks.config.ModConfig.tweaks.enableAltarRituals
-                && ModElements.EXTENDED
-                && com.spege.insanetweaks.config.ModConfig.arcaneSanctum.enabled;
+        boolean altarExclusive = ModRituals.altarExclusivityActive();
         java.util.List<ResourceLocation> altarRecipes = new java.util.ArrayList<>();
         for (IRecipe recipe : modRegistry) {
             if (recipe == null) {

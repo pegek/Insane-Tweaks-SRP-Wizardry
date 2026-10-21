@@ -346,10 +346,17 @@ public final class RitualAltarManager {
         // The four receptacles burn out, as EB's own altar empties its receptacles
         // (consumeReceptacleContents): every ritual costs four dust on top of its pattern.
         for (int i = 0; i < RECEPTACLE_SIDES.length; i++) {
-            TileEntity te = world.getTileEntity(centre.offset(RECEPTACLE_SIDES[i], 2));
+            BlockPos pos = centre.offset(RECEPTACLE_SIDES[i], 2);
+            TileEntity te = world.getTileEntity(pos);
             if (te instanceof TileEntityReceptacle) {
                 ((TileEntityReceptacle) te).setElement(null);
                 te.markDirty();
+                // 🚨 setElement only notifies neighbours and rechecks light - it sends NOTHING to
+                // clients. EB's own altar gets away with that because it ticks on both sides; this
+                // manager runs only on the server, so without the update packet players keep seeing
+                // four lit receptacles (and get ghost dust clicking them) until the chunk reloads.
+                IBlockState state = world.getBlockState(pos);
+                world.notifyBlockUpdate(pos, state, state, 3);
             }
         }
 

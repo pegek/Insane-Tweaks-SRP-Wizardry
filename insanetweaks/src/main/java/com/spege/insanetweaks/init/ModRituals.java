@@ -9,6 +9,7 @@ import com.spege.insanetweaks.InsaneTweaksMod;
 import com.spege.insanetweaks.api.RitualRecipe;
 import com.spege.insanetweaks.api.RitualRegistry;
 import com.spege.insanetweaks.config.ModConfig;
+import com.spege.insanetweaks.ritual.RitualCoverage;
 
 import electroblob.wizardry.registry.WizardryItems;
 import electroblob.wizardry.spell.Spell;
@@ -99,6 +100,7 @@ public final class ModRituals {
         }
         InsaneTweaksMod.LOGGER.info("[InsaneTweaks] Altar rituals registered: {}.",
                 Integer.valueOf(RitualRegistry.getRecipes().size()));
+        warnUncovered();
     }
 
     // ------------------------------------------------------------------------------------------
@@ -303,17 +305,70 @@ public final class ModRituals {
      * The golden book is deliberately absent: its table recipe stays and the altar is only cheaper.
      */
     public static boolean isAltarExclusive(Item item) {
-        if (item == null || item == Items.AIR) {
-            return false;
+        return item != null && item != Items.AIR && exclusiveItems().contains(item);
+    }
+
+    /** The items {@link #isAltarExclusive} answers true for. */
+    private static List<Item> exclusiveItems() {
+        List<Item> items = new ArrayList<>();
+        items.add(ModItems.MAGIC_NUCLEUS);
+        items.add(ModItems.ADAPTATION_UPGRADE);
+        items.add(ModItems.LIVING_WAND);
+        items.add(ModItems.LIVING_SPELLBLADE);
+        items.add(ModItems.LIVING_AEGIS);
+        items.add(ModItems.LIVING_BATTLEMAGE_HELMET);
+        items.add(ModItems.LIVING_BATTLEMAGE_CHESTPLATE);
+        items.add(ModItems.LIVING_BATTLEMAGE_LEGGINGS);
+        items.add(ModItems.LIVING_BATTLEMAGE_BOOTS);
+        items.add(ModItems.LIVING_NUCLEUS);
+        if (ModBlocks.SANCTUARY_CORE != null) {
+            items.add(Item.getItemFromBlock(ModBlocks.SANCTUARY_CORE));
         }
-        if (item == ModItems.MAGIC_NUCLEUS || item == ModItems.ADAPTATION_UPGRADE || item == ModItems.LIVING_WAND
-                || item == ModItems.LIVING_SPELLBLADE || item == ModItems.LIVING_AEGIS
-                || item == ModItems.LIVING_BATTLEMAGE_HELMET || item == ModItems.LIVING_BATTLEMAGE_CHESTPLATE
-                || item == ModItems.LIVING_BATTLEMAGE_LEGGINGS || item == ModItems.LIVING_BATTLEMAGE_BOOTS
-                || item == ModItems.LIVING_NUCLEUS) {
-            return true;
+        return items;
+    }
+
+    /**
+     * Whether our table recipes for the {@link #isAltarExclusive} items are stripped. Only when a
+     * ritual can actually make them: rituals on, the Abomination element present (no receptacle can
+     * count as lit without it) and sanctums enabled (no dais otherwise). Shared with
+     * {@code ModRecipes.removeRecipes} so the two can never disagree.
+     */
+    public static boolean altarExclusivityActive() {
+        return ModConfig.tweaks.altarExclusiveRecipes && ModConfig.tweaks.enableAltarRituals
+                && ModElements.EXTENDED && ModConfig.arcaneSanctum.enabled;
+    }
+
+    /**
+     * Warns about every altar-exclusive item whose table recipe was stripped but whose ritual was
+     * dropped (a missing ingredient id), because that item now has no recipe anywhere and nothing
+     * else would say so. Only items actually in the registry count: the living nucleus clone exists
+     * only without swparasites.
+     */
+    private static void warnUncovered() {
+        if (!altarExclusivityActive()) {
+            return;
         }
-        return ModBlocks.SANCTUARY_CORE != null && item == Item.getItemFromBlock(ModBlocks.SANCTUARY_CORE);
+        List<String> exclusive = new ArrayList<>();
+        for (Item item : exclusiveItems()) {
+            ResourceLocation name = item == null ? null : item.getRegistryName();
+            if (name != null && ForgeRegistries.ITEMS.getValue(name) == item) {
+                exclusive.add(name.toString());
+            }
+        }
+        List<String> produced = new ArrayList<>();
+        for (RitualRecipe recipe : RitualRegistry.getRecipes()) {
+            ResourceLocation name = recipe.getResult().getItem().getRegistryName();
+            if (name != null) {
+                produced.add(name.toString());
+            }
+        }
+        List<String> uncovered = RitualCoverage.uncovered(exclusive, produced);
+        if (!uncovered.isEmpty()) {
+            InsaneTweaksMod.LOGGER.warn("[InsaneTweaks] Altar rituals: these items lost their crafting-table "
+                    + "recipe to the altar but have NO ritual (see the skipped-ritual lines above), so "
+                    + "nothing can make them: {}. Set tweaks.altarExclusiveRecipes=false to restore the "
+                    + "table recipes.", uncovered);
+        }
     }
 
     // ------------------------------------------------------------------------------------------
