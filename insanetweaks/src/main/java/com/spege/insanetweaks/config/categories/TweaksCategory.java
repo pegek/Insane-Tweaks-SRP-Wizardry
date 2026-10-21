@@ -116,6 +116,15 @@ public class TweaksCategory {
     @Config.RequiresMcRestart
     public boolean altarTestRecipes = true;
 
+    @Config.Comment({"Altar rituals: remove THIS mod's crafting-table recipes for the items now made on the",
+            "3x3 altar (Living gear, magic nucleus, adaptation upgrade, living nucleus clone, Sanctuary",
+            "core). The golden book keeps its table recipe. Other mods' recipes are never touched.",
+            "Ignored - the table recipes stay - when altar rituals are off, the Abomination element is",
+            "missing, or sanctums are disabled, because then no ritual could ever make these items."})
+    @Config.Name("Altar Exclusive Recipes")
+    @Config.RequiresMcRestart
+    public boolean altarExclusiveRecipes = true;
+
     // The Bauble Fruit acquisition loop (fragment drops, sapling, corrupted fruit) moved to the
     // dedicated 'baubleFruits' category in 1.4.18 — see BaubleFruitsCategory.
 }

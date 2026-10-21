@@ -98,6 +98,17 @@ public class ModRecipes {
         //
         // Collected first, removed after: mutating the registry while iterating it is not safe.
         java.util.List<ResourceLocation> disabledGearRecipes = new java.util.ArrayList<>();
+        // Altar exclusivity: our own table recipes for items that now come from the 3x3 ritual.
+        // The JSON files and the Java fallbacks stay in the source; only their registry entries go.
+        //
+        // 🚨 Only when a ritual can actually happen. With rituals off, no Abomination element (no
+        // receptacle can ever count as lit) or no sanctums (no dais to stand on), stripping these
+        // would leave Living gear, the adaptation upgrade and the rest uncraftable by any route.
+        boolean altarExclusive = com.spege.insanetweaks.config.ModConfig.tweaks.altarExclusiveRecipes
+                && com.spege.insanetweaks.config.ModConfig.tweaks.enableAltarRituals
+                && ModElements.EXTENDED
+                && com.spege.insanetweaks.config.ModConfig.arcaneSanctum.enabled;
+        java.util.List<ResourceLocation> altarRecipes = new java.util.ArrayList<>();
         for (IRecipe recipe : modRegistry) {
             if (recipe == null) {
                 continue;
@@ -106,14 +117,23 @@ public class ModRecipes {
             if (output == null || output.isEmpty()) {
                 continue; // dynamic recipes have no fixed output; nothing to match on
             }
+            ResourceLocation name = recipe.getRegistryName();
+            if (name == null) {
+                continue;
+            }
             if (ModItems.isGearDisabled(output.getItem())) {
-                ResourceLocation name = recipe.getRegistryName();
-                if (name != null) {
-                    disabledGearRecipes.add(name);
-                }
+                disabledGearRecipes.add(name);
+            } else if (altarExclusive && InsaneTweaksMod.MODID.equals(name.getResourceDomain())
+                    && ModRituals.isAltarExclusive(output.getItem())) {
+                // Namespace, not output, decides ownership: swparasites' own living nucleus recipe
+                // produces an item we also list, and it is not ours to remove.
+                altarRecipes.add(name);
             }
         }
         for (ResourceLocation name : disabledGearRecipes) {
+            modRegistry.remove(name);
+        }
+        for (ResourceLocation name : altarRecipes) {
             modRegistry.remove(name);
         }
         if (!disabledGearRecipes.isEmpty()) {
@@ -121,6 +141,12 @@ public class ModRecipes {
                     "[InsaneTweaks] gear.availability: removed {} recipe(s) for gear switched off in "
                             + "the config. The items themselves stay registered.",
                     Integer.valueOf(disabledGearRecipes.size()));
+        }
+        if (!altarRecipes.isEmpty()) {
+            InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] tweaks.altarExclusiveRecipes: removed {} crafting-table recipe(s) for "
+                            + "items now made on the 3x3 altar: {}", Integer.valueOf(altarRecipes.size()),
+                    altarRecipes);
         }
     }
 
