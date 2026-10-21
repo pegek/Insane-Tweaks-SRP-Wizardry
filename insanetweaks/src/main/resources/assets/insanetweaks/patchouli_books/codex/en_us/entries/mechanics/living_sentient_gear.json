@@ -1,0 +1,12 @@
+{
+  "name": "Living and Sentient Gear",
+  "icon": "insanetweaks:living_wand",
+  "category": "mechanics",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "text": "Living gear is alive and it feeds. A $(item)Living Wand$() gathers strength from the mana spent through it and from the foes it helps slay, and in time evolves into its $(thing)Sentient$() form.$(br2)All Living gear is made on the dais of the Nine Altars."
+    }
+  ]
+}

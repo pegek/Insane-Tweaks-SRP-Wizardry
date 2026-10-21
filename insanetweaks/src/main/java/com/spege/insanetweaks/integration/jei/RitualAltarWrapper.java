@@ -7,7 +7,10 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import com.spege.insanetweaks.api.RitualRecipe;
+import com.spege.insanetweaks.init.ModElements;
 
+import electroblob.wizardry.constants.Element;
+import electroblob.wizardry.registry.WizardryItems;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.ingredients.VanillaTypes;
 import mezz.jei.api.recipe.IRecipeWrapper;
@@ -41,7 +44,34 @@ public class RitualAltarWrapper implements IRecipeWrapper {
             // exactly right, since "this position must stay empty" is a real part of the pattern.
             inputs.add(Arrays.asList(this.recipe.getIngredient(i).getMatchingStacks()));
         }
+        // The four receptacles, N, E, S, W - display only, the ritual reads them from the world. One
+        // shows Abomination dust (at least one must burn it), the other three cycle every element.
+        List<ItemStack> abomination = abominationDust();
+        List<ItemStack> anyElement = allElementDusts();
+        inputs.add(abomination);
+        inputs.add(anyElement);
+        inputs.add(anyElement);
+        inputs.add(anyElement);
         ingredients.setInputLists(VanillaTypes.ITEM, inputs);
         ingredients.setOutput(VanillaTypes.ITEM, this.recipe.getResult());
+    }
+
+    private static List<ItemStack> abominationDust() {
+        List<ItemStack> out = new ArrayList<>(1);
+        if (ModElements.EXTENDED && ModElements.ABOMINATION != null) {
+            out.add(new ItemStack(WizardryItems.spectral_dust, 1, ModElements.ABOMINATION.ordinal()));
+        }
+        return out;
+    }
+
+    /** One spectral dust per element; MAGIC has no dust (metadata 0 is not a valid element dust). */
+    private static List<ItemStack> allElementDusts() {
+        List<ItemStack> out = new ArrayList<>();
+        for (Element element : Element.values()) {
+            if (element != Element.MAGIC) {
+                out.add(new ItemStack(WizardryItems.spectral_dust, 1, element.ordinal()));
+            }
+        }
+        return out;
     }
 }

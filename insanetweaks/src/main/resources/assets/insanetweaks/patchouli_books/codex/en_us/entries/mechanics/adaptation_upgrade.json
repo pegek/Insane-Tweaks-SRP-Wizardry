@@ -1,0 +1,12 @@
+{
+  "name": "Adaptation Upgrade",
+  "icon": "insanetweaks:adaptation_upgrade",
+  "category": "mechanics",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "text": "Applied to a wand like any other upgrade, it lets that wand cast Abomination spells. One is enough. Living and Sentient foci are adapted from birth and need none."
+    }
+  ]
+}

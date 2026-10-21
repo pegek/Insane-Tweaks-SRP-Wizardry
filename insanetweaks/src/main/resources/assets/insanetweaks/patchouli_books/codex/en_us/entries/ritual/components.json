@@ -1,0 +1,32 @@
+{
+  "name": "Arcane Components",
+  "icon": "insanetweaks:golden_book",
+  "category": "ritual",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "text",
+      "text": "The components of the parasitic battlemage's craft. Most are now made only on the dais. The $(item)Golden Book$() can still be bound at a table, but the altar makes it without a nether star."
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:magic_nucleus"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:adaptation_upgrade"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:golden_book"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_nucleus"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:sanctuary_core"
+    }
+  ]
+}
