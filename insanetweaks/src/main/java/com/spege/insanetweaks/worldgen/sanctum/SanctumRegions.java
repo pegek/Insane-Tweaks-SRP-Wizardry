@@ -30,6 +30,20 @@ public final class SanctumRegions {
         return roll < chance ? new int[] { cx, cz } : null;
     }
 
+    /** A sanctum start within {@code radius} chunks (each axis) of the chunk, or null. */
+    public static int[] startNear(long worldSeed, int chunkX, int chunkZ, int radius, int size, int margin,
+            double chance) {
+        for (int rx = regionOf(chunkX - radius, size); rx <= regionOf(chunkX + radius, size); rx++) {
+            for (int rz = regionOf(chunkZ - radius, size); rz <= regionOf(chunkZ + radius, size); rz++) {
+                int[] c = candidate(worldSeed, rx, rz, size, margin, chance);
+                if (c != null && Math.abs(c[0] - chunkX) <= radius && Math.abs(c[1] - chunkZ) <= radius) {
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
     /** The layout seed of a start, independent of the region size. */
     public static long layoutSeed(long worldSeed, int chunkX, int chunkZ) {
         return mix(worldSeed, chunkX, chunkZ, LAYOUT_SALT);

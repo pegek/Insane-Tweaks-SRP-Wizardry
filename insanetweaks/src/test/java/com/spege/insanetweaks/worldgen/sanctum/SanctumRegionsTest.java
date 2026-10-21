@@ -10,6 +10,30 @@ import org.junit.Test;
 
 public class SanctumRegionsTest {
 
+    /** A start chunk within the radius is found, one just beyond it is not. */
+    @Test
+    public void startNearFindsTheCandidateWithinTheRadius() {
+        long seed = 77L;
+        int[] start = SanctumRegions.candidate(seed, 0, 0, 32, 4, 1.0D);
+        org.junit.Assert.assertNotNull(SanctumRegions.startNear(seed, start[0] + 8, start[1] - 8, 8, 32, 4, 1.0D));
+        org.junit.Assert.assertNull(SanctumRegions.startNear(seed, start[0] + 9, start[1], 8, 32, 4, 0.0D));
+        int[] found = SanctumRegions.startNear(seed, start[0], start[1], 0, 32, 4, 1.0D);
+        org.junit.Assert.assertArrayEquals(start, found);
+    }
+
+    @Test
+    public void startNearIgnoresStartsFurtherAway() {
+        long seed = 5L;
+        for (int rx = -3; rx <= 3; rx++) {
+            for (int rz = -3; rz <= 3; rz++) {
+                int[] c = SanctumRegions.candidate(seed, rx, rz, 32, 4, 1.0D);
+                int[] near = SanctumRegions.startNear(seed, c[0], c[1], 8, 32, 4, 1.0D);
+                org.junit.Assert.assertNotNull(near);
+                org.junit.Assert.assertTrue(Math.abs(near[0] - c[0]) <= 8 && Math.abs(near[1] - c[1]) <= 8);
+            }
+        }
+    }
+
     @Test
     public void regionOfFloorsNegatives() {
         assertEquals(0, SanctumRegions.regionOf(31, 32));

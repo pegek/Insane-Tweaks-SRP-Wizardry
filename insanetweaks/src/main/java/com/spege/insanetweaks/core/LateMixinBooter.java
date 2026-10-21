@@ -54,6 +54,11 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("jei")) {
             configs.add("mixins.insanetweaks.jei.json");
         }
+        // Roguelike Dungeons (Fnar Edition) - @Mod id "roguelike". Keeps its dungeons out of
+        // Sunken Arcane Sanctums (SanctumDungeonGuard).
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("roguelike")) {
+            configs.add("mixins.insanetweaks.roguelike.json");
+        }
         return configs;
     }
 

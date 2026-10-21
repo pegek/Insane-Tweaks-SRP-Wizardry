@@ -19,7 +19,7 @@ public final class SanctumPlacement {
 
     /** Starts further than this (chunks) from a writer chunk cannot reach it (footprint is ±26 blocks). */
     public static final int REACH = 3;
-    private static final int MARGIN = 4;
+    public static final int MARGIN = 4;
     private static final int NO_SRP_DIMENSION = 150;
     private static final int CACHE_SIZE = 32;
 
@@ -111,7 +111,8 @@ public final class SanctumPlacement {
             containers.add(Long.valueOf(new BlockPos(c[0], c[1], c[2]).toLong()));
         }
         for (int[] p : l.props) {
-            if (p[3] == SanctumLayout.PROP_EBW_SHELF || p[3] == SanctumLayout.PROP_SHULKER) {
+            if (p[3] == SanctumLayout.PROP_EBW_SHELF || p[3] == SanctumLayout.PROP_SHULKER
+                    || p[3] == SanctumLayout.PROP_ARCANE_WORKBENCH) {
                 containers.add(Long.valueOf(new BlockPos(p[0], p[1], p[2]).toLong()));
             }
         }

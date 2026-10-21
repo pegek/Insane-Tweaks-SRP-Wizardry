@@ -218,6 +218,13 @@ public final class SanctumBuilder {
                 if (te != null) {
                     SanctumLocks.lock(te, sanctumId);
                 }
+            } else if (prop[3] == SanctumLayout.PROP_ARCANE_WORKBENCH) {
+                // Locked too: from an arcane workbench the player can pull spell books out of the
+                // locked bookshelves around it.
+                TileEntity te = world.getTileEntity(pos);
+                if (te != null) {
+                    SanctumLocks.lock(te, sanctumId);
+                }
             }
         }
         for (int[] d : l.trapDispensers) {
@@ -296,7 +303,7 @@ public final class SanctumBuilder {
         if (lectern != null && clip.contains(lectern[0], lectern[1], lectern[2])) {
             // The codex lectern stays empty until the guide book exists (spec 15.3).
             world.setBlockState(new BlockPos(lectern[0], lectern[1], lectern[2]),
-                    withFacing(p.prop(SanctumLayout.PROP_SAGE_LECTERN), facing(lectern[3])), FLAGS);
+                    withFacing(p.codexLectern(), facing(lectern[3])), FLAGS);
         }
     }
 
@@ -638,6 +645,11 @@ public final class SanctumBuilder {
                     : wall == this.cracked ? BlockSilverfish.EnumType.CRACKED_STONEBRICK
                             : BlockSilverfish.EnumType.STONEBRICK;
             return Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, type);
+        }
+
+        /** EBW's lectern - it holds books, unlike ASC's sage lectern. */
+        IBlockState codexLectern() {
+            return lookup("ebwizardry:oak_lectern");
         }
 
         IBlockState ruin(long seed, int x, int y, int z) {
