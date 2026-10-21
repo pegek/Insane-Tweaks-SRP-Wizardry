@@ -395,6 +395,7 @@ tooltip.insanetweaks.parasitenunchaku.progress=§3---> §b%s§3 / %s
 
 # --- Imbuement Altar: 3x3 rituals (Insane Tweaks additions to EB's block) ---
 integration.jei.category.insanetweaks:ritual_altar=Imbuement Altar Ritual (3x3)
+integration.jei.insanetweaks.ritual_altar.note=Only in a conquered Sunken Arcane Sanctum. The four receptacles burn out when the ritual completes.
 # --- Corrupted Sapling defense (1.21.0) ---
 msg.insanetweaks.sapling.problem.owner_away=its keeper is too far away
 msg.insanetweaks.sapling.problem.no_ring=its keeper wears no Blessed Ring or Ring of the Seven Curses

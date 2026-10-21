@@ -32,14 +32,19 @@ public class RitualAltarCategory implements IRecipeCategory<RitualAltarWrapper> 
             new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
 
     private static final int SLOT_SIZE = 18;
-    private static final int GRID_X = 0;
-    private static final int GRID_Y = 0;
-    private static final int ARROW_X = 62;
-    private static final int ARROW_Y = 19;
-    private static final int OUTPUT_X = 92;
-    private static final int OUTPUT_Y = 18;
-    private static final int WIDTH = 110;
-    private static final int HEIGHT = 54;
+    /** The grid is inset by one slot so a receptacle fits on every side of it. */
+    private static final int GRID_X = 18;
+    private static final int GRID_Y = 18;
+    /** Receptacle slots N, E, S, W, each next to that side's middle cell - the order the wrapper uses. */
+    private static final int[][] RECEPTACLES = { { 36, 0 }, { 72, 36 }, { 36, 72 }, { 0, 36 } };
+    private static final int ARROW_X = 98;
+    private static final int ARROW_Y = 37;
+    private static final int OUTPUT_X = 128;
+    private static final int OUTPUT_Y = 36;
+    private static final int NOTE_Y = 94;
+    private static final int WIDTH = 146;
+    /** Room for three wrapped lines of the note under the grid. */
+    private static final int HEIGHT = 124;
 
     private final IDrawable background;
     private final IDrawable arrow;
@@ -77,6 +82,9 @@ public class RitualAltarCategory implements IRecipeCategory<RitualAltarWrapper> 
     @Override
     public void drawExtras(@Nonnull Minecraft minecraft) {
         this.arrow.draw(minecraft, ARROW_X, ARROW_Y);
+        // Wrapped to the category width: one line of it is wider than the page.
+        minecraft.fontRenderer.drawSplitString(I18n.format("integration.jei.insanetweaks.ritual_altar.note"),
+                0, NOTE_Y, WIDTH, 0x404040);
     }
 
     @Override
@@ -87,10 +95,13 @@ public class RitualAltarCategory implements IRecipeCategory<RitualAltarWrapper> 
         for (int i = 0; i < RitualRecipe.GRID_SIZE; i++) {
             slots.init(i, true, GRID_X + (i % 3) * SLOT_SIZE, GRID_Y + (i / 3) * SLOT_SIZE);
         }
-        slots.init(RitualRecipe.GRID_SIZE, false, OUTPUT_X, OUTPUT_Y);
+        for (int r = 0; r < RECEPTACLES.length; r++) {
+            slots.init(RitualRecipe.GRID_SIZE + r, true, RECEPTACLES[r][0], RECEPTACLES[r][1]);
+        }
+        slots.init(RitualRecipe.GRID_SIZE + RECEPTACLES.length, false, OUTPUT_X, OUTPUT_Y);
 
-        // set(IIngredients) maps the input list onto the input slots in order and the output onto the
-        // single output slot, which is exactly the order the wrapper builds them in.
+        // set(IIngredients) maps the input lists onto the input slots in index order (grid, then the
+        // receptacles N, E, S, W) and the output onto the output slot - the order the wrapper builds.
         slots.set(ingredients);
     }
 }
