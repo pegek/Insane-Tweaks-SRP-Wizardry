@@ -393,10 +393,7 @@ tooltip.insanetweaks.parasitenunchaku.bleed=§7§oInflicts §c§olife-threatenin
 tooltip.insanetweaks.parasitenunchaku.indeaf=§7§oSevers the §b§omovement§7§o of the struck.
 tooltip.insanetweaks.parasitenunchaku.progress=§3---> §b%s§3 / %s
 
-# --- Imbuement Altar: salvage + 3x3 rituals (Insane Tweaks additions to EB's block) ---
-# The salvage line is appended to whichever artefact tweaks.imbuementAltarSalvageArtefacts names,
-# so it must read as a property of the artefact, not of the altar.
-tooltip.insanetweaks.altar_salvage=§dMining an Imbuement Altar reclaims it as an item.
+# --- Imbuement Altar: 3x3 rituals (Insane Tweaks additions to EB's block) ---
 integration.jei.category.insanetweaks:ritual_altar=Imbuement Altar Ritual (3x3)
 # --- Corrupted Sapling defense (1.21.0) ---
 msg.insanetweaks.sapling.problem.owner_away=its keeper is too far away
