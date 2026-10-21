@@ -98,6 +98,14 @@ public class ModRecipes {
         //
         // Collected first, removed after: mutating the registry while iterating it is not safe.
         java.util.List<ResourceLocation> disabledGearRecipes = new java.util.ArrayList<>();
+        // Altar exclusivity: our own table recipes for items that now come from the 3x3 ritual.
+        // The JSON files and the Java fallbacks stay in the source; only their registry entries go.
+        //
+        // 🚨 Only when a ritual can actually happen. With rituals off, no Abomination element (no
+        // receptacle can ever count as lit) or no sanctums (no dais to stand on), stripping these
+        // would leave Living gear, the adaptation upgrade and the rest uncraftable by any route.
+        boolean altarExclusive = ModRituals.altarExclusivityActive();
+        java.util.List<ResourceLocation> altarRecipes = new java.util.ArrayList<>();
         for (IRecipe recipe : modRegistry) {
             if (recipe == null) {
                 continue;
@@ -106,14 +114,23 @@ public class ModRecipes {
             if (output == null || output.isEmpty()) {
                 continue; // dynamic recipes have no fixed output; nothing to match on
             }
+            ResourceLocation name = recipe.getRegistryName();
+            if (name == null) {
+                continue;
+            }
             if (ModItems.isGearDisabled(output.getItem())) {
-                ResourceLocation name = recipe.getRegistryName();
-                if (name != null) {
-                    disabledGearRecipes.add(name);
-                }
+                disabledGearRecipes.add(name);
+            } else if (altarExclusive && InsaneTweaksMod.MODID.equals(name.getResourceDomain())
+                    && ModRituals.isAltarExclusive(output.getItem())) {
+                // Namespace, not output, decides ownership: swparasites' own living nucleus recipe
+                // produces an item we also list, and it is not ours to remove.
+                altarRecipes.add(name);
             }
         }
         for (ResourceLocation name : disabledGearRecipes) {
+            modRegistry.remove(name);
+        }
+        for (ResourceLocation name : altarRecipes) {
             modRegistry.remove(name);
         }
         if (!disabledGearRecipes.isEmpty()) {
@@ -121,6 +138,12 @@ public class ModRecipes {
                     "[InsaneTweaks] gear.availability: removed {} recipe(s) for gear switched off in "
                             + "the config. The items themselves stay registered.",
                     Integer.valueOf(disabledGearRecipes.size()));
+        }
+        if (!altarRecipes.isEmpty()) {
+            InsaneTweaksMod.LOGGER.info(
+                    "[InsaneTweaks] tweaks.altarExclusiveRecipes: removed {} crafting-table recipe(s) for "
+                            + "items now made on the 3x3 altar: {}", Integer.valueOf(altarRecipes.size()),
+                    altarRecipes);
         }
     }
 
@@ -259,6 +282,21 @@ public class ModRecipes {
                             new ItemStack(net.minecraft.init.Items.BOOK),
                             new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
                             new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta)));
+
+            // The Insane Codex, for anyone who never found (or lost) the sanctum's copy. Only with
+            // Patchouli: without it CodexBook.stack() is EMPTY and there is no book to open.
+            ItemStack codex = com.spege.insanetweaks.integration.patchouli.CodexBook.stack();
+            if (Loader.isModLoaded("patchouli") && !codex.isEmpty()) {
+                registerFallback(event, "codex",
+                        new ShapelessOreRecipe(
+                                new ResourceLocation(InsaneTweaksMod.MODID, "codex"),
+                                codex,
+                                new ItemStack(net.minecraft.init.Items.WRITABLE_BOOK),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta),
+                                new ItemStack(safeItem("ebwizardry", "spectral_dust"), 1, elementMeta)));
+            }
         } else {
             // Say what the skip cost. logMissingSummary() cannot: nothing above ran, so no id was
             // recorded and skippedRecipes stays 0, and the player would meet this as two recipes

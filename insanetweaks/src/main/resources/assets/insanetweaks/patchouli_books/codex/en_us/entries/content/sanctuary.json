@@ -1,0 +1,12 @@
+{
+  "name": "Sanctuary",
+  "icon": "insanetweaks:sanctuary_core",
+  "category": "content",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "text": "The $(item)Sanctuary Nexus$() holds the parasites back from the land around it. It grows by ritual: build a ring of the evolution lure it asks for around it, and it consumes the ring and grows stronger.$(br2)The Nexus itself is made on the dais of the Nine Altars."
+    }
+  ]
+}

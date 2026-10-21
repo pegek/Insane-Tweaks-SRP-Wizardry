@@ -1,0 +1,60 @@
+{
+  "name": "Living Gear",
+  "icon": "insanetweaks:living_wand",
+  "category": "ritual",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "text",
+      "text": "Living wands, blades, shields and armour are grown on the dais from a battlemage's own gear and parasite remains."
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_wand"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_spellblade"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_aegis"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_battlemage_helmet"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_battlemage_chestplate"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_battlemage_leggings"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:living_battlemage_boots"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:parasite_mage_helmet"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:parasite_mage_chestplate"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:parasite_mage_leggings"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:parasite_mage_boots"
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:parasite_living_nunchaku"
+    }
+  ]
+}

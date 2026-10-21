@@ -1,0 +1,16 @@
+{
+  "name": "Abomination Magic",
+  "icon": "ebwizardry:spectral_dust",
+  "category": "mechanics",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "text": "$(thing)Abomination$() is an element of its own, drawn from the parasites themselves.$(br2)Its spells answer only to Living and Sentient wands and spellblades, or to a focus carrying the $(item)Adaptation Upgrade$(). Any other focus refuses to cast them."
+    },
+    {
+      "type": "text",
+      "text": "Abomination spectral dust comes mainly from corrupted wizards, and can also be crafted from parasite remains. It lights the receptacles of the Nine Altars."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "The Ritual of the Nine Altars",
+  "icon": "ebwizardry:imbuement_altar",
+  "category": "ritual",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "text",
+      "text": "Nine $(item)Imbuement Altars$() set out in a 3x3 square form a circle that works like a crafting table. Lay one ingredient on each altar; when the arrangement matches a ritual, the circle wakes and the result appears on the centre altar.$(br2)The circle only answers inside a $(thing)conquered Sunken Arcane Sanctum$(). Altars cannot be moved: the dais at its heart is the reward for clearing it."
+    },
+    {
+      "type": "text",
+      "text": "$(thing)Receptacles.$() Hang one receptacle on the outer face of the middle altar of each side, pointing outwards. Light all four with spectral dust; at least one must burn $(thing)Abomination$().$(br2)When a ritual completes, all four receptacles burn out and must be lit again."
+    },
+    {
+      "type": "text",
+      "text": "$(thing)Orientation.$() A ritual matches whichever way the circle faces. A mirrored layout is a different ritual.$(br2)$(thing)Interruption.$() Taking an ingredient back, or emptying or knocking off a receptacle, stops the ritual. A dull fizzle means the circle refused: check the receptacles, and whether the sanctum is truly cleared."
+    },
+    {
+      "type": "text",
+      "text": "The dais of a sanctum already holds a magic crystal and some Abomination dust: the first ritual, waiting to be finished."
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:abomination_crystal"
+    }
+  ]
+}

@@ -335,12 +335,19 @@ public class InsaneTweaksMod implements IGuiHandler {
         com.spege.insanetweaks.init.ModRituals.register();
         MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.RitualAltarHandler());
 
-        // Imbuement Altar: make EB's bedrock-hard altar minable, and gate reclaiming it as an item
-        // behind an artefact. Must run in init - AFTER EB's block registry event, and before any
-        // world exists. The handler is registered unconditionally: it early-returns on a block
-        // identity check, and its artefact list is read live so editing it needs no restart.
-        com.spege.insanetweaks.events.ImbuementAltarSalvageHandler.applyBlockProperties();
-        MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ImbuementAltarSalvageHandler());
+        // The Codex (Patchouli, optional). PatchouliFlags names Patchouli types, so it is reached only
+        // behind this check; the call itself is a plain invokestatic of our own class, which the
+        // verifier does not resolve while linking this @Mod class.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("patchouli")) {
+            com.spege.insanetweaks.integration.patchouli.PatchouliFlags.apply();
+            // EB's bookshelf takes only items on its own "book" list (ContainerBookshelf.isBook), and
+            // Patchouli's guide book is not on it - without this the sanctum's Codex shelf, and any
+            // player, could never put the Codex on a shelf. The list is only ever appended to.
+            net.minecraft.item.Item guideBook = com.spege.insanetweaks.integration.patchouli.CodexBook.guideBook();
+            if (guideBook != null) {
+                electroblob.wizardry.inventory.ContainerBookshelf.registerBookItem(guideBook);
+            }
+        }
 
         // Immediately grant fire/explosion immunity to all Living and Sentient item drops
         // on the tick they join the world, before any explosion can hit them.
@@ -560,10 +567,6 @@ public class InsaneTweaksMod implements IGuiHandler {
             // Client half of the enchant quest-gate; the server-side veto is registered
             // unconditionally above. Both flags it reads are live, so no config gate here.
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.EnchantGrantTooltipHandler());
-            // Tells the player that this artefact is what reclaims an Imbuement Altar. The ability is
-            // ours, so EB's own description says nothing about it. Class-level @SideOnly - must stay
-            // inside this client block.
-            MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ArtefactSalvageTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.SentinelClientInteractionHandler());
             MinecraftForge.EVENT_BUS.register(new com.spege.insanetweaks.events.ThrallClientInteractionHandler());
             if (com.spege.insanetweaks.config.ModConfig.modules.enableSpells) {

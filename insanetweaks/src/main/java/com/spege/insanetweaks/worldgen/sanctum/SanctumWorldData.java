@@ -98,6 +98,29 @@ public class SanctumWorldData extends WorldSavedData {
         return r == null ? null : r.element;
     }
 
+    /**
+     * The sanctum whose footprint contains x, z, or null.
+     *
+     * <p>🚨 Use this BEFORE {@link #isCleared}: {@code isCleared} answers true for an id it does not
+     * know, so asking it about a position without first finding a real sanctum here would treat
+     * every spot in the world as a conquered sanctum.
+     */
+    public Long sanctumAt(int x, int z) {
+        for (Map.Entry<Long, Record> e : this.records.entrySet()) {
+            int[] b = e.getValue().bounds;
+            if (b != null && x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3]) {
+                return e.getKey();
+            }
+        }
+        return null;
+    }
+
+    /** hullMinY, hullMaxY of a sanctum, or null for records written before 1.28.0. */
+    public int[] hullY(long id) {
+        Record r = this.records.get(Long.valueOf(id));
+        return r == null || r.hullY == null ? null : r.hullY.clone();
+    }
+
     /** minX, minZ, maxX, maxZ, hullMinY, hullMaxY of a sanctum with a hull, or null. */
     public int[] box(long id) {
         Record r = this.records.get(Long.valueOf(id));
