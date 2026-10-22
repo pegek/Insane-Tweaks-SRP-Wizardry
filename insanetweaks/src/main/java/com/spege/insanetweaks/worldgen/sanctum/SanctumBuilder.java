@@ -425,7 +425,7 @@ public final class SanctumBuilder {
         }
         switch (d[3]) {
             case SanctumLayout.DECOR_ARMOR_STAND:
-                armorStand(world, l, d, face);
+                armorStand(world, l, d, face, SanctumWorldData.get(world).element(sanctumId));
                 break;
             case SanctumLayout.DECOR_SHULKER:
                 potionBox(world, l, pos, sanctumId);
@@ -465,24 +465,42 @@ public final class SanctumBuilder {
         }
     }
 
-    private static final Item[][] ARMOUR = {
-            { Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS, Items.IRON_BOOTS },
-            { Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS, Items.CHAINMAIL_BOOTS },
-            { Items.GOLDEN_HELMET, Items.GOLDEN_CHESTPLATE, Items.GOLDEN_LEGGINGS, Items.GOLDEN_BOOTS } };
+    /** EBW armour classes, head / chest / legs / feet item names. */
+    private static final String[][] ARMOUR = {
+            { "wizard_hat", "wizard_robe", "wizard_leggings", "wizard_boots" },
+            { "sage_hat", "sage_robe", "sage_leggings", "sage_boots" },
+            { "battlemage_helmet", "battlemage_chestplate", "battlemage_leggings", "battlemage_boots" },
+            { "warlock_hood", "warlock_robe", "warlock_leggings", "warlock_boots" } };
     private static final EntityEquipmentSlot[] ARMOUR_SLOTS = { EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST,
             EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET };
 
-    /** An armour stand wearing one or two pieces of iron, chain or gold, slots picked by position. */
-    private static void armorStand(World world, SanctumLayout l, int[] d, EnumFacing face) {
+    /**
+     * An armour stand wearing one or two pieces of one EBW armour class (wizard, sage, battlemage or
+     * warlock), in the sanctum's element when it has one. The pieces are drained of mana: a relic of
+     * the fallen acolytes, worth recharging, not a free full set.
+     */
+    private static void armorStand(World world, SanctumLayout l, int[] d, EnumFacing face, String element) {
         EntityArmorStand stand = new EntityArmorStand(world);
         stand.setLocationAndAngles(d[0] + 0.5D, d[1], d[2] + 0.5D, face.getHorizontalAngle(), 0.0F);
         int pieces = SanctumNoise.at(l.seed, d[0], d[1], d[2], 110) < 0.5D ? 1 : 2;
         int first = Math.min(3, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 111) * 4));
         int step = 1 + Math.min(2, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 112) * 3));
+        int kind = Math.min(ARMOUR.length - 1, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 113) * ARMOUR.length));
         for (int i = 0; i < pieces; i++) {
             int slot = (first + i * step) & 3;
-            int material = Math.min(2, (int) (SanctumNoise.at(l.seed, d[0], d[1], d[2], 113 + i) * 3));
-            stand.setItemStackToSlot(ARMOUR_SLOTS[slot], new ItemStack(ARMOUR[material][slot]));
+            String name = "ebwizardry:" + ARMOUR[kind][slot];
+            Item item = element == null ? null : Item.getByNameOrId(name + "_" + element);
+            if (item == null) {
+                item = Item.getByNameOrId(name);
+            }
+            if (item == null) {
+                continue;
+            }
+            ItemStack piece = new ItemStack(item);
+            if (piece.isItemStackDamageable()) {
+                piece.setItemDamage(Math.max(0, piece.getMaxDamage() - 1));
+            }
+            stand.setItemStackToSlot(ARMOUR_SLOTS[slot], piece);
         }
         world.spawnEntity(stand);
     }

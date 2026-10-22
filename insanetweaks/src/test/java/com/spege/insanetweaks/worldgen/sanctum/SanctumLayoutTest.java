@@ -458,6 +458,36 @@ public class SanctumLayoutTest {
         }
     }
 
+    /** Every side room holds a locked loot chest; crypts and collapsed rooms hold anchors too. */
+    @Test
+    public void everySideRoomHasALootChestAndAnchors() {
+        boolean sawFiller = false;
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            for (SanctumLayout.Room r : l.rooms) {
+                if (!r.type.isSideRoom()) {
+                    continue;
+                }
+                SanctumBox in = r.outer.shrink(1);
+                int chests = 0;
+                for (int[] c : l.chests) {
+                    chests += in.contains(c[0], c[1], c[2]) ? 1 : 0;
+                }
+                assertTrue("seed " + s + " " + r.type, chests >= 1);
+                if (r.type == SanctumLayout.RoomType.CRYPT || r.type == SanctumLayout.RoomType.COLLAPSED) {
+                    sawFiller = true;
+                    assertTrue(r.type.hasAnchors());
+                    int anchors = 0;
+                    for (int[] a : l.anchors) {
+                        anchors += in.contains(a[0], a[1], a[2]) ? 1 : 0;
+                    }
+                    assertTrue("seed " + s + " " + r.type + " anchors " + anchors, anchors >= 1 && anchors <= 2);
+                }
+            }
+        }
+        assertTrue(sawFiller);
+    }
+
     @Test
     public void stairDoorIsFourHigh() {
         for (long s = 0; s < 50; s++) {

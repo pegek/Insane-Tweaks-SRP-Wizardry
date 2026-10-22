@@ -29,7 +29,7 @@ public final class SanctumLayout {
         }
 
         public boolean hasAnchors() {
-            return this == LIBRARY || this == FORGE || this == WORKSHOP || this == TELEPORT || this == RITUAL;
+            return this != CHAMBER && this != ANTECHAMBER && this != DESCENT && this != HALL && this != VESTIBULE;
         }
     }
 
@@ -537,8 +537,11 @@ public final class SanctumLayout {
                         }
                     }
                 }
+                addChest(rel(cx, cz, front, -3, 0, f), face(front), CHEST_LIBRARY);
                 break;
             default:
+                // Crypts and collapsed rooms: a chest against the back wall, like every side room.
+                addChest(rel(cx, cz, front, -3, 0, f), face(front), CHEST_LIBRARY);
                 break;
         }
         if (type.hasAnchors()) {
