@@ -179,8 +179,8 @@ public final class ModRituals {
         if (ModBlocks.SANCTUARY_CORE != null) {
             ritual("sanctuary_core", t, new ItemStack(ModBlocks.SANCTUARY_CORE),
                     item("srparasites", "pearl"), item("minecraft", "beacon"), item("minecraft", "ender_eye"),
-                    variants("ebwizardry", "runestone"), item("srparasites", "levelclock"),
-                    variants("ebwizardry", "runestone"),
+                    metas("ebwizardry", "runestone", 1, 7), item("srparasites", "levelclock"),
+                    metas("ebwizardry", "runestone", 1, 7),
                     item("ancientspellcraft", "devoritium_block"),
                     anyOre(ModOreDict.ORE_MAGIC_NUCLEUS, ModOreDict.ORE_LIVING_NUCLEUS),
                     item("ancientspellcraft", "devoritium_block"));
@@ -462,21 +462,26 @@ public final class ModRituals {
     }
 
     /**
-     * Every real variant of one item - all EB runestones, say - listed one by one rather than as a
-     * wildcard. A wildcard stack (meta 32767) matches the same things, but the Codex and JEI would draw
-     * it as an item at damage 32767, which for a block is a missing model.
+     * One item at each metadata in {@code from..to} inclusive - e.g. EB runestones 1-7 - listed one by
+     * one rather than as a wildcard, which the Codex and JEI would draw at damage 32767 (a missing
+     * model for a block).
+     *
+     * <p>🚨 Spelled out on purpose, not discovered through {@code getSubItems}: EB's
+     * {@code BlockRunestone.getSubBlocks} only fills the list for its OWN creative tab, so asking with
+     * {@code CreativeTabs.SEARCH} came back empty, and a "fall back to meta 0" filled the cell with
+     * runestone:0 - a variant that does not exist (runestones are elements 1-7, MAGIC has none). The
+     * Sanctuary ritual could then never match.
      */
-    private static Ingredient variants(String modid, String path) {
+    private static Ingredient metas(String modid, String path, int from, int to) {
         Item found = safeItem(modid, path);
         if (found == Items.AIR) {
             return Ingredient.EMPTY; // the miss is recorded; ritual() drops this recipe
         }
-        net.minecraft.util.NonNullList<ItemStack> stacks = net.minecraft.util.NonNullList.create();
-        found.getSubItems(net.minecraft.creativetab.CreativeTabs.SEARCH, stacks);
-        if (stacks.isEmpty()) {
-            stacks.add(new ItemStack(found));
+        ItemStack[] stacks = new ItemStack[to - from + 1];
+        for (int meta = from; meta <= to; meta++) {
+            stacks[meta - from] = new ItemStack(found, 1, meta);
         }
-        return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
+        return Ingredient.fromStacks(stacks);
     }
 
     /** First item under an ore name, as a result; EMPTY (and a recorded miss) when there is none. */
