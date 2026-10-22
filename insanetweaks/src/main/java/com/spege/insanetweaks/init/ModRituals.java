@@ -63,8 +63,6 @@ public final class ModRituals {
     /** Whether srpextra's parts exist, or the Living armour falls back to SRP substitutes. */
     private static final boolean SRPEXTRA = Loader.isModLoaded("srpextra");
 
-    private static final String BETTER_SURVIVAL = "mujmajnkraftsbettersurvival";
-    private static final String LIVING_NUNCHAKU = "itemparasitelivingnunchaku";
 
     /** Every distinct id missing this run, in discovery order. For the closing summary. */
     private static final Set<String> MISSING_IDS = new LinkedHashSet<>();
@@ -111,14 +109,13 @@ public final class ModRituals {
     // ------------------------------------------------------------------------------------------
 
     /**
-     * Reference ritual: eight Abomination spectral dust in a ring around a plain magic crystal,
-     * producing an Abomination crystal.
+     * Abomination crystals, two at a time: a plain magic crystal in the centre and four Abomination
+     * dust on the sides' middle altars (corners empty), plus the four receptacle dusts.
      *
-     * <p>Deliberately chosen to add NO power to the game. EB's own altar already does this conversion
-     * for four dust and one crystal; this asks for eight, so it is strictly the worse deal and exists
-     * to be looked at, not used - it gives the structure something to do, gives JEI something to
-     * show, and gives the mechanic a test case that cannot unbalance anything while the real ritual
-     * list is still being decided.
+     * <p>That is the altar's own deal on top of EB's: EB's single altar turns one crystal and four
+     * dust into one Abomination crystal, so a 3x3 version could never be CHEAPER for one crystal -
+     * the four receptacles alone already cost what EB charges. Doubling the output is what makes the
+     * dais worth using for it (user decision 2026-10-22, test value).
      *
      * <p>Skipped entirely when the Abomination element is not registered - there is no dust to build
      * it from, and a recipe naming a missing item would be a recipe that silently never fires.
@@ -132,13 +129,11 @@ public final class ModRituals {
         int meta = ModElements.ABOMINATION.ordinal();
 
         ritual("abomination_crystal", ModConfig.tweaks.ritualDurationTicks,
-                new ItemStack(safeItem("ebwizardry", "magic_crystal"), 1, meta),
-                item("ebwizardry", "spectral_dust", meta), item("ebwizardry", "spectral_dust", meta),
-                item("ebwizardry", "spectral_dust", meta),
+                new ItemStack(safeItem("ebwizardry", "magic_crystal"), 2, meta),
+                NONE, item("ebwizardry", "spectral_dust", meta), NONE,
                 item("ebwizardry", "spectral_dust", meta), item("ebwizardry", "magic_crystal", 0),
                 item("ebwizardry", "spectral_dust", meta),
-                item("ebwizardry", "spectral_dust", meta), item("ebwizardry", "spectral_dust", meta),
-                item("ebwizardry", "spectral_dust", meta));
+                NONE, item("ebwizardry", "spectral_dust", meta), NONE);
     }
 
     /**
@@ -178,12 +173,16 @@ public final class ModRituals {
                 item("srparasites", "assimilated_flesh"),
                 NONE, item("srparasites", "ada_manducater_drop"), NONE);
 
+        // The altar's own Sanctuary recipe (user, 2026-10-22), no longer a copy of the table one: one SRP
+        // pearl and an eye of ender beside the beacon, ANY runestone instead of necromancy only, and a
+        // magic or living nucleus in place of the false apple.
         if (ModBlocks.SANCTUARY_CORE != null) {
             ritual("sanctuary_core", t, new ItemStack(ModBlocks.SANCTUARY_CORE),
-                    item("srparasites", "pearl"), item("minecraft", "beacon"), item("srparasites", "pearl"),
-                    item("ebwizardry", "runestone", 4), item("srparasites", "levelclock"),
-                    item("ebwizardry", "runestone", 4),
-                    item("ancientspellcraft", "devoritium_block"), item("srparasites", "false_apple"),
+                    item("srparasites", "pearl"), item("minecraft", "beacon"), item("minecraft", "ender_eye"),
+                    variants("ebwizardry", "runestone"), item("srparasites", "levelclock"),
+                    variants("ebwizardry", "runestone"),
+                    item("ancientspellcraft", "devoritium_block"),
+                    anyOre(ModOreDict.ORE_MAGIC_NUCLEUS, ModOreDict.ORE_LIVING_NUCLEUS),
                     item("ancientspellcraft", "devoritium_block"));
         }
     }
@@ -233,13 +232,13 @@ public final class ModRituals {
         // Parasite Mage armour, grown from EB's warlock set.
         ritual("parasite_mage_helmet", t, stack(InsaneTweaksMod.MODID, "parasite_mage_helmet", 1, 0),
                 NONE, buckle(), NONE,
-                plates(), warlock("helmet"), plates(),
+                plates(), warlock("hood"), plates(),
                 NONE, item("srparasites", "living_core"), NONE);
 
         ritual("parasite_mage_chestplate", t, stack(InsaneTweaksMod.MODID, "parasite_mage_chestplate", 1, 0),
                 NONE, plates(), NONE,
                 cloth(), item("srparasites", "living_core"), cloth(),
-                plates(), warlock("chestplate"), plates());
+                plates(), warlock("robe"), plates());
 
         ritual("parasite_mage_leggings", t, stack(InsaneTweaksMod.MODID, "parasite_mage_leggings", 1, 0),
                 cloth(), NONE, cloth(),
@@ -251,16 +250,8 @@ public final class ModRituals {
                 plates(), item("srparasites", "living_core"), plates(),
                 NONE, warlock("boots"), NONE);
 
-        // The Living nunchaku is Better Survival's item, made by OUR recipe; only with Better Survival.
-        if (Loader.isModLoaded(BETTER_SURVIVAL)) {
-            ritual("parasite_living_nunchaku", t, stack(BETTER_SURVIVAL, LIVING_NUNCHAKU, 1, 0),
-                    item("srparasites", "hardened_bone_handle"), item("srparasites", "vile_shell"),
-                    anyOre(ModOreDict.ORE_INFECTIOUS_LONG_BLADE_FRAGMENT),
-                    item("srparasites", "vile_shell"), anyOre(ModOreDict.ORE_LIVING_NUCLEUS),
-                    item("srparasites", "vile_shell"),
-                    anyOre(ModOreDict.ORE_INFECTIOUS_LONG_BLADE_FRAGMENT), item("srparasites", "vile_shell"),
-                    item("srparasites", "hardened_bone_handle"));
-        }
+        // The Living nunchaku stays on the crafting table (user, 2026-10-22): it is not a magic item,
+        // so there is nothing for the ritual to gate.
     }
 
     /**
@@ -362,13 +353,6 @@ public final class ModRituals {
         items.add(ModItems.PARASITE_WIZARD_BOOTS);
         if (ModBlocks.SANCTUARY_CORE != null) {
             items.add(Item.getItemFromBlock(ModBlocks.SANCTUARY_CORE));
-        }
-        // Looked up by name and typed as Item, never as the Better Survival subclass: naming that
-        // class here would make this one fail to link without Better Survival (see CLAUDE.md,
-        // "Guarding an optional mod dependency").
-        Item nunchaku = ForgeRegistries.ITEMS.getValue(new ResourceLocation(BETTER_SURVIVAL, LIVING_NUNCHAKU));
-        if (nunchaku != null) {
-            items.add(nunchaku);
         }
         return items;
     }
@@ -473,6 +457,24 @@ public final class ModRituals {
             MISSING_IDS.add(id);
             PENDING_MISSING.add(id);
             return Ingredient.EMPTY;
+        }
+        return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
+    }
+
+    /**
+     * Every real variant of one item - all EB runestones, say - listed one by one rather than as a
+     * wildcard. A wildcard stack (meta 32767) matches the same things, but the Codex and JEI would draw
+     * it as an item at damage 32767, which for a block is a missing model.
+     */
+    private static Ingredient variants(String modid, String path) {
+        Item found = safeItem(modid, path);
+        if (found == Items.AIR) {
+            return Ingredient.EMPTY; // the miss is recorded; ritual() drops this recipe
+        }
+        net.minecraft.util.NonNullList<ItemStack> stacks = net.minecraft.util.NonNullList.create();
+        found.getSubItems(net.minecraft.creativetab.CreativeTabs.SEARCH, stacks);
+        if (stacks.isEmpty()) {
+            stacks.add(new ItemStack(found));
         }
         return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
     }

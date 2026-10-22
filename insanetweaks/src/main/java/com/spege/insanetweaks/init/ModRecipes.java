@@ -416,9 +416,9 @@ public class ModRecipes {
         // We register one recipe per ebwizardry helmet variant.
         // =====================================================================
         String[] warlockHelmetVariants = {
-                "warlock_helmet", "warlock_helmet_fire", "warlock_helmet_ice",
-                "warlock_helmet_lightning", "warlock_helmet_necromancy",
-                "warlock_helmet_earth", "warlock_helmet_sorcery", "warlock_helmet_healing"
+                "warlock_hood", "warlock_hood_fire", "warlock_hood_ice",
+                "warlock_hood_lightning", "warlock_hood_necromancy",
+                "warlock_hood_earth", "warlock_hood_sorcery", "warlock_hood_healing"
         };
         for (String variant : warlockHelmetVariants) {
             net.minecraft.item.Item helmetItem = ForgeRegistries.ITEMS
@@ -451,9 +451,9 @@ public class ModRecipes {
         // S = any ebwizardry:battlemage_chestplate variant
         // =====================================================================
         String[] warlockChestVariants = {
-                "warlock_chestplate", "warlock_chestplate_fire", "warlock_chestplate_ice",
-                "warlock_chestplate_lightning", "warlock_chestplate_necromancy",
-                "warlock_chestplate_earth", "warlock_chestplate_sorcery", "warlock_chestplate_healing"
+                "warlock_robe", "warlock_robe_fire", "warlock_robe_ice",
+                "warlock_robe_lightning", "warlock_robe_necromancy",
+                "warlock_robe_earth", "warlock_robe_sorcery", "warlock_robe_healing"
         };
         for (String variant : warlockChestVariants) {
             net.minecraft.item.Item chestItem = ForgeRegistries.ITEMS

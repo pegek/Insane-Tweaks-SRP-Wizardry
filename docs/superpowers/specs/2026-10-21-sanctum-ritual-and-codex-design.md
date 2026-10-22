@@ -158,9 +158,8 @@ individual costs later.
 | `insanetweaks:living_spellblade` | `recipes/living_spellblade.json` |
 | `insanetweaks:living_aegis` | `recipes/living_aegis.json` |
 | `insanetweaks:living_battlemage_helmet/chestplate/leggings/boots` | the four `recipes/living_battlemage_*.json` |
-| `insanetweaks:sanctuary_core` | `ModRecipes` `sanctuary_nexus` |
+| `insanetweaks:sanctuary_core` | **Own altar recipe (user, 2026-10-22):** SRP pearl, beacon, ender eye / any runestone, level clock, any runestone / devoritium block, magic or living nucleus, devoritium block |
 | `insanetweaks:parasite_mage_helmet/chestplate/leggings/boots` | the four `recipes/parasite_mage_*.json` (user, 2026-10-21) |
-| `mujmajnkraftsbettersurvival:itemparasitelivingnunchaku` | `recipes/parasite_living_nunchaku.json` — our recipe for Better Survival's item; only with Better Survival (user, 2026-10-21) |
 | living nucleus | see below |
 
 Details the builder must carry over:
@@ -176,6 +175,13 @@ Details the builder must carry over:
   `itLivingNucleus` (same pattern as our clone recipe); our clone's table recipe is disabled; the
   `swparasites` table recipe is **not** touched.
 - `sanctuary_core` only exists with the Sanctuary module and SRP; skip the ritual otherwise.
+
+- **Not on the altar:** the Living nunchaku. It was moved on 2026-10-21 and moved back on 2026-10-22: it is not a magic item, so nothing about it needs gating; its table recipe stays.
+- **Parasite Mage hood and robe.** EB's warlock pieces are `warlock_hood` and `warlock_robe`, not `warlock_helmet`/`warlock_chestplate`. The old JSON and Java table recipes named the latter and never loaded; all three places now use the real names.
+
+### 7.1a Abomination crystal (2026-10-22)
+
+Plain magic crystal in the centre, Abomination dust on the four side-middle altars, corners empty, plus the four receptacle dusts; yields **2** Abomination crystals (test value). A one-crystal version could never undercut EB's single altar, whose price (crystal + four dust) the receptacles alone already equal. It is the first page of the Codex's Arcane Components entry.
 
 ### 7.2 Golden book: cheaper alternative, table stays
 
@@ -306,6 +312,8 @@ To be sent when this design is approved:
    see §10.
 
 No dais recording is needed: the gate is loose (§5).
+
+4. **Pre-placed dust (2026-10-22).** The Abomination crystal ritual now needs its corners EMPTY. `SanctumLayout.chamber` picks the dust altars from all eight outer altars, so a corner holding dust blocks the ritual. Pick them from the four side-middle altars only (indices 1, 3, 5, 7 of `altars`), 1–3 of them, so the player still adds at least one.
 
 ## 12. Config (`tweaks`)
 
