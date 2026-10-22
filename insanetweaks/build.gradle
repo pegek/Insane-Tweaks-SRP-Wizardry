@@ -23,7 +23,7 @@ repositories {
     mavenCentral()
 }
 
-version = '1.30.2'
+version = '1.30.3'
 group = 'com.spege.insanetweaks'
 archivesBaseName = 'insanetweaks'
 
