@@ -117,8 +117,8 @@ public class TweaksCategory {
     public boolean altarTestRecipes = true;
 
     @Config.Comment({"Altar rituals: remove THIS mod's crafting-table recipes for the items now made on the",
-            "3x3 altar (Living gear, Parasite Mage armour, the Living nunchaku, magic nucleus, adaptation",
-            "upgrade, living nucleus clone, Sanctuary core). The golden book keeps its table recipe.",
+            "3x3 altar (Living gear, Parasite Mage armour, magic nucleus, adaptation upgrade, living",
+            "nucleus clone, Sanctuary core). The golden book and the Living nunchaku keep their table recipes.",
             "Other mods' recipes are never touched.",
             "Ignored - the table recipes stay - when altar rituals are off, the Abomination element is",
             "missing, or sanctums are disabled, because then no ritual could ever make these items."})

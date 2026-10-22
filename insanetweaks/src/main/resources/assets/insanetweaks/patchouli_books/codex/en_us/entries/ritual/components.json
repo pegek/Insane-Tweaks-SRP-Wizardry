@@ -6,7 +6,11 @@
   "pages": [
     {
       "type": "text",
-      "text": "The components of the parasitic battlemage's craft. Most are now made only on the dais. The $(item)Golden Book$() can still be bound at a table, but the altar makes it without a nether star."
+      "text": "The components of the parasitic battlemage's craft. Most are now made only on the dais. The $(item)Golden Book$() can still be bound at a table, but the altar makes it without a nether star.$(br2)$(item)Abomination crystals$() come out two at a time: a plain magic crystal in the centre, Abomination dust on the four sides, the corners left empty."
+    },
+    {
+      "type": "insanetweaks:ritual",
+      "ritual": "insanetweaks:abomination_crystal"
     },
     {
       "type": "insanetweaks:ritual",

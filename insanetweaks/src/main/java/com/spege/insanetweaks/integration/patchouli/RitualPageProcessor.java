@@ -68,7 +68,7 @@ public class RitualPageProcessor implements IComponentProcessor {
             return PatchouliAPI.instance.serializeItemStack(this.recipe.getResult());
         }
         if ("name".equals(key)) {
-            return this.recipe.getResult().getDisplayName();
+            return CodexText.plain(this.recipe.getResult().getDisplayName());
         }
         return "";
     }
