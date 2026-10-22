@@ -27,7 +27,7 @@ public class SanctumElixirsTest {
     }
 
     @Test
-    public void vanillaThreeOrFourDistinct() {
+    public void vanillaTwoOrThreeDistinct() {
         Random r = new Random(1L);
         for (int i = 0; i < RUNS; i++) {
             Set<String> ids = new HashSet<String>();
@@ -38,7 +38,7 @@ public class SanctumElixirsTest {
                     assertTrue("duplicate " + e[0], ids.add(e[0]));
                 }
             }
-            assertTrue("vanilla count " + count, count >= 3 && count <= 4);
+            assertTrue("vanilla count " + count, count >= 2 && count <= 3);
         }
     }
 
@@ -49,9 +49,9 @@ public class SanctumElixirsTest {
             for (String[] e : SanctumElixirs.recipe(noise(r))) {
                 int ticks = Integer.parseInt(e[2]);
                 if (vanilla(e[0])) {
-                    assertTrue(e[0] + " " + ticks, ticks >= 4800 && ticks <= 9600);
+                    assertTrue(e[0] + " " + ticks, ticks >= 3600 && ticks <= 8400);
                 } else {
-                    assertTrue(e[0] + " " + ticks, ticks >= 2400 && ticks <= 4800);
+                    assertTrue(e[0] + " " + ticks, ticks >= 1200 && ticks <= 3600);
                 }
             }
         }

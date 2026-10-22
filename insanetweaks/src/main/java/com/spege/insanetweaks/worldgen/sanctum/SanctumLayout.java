@@ -91,7 +91,7 @@ public final class SanctumLayout {
     public static final int LEVEL_DROP = 10;
     public static final int MIN_FLOOR = 17;
 
-    private static final double TRAP_CHANCE = 0.35D;
+    private static final double TRAP_CHANCE = 0.5D;
 
     private static final int[][] CHAMBER_SPOTS = { { -16, -5 }, { -16, 5 }, { -24, -5 }, { -24, 5 }, { -20, -6 },
             { -20, 6 }, { -26, 3 } };
@@ -427,9 +427,6 @@ public final class SanctumLayout {
             this.pillars.add(new int[] { w[0], w[2] });
         }
         addChest(point(-25, f2, 0), face(EAST), CHEST_MAIN);
-        if (r.nextBoolean()) {
-            addChest(point(-25, f2, -2), face(EAST), CHEST_MAIN);
-        }
         if (r.nextInt(4) == 0) {
             addProp(point(-25, f2, 2), PROP_SHULKER, face(EAST));
         }
@@ -506,7 +503,7 @@ public final class SanctumLayout {
                     prop(cx, cz, front, a, -3, f, shelf(r), sideB);
                 }
                 prop(cx, cz, front, -1, 0, f, r.nextBoolean() ? PROP_ENCHANTING_TABLE : PROP_ARCANE_WORKBENCH, front);
-                addChest(rel(cx, cz, front, 2, 3, f), face(sideA), CHEST_LIBRARY);
+                // No chest: the library's loot is in its bookshelves.
                 break;
             case FORGE:
                 prop(cx, cz, front, -2, 0, f, PROP_ARCANE_ANVIL, front);

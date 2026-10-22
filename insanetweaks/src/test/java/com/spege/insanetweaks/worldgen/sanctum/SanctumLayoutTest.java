@@ -130,8 +130,7 @@ public class SanctumLayoutTest {
     }
 
     @Test
-    public void chamberHasOneOrTwoMainChests() {
-        boolean sawTwo = false;
+    public void chamberHasExactlyOneMainChest() {
         for (long s = 0; s < SEEDS; s++) {
             int main = 0;
             for (int[] c : layout(s).chests) {
@@ -139,10 +138,25 @@ public class SanctumLayoutTest {
                     main++;
                 }
             }
-            assertTrue(main >= 1 && main <= 2);
-            sawTwo |= main == 2;
+            assertEquals("seed " + s, 1, main);
         }
-        assertTrue(sawTwo);
+    }
+
+    /** The library's loot lives in its bookshelves: no chest there. */
+    @Test
+    public void libraryHasNoChest() {
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            for (SanctumLayout.Room r : l.rooms) {
+                if (r.type != SanctumLayout.RoomType.LIBRARY) {
+                    continue;
+                }
+                SanctumBox in = r.outer.shrink(1);
+                for (int[] c : l.chests) {
+                    assertFalse("seed " + s, in.contains(c[0], c[1], c[2]));
+                }
+            }
+        }
     }
 
     @Test
@@ -473,7 +487,9 @@ public class SanctumLayoutTest {
                 for (int[] c : l.chests) {
                     chests += in.contains(c[0], c[1], c[2]) ? 1 : 0;
                 }
-                assertTrue("seed " + s + " " + r.type, chests >= 1);
+                if (r.type != SanctumLayout.RoomType.LIBRARY) {
+                    assertTrue("seed " + s + " " + r.type, chests >= 1);
+                }
                 if (r.type == SanctumLayout.RoomType.CRYPT || r.type == SanctumLayout.RoomType.COLLAPSED) {
                     sawFiller = true;
                     assertTrue(r.type.hasAnchors());

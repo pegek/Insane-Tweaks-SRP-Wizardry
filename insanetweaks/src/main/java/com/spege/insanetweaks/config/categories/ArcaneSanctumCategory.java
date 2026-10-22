@@ -108,6 +108,6 @@ public class ArcaneSanctumCategory {
     @Config.Comment({ "Spells a trap dispenser fires (as scrolls), one picked per dispenser by position.",
             "Ids that do not resolve, or spells EBW does not allow from a dispenser, are skipped." })
     @Config.Name("Trap Spells")
-    public String[] trapSpells = { "ebwizardry:magic_missile", "ebwizardry:firebolt", "ebwizardry:ice_shard",
-            "ebwizardry:poison" };
+    public String[] trapSpells = { "ebwizardry:poison", "ebwizardry:wither", "ebwizardry:curse_of_undeath",
+            "ebwizardry:curse_of_enfeeblement" };
 }

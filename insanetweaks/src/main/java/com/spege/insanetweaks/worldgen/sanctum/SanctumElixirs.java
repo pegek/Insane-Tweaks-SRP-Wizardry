@@ -10,12 +10,12 @@ import java.util.List;
  * effect entries {id, amplifier, ticks}.
  *
  * <ul>
- *   <li>3-4 distinct vanilla effects at level II (fire resistance and night vision have one
- *   level), 4-8 minutes each;</li>
+ *   <li>2-3 distinct vanilla effects at level II (fire resistance and night vision have one
+ *   level), 3-7 minutes each;</li>
  *   <li>50%: one insanetweaks effect, Cleanse or Nourished (level II - it does nothing at I),
- *   2-4 minutes. Immune Bond (works only through its spell), Gilded Stasis (freezes the drinker)
+ *   1-3 minutes. Immune Bond (works only through its spell), Gilded Stasis (freezes the drinker)
  *   and Wit's Hunger (a curse) are left out;</li>
- *   <li>50%: one EBW buff-spell effect, 2-4 minutes.</li>
+ *   <li>50%: one EBW buff-spell effect, 1-3 minutes.</li>
  * </ul>
  */
 public final class SanctumElixirs {
@@ -37,18 +37,18 @@ public final class SanctumElixirs {
     public static List<String[]> recipe(double[] n) {
         List<String[]> out = new ArrayList<String[]>();
         List<String> pool = new ArrayList<String>(Arrays.asList(VANILLA));
-        int count = n[0] < 0.5D ? 3 : 4;
+        int count = n[0] < 0.5D ? 2 : 3;
         for (int i = 0; i < count; i++) {
             String id = pool.remove(pick(n[1 + i], pool.size()));
             boolean single = id.equals("minecraft:fire_resistance") || id.equals("minecraft:night_vision");
-            out.add(entry(id, single ? 0 : 1, ticks(n[5 + i], 4800, 9600)));
+            out.add(entry(id, single ? 0 : 1, ticks(n[5 + i], 3600, 8400)));
         }
         if (n[9] < 0.5D) {
             int k = pick(n[10], INSANE.length);
-            out.add(entry(INSANE[k], INSANE_AMPLIFIER[k], ticks(n[11], 2400, 4800)));
+            out.add(entry(INSANE[k], INSANE_AMPLIFIER[k], ticks(n[11], 1200, 3600)));
         }
         if (n[12] < 0.5D) {
-            out.add(entry(WIZARDRY[pick(n[13], WIZARDRY.length)], 0, ticks(n[14], 2400, 4800)));
+            out.add(entry(WIZARDRY[pick(n[13], WIZARDRY.length)], 0, ticks(n[14], 1200, 3600)));
         }
         return out;
     }
