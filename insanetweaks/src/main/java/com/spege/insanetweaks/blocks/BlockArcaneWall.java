@@ -32,7 +32,7 @@ public class BlockArcaneWall extends Block {
         this.setBlockUnbreakable();
         this.setResistance(6000000.0F);
         this.setSoundType(SoundType.GLASS);
-        this.setLightLevel(0.2F);
+        this.setLightOpacity(255);
         this.setUnlocalizedName(InsaneTweaksMod.MODID + ".arcane_wall");
         this.setRegistryName(new ResourceLocation(InsaneTweaksMod.MODID, "arcane_wall"));
     }

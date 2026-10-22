@@ -39,10 +39,15 @@ public final class SanctumPlacement {
         return ModConfig.arcaneSanctum;
     }
 
+    /** Dimensions a sanctum may never stand in, listed or not: 150 (no SRP, ever), Nether and End (no rules yet). */
+    public static boolean dimensionRefused(World world) {
+        int dim = world.provider.getDimension();
+        return dim == NO_SRP_DIMENSION || dim == -1 || dim == 1;
+    }
+
     public static boolean dimensionAllowed(World world) {
         int dim = world.provider.getDimension();
-        // 150: no SRP there, ever. Nether and End: no placement rules yet (spec 16.4).
-        if (dim == NO_SRP_DIMENSION || dim == -1 || dim == 1) {
+        if (dimensionRefused(world)) {
             return false;
         }
         for (int d : cfg().dimensions) {

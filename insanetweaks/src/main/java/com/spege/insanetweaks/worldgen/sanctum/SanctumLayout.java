@@ -269,10 +269,6 @@ public final class SanctumLayout {
     }
 
     /**
-     * The arcane-wall hull: one layer around every room (each outer box grown by one), never inside
-     * any room's outer box, and open in the shaft column above the vestibule - the one way in.
-     */
-    /**
      * Runestone frame (spec 16.2): a shell cell on two boundary planes of a non-chamber room is an
      * edge, on three a corner. Nothing inside the ritual chamber's outer box is framed - it stays
      * all sealed stone.
@@ -299,6 +295,10 @@ public final class SanctumLayout {
         return best;
     }
 
+    /**
+     * The arcane-wall hull: one layer around every room (each outer box grown by one), never inside
+     * any room's outer box, and open in the shaft column above the vestibule - the one way in.
+     */
     public boolean isHull(int x, int y, int z) {
         if (Math.abs(x - this.shaftX) <= 1 && Math.abs(z - this.shaftZ) <= 1 && y > this.wardY) {
             return false;
@@ -414,12 +414,16 @@ public final class SanctumLayout {
                 this.altars.add(point(-20 + dx, f2 + 1, dz));
             }
         }
-        List<int[]> outer = new ArrayList<int[]>(this.altars);
-        outer.remove(4);
-        Collections.shuffle(outer, r);
-        int dust = 3 + r.nextInt(3);
+        // 1-3 Abomination dusts, only on the side altars (indices 1, 3, 5, 7: the middle of each
+        // edge), never on the corners.
+        List<int[]> sides = new ArrayList<int[]>();
+        for (int i = 1; i < 9; i += 2) {
+            sides.add(this.altars.get(i));
+        }
+        Collections.shuffle(sides, r);
+        int dust = 1 + r.nextInt(3);
         for (int i = 0; i < dust; i++) {
-            this.dustAltars.add(outer.get(i));
+            this.dustAltars.add(sides.get(i));
         }
         int[][] pillarCells = { { -27, -7 }, { -27, 7 }, { -13, -7 }, { -13, 7 } };
         for (int[] p : pillarCells) {

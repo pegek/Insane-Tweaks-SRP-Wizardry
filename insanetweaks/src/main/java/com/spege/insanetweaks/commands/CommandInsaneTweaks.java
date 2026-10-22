@@ -252,6 +252,12 @@ public class CommandInsaneTweaks extends CommandBase {
         net.minecraft.world.World world = sender.getEntityWorld();
         net.minecraft.util.math.BlockPos at = sender.getPosition();
         if ("place".equalsIgnoreCase(args[1])) {
+            if (com.spege.insanetweaks.worldgen.sanctum.SanctumPlacement.dimensionRefused(world)) {
+                // Its warning, advancements and dungeon guard all ignore these dimensions.
+                sender.sendMessage(new TextComponentString(
+                        "§cSanctums cannot stand in this dimension (150, the Nether and the End are refused)."));
+                return;
+            }
             com.spege.insanetweaks.worldgen.sanctum.SanctumLayout layout =
                     com.spege.insanetweaks.worldgen.sanctum.SanctumLayout.generate(world.rand.nextLong(), at.getX(),
                             at.getZ(), com.spege.insanetweaks.config.ModConfig.arcaneSanctum.floorYMin,

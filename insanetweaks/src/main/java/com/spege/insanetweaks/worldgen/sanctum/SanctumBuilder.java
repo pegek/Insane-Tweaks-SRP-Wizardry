@@ -53,12 +53,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /**
- * Writes the part of a {@link SanctumLayout} inside a clip box. Passes: (1) walls - every room in
- * stone brick (a few silverfish blocks among them), then the ritual chamber's shell in sealed
- * stone over any shared plane; (2) every interior except the stairway's, then carves (doorways,
- * stair headroom) to air; (3) seal, dais, altars, pillars, stairs, props, traps, chests, anchors,
- * lights, decor; (4) webs, vines and rubble; (5) shaft and surface ruin. Materials depend on position only (SanctumNoise), so a structure split over many
- * populate calls is identical to one built at once. Containers get the sanctum's Arcane Lock.
+ * Writes the part of a {@link SanctumLayout} inside a clip box. Passes: (0) the arcane-wall hull;
+ * (1) walls - every room in its dimension's palette with the element's runestone frame, then the
+ * ritual chamber's shell in sealed stone over any shared plane; (2) every interior except the
+ * stairway's, then carves (doorways, stair headroom) to air; (3) seal, dais, altars, pillars,
+ * stairs, props, traps, chests, anchors, lights, decor, codex shelf, receptacles; (4) webs, vines
+ * and rubble; (5) shaft and surface ruin. Materials depend on position only (SanctumNoise), so a
+ * structure split over many populate calls is identical to one built at once. Containers get the
+ * sanctum's Arcane Lock.
  */
 public final class SanctumBuilder {
 
@@ -603,7 +605,7 @@ public final class SanctumBuilder {
                 set(world, x, surface + h, z, p.ruin(l.seed, x, surface + h, z));
             }
         } else if (n < 0.42D) {
-            set(world, x, surface, z, Blocks.MOSSY_COBBLESTONE.getDefaultState());
+            set(world, x, surface, z, p.ruinFloor(l.seed, x, surface, z));
         }
     }
 
@@ -725,6 +727,11 @@ public final class SanctumBuilder {
             } else {
                 electroblob.wizardry.constants.Element e = electroblob.wizardry.constants.Element.fromName(element,
                         electroblob.wizardry.constants.Element.SORCERY);
+                // A record holding an element runestone cannot show (magic, abomination, a typo) falls
+                // back to sorcery instead of throwing in worldgen.
+                if (!electroblob.wizardry.block.BlockRunestone.ELEMENT.getAllowedValues().contains(e)) {
+                    e = electroblob.wizardry.constants.Element.SORCERY;
+                }
                 this.runestone = WizardryBlocks.runestone.getDefaultState()
                         .withProperty(electroblob.wizardry.block.BlockRunestone.ELEMENT, e);
                 this.pedestal = WizardryBlocks.runestone_pedestal.getDefaultState()
@@ -799,6 +806,12 @@ public final class SanctumBuilder {
                     : wall == this.cracked ? BlockSilverfish.EnumType.CRACKED_STONEBRICK
                             : BlockSilverfish.EnumType.STONEBRICK;
             return Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, type);
+        }
+
+        /** A worn floor block of the surface ruin: mossy cobblestone in the Overworld, the palette wall elsewhere. */
+        IBlockState ruinFloor(long seed, int x, int y, int z) {
+            return SanctumPalettes.silverfish(this.dimension) ? Blocks.MOSSY_COBBLESTONE.getDefaultState()
+                    : wall(seed, x, y, z);
         }
 
         IBlockState ruin(long seed, int x, int y, int z) {

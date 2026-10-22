@@ -25,7 +25,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  */
 public class SanctumTeleportGuard {
 
-    private static final int WATCH_TICKS = 10;
+    /** EBW teleports land inside the cast, so the end of the same world tick already sees them. */
+    private static final int WATCH_TICKS = 1;
     /** Radius around the caster within which anyone could be the one a teleport spell moves. */
     private static final double SPELL_REACH = 32.0D;
     private static final List<Pending> PENDING = new ArrayList<Pending>();

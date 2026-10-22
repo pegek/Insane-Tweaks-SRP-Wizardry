@@ -59,6 +59,11 @@ public class LateMixinBooter implements ILateMixinLoader {
         if (net.minecraftforge.fml.common.Loader.isModLoaded("roguelike")) {
             configs.add("mixins.insanetweaks.roguelike.json");
         }
+        // Doomlike Dungeons - @Mod id "dldungeonsjbg". Same guard, on its dungeon-centre pick.
+        // srpwizcore mixes a different class of it (Builder), so the two never meet.
+        if (net.minecraftforge.fml.common.Loader.isModLoaded("dldungeonsjbg")) {
+            configs.add("mixins.insanetweaks.doomlike.json");
+        }
         return configs;
     }
 

@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8.2",
+  "package": "com.spege.insanetweaks.mixins.worldgen",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinDoomlikeDungeonCenter"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}

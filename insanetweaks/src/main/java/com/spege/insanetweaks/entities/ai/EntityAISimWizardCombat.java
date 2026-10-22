@@ -84,6 +84,8 @@ public class EntityAISimWizardCombat extends EntityAIBase {
     private long nextPanicReadyTime;
     /** DISPLACE (banish) is off the table until this world time - see tuning().banishCooldownTicks. */
     private long nextDisplaceReadyTime;
+    /** The DISPLACE spell picked as the close-range special, armed into the cooldown once it is cast. */
+    private Spell pendingDisplace;
 
     // E1 diagnostics
     private long lastRejectLogTime;
@@ -548,6 +550,11 @@ public class EntityAISimWizardCombat extends EntityAIBase {
                 tuning().postCastSlownessTicks, tuning().postCastSlownessAmplifier, false, false));
 
         applySpellCooldown(spell);
+        if (spell == this.pendingDisplace) {
+            // The banish cooldown starts when the banish actually lands, not when it was picked.
+            this.pendingDisplace = null;
+            armDisplaceCooldown();
+        }
     }
 
     private void applySpellCooldown(Spell spell) {
@@ -659,10 +666,11 @@ public class EntityAISimWizardCombat extends EntityAIBase {
         //  - DRAIN at mid range: channelled parasitic drain that heals the wizard
         if (ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent > 0
                 && this.wizard.getRNG().nextInt(100) < ModConfig.entities.assimilatedWizard.combat.specialSpellChancePercent) {
-            if (distance <= tuning().banishMaxDistance && displaceReady()) {
-                Spell displace = pickByRoles(pool, SpellRole.DISPLACE);
+            if (distance <= tuning().banishMaxDistance) {
+                // Up close the special is DISPLACE or nothing - never the drain - and only off cooldown.
+                Spell displace = displaceReady() ? pickByRoles(pool, SpellRole.DISPLACE) : null;
                 if (displace != null) {
-                    armDisplaceCooldown();
+                    this.pendingDisplace = displace;
                     return displace;
                 }
             } else if (distance <= tuning().lifeDrainMaxDistance) {

@@ -95,8 +95,8 @@ public class ArcaneSanctumCategory {
     @Config.RangeDouble(min = 0.0, max = 1.0)
     public double anchorArtefactChanceChamber = 0.50;
 
-    @Config.Comment({ "Stop Roguelike Dungeons from generating a dungeon within ~8 chunks of a sanctum start - its",
-            "rooms would cut through the sanctum's walls and let the parasites out. Read live." })
+    @Config.Comment({ "Stop Roguelike Dungeons and Doomlike Dungeons from generating a dungeon within ~8 chunks of a",
+            "sanctum start - their rooms would cut through the sanctum's walls and let the parasites out. Read live." })
     @Config.Name("Block Foreign Dungeons")
     public boolean blockForeignDungeons = true;
 

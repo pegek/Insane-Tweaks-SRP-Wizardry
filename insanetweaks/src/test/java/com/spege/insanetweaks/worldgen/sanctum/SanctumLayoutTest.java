@@ -504,6 +504,24 @@ public class SanctumLayoutTest {
         assertTrue(sawFiller);
     }
 
+    /** 1-3 Abomination dusts, only on the side altars (middle of each edge), never on the corners. */
+    @Test
+    public void dustOnlyOnOneToThreeSideAltars() {
+        boolean sawThree = false;
+        for (long s = 0; s < SEEDS; s++) {
+            SanctumLayout l = layout(s);
+            int[] c = l.altars.get(4);
+            assertTrue("seed " + s, l.dustAltars.size() >= 1 && l.dustAltars.size() <= 3);
+            sawThree |= l.dustAltars.size() == 3;
+            for (int[] d : l.dustAltars) {
+                int dx = Math.abs(d[0] - c[0]);
+                int dz = Math.abs(d[2] - c[2]);
+                assertEquals("seed " + s + " corner or centre dust", 1, dx + dz);
+            }
+        }
+        assertTrue(sawThree);
+    }
+
     @Test
     public void stairDoorIsFourHigh() {
         for (long s = 0; s < 50; s++) {
