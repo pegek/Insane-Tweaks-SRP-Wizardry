@@ -173,12 +173,16 @@ public final class ModRituals {
                 item("srparasites", "assimilated_flesh"),
                 NONE, item("srparasites", "ada_manducater_drop"), NONE);
 
+        // The altar's own Sanctuary recipe (user, 2026-10-22), no longer a copy of the table one: one SRP
+        // pearl and an eye of ender beside the beacon, ANY runestone instead of necromancy only, and a
+        // magic or living nucleus in place of the false apple.
         if (ModBlocks.SANCTUARY_CORE != null) {
             ritual("sanctuary_core", t, new ItemStack(ModBlocks.SANCTUARY_CORE),
-                    item("srparasites", "pearl"), item("minecraft", "beacon"), item("srparasites", "pearl"),
-                    item("ebwizardry", "runestone", 4), item("srparasites", "levelclock"),
-                    item("ebwizardry", "runestone", 4),
-                    item("ancientspellcraft", "devoritium_block"), item("srparasites", "false_apple"),
+                    item("srparasites", "pearl"), item("minecraft", "beacon"), item("minecraft", "ender_eye"),
+                    variants("ebwizardry", "runestone"), item("srparasites", "levelclock"),
+                    variants("ebwizardry", "runestone"),
+                    item("ancientspellcraft", "devoritium_block"),
+                    anyOre(ModOreDict.ORE_MAGIC_NUCLEUS, ModOreDict.ORE_LIVING_NUCLEUS),
                     item("ancientspellcraft", "devoritium_block"));
         }
     }
@@ -453,6 +457,24 @@ public final class ModRituals {
             MISSING_IDS.add(id);
             PENDING_MISSING.add(id);
             return Ingredient.EMPTY;
+        }
+        return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
+    }
+
+    /**
+     * Every real variant of one item - all EB runestones, say - listed one by one rather than as a
+     * wildcard. A wildcard stack (meta 32767) matches the same things, but the Codex and JEI would draw
+     * it as an item at damage 32767, which for a block is a missing model.
+     */
+    private static Ingredient variants(String modid, String path) {
+        Item found = safeItem(modid, path);
+        if (found == Items.AIR) {
+            return Ingredient.EMPTY; // the miss is recorded; ritual() drops this recipe
+        }
+        net.minecraft.util.NonNullList<ItemStack> stacks = net.minecraft.util.NonNullList.create();
+        found.getSubItems(net.minecraft.creativetab.CreativeTabs.SEARCH, stacks);
+        if (stacks.isEmpty()) {
+            stacks.add(new ItemStack(found));
         }
         return Ingredient.fromStacks(stacks.toArray(new ItemStack[stacks.size()]));
     }

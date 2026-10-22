@@ -158,7 +158,7 @@ individual costs later.
 | `insanetweaks:living_spellblade` | `recipes/living_spellblade.json` |
 | `insanetweaks:living_aegis` | `recipes/living_aegis.json` |
 | `insanetweaks:living_battlemage_helmet/chestplate/leggings/boots` | the four `recipes/living_battlemage_*.json` |
-| `insanetweaks:sanctuary_core` | `ModRecipes` `sanctuary_nexus` |
+| `insanetweaks:sanctuary_core` | **Own altar recipe (user, 2026-10-22):** SRP pearl, beacon, ender eye / any runestone, level clock, any runestone / devoritium block, magic or living nucleus, devoritium block |
 | `insanetweaks:parasite_mage_helmet/chestplate/leggings/boots` | the four `recipes/parasite_mage_*.json` (user, 2026-10-21) |
 | living nucleus | see below |
 
